@@ -1,4 +1,4 @@
-// Fixed, simplified travel network on the illustrated Europe board.
+// Free movement across neighbouring land spaces on the illustrated Europe board.
 // Coordinates refer to the 1536 × 1024 artwork, not a road-navigation map.
 const cities=[
 ['Lisbonne',130,775],['Madrid',270,750],['Barcelone',439,740],
@@ -52,12 +52,41 @@ const routes=[
 ['Copenhague','Oslo',[],true],['Londres','Paris',[[472,434,'cote']],true],
 ['Dublin','Londres',[],true]
 ];
+// Simplified land footprints fitted to this artwork (not navigation data).
+const land=[
+ [[765,304],[794,305],[820,350],[798,375],[768,365]],
+ [[80,805],[120,640],[245,604],[345,642],[339,484],[472,450],[524,409],[547,372],[610,318],[743,313],[775,361],[866,366],[987,371],[1135,348],[1150,260],[1073,206],[1084,121],[1190,60],[1320,82],[1492,190],[1510,535],[1377,582],[1300,639],[1345,706],[1483,713],[1520,798],[1450,883],[1270,874],[1190,888],[1090,873],[1094,796],[1025,736],[959,671],[892,633],[826,630],[838,684],[895,735],[920,790],[889,870],[834,875],[806,794],[773,743],[773,664],[698,657],[615,689],[543,698],[490,734],[478,770],[388,795],[306,828],[179,873]],
+ [[629,247],[638,177],[720,128],[800,75],[883,29],[930,28],[974,63],[1016,90],[1008,157],[970,203],[917,232],[876,253],[878,291],[832,303],[810,269],[780,241],[734,261],[676,265]],
+ [[336,428],[390,368],[382,296],[365,246],[388,183],[433,179],[461,194],[449,243],[469,283],[492,323],[516,367],[489,403],[447,415],[396,411]],
+ [[232,352],[247,290],[275,265],[329,258],[351,293],[352,341],[319,363],[269,366]]
+];
+const mountains=[
+ [[215,677],[330,626],[439,531],[486,559],[421,690],[327,711]],
+ [[572,567],[678,493],[771,470],[829,537],[759,612],[706,646],[616,620]],
+ [[1030,502],[1130,479],[1275,537],[1320,584],[1230,626],[1140,590]],
+ [[956,639],[1010,650],[1134,786],[1084,819],[1015,740]],
+ [[802,647],[847,677],[900,775],[862,807],[826,755]],
+ [[642,211],[682,164],[864,56],[923,31],[938,98],[830,156],[757,201],[710,237]]
+];
+function inside(x,y,poly){let hit=false;for(let i=0,j=poly.length-1;i<poly.length;j=i++){const [a,b]=poly[i],[c,d]=poly[j];if((b>y)!==(d>y)&&x<(c-a)*(y-b)/(d-b)+a)hit=!hit;}return hit;}
+const onLand=(x,y)=>land.some(p=>inside(x,y,p));
+function terrain(x,y){if(mountains.some(p=>inside(x,y,p)))return 'montagne';if([[30,0],[-30,0],[0,30],[0,-30]].some(([dx,dy])=>!onLand(x+dx,y+dy)))return 'cote';return 'plaine';}
 export function europeBoard(from,to){
  const board={},byName={},edges=[];let next=1;
  const node=(key,name,x,y,type)=>{board[key]={id:next++,key,name,x,y,type,roads:[],rotation:0,links:[]};return key;};
  for(const [name,x,y] of cities){const k='city-'+name;byName[name]=node(k,name,x,y,name==='Cap Nord'?'cote':'ville');}
- const link=(a,b,ferry=false)=>{board[a].links.push(b);board[b].links.push(a);edges.push({a,b,ferry});};
- routes.forEach(([a,b,spaces,ferry],i)=>{let prev=byName[a];spaces.forEach(([x,y,type],j)=>{const k=node(`route-${i}-${j}`,'',x,y,type);link(prev,k,!!ferry);prev=k;});link(prev,byName[b],!!ferry);});
+ // Retain old land-space keys so existing saves keep their visited terrain.
+ routes.forEach(([, ,spaces,ferry],i)=>{if(!ferry)spaces.forEach(([x,y,type],j)=>node(`route-${i}-${j}`,'',x,y,type));});
+ for(let y=40;y<900;y+=40)for(let x=80;x<1520;x+=40){if(onLand(x,y)&&!Object.values(board).some(t=>Math.hypot(t.x-x,t.y-y)<23))node(`land-${x}-${y}`,'',x,y,terrain(x,y));}
+ const link=(a,b,ferry=false)=>{if(board[a].links.includes(b))return;board[a].links.push(b);board[b].links.push(a);edges.push({a,b,ferry});};
+ const nodes=Object.values(board);
+ // Local moves in every direction; no selected route or ordered waypoints.
+ for(let i=0;i<nodes.length;i++)for(let j=i+1;j<nodes.length;j++){
+  const a=nodes[i],b=nodes[j],distance=Math.hypot(a.x-b.x,a.y-b.y);
+  if(distance<=60&&[.25,.5,.75].every(t=>onLand(a.x+(b.x-a.x)*t,a.y+(b.y-a.y)*t)))link(a.key,b.key);
+ }
+ // Ferries are explicit exceptions to land adjacency.
+ for(const [a,b,,ferry] of routes)if(ferry)link(byName[a],byName[b],true);
  const start=byName[from],arrival=byName[to];if(!start||!arrival)throw new Error('Ville du voyage absente du plateau');
  board[start].id=0;
  return {board,edges,start,arrivalId:board[arrival].id};
