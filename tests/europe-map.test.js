@@ -1,26 +1,35 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {europeBoard} from '../dist/europe.js';
-import {tilePolygons,playableMap} from '../dist/europe-map.js';
+import {europeBoard,hexVertices,HEX_RADIUS} from '../dist/europe.js';
+import {tilePolygons,playableMap,cityLabels} from '../dist/europe-map.js';
 
-test('every saved board space has a non-overlapping playable terrain polygon',()=>{
+test('every terrain including cities and coastal cells has the same six sides, radius and area',()=>{
  const {board}=europeBoard('Paris','Istanbul');
- const polygons=tilePolygons(board);assert.equal(polygons.length,Object.keys(board).length);
- for(const tile of polygons){
-  const node=board[tile.key],p=tile.points.split(' ').map(v=>v.split(',').map(Number));
-  assert(p.length>=3,tile.key);
-  // Every face is confined to its own nearest-node region.
-  for(const [x,y] of p)for(const other of Object.values(board)){
-   const own=(x-node.x)**2+(y-node.y)**2,foreign=(x-other.x)**2+(y-other.y)**2;
-   assert(own<=foreign+25,`${tile.key}: overlapping neighbour ${other.key}`);
-  }
+ assert.equal(tilePolygons(board).length,Object.keys(board).length);
+ const expectedArea=3*Math.sqrt(3)*HEX_RADIUS**2/2;
+ for(const t of Object.values(board)){
+  const p=hexVertices(t);assert.equal(p.length,6);
+  for(let i=0;i<6;i++){assert(Math.abs(Math.hypot(p[i][0]-t.x,p[i][1]-t.y)-HEX_RADIUS)<1e-8);const n=p[(i+1)%6];assert(Math.abs(Math.hypot(n[0]-p[i][0],n[1]-p[i][1])-HEX_RADIUS)<1e-8);}
+  const area=Math.abs(p.reduce((s,v,i)=>{const n=p[(i+1)%6];return s+v[0]*n[1]-v[1]*n[0];},0))/2;
+  assert(Math.abs(area-expectedArea)<1e-6,t.key);
  }
 });
-test('the terrain polygons are the movement targets, with no raster board underneath',()=>{
+
+test('drawing and hit targets use one whole hex per cell without an illustrated background or coastline clipping',()=>{
  const {board,edges,start,arrivalId}=europeBoard('Paris','Istanbul');
- const g={board,edges,pos:start,arrivalId,visited:[start],phase:'move'};
- const html=playableMap(g,board[start].links.map(k=>board[k]),()=>1);
+ const g={board,edges,pos:start,arrivalId,visited:[start],phase:'move',energy:10};
+ const html=playableMap(g,board[start].links.map(k=>board[k]),()=>1,start);
  assert.equal((html.match(/data-move=/g)||[]).length,Object.keys(board).length);
- assert(!html.includes('<img'));assert(html.includes('clip-path="url(#europe-land)"'));
- assert(html.includes('map-tile reachable'));assert(html.includes('role="button"'));
+ assert(!html.includes('<img'));assert(!html.includes('<image'));assert(!html.includes('clip-path'));
+ assert(html.includes('reachable'));assert(html.includes('role="button"'));assert(html.includes('aria-pressed="true"'));
+ assert.equal((html.match(/class="city-label"/g)||[]).length,30);
+ const labels=cityLabels(Object.values(board));
+ for(let i=0;i<labels.length;i++)for(let j=i+1;j<labels.length;j++){const a=labels[i],b=labels[j];assert(!(a.x<b.x+b.width&&a.x+a.width>b.x&&a.y<b.y+b.height&&a.y+a.height>b.y),'Overlapping labels '+a.name+' / '+b.name);}
+});
+
+test('neighbours with insufficient energy are inspectable but are not highlighted as available',()=>{
+ const {board,edges,start,arrivalId}=europeBoard('Paris','Istanbul');
+ const g={board,edges,pos:start,arrivalId,visited:[start],phase:'move',energy:0};
+ const html=playableMap(g,board[start].links.map(k=>board[k]),()=>1);
+ assert(!html.includes(' reachable'));assert(html.includes('unaffordable'));assert(html.includes('tabindex="0"'));
 });

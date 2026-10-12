@@ -6,9 +6,9 @@ export const voyages=[
 {id:'nord',title:'Cap vers le Nord',from:'Copenhague',to:'Cap Nord',color:'#416546',cities:3,coast:3,chains:2}
 ];
 export function drawVoyages(rng=Math.random){const cards=[...voyages];for(let i=cards.length-1;i>0;i--){let j=Math.floor(rng()*(i+1));[cards[i],cards[j]]=[cards[j],cards[i]];}return cards.slice(0,3);}
-export function progress(g){const v=voyages.find(v=>v.id===g.voyage);if(!v)return null;const unique=[...new Set(g.travel||[])].map(k=>g.board[k]).filter(Boolean);const count=type=>unique.filter(t=>t.type===type&&t.id!==g.arrivalId&&t.id!==0).length;
+export function progress(g){const v=voyages.find(v=>v.id===g.voyage);if(!v)return null;const history=g.travelHistory||(g.travel||[]).map(k=>({key:k,type:g.board[k]?.type,endpoint:g.board[k]?.id===0||g.board[k]?.id===g.arrivalId}));const first=new Map();for(const t of history)if(!first.has(t.key))first.set(t.key,t);const unique=[...first.values()];const count=type=>unique.filter(t=>t.type===type&&!t.endpoint).length;
 let runs={montagne:0,cote:0,plaine:0},current=0,last='',seen=new Set(),chains=0,chainAwarded=false;
-for(const k of g.travel||[]){const type=g.board[k]?.type;if(type!==last){current=0;chainAwarded=false;}if(seen.has(k)){current=0;}else {current++;seen.add(k);}last=type;if(type in runs)runs[type]=Math.max(runs[type],current);if(type==='montagne'&&current>=2&&!chainAwarded){chains++;chainAwarded=true;}}
+for(const {key:k,type} of history){if(type!==last){current=0;chainAwarded=false;}if(seen.has(k)){current=0;}else {current++;seen.add(k);}last=type;if(type in runs)runs[type]=Math.max(runs[type],current);if(type==='montagne'&&current>=2&&!chainAwarded){chains++;chainAwarded=true;}}
 const rows=[];const add=(label,value,target)=>rows.push({label,value:Math.min(value,target),target,done:value>=target});
 add('Villes intermédiaires',count('ville'),v.cities);
 if(v.mountainRun)add('Montagnes consécutives',runs.montagne,v.mountainRun);
