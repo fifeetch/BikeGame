@@ -18,4 +18,4 @@ if(v.plain)add('Tuiles plaine',count('plaine'),v.plain);
 if(v.plainRun)add('Plaines consécutives',runs.plaine,v.plainRun);
 if(v.mountain)add('Tuile montagne',count('montagne'),v.mountain);
 if(v.chains)add('Chaînes distinctes de 2 montagnes',chains,v.chains);
-return {v,rows,ready:rows.every(r=>r.done),won:!!g.voyageWon};}
+if(g.mode==='plateau')for(const r of rows)r.label=r.label.replace('Tuiles','Cases').replace('Tuiles','Cases').replace('tuiles','cases').replace('Tuile','Case');return {v,rows,ready:rows.every(r=>r.done),won:!!g.voyageWon};}

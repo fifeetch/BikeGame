@@ -24,3 +24,9 @@ Les pauses et services sont libres entre les actions : économie volontairement 
 ## Vérification
 
 Tests automatisés des connexions, rotations, déplacements, coûts, événements, équipements, score, sérialisation et simulation de parties complètes. L’apparence et l’installation Android nécessitent encore une validation sur appareil réel.
+
+
+## Deux versions
+L’accueil d’une nouvelle aventure propose Plateau Europe ou Tuiles, puis le vélo et le tirage de trois Voyages. Le plateau utilise une carte illustrée et un réseau fixe de cases, défini dans `dist/europe.js`. Les reliefs et trajets sont simplifiés : ce n’est pas une carte de navigation. La destination est une vraie ville du réseau (ou le Cap Nord), les ferries sont signalés en pointillés. Les ressources, événements, équipements et compteurs restent ceux du prototype existant. Le mode et le réseau sont sauvegardés ; les anciennes sauvegardes sans champ `mode` restent en version Tuiles.
+
+Les tests vérifient une réalisation effective des cinq Voyages sur le plateau, l’absence de pose, les déplacements et la reprise du mode. L’interface a un test de navigation sans navigateur ; l’affichage réel et le tactile sur téléphone restent à vérifier.
