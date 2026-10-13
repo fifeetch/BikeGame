@@ -366,3 +366,18 @@ header.in-game .split-size input{width:100px;min-height:24px;margin:0;padding:0;
  .game.game-split .player-mat .sheet-page-tour .sheet-action-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media(max-width:979px){header.in-game .split-toggle,header.in-game .split-size{display:none}}
+
+/* Objectifs illustrés : le texte reste du vrai HTML, lisible et synchronisé avec les règles. */
+.voyage-choice .voyage-card-new{aspect-ratio:395/511;display:flex;flex-direction:column;overflow:hidden;border:4px solid var(--voyage-color);border-radius:16px;background:#f8edcf;box-shadow:0 8px 20px #283b3420;color:#2d463e}
+.voyage-card-new-art{height:43%;flex:none;background-image:var(--card-art);background-position:center 52%;background-size:cover;border-bottom:4px solid var(--voyage-color)}
+.voyage-card-new-content{display:flex;flex-direction:column;flex:1;min-height:0;padding:13px 17px 14px}
+.voyage-card-new-kicker{font:700 10px system-ui,sans-serif;letter-spacing:.22em;color:var(--voyage-color)}
+.voyage-card-new-content h2{font:700 clamp(19px,1.85vw,28px) Georgia,serif;line-height:1.05;margin:5px 0 6px;color:#233f38}
+.voyage-card-new-route{font:700 13px system-ui,sans-serif;color:var(--voyage-color)}
+.voyage-card-new-rule{height:1px;margin:9px 0 6px;background:#bfa982}
+.voyage-card-new-content p{margin:0 0 3px;font:600 12px system-ui,sans-serif}
+.voyage-card-new-content ul{margin:0;padding-left:18px;font:12px/1.45 system-ui,sans-serif}
+.voyage-card-new-content li{margin:1px 0}
+.voyage-card-new-content small{margin-top:auto;padding-top:5px;font:italic 11px Georgia,serif;color:#52675c}
+.voyage-art.art-generated{background-size:cover;background-position:center}
+@media(max-width:760px){.voyage-card-new-content h2{font-size:25px}}
