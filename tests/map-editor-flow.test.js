@@ -40,6 +40,9 @@ test('menu editor saves and exports a col map, choice starts on it, and later ed
   assert(lastSheet.includes('PLATEAU DU CYCLISTE'));
   assert(lastSheet.includes('<details class="sheet-extras">'));
   assert(lastSheet.includes('Journal & aide des terrains'));
+  assert(lastSheet.includes('Cartes en main'));
+  assert(lastSheet.includes('Cartes posées'));
+  assert(lastSheet.includes('Aucune carte posée pour le moment.'));
   assert(!app.innerHTML.includes('dock-resources'));
   for(const action of ['eat','food','work','save','finish'])assert(lastSheet.includes(`data-action="${action}"`));
   let game=JSON.parse(storage.get('velo-save'));assert.equal(game.mapChoice,saved[0].id);assert.equal(game.rules.terrain.col,5);assert.equal(game.board[original.key].type,'col');assert.equal(S.cost(game,game.board[original.key]),5);
