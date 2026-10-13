@@ -381,3 +381,20 @@ header.in-game .split-size input{width:100px;min-height:24px;margin:0;padding:0;
 .voyage-card-new-content small{margin-top:auto;padding-top:5px;font:italic 11px Georgia,serif;color:#52675c}
 .voyage-art.art-generated{background-size:cover;background-position:center}
 @media(max-width:760px){.voyage-card-new-content h2{font-size:25px}}
+
+/* La main se consulte depuis le plateau ; les cartes posées restent dans le carnet. */
+.player-sheet-dock{grid-template-columns:minmax(120px,.38fr) minmax(0,.62fr);align-items:stretch}
+.player-sheet-dock .dock-hand{min-height:55px;padding:10px 14px;border:2px solid #bc9256;background:#f4e4bc;color:#294b3d;font-size:17px;font-weight:800;box-shadow:0 3px 0 #b89a62}
+.player-sheet-dock .dock-hand:not(:disabled):hover{background:#f8edcf}
+.player-sheet-mount .sheet-page-cartes .sheet-journal>.sheet-card:first-child{display:none}
+.card-hand-modal{max-width:1000px}
+.card-hand-modal .card-choice-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:14px}
+.card-hand-modal .card-choice-list article{max-width:none}
+@media(min-width:980px){
+ .player-sheet-mount .player-mat{zoom:.75;width:100%}
+ .game.game-split .layout>section:first-child{grid-template-rows:minmax(0,1fr) repeat(4,auto)}
+ .game.game-split .board-legend,.game.game-split .standings{display:none}
+ .game.game-split .toast{grid-row:5}
+ .game.game-split .player-sheet-mount{grid-row:1 / 6}
+ .game.game-split .player-sheet-dock .dock-hand{min-height:44px;padding:6px 10px;font-size:14px}
+}

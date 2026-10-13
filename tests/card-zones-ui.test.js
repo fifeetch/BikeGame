@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import * as S from '../dist/simulator.js';
 import {CLASSIC} from '../dist/rules.js';
 
@@ -48,4 +49,12 @@ test('the player sheet separates playable hand cards from placed cards',async()=
  assert(placed.includes('Bonne affaire'));
  assert(placed.includes('Pluie battante'));
  assert(!placed.includes('data-action="card-'));
+ assert(app.innerHTML.includes('🃏 En main · 1'));
+ elements.get('data-action').find(el=>el.dataset.action==='cards').onclick();
+ assert(app.innerHTML.includes('card-hand-modal'));
+ assert(app.innerHTML.includes('Vent favorable'));
+ assert(!app.innerHTML.includes('Bonne affaire</h3>'));
+ const css=readFileSync(new URL('../dist/style.css',import.meta.url),'utf8');
+ assert(css.includes('.player-sheet-mount .player-mat{zoom:.75;width:100%}'));
+ assert(css.includes('.player-sheet-mount .sheet-page-cartes .sheet-journal>.sheet-card:first-child{display:none}'));
 });
