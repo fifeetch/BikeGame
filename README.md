@@ -1,6 +1,6 @@
 # L’Aventure à Vélo
 
-Jeu de société local pour 1 à 6 joueurs. Le mode Europe utilise la nouvelle image fournie, avec plus de 700 hexagones de même taille dont les centres sont relevés sur les cases visibles de la carte. Le mode Tuiles reste disponible.
+Jeu de société local pour 1 à 6 joueurs. Le mode Europe utilise une grille axiale régulière couvrant tout le plateau : chaque hexagone a la même taille et reçoit un terrain mer, côte, plaine, moyenne montagne, haute montagne ou ville. Le mode Tuiles reste disponible.
 
 ## Jouer
 
@@ -18,6 +18,6 @@ La carte Europe occupe désormais davantage de largeur et de hauteur. Le résum�
 
 ## Sources et vérification
 
-`scripts/build-europe-board.py` relève les cases de `dist/assets/europe/nouvelle-carte.png` et régénère `board-data.js`. `dist/europe.js` ajoute les villes et liaisons, `dist/simulator.js` contrôle les règles, `dist/cards.js` décrit les cartes, et `dist/app.js` gère l’interface. Les anciennes sauvegardes Europe sont adaptées à la nouvelle grille ; une copie préalable est conservée dans le navigateur sous `velo-save-before-new-map`.
+`node scripts/build-europe-board.js` projette la classification des terrains de la carte de référence sur la grille axiale et régénère `dist/assets/europe/board-data.js`. Les liens terrestres sont calculés uniquement à partir des coordonnées axiales exactes ; les cases mer restent visibles mais ne sont pas parcourables, les ferries étant des liaisons séparées entre ports. `dist/europe.js` ajoute les villes et liaisons, `dist/simulator.js` contrôle les règles, `dist/cards.js` décrit les cartes, et `dist/app.js` gère l’interface. Les anciennes sauvegardes Europe sont adaptées à la grille v8 et les positions sont rattachées à la case terrestre la plus proche ; une copie préalable est conservée dans le navigateur sous `velo-save-before-new-map`.
 
 Exécuter les tests récents avec `node --test tests/new-map-game.test.js`. Certains tests historiques des événements automatiques et de l’ancienne carte décrivent volontairement l’ancienne version et doivent encore être réécrits avant qu’un `npm test` global ne repasse au vert. L’essai visuel sur un téléphone réel reste également à faire.

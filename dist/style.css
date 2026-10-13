@@ -40,6 +40,7 @@ summary{cursor:pointer;font-weight:700;min-height:32px}
 .map-water-labels{fill:#749ca6;font:italic 16px Georgia,serif;letter-spacing:2px;text-anchor:middle;pointer-events:none}
 .terrain-face{stroke:#fff8e7;stroke-width:1.4;stroke-linejoin:round}
 .terrain-plaine .terrain-face{fill:#aec786}
+.terrain-moyenne_montagne .terrain-face{fill:#d6ad62}
 .terrain-montagne .terrain-face{fill:#aabcb5}
 .terrain-ville .terrain-face{fill:#e8b876}
 .terrain-cote .terrain-face{fill:#80c6cd}
@@ -66,16 +67,27 @@ summary{cursor:pointer;font-weight:700;min-height:32px}
 .rider-shadow{fill:#173b3b;opacity:.2}
 .rider-base{fill:#fff9e8;stroke:#264d40;stroke-width:1.5}
 .map-ferries path{fill:none;stroke:#668e9f;stroke-width:2.5;stroke-dasharray:5 7}
-.supplied-map .terrain-face{fill:transparent;stroke:transparent;stroke-width:2.5}
+.supplied-map .terrain-face{stroke:#fff8e7;stroke-width:1.15;stroke-linejoin:round}
+.supplied-map .terrain-mer .terrain-face{fill:#63b9d5}
+.supplied-map .terrain-plaine .terrain-face{fill:#a9c47b}
+.supplied-map .terrain-moyenne_montagne .terrain-face{fill:#e5bd69}
+.supplied-map .terrain-montagne .terrain-face{fill:#9eaaa5}
+.supplied-map .terrain-cote .terrain-face{fill:#78c4cf}
+.supplied-map .terrain-ville .terrain-face{fill:#e99b68}
+.map-ocean{fill:#bfeaf0}
+.terrain-mark{fill:#36594d;font:700 8px system-ui,sans-serif;text-anchor:middle;pointer-events:none;opacity:.72}
+.terrain-mer .terrain-mark,.terrain-cote .terrain-mark{fill:#247d9e;font-size:10px}
+.terrain-montagne .terrain-mark,.terrain-moyenne_montagne .terrain-mark{fill:#52635d;font-size:10px}
+.terrain-ville .terrain-mark{fill:#a7472e;font-size:10px}
+.city-name{fill:#183f59;paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round;font:700 9px system-ui,sans-serif;text-anchor:middle;pointer-events:none}
 .supplied-map .map-tile.reachable .terrain-face{stroke:#fff59a;stroke-width:2;stroke-dasharray:3 3}
 .supplied-map .map-tile.queued .terrain-face{stroke:#ef5e38;stroke-width:4;stroke-dasharray:none}
 .supplied-map .map-tile.next-step .terrain-face{fill:#f4dc5b66;stroke:#fff6a0;stroke-width:2.5;stroke-dasharray:none}
 .supplied-map .map-tile.next-step{cursor:pointer}
-.supplied-map .map-tile[aria-disabled="true"] .terrain-face{fill:#18394330;stroke:#fff9;stroke-width:1}
+.supplied-map .map-tile[aria-disabled="true"] .terrain-face{stroke:#fff9;stroke-width:1}
 .supplied-map .map-tile[aria-disabled="true"]{cursor:not-allowed}
 .supplied-map .map-tile.here .terrain-face{stroke:#174e7a;stroke-width:3;stroke-dasharray:none}
 .supplied-map .map-tile:hover .terrain-face,.supplied-map .map-tile:focus-visible .terrain-face{stroke:#205b86;stroke-width:3;stroke-dasharray:none}
-.supplied-map .map-tile.visited:not(.queued):not(.here) .terrain-face,.supplied-map .map-tile.destination:not(.queued) .terrain-face,.supplied-map .map-tile.departure:not(.queued) .terrain-face{stroke:transparent}
 .route-numbers{pointer-events:none}.route-numbers circle{fill:#fff9df;stroke:#e65c37;stroke-width:2}.route-numbers text{fill:#173e4a;text-anchor:middle;font:700 9px system-ui,sans-serif}
 .cap-label{fill:#194369;paint-order:stroke;stroke:#fff;stroke-width:2px;font:700 11px system-ui,sans-serif;text-anchor:middle}
 .route-buttons{display:flex;gap:8px;flex-wrap:wrap}.route-planner small{line-height:1.4}
