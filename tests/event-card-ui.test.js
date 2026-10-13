@@ -35,6 +35,8 @@ test('a resumed new game shows the common piles, public bonus slots and only act
  await import('../dist/app.js?event-ui');
  elements.get('data-action').find(el=>el.dataset.action==='continue').onclick();
  assert(app.innerHTML.includes('Cartes Événement'));assert(app.innerHTML.includes('dans la pioche'));
+ assert(app.innerHTML.slice(0,app.innerHTML.indexOf('</header>')).includes('class="event-piles"'));
+ assert(!app.innerHTML.slice(app.innerHTML.indexOf('</header>')).includes('class="event-piles"'));
  assert(sheet.includes('EMPLACEMENT 1'));assert(sheet.includes('EMPLACEMENT 2'));
  assert(sheet.includes(EVENT_CARDS.find(c=>c.id===aliceCard).name));
  if(!m.players[0].cardHand.includes(bobCard))assert(!sheet.includes(`№ ${bobCard.slice(-2)}`));

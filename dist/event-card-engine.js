@@ -15,7 +15,7 @@ export function discard(m,id){if(id)m.eventDiscard.push(id);}
 function shuffle(m,ids){const out=[...ids];for(let i=out.length-1;i>0;i--){const j=Math.floor(random(m)*(i+1));[out[i],out[j]]=[out[j],out[i]];}return out;}
 export function draw(m){if(!m.eventDeck.length&&m.eventDiscard.length){m.eventDeck=shuffle(m,m.eventDiscard);m.eventDiscard=[];}return m.eventDeck.pop()||null;}
 export function setup(m){m.eventDeck=shuffle(m,EVENT_CARDS.filter(c=>m.players.length>1||c.targetType==='self').map(c=>c.id));m.eventDiscard=[];m.cardChoices=[];m.cardWindow=null;m.pendingAttack=null;
- for(const p of m.players){p.bonusCards=[];p.pendingEffects=[];p.journalCities=[];p.cardHand=[];p.freeSteps=0;p.freeGeneralSteps=0;p.freeRoadSteps=0;p.bonusDistanceUsed=0;p.negativePlayedTurn=0;p.warmTurn=0;p.lightTurn=0;for(let i=0;i<HAND_LIMIT;i++){const id=draw(m);if(id)p.cardHand.push(id);}}
+ for(const p of m.players){p.bonusCards=[];p.pendingEffects=[];p.journalCities=[];p.cardHand=[];p.freeSteps=0;p.freeGeneralSteps=0;p.freeRoadSteps=0;p.bonusDistanceUsed=0;p.cardPlayedTurn=0;p.climatePlayedTurn=0;p.negativePlayedTurn=0;p.warmTurn=0;p.lightTurn=0;for(let i=0;i<HAND_LIMIT;i++){const id=draw(m);if(id)p.cardHand.push(id);}}
 }
 export function drawChoices(m){m.cardChoices=[draw(m),draw(m)].filter(Boolean);m.phase='card-choice';return m.cardChoices;}
 export function keepChoice(m,index){if(m.phase!=='card-choice'||!m.cardChoices[index])return false;
@@ -48,12 +48,12 @@ export function currentResponder(m){return m.cardWindow?.responders[m.cardWindow
 export function passIntervention(m){if(m.phase!=='card-intervention'||!m.cardWindow||m.pendingAttack)return false;m.cardWindow.responderIndex++;return true;}
 export function beginAttack(m,actorId,index,targetId){const actor=m.players.find(p=>p.id===actorId),target=m.players.find(p=>p.id===targetId),c=card(actor?.cardHand[index]);
  if(!actor||!target||actor===target||!c||m.pendingAttack||m.done||!['negative','climatic'].includes(c.category))return false;
- if(c.category==='negative'&&(actor!==m.players[m.activeIndex]||!['move','place'].includes(m.phase)||actor.negativePlayedTurn===m.turn))return false;
+ if(c.category==='negative'&&(actor!==m.players[m.activeIndex]||!['move','place'].includes(m.phase)||actor.cardPlayedTurn===m.turn||actor.negativePlayedTurn===m.turn))return false;
  if(c.category==='climatic'){
-  if(target!==m.players[m.activeIndex]||actor===target||!['move','place','card-intervention'].includes(m.phase)||!climateEligible(m,c.id))return false;
+  if(target!==m.players[m.activeIndex]||actor===target||actor.climatePlayedTurn===m.turn||!['move','place','card-intervention'].includes(m.phase)||!climateEligible(m,c.id))return false;
   if(m.phase==='card-intervention'&&(currentResponder(m)!==actor.id||m.cardWindow.climateUsed))return false;
  }
- actor.cardHand.splice(index,1);if(c.category==='negative')actor.negativePlayedTurn=m.turn;
+ actor.cardHand.splice(index,1);if(c.category==='negative'){actor.cardPlayedTurn=m.turn;actor.negativePlayedTurn=m.turn;}if(c.category==='climatic')actor.climatePlayedTurn=m.turn;
  if(c.category==='climatic'&&m.cardWindow)m.cardWindow.climateUsed=true;
  m.pendingAttack={cardId:c.id,actorId,targetId};note(m,actor,`${actor.name} joue ${c.name} contre ${target.name}.`,'card-attack',{cardId:c.id,targetId});return true;
 }
@@ -89,10 +89,12 @@ export function resolveAttack(m,choice={}){const a=m.pendingAttack;if(!a)return 
  if(!deferred)discard(m,c.id);note(m,p,protectedBy?`${p.name} est protégé par ${protectedBy}.`:`${p.name} subit ${c.name} : ${c.effectText}`,'card-result',{cardId:c.id});m.pendingAttack=null;return true;
 }
 export function playOwnCard(m,index,replaceIndex){const p=m.players[m.activeIndex],c=card(p.cardHand[index]);if(!c||m.done||!['move','place'].includes(m.phase)||!['positive','permanent'].includes(c.category))return false;
+ if(p.cardPlayedTurn===m.turn)return false;
  if(c.effectType==='cancel_attack')return false;
  if(c.category==='permanent'&&p.bonusCards.length>=BONUS_LIMIT&&(!Number.isInteger(replaceIndex)||replaceIndex<0||replaceIndex>=BONUS_LIMIT))return false;
  if(c.category==='permanent'&&p.bonusCards.length>=BONUS_LIMIT)removeBonus(m,p,replaceIndex);
  p.cardHand.splice(index,1);
+ p.cardPlayedTurn=m.turn;
  if(c.category==='permanent'){p.bonusCards.push(c.id);note(m,p,`${p.name} équipe ${c.name}.`,'card-bonus',{cardId:c.id});return true;}
  switch(c.effectType){
   case 'free_steps':p.freeSteps=(p.freeSteps||0)+c.effectValue;if(c.id==='evt-10')p.freeRoadSteps=(p.freeRoadSteps||0)+c.effectValue;else p.freeGeneralSteps=(p.freeGeneralSteps||0)+c.effectValue;break;
