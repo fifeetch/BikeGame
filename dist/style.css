@@ -54,6 +54,9 @@ summary{cursor:pointer;font-weight:700;min-height:32px}
 .map-tile.departure .terrain-face{stroke:#356250;stroke-width:2.5}
 .map-tile.here .terrain-face{stroke:#214b40;stroke-width:4;stroke-dasharray:none}
 .map-tile.selected .terrain-face{stroke:#176879;stroke-width:4;stroke-dasharray:none}
+.map-edit-mode .map-tile.editable{cursor:pointer}
+.map-edit-mode .map-tile.editable .terrain-face{stroke:#f3ba53;stroke-width:2;stroke-dasharray:2 2}
+.map-edit-mode .map-tile.editable:hover .terrain-face,.map-edit-mode .map-tile.editable:focus-visible .terrain-face{stroke:#e06b3c;stroke-width:4;filter:brightness(1.08)}
 .hex-symbol,.map-symbols,.map-ferries{pointer-events:none}
 .hex-symbol{opacity:.65}
 .hex-mountain{fill:#4c6d62}

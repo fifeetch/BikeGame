@@ -29,7 +29,9 @@ function Get-TerrainVotes([double]$x, [double]$y, [double[]]$rings) {
     if ($votes.cote -gt 0 -and $votes.cote -ge [Math]::Max($votes.plaine, [Math]::Max($votes.moyenne_montagne, $votes.montagne))) { return 'cote' }
     $type = 'plaine'; $best = $votes.plaine
     foreach ($candidate in @('moyenne_montagne', 'montagne')) { if ($votes[$candidate] -gt $best) { $type = $candidate; $best = $votes[$candidate] } }
-    if ($landVotes -eq 0) { return 'mer' }
+    # A white label, icon, or unclassified pixel is not evidence of ocean.
+    # The old fallback turned those gaps into water and split inland terrain.
+    if ($landVotes -eq 0) { return 'plaine' }
     return $type
 }
 
@@ -78,6 +80,30 @@ try {
         }
     }
 
+    # Remove one-cell raster speckles in the land mask before marking cities.
+    # Only a clear land majority may replace a sea cell; actual coastlines stay
+    # intact, while noisy blue samples inside France no longer form sea slits.
+    $byAxial = @{}
+    foreach ($cell in $cells) { $byAxial["$($cell.q),$($cell.r)"] = $cell }
+    $directions = @(@(1,0), @(1,1), @(0,1), @(-1,0), @(-1,-1), @(0,-1))
+    for ($pass = 0; $pass -lt 2; $pass++) {
+        $changes = @{}
+        foreach ($cell in $cells) {
+            if ($cell.type -ne 'mer') { continue }
+            $land = @{}
+            foreach ($direction in $directions) {
+                $neighbor = $byAxial["$($cell.q + $direction[0]),$($cell.r + $direction[1])"]
+                if ($neighbor -and $neighbor.type -ne 'mer') { $land[$neighbor.type] = 1 + [int]$land[$neighbor.type] }
+            }
+            $count = ($land.Values | Measure-Object -Sum).Sum
+            if ($count -ge 4) {
+                $winner = $land.GetEnumerator() | Sort-Object Value -Descending | Select-Object -First 1
+                $changes[$cell] = if ($winner.Key -eq 'ville') { 'plaine' } else { $winner.Key }
+            }
+        }
+        foreach ($cell in $changes.Keys) { $cell.type = $changes[$cell] }
+    }
+
     foreach ($city in $anchors) {
         $chosen = $null; $bestDistance = [double]::PositiveInfinity
         foreach ($cell in $cells) {
@@ -87,17 +113,6 @@ try {
         }
         if (-not $chosen) { throw "Impossible de placer la ville $($city.Name)." }
         $chosen.type = 'ville'; $chosen.name = $city.Name
-    }
-
-    $byAxial = @{}
-    foreach ($cell in $cells) { $byAxial["$($cell.q),$($cell.r)"] = $cell }
-    $directions = @(@(1,0), @(1,1), @(0,1), @(-1,0), @(-1,-1), @(0,-1))
-    foreach ($cell in $cells) {
-        if ($cell.type -eq 'mer' -or $cell.name) { continue }
-        foreach ($direction in $directions) {
-            $neighbor = $byAxial["$($cell.q + $direction[0]),$($cell.r + $direction[1])"]
-            if ($neighbor -and $neighbor.type -eq 'mer') { $cell.type = 'cote'; break }
-        }
     }
 
     $output = 'export const MAP_CELLS=' + (ConvertTo-Json -InputObject @($cells) -Depth 5 -Compress) + ";`n"
