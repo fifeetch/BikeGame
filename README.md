@@ -14,6 +14,8 @@ Chaque joueur commence avec trois cartes de jeu, distinctes de sa carte Voyage. 
 
 La fiche joueur interactive remplace la longue colonne latérale : un résumé compact reste visible près du plateau, et la fiche détaillée regroupe le vélo, les ressources, l’équipement, l’objectif, les actions du jour, les cartes, les notes et l’aide des terrains dans trois vues adaptées aux petits et grands écrans.
 
+La carte Europe occupe désormais davantage de largeur et de hauteur. Le résumé joueur se trouve dans le flux sous la carte (pas en surimpression), avec un bouton « Terminer le tour » renforcé et placé à portée de main.
+
 ## Sources et vérification
 
 `scripts/build-europe-board.py` relève les cases de `dist/assets/europe/nouvelle-carte.png` et régénère `board-data.js`. `dist/europe.js` ajoute les villes et liaisons, `dist/simulator.js` contrôle les règles, `dist/cards.js` décrit les cartes, et `dist/app.js` gère l’interface. Les anciennes sauvegardes Europe sont adaptées à la nouvelle grille ; une copie préalable est conservée dans le navigateur sous `velo-save-before-new-map`.
