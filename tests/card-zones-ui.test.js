@@ -8,11 +8,11 @@ test('the player sheet separates playable hand cards from placed cards',async()=
  game.players[0].cardHand=['vent-favorable','bonne-affaire','pluie-battante'];
  assert(S.playCard(game,1,game.players[0].id));
  assert(S.playCard(game,1,game.players[1].id));
- const storage=new Map([['velo-save',S.serialize(game)]]),app={innerHTML:''},elements=new Map();
- let sheet='';
+ const storage=new Map([['velo-save',S.serialize(game)]]),app={innerHTML:''},elements=new Map(),widthControl={value:'50'},widthOutput={textContent:''};
+ let sheet='',appliedWidth='',currentSheet={scrollTop:0};const gameRoot={querySelector:()=>null,append:node=>{sheet=node.innerHTML;currentSheet={scrollTop:0};},style:{setProperty:(_name,value)=>{appliedWidth=value;}}};
  globalThis.localStorage={getItem:key=>storage.get(key)||null,setItem:(key,value)=>storage.set(key,value)};
  globalThis.document={
-  querySelector(selector){if(selector==='#app')return app;if(selector==='.game'&&app.innerHTML.includes('<main class="game">'))return {querySelector:()=>null,append:node=>{sheet=node.innerHTML;}};return null;},
+  querySelector(selector){if(selector==='#app')return app;if(selector==='.game'&&/<main class="game(?: game-split)?"/.test(app.innerHTML))return gameRoot;if(selector==='.player-sheet-mount'&&app.innerHTML.includes('<main class="game'))return currentSheet;if(selector==='#split-width'&&app.innerHTML.includes('id="split-width"'))return widthControl;if(selector==='#split-width-value'&&app.innerHTML.includes('id="split-width-value"'))return widthOutput;return null;},
   querySelectorAll(selector){const attr=selector.slice(1,-1),key=attr.replace(/^data-/,'').replace(/-([a-z])/g,(_,letter)=>letter.toUpperCase());const found=[...app.innerHTML.matchAll(new RegExp(attr+'="([^"]*)"','g'))].map(match=>({dataset:{[key]:match[1]}}));elements.set(attr,found);return found;},
   createElement(){return {click(){}};}
  };
@@ -20,6 +20,21 @@ test('the player sheet separates playable hand cards from placed cards',async()=
  const resume=elements.get('data-action')?.find(el=>el.dataset.action==='continue');
  assert(resume);
  resume.onclick();
+ assert(app.innerHTML.includes('class="game game-split"'));
+ assert(app.innerHTML.includes('aria-label="Largeur de la fiche joueur"'));
+ widthControl.oninput();
+ assert.equal(storage.get('velo-split-width'),'50');
+ assert.equal(appliedWidth,'50%');
+ assert.equal(widthOutput.textContent,'50%');
+ currentSheet.scrollTop=175;
+ elements.get('data-action').find(el=>el.dataset.action==='split-view').onclick();
+ assert.equal(currentSheet.scrollTop,175);
+ assert.equal(storage.get('velo-split-view'),'false');
+ assert(app.innerHTML.includes('<main class="game">'));
+ elements.get('data-action').find(el=>el.dataset.action==='split-view').onclick();
+ assert.equal(storage.get('velo-split-view'),'true');
+ assert(app.innerHTML.includes('class="game game-split"'));
+ assert(app.innerHTML.includes('--sheet-width:50%'));
  assert(sheet.includes('Cartes en main'));
  assert(sheet.includes('Cartes posées'));
  assert(sheet.includes('1/5 cartes'));

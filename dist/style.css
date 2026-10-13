@@ -332,3 +332,37 @@ header.in-game+.game{padding-top:8px}
 .player-sheet-dock .dock-end-turn{min-height:55px;padding:10px 18px;font-size:20px}
 @media(max-width:1050px){.player-mat .sheet-page-tour .sheet-action-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.player-mat .sheet-extras-content{grid-template-columns:1fr}}
 @media(max-width:700px){.player-mat{padding:12px;border-width:4px;border-radius:17px}.player-mat:before{inset:6px}.player-mat .player-sheet-head{padding:4px 2px 10px}.player-mat .mat-day{padding:7px 9px;font-size:11px}.player-mat .sheet-page-section{padding:11px}.player-mat .sheet-page-velo .sheet-overview{grid-template-columns:1fr}.player-mat .sheet-page-velo .sheet-bike,.player-mat .sheet-page-velo .sheet-movement,.player-mat .sheet-page-velo .sheet-resource-grid,.player-mat .sheet-page-velo .sheet-objective,.player-mat .sheet-page-velo .sheet-overview>.sheet-card:not(.sheet-objective){grid-column:1;grid-row:auto}.player-mat .sheet-page-velo .sheet-resource-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.player-mat .sheet-voyage{grid-template-columns:1fr}.player-mat .sheet-journal{grid-template-columns:1fr}.player-mat .sheet-journal>.sheet-card{grid-column:1!important}.player-mat .sheet-page-tour .sheet-action-grid{grid-template-columns:1fr}.player-mat .sheet-hand .game-card{max-width:none}.player-mat .sheet-resource{min-height:88px}}
+
+/* Optional PC layout: board and player mat stay visible in separate panes. */
+header.in-game .split-toggle{white-space:nowrap;background:#dfecdc;color:#234e43;border:1px solid #a7c4aa}
+header.in-game .split-toggle[aria-pressed="true"]{background:#254f40;color:#fff8e9}
+header.in-game .split-size{display:flex;flex-direction:row;align-items:center;gap:8px;margin:0;padding:0 5px;color:#345d4d;font-size:12px;white-space:nowrap}
+header.in-game .split-size output{min-width:34px;font-weight:800}
+header.in-game .split-size input{width:100px;min-height:24px;margin:0;padding:0;accent-color:#376b52}
+@media(min-width:980px){
+ #app:has(.game-split){display:flex;flex-direction:column;height:100dvh;overflow:hidden}
+ #app:has(.game-split)>header{flex:none}
+ .game.game-split{display:flex;flex:1;flex-direction:column;min-height:0;max-width:none;width:100%;padding:8px 12px 12px;overflow:hidden}
+ .game.game-split .layout{display:block;flex:1;min-height:0}
+ .game.game-split .layout>section:first-child{display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,var(--sheet-width));grid-template-rows:minmax(0,1fr) repeat(6,auto);gap:7px 14px;height:100%;min-height:0}
+ .game.game-split .map-wrap{grid-column:1;grid-row:1;min-height:0}
+ .game.game-split .map{height:100%;min-height:0;max-height:none}
+ .game.game-split .player-sheet-dock{grid-column:1;grid-row:2;margin:0;padding:4px}
+ .game.game-split .player-sheet-dock .dock-end-turn{min-height:44px;padding:6px 12px;font-size:16px;box-shadow:0 3px 0 #153a31}
+ .game.game-split .hand{grid-column:1;grid-row:3;max-height:110px;overflow:auto}
+ .game.game-split .cell-details{grid-column:1;grid-row:4;margin:0;padding:8px 12px;min-height:62px}
+ .game.game-split .board-legend{grid-column:1;grid-row:5;padding:3px 4px;font-size:11px;gap:3px 12px;max-height:44px;overflow:auto}
+ .game.game-split .toast{grid-column:1;grid-row:6;padding:0 4px;min-height:17px}
+ .game.game-split .standings{grid-column:1;grid-row:7;margin:0;padding:5px 10px;max-height:70px;overflow:auto}
+ .game.game-split .standings h3{display:none}
+ .game.game-split .standings ol{display:flex;flex-wrap:wrap;gap:0 16px;margin:0;padding-left:20px;line-height:1.4;font-size:12px}
+ .game.game-split .standings p{display:none}
+ .game.game-split .player-sheet-mount{grid-column:2;grid-row:1 / 8;min-width:0;min-height:0;height:100%;margin:0;overflow:auto;overscroll-behavior:contain}
+ .game.game-split .player-mat{padding:14px;border-width:4px}
+ .game.game-split .player-mat .sheet-page-velo .sheet-overview{grid-template-columns:1fr}
+ .game.game-split .player-mat .sheet-page-velo .sheet-bike,.game.game-split .player-mat .sheet-page-velo .sheet-movement,.game.game-split .player-mat .sheet-page-velo .sheet-resource-grid,.game.game-split .player-mat .sheet-page-velo .sheet-objective,.game.game-split .player-mat .sheet-page-velo .sheet-overview>.sheet-card:not(.sheet-objective){grid-column:1;grid-row:auto}
+ .game.game-split .player-mat .sheet-page-velo .sheet-resource-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .game.game-split .player-mat .sheet-voyage,.game.game-split .player-mat .sheet-extras-content{grid-template-columns:1fr}
+ .game.game-split .player-mat .sheet-page-tour .sheet-action-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:979px){header.in-game .split-toggle,header.in-game .split-size{display:none}}

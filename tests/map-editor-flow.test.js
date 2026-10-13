@@ -16,7 +16,7 @@ test('menu editor saves and exports a col map, choice starts on it, and later ed
  let lastSheet='';const gameRoot={querySelector:()=>null,append:sheet=>{lastSheet=sheet.innerHTML;}};
  globalThis.localStorage={getItem:key=>storage.get(key)||null,setItem:(key,value)=>storage.set(key,value)};
  globalThis.document={
-  querySelector(selector){if(selector==='#app')return app;if(selector==='.game'&&app.innerHTML.includes('<main class="game">'))return gameRoot;if(selector==='#import-map'&&app.innerHTML.includes('id="import-map"'))return mapInput;if(selector==='#editor-map-name')return {value:controls.name};if(selector==='#map-tile-type')return {value:controls.type};if(selector==='#map-tile-name')return {value:controls.city};if(selector==='#map-col-effort')return {value:controls.effort};return null;},
+  querySelector(selector){if(selector==='#app')return app;if(selector==='.game'&&/<main class="game(?: game-split)?"/.test(app.innerHTML))return gameRoot;if(selector==='#import-map'&&app.innerHTML.includes('id="import-map"'))return mapInput;if(selector==='#editor-map-name')return {value:controls.name};if(selector==='#map-tile-type')return {value:controls.type};if(selector==='#map-tile-name')return {value:controls.city};if(selector==='#map-col-effort')return {value:controls.effort};return null;},
   querySelectorAll(selector){const attr=selector.slice(1,-1),key=attr.replace(/^data-/,'').replace(/-([a-z])/g,(_,c)=>c.toUpperCase());const found=[...app.innerHTML.matchAll(new RegExp(attr+'="([^"]*)"','g'))].map(match=>({dataset:{[key]:match[1]}}));elements.set(attr,found);return found;},
   createElement(){return {click(){}};}
  };
