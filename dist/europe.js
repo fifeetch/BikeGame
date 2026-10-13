@@ -1,10 +1,10 @@
 import {MAP_CELLS} from './assets/europe/board-data.js';
 
-export const MAP_VERSION=8;
-export const MAP_WIDTH=1261, MAP_HEIGHT=842, HEX_RADIUS=29/Math.sqrt(3), HEX_ROW_STEP=HEX_RADIUS*1.5;
+export const MAP_VERSION=9;
+export const MAP_WIDTH=1261, MAP_HEIGHT=842, HEX_SPACING=29/Math.sqrt(2), HEX_RADIUS=HEX_SPACING/Math.sqrt(3), HEX_ROW_STEP=HEX_RADIUS*1.5;
 export const HEX_DIRECTIONS=[[1,0],[1,1],[0,1],[-1,0],[-1,-1],[0,-1]];
 export const hexKey=(q,r)=>`hex-${q}-${r}`;
-export function hexCenter(q,r){return {x:630+29*q-14.5*r,y:50+HEX_ROW_STEP*r};}
+export function hexCenter(q,r){return {x:630+HEX_SPACING*q-HEX_SPACING/2*r,y:50+HEX_ROW_STEP*r};}
 export function hexVertices(t){return Array.from({length:6},(_,i)=>{const a=(i*60-90)*Math.PI/180;return [t.x+HEX_RADIUS*Math.cos(a),t.y+HEX_RADIUS*Math.sin(a)];});}
 export const axialDistance=(a,b)=>Math.max(Math.abs(a.q-b.q),Math.abs(a.r-b.r),Math.abs(a.q-a.r-b.q+b.r));
 
