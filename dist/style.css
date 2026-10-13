@@ -69,6 +69,10 @@ summary{cursor:pointer;font-weight:700;min-height:32px}
 .supplied-map .terrain-face{fill:transparent;stroke:transparent;stroke-width:2.5}
 .supplied-map .map-tile.reachable .terrain-face{stroke:#fff59a;stroke-width:2;stroke-dasharray:3 3}
 .supplied-map .map-tile.queued .terrain-face{stroke:#ef5e38;stroke-width:4;stroke-dasharray:none}
+.supplied-map .map-tile.next-step .terrain-face{fill:#f4dc5b66;stroke:#fff6a0;stroke-width:2.5;stroke-dasharray:none}
+.supplied-map .map-tile.next-step{cursor:pointer}
+.supplied-map .map-tile[aria-disabled="true"] .terrain-face{fill:#18394330;stroke:#fff9;stroke-width:1}
+.supplied-map .map-tile[aria-disabled="true"]{cursor:not-allowed}
 .supplied-map .map-tile.here .terrain-face{stroke:#174e7a;stroke-width:3;stroke-dasharray:none}
 .supplied-map .map-tile:hover .terrain-face,.supplied-map .map-tile:focus-visible .terrain-face{stroke:#205b86;stroke-width:3;stroke-dasharray:none}
 .supplied-map .map-tile.visited:not(.queued):not(.here) .terrain-face,.supplied-map .map-tile.destination:not(.queued) .terrain-face,.supplied-map .map-tile.departure:not(.queued) .terrain-face{stroke:transparent}
@@ -168,6 +172,13 @@ summary{cursor:pointer;font-weight:700;min-height:32px}
 .player-sheet-inline .sheet-overview{grid-template-columns:1.15fr 1fr}
 .player-sheet-inline .sheet-bike{grid-column:1/-1}
 .player-sheet-inline .sheet-objective,.player-sheet-inline .sheet-movement{grid-column:1/-1}
+.player-sheet-mount{scroll-margin-top:14px}
+.player-order{display:flex;gap:8px;overflow-x:auto;padding:4px 3px 10px;scrollbar-width:thin}
+.player-order button{flex:none}
+.route-planner{align-items:center}
+.route-planner>div:first-child{display:grid;gap:5px;min-width:0}
+.route-planner .route-buttons button:focus-visible,.sheet-action-grid button:focus-visible,.sheet-tabs button:focus-visible{outline:3px solid #dc9f36;outline-offset:2px}
+@media(max-width:760px){.game{padding:8px}.map{height:min(62vh,560px);min-height:360px}.maptools button{min-width:44px;min-height:44px}.route-planner{align-items:stretch;gap:10px}.route-planner .route-buttons{display:grid;grid-template-columns:1fr 2fr}.route-planner .route-buttons button{padding:10px 8px;font-size:13px}.player-sheet-mount{margin:16px 0 6px}.player-sheet-inline{padding:12px;border-radius:16px}.player-sheet-inline .sheet-tabs{top:0}.player-sheet-inline .sheet-resource{min-height:102px}.player-sheet-inline .sheet-hand{grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr))}}
 .player-sheet-inline .sheet-actions{max-width:none}
 .player-sheet-inline .sheet-hand{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
 @media(max-width:760px){.player-sheet-mount{margin:20px 0 8px}.player-sheet-inline{padding:14px 10px;border-radius:16px}.player-sheet-inline .sheet-overview{grid-template-columns:1fr}.player-sheet-inline .sheet-bike,.player-sheet-inline .sheet-objective,.player-sheet-inline .sheet-movement{grid-column:1}.player-sheet-inline .sheet-tabs{gap:5px}.player-sheet-inline .sheet-tabs button{white-space:nowrap;font-size:13px}}
