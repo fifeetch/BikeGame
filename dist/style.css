@@ -175,10 +175,22 @@ summary{cursor:pointer;font-weight:700;min-height:32px}
 .player-sheet-mount{scroll-margin-top:14px}
 .player-order{display:flex;gap:8px;overflow-x:auto;padding:4px 3px 10px;scrollbar-width:thin}
 .player-order button{flex:none}
+.sheet-one-page{display:grid;grid-template-columns:.95fr 1fr 1.3fr;gap:12px;align-items:start}
+.sheet-page-section{min-width:0;padding:12px;border:1px solid #d8dfd3;border-radius:15px;background:#f4f3e9}
+.sheet-page-heading{margin:0 0 10px;padding-bottom:8px;border-bottom:1px solid #d7ddcf;font:700 16px Georgia,serif;color:#244b40}
+.sheet-page-section .sheet-overview{display:flex;flex-direction:column;gap:10px}
+.sheet-page-section .sheet-bike,.sheet-page-section .sheet-objective,.sheet-page-section .sheet-movement{grid-column:auto}
+.sheet-page-section .sheet-card{padding:12px}
+.sheet-page-cartes .sheet-hand{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.sheet-page-cartes .sheet-hand .game-card{min-height:185px}
+.sheet-page-tour .sheet-actions{max-width:none}
+.sheet-page-tour .sheet-action-grid{grid-template-columns:1fr}
+.sheet-page-tour .sheet-action-grid .sheet-end-day{display:none}
 .route-planner{align-items:center}
 .route-planner>div:first-child{display:grid;gap:5px;min-width:0}
 .route-planner .route-buttons button:focus-visible,.sheet-action-grid button:focus-visible,.sheet-tabs button:focus-visible{outline:3px solid #dc9f36;outline-offset:2px}
-@media(max-width:760px){.game{padding:8px}.map{height:min(62vh,560px);min-height:360px}.maptools button{min-width:44px;min-height:44px}.route-planner{align-items:stretch;gap:10px}.route-planner .route-buttons{display:grid;grid-template-columns:1fr 2fr}.route-planner .route-buttons button{padding:10px 8px;font-size:13px}.player-sheet-mount{margin:16px 0 6px}.player-sheet-inline{padding:12px;border-radius:16px}.player-sheet-inline .sheet-tabs{top:0}.player-sheet-inline .sheet-resource{min-height:102px}.player-sheet-inline .sheet-hand{grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr))}}
+@media(max-width:980px){.sheet-one-page{grid-template-columns:1fr 1fr}.sheet-page-cartes{grid-column:1/-1}}
+@media(max-width:760px){.game{padding:8px}.map{height:min(62vh,560px);min-height:360px}.maptools button{min-width:44px;min-height:44px}.route-planner{align-items:stretch;gap:10px}.route-planner .route-buttons{display:grid;grid-template-columns:1fr 2fr}.route-planner .route-buttons button{padding:10px 8px;font-size:13px}.player-sheet-mount{margin:16px 0 6px}.player-sheet-inline{padding:12px;border-radius:16px}.player-sheet-inline .sheet-resource{min-height:102px}.sheet-one-page{grid-template-columns:1fr}.sheet-page-cartes{grid-column:auto}.sheet-page-section{padding:10px}.sheet-page-tour .sheet-action-grid{grid-template-columns:1fr 1fr}.sheet-page-cartes .sheet-hand{grid-template-columns:repeat(auto-fit,minmax(145px,1fr))}}
 .player-sheet-inline .sheet-actions{max-width:none}
 .player-sheet-inline .sheet-hand{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
 @media(max-width:760px){.player-sheet-mount{margin:20px 0 8px}.player-sheet-inline{padding:14px 10px;border-radius:16px}.player-sheet-inline .sheet-overview{grid-template-columns:1fr}.player-sheet-inline .sheet-bike,.player-sheet-inline .sheet-objective,.player-sheet-inline .sheet-movement{grid-column:1}.player-sheet-inline .sheet-tabs{gap:5px}.player-sheet-inline .sheet-tabs button{white-space:nowrap;font-size:13px}}
