@@ -41,6 +41,6 @@ test('mythic passes have a distinct map variant and accessible label',()=>{
  const html=playableMap(g,[],()=>4);
  assert(html.includes('terrain-col'));
  assert(html.includes('Col mythique'));
- assert(html.includes('◆'));
+ assert(html.includes('tile-icon-col'));
  assert(html.includes('4 énergie'));
 });

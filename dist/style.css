@@ -83,11 +83,6 @@ summary{cursor:pointer;font-weight:700;min-height:32px}
 .map-ocean{fill:#9edbe7}
 .coast-water{fill:#176f9b;pointer-events:none}
 .coast-seam{fill:none;stroke:#f8e5ad;stroke-width:1.1;pointer-events:none}
-.terrain-mark{fill:#36594d;font:700 8px system-ui,sans-serif;text-anchor:middle;pointer-events:none;opacity:.72}
-.terrain-mer .terrain-mark,.terrain-cote .terrain-mark{fill:#247d9e;font-size:10px}
-.terrain-mer .terrain-mark{fill:#e2f8fc;opacity:.92}
-.terrain-montagne .terrain-mark,.terrain-moyenne_montagne .terrain-mark{fill:#52635d;font-size:10px}
-.terrain-col .terrain-mark{fill:#fff4cf;font-size:10px;opacity:1}
 .home-actions,.editor-controls,.map-menu-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .home-saved-maps{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:18px}
 .home-saved-maps button{min-height:38px;padding:7px 10px}
@@ -101,7 +96,6 @@ summary{cursor:pointer;font-weight:700;min-height:32px}
 .editor-controls>span{font-weight:700}
 .editor-controls button{min-height:42px}
 @media(max-width:760px){.home-actions button,.editor-controls button{flex:1 1 auto}.map-editor-page .map{height:60vh}.saved-map-card button{width:100%;margin-top:5px}}
-.terrain-ville .terrain-mark{fill:#a7472e;font-size:10px}
 .city-name{fill:#183f59;paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round;font:700 9px system-ui,sans-serif;text-anchor:middle;pointer-events:none}
 .supplied-map .map-tile.reachable .terrain-face{stroke:#fff59a;stroke-width:2;stroke-dasharray:3 3}
 .supplied-map .map-tile.queued .terrain-face{stroke:#ef5e38;stroke-width:4;stroke-dasharray:none}
@@ -229,3 +223,41 @@ summary{cursor:pointer;font-weight:700;min-height:32px}
 .player-sheet-inline .sheet-actions{max-width:none}
 .player-sheet-inline .sheet-hand{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
 @media(max-width:760px){.player-sheet-mount{margin:20px 0 8px}.player-sheet-inline{padding:14px 10px;border-radius:16px}.player-sheet-inline .sheet-overview{grid-template-columns:1fr}.player-sheet-inline .sheet-bike,.player-sheet-inline .sheet-objective,.player-sheet-inline .sheet-movement{grid-column:1}.player-sheet-inline .sheet-tabs{gap:5px}.player-sheet-inline .sheet-tabs button{white-space:nowrap;font-size:13px}}
+
+/* The game opens on the board; duplicate summaries remain in the player sheet below. */
+header .brand{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+header .active-player{display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border:1px solid #cbd9c8;border-radius:999px;background:#edf4e9;color:#234e43;font-size:14px;font-weight:700}
+header .active-player i{width:10px;height:10px;border-radius:50%;background:var(--player-color);box-shadow:0 0 0 2px #fff}
+header.in-game+.game>.player-order,header.in-game+.game>.topbar,header.in-game+.game>.hint,header.in-game+.game>.objective{display:none}
+header.in-game+.game{padding-top:8px}
+.home-editor-entry{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-top:22px;padding:20px;border:2px solid #7caa89;border-radius:20px;background:linear-gradient(125deg,#edf5e9,#fff9e9);box-shadow:0 6px 16px #244b4018}
+.home-editor-entry h2{font:26px Georgia,serif;margin:5px 0;color:#245244}
+.home-editor-entry p{font-size:14px;line-height:1.4;margin:0;color:#526b5d}
+.home-editor-entry .editor-entry{flex:none;background:#225945;font-weight:750}
+
+/* Soft-relief variant B, painted inside the same interactive hexagons. */
+.supplied-map .terrain-mer .terrain-face{fill:url(#tile-sea)}
+.supplied-map .terrain-cote .terrain-face{fill:url(#tile-coast)}
+.supplied-map .terrain-plaine .terrain-face{fill:url(#tile-plain)}
+.supplied-map .terrain-moyenne_montagne .terrain-face{fill:url(#tile-hills)}
+.supplied-map .terrain-montagne .terrain-face{fill:url(#tile-mountain)}
+.supplied-map .terrain-col .terrain-face{fill:url(#tile-pass)}
+.supplied-map .terrain-ville .terrain-face{fill:url(#tile-city)}
+.supplied-map .terrain-icon{pointer-events:none;opacity:.92}
+.supplied-map .map-tile.next-step .terrain-face{fill:#f4dc5b99}
+
+/* Card-sized hand and draw choices, without changing their play actions. */
+.sheet-hand{grid-template-columns:repeat(auto-fit,minmax(185px,1fr))}
+.sheet-hand .game-card,.card-choice-list article{position:relative;display:flex;flex-direction:column;gap:10px;min-height:270px;max-width:250px;width:100%;padding:20px 17px 16px;border:3px solid #2e7658;border-radius:17px;background:linear-gradient(153deg,#f6fbeb,#fffdf4 42%,#e9f2e3);box-shadow:0 8px 18px #1c463027,inset 0 0 0 4px #fff9e8,inset 0 0 0 5px #88af8d;overflow:hidden}
+.sheet-page-cartes .sheet-hand .game-card{min-height:270px}
+.sheet-hand .game-card.negative,.card-choice-list article.negative{border-color:#bd634d;background:linear-gradient(153deg,#fff2e8,#fffdf4 42%,#f8e6dc);box-shadow:0 8px 18px #62372524,inset 0 0 0 4px #fff9e8,inset 0 0 0 5px #dba18a}
+.sheet-hand .game-card:before,.card-choice-list article:before{content:'✦';position:absolute;right:13px;top:8px;color:#91b392;font-size:18px}
+.sheet-hand .game-card.negative:before,.card-choice-list article.negative:before{color:#d9a28f}
+.sheet-hand .card-title,.card-choice-list .card-title{display:flex;flex-direction:column;align-items:flex-start;gap:8px}
+.sheet-hand .card-title>span,.card-choice-list .card-title>span{width:56px;height:56px;border-radius:50%;background:#d9eddb;font-size:29px;box-shadow:0 0 0 3px #fffaed,0 0 0 5px #83ae88}
+.sheet-hand .negative .card-title>span,.card-choice-list .negative .card-title>span{background:#f8ded0;box-shadow:0 0 0 3px #fffaed,0 0 0 5px #dba18a}
+.sheet-hand .card-title small,.card-choice-list .card-title small{font-size:10px;letter-spacing:.15em}
+.sheet-hand .card-title h4,.card-choice-list .card-title h3{font:700 19px/1.13 Georgia,serif;margin:0;color:#23483b}
+.sheet-hand .game-card p,.card-choice-list article p{font-size:13px;line-height:1.4;color:#405649;margin:0 0 4px}
+.sheet-hand .game-card button,.card-choice-list article button{margin-top:auto;min-height:40px;width:100%;padding:8px 10px;border-radius:9px;font-size:13px;font-weight:750}
+@media(max-width:760px){.home-editor-entry{align-items:stretch;flex-direction:column;padding:16px}.home-editor-entry .editor-entry{width:100%}.sheet-hand .game-card,.card-choice-list article{max-width:none}header .brand{gap:8px}header .active-player{font-size:12px;padding:4px 8px}}

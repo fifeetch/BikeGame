@@ -5,14 +5,30 @@ export const tilePolygons=board=>Object.values(board).map(t=>({key:t.key,points:
 const names={mer:'Mer',plaine:'Plaine',moyenne_montagne:'Moyenne montagne',montagne:'Haute montagne',col:'Col mythique',ville:'Ville',cote:'Côte'};
 export const tileLabel=(g,t,cost)=>`${t.name?t.name+' · ':''}${names[t.type]||t.type}${t.key===g.pos?' · position actuelle':''}${t.id===g.arrivalId?' · arrivée':''} · ${cost(g,t)} énergie`;
 export function cityLabels(nodes){return nodes.filter(t=>t.name).map(t=>({key:t.key,name:t.name,x:t.x-35,y:t.y+19,width:70,height:18}));}
-const marks={mer:'≈',cote:'',plaine:'·',moyenne_montagne:'⌃',montagne:'▲',col:'◆',ville:'●'};
+// One shared set of SVG paints and pictograms keeps the 2,700+ hexes lightweight.
+const tileArtwork=`<defs>
+ <linearGradient id="tile-sea" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#2c9bcc"/><stop offset=".55" stop-color="#127bb2"/><stop offset="1" stop-color="#075c94"/></linearGradient>
+ <linearGradient id="tile-coast" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#e9f8e5"/><stop offset=".53" stop-color="#b7e4d2"/><stop offset="1" stop-color="#6dbad0"/></linearGradient>
+ <linearGradient id="tile-plain" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#d8e8a4"/><stop offset=".52" stop-color="#9cc66d"/><stop offset="1" stop-color="#6eaa62"/></linearGradient>
+ <linearGradient id="tile-hills" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f4d992"/><stop offset=".53" stop-color="#d9ad60"/><stop offset="1" stop-color="#ae874e"/></linearGradient>
+ <linearGradient id="tile-mountain" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#edf2e7"/><stop offset=".48" stop-color="#aebcb3"/><stop offset="1" stop-color="#748e8f"/></linearGradient>
+ <linearGradient id="tile-pass" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#d8c5ec"/><stop offset=".52" stop-color="#a38bc7"/><stop offset="1" stop-color="#73629b"/></linearGradient>
+ <linearGradient id="tile-city" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f7d298"/><stop offset=".55" stop-color="#e9a271"/><stop offset="1" stop-color="#c96f56"/></linearGradient>
+ <symbol id="tile-icon-mer" viewBox="0 0 16 16"><path d="M1 6q2-2 4 0t4 0t4 0t3 0M1 11q2-2 4 0t4 0t4 0t3 0" fill="none" stroke="#dbf7ff" stroke-width="1.5" stroke-linecap="round"/></symbol>
+ <symbol id="tile-icon-cote" viewBox="0 0 16 16"><path d="M1 3q3-1 5 2t4 2t5 3" fill="none" stroke="#fdf3ce" stroke-width="2"/><path d="M1 11q2-2 4 0t4 0" fill="none" stroke="#2f99b2" stroke-width="1.3"/></symbol>
+ <symbol id="tile-icon-plaine" viewBox="0 0 16 16"><path d="M3 12l-1-4m1 4 2-3m5 3-1-6m1 6 3-4" fill="none" stroke="#3d8551" stroke-width="1.4" stroke-linecap="round"/><circle cx="12" cy="4" r="1" fill="#f4e8a2"/></symbol>
+ <symbol id="tile-icon-moyenne_montagne" viewBox="0 0 16 16"><path d="M1 12 6 3l4 7 2-4 3 6Z" fill="#92794f"/><path d="m6 3 2.2 4H4Z" fill="#f8e5ab"/><path d="m12 6 1.5 3H10Z" fill="#edd2a0"/></symbol>
+ <symbol id="tile-icon-montagne" viewBox="0 0 16 16"><path d="M1 13 6 2l3 6 2-4 4 9Z" fill="#617c85"/><path d="M6 2 8 6H4Z" fill="#fffdf0"/><path d="m11 4 1.8 4H9Z" fill="#f8fbf4"/></symbol>
+ <symbol id="tile-icon-col" viewBox="0 0 16 16"><path d="M1 13 6 4l2 4 2-3 5 8Z" fill="#665c89"/><path d="M8 1v8M5 4h6" stroke="#fff2bf" stroke-width="1.4"/><circle cx="8" cy="4" r="1.6" fill="#fff7d3"/></symbol>
+ <symbol id="tile-icon-ville" viewBox="0 0 16 16"><path d="M2 8 8 3l6 5" fill="#a84f3d"/><path d="M3 8h10v6H3Z" fill="#fff0ce"/><path d="M7 10h2v4H7Z" fill="#80584b"/><path d="M1 14h14" stroke="#875c4b" stroke-width="1"/></symbol>
+</defs>`;
 export function playableMap(g,reachable,cost,selected='',route=[],nextSteps=[],editMode=false){
  const nodes=Object.values(g.board),available=new Set(reachable.map(t=>t.key)),selectable=new Set(nextSteps),queued=new Map(route.map((key,i)=>[key,i+1])),visited=new Set(g.visited||[]);
  const points=Object.fromEntries(tilePolygons(g.board).map(t=>[t.key,t.points]));
  const states=t=>[available.has(t.key)?'reachable':'',t.key===g.pos?'here':'',visited.has(t.key)?'visited':'',t.id===g.arrivalId?'destination':'',t.key===selected?'selected':'',queued.has(t.key)?'queued':'',selectable.has(t.key)?'next-step':'',!selectable.has(t.key)&&!queued.has(t.key)?'unavailable':''].filter(Boolean).join(' ');
  return `<svg class="playable-europe supplied-map ${editMode?'map-edit-mode':''}" viewBox="0 0 ${MAP_WIDTH} ${MAP_HEIGHT}" aria-label="Plateau Europe sur grille régulière : chaque hexagone a la même taille">
- <rect class="map-ocean" width="${MAP_WIDTH}" height="${MAP_HEIGHT}"/>
- <g class="hex-cells">${nodes.map(t=>{const canSelect=editMode||selectable.has(t.key)||queued.has(t.key);return `<g class="map-tile terrain-${t.type} ${states(t)} ${editMode?'editable':''}" ${canSelect?`data-move="${escape(t.key)}" role="button" tabindex="0"`:'aria-disabled="true"'} aria-label="${escape(editMode?'Modifier '+(t.name||names[t.type]||t.type):tileLabel(g,t,cost))}${canSelect&&!editMode?' · sélectionnable':''}" aria-pressed="${queued.has(t.key)}"><title>${escape(editMode?'Cliquer pour modifier · '+(t.name||names[t.type]||t.type):tileLabel(g,t,cost))}</title><polygon class="terrain-face" points="${points[t.key]}"/><text class="terrain-mark" x="${t.x}" y="${t.y+4}">${marks[t.type]||''}</text></g>`;}).join('')}</g>
+ ${tileArtwork}<rect class="map-ocean" width="${MAP_WIDTH}" height="${MAP_HEIGHT}"/>
+ <g class="hex-cells">${nodes.map(t=>{const canSelect=editMode||selectable.has(t.key)||queued.has(t.key);return `<g class="map-tile terrain-${t.type} ${states(t)} ${editMode?'editable':''}" ${canSelect?`data-move="${escape(t.key)}" role="button" tabindex="0"`:'aria-disabled="true"'} aria-label="${escape(editMode?'Modifier '+(t.name||names[t.type]||t.type):tileLabel(g,t,cost))}${canSelect&&!editMode?' · sélectionnable':''}" aria-pressed="${queued.has(t.key)}"><title>${escape(editMode?'Cliquer pour modifier · '+(t.name||names[t.type]||t.type):tileLabel(g,t,cost))}</title><polygon class="terrain-face" points="${points[t.key]}"/><use class="terrain-icon" href="#tile-icon-${t.type}" x="${t.x-7}" y="${t.y-7}" width="14" height="14" aria-hidden="true"/></g>`;}).join('')}</g>
  <g class="city-names" aria-hidden="true">${cityLabels(nodes).map(c=>`<text class="city-name" x="${c.x+35}" y="${c.y+6}">${escape(c.name)}</text>`).join('')}</g>
  <g class="route-numbers" aria-hidden="true">${route.map((k,i)=>{const t=g.board[k];return t?`<g transform="translate(${t.x} ${t.y})"><circle r="9"/><text y="3">${i+1}</text></g>`:'';}).join('')}</g>
  <g class="map-symbols" aria-hidden="true">
