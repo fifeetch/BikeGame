@@ -2,10 +2,10 @@ import {hexVertices,HEX_RADIUS,MAP_WIDTH,MAP_HEIGHT} from './europe.js';
 
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export const tilePolygons=board=>Object.values(board).map(t=>({key:t.key,points:hexVertices(t).map(p=>p.map(v=>v.toFixed(2)).join(',')).join(' ')}));
-const names={mer:'Mer',plaine:'Plaine',moyenne_montagne:'Moyenne montagne',montagne:'Haute montagne',ville:'Ville',cote:'Côte'};
+const names={mer:'Mer',plaine:'Plaine',moyenne_montagne:'Moyenne montagne',montagne:'Haute montagne',col:'Col mythique',ville:'Ville',cote:'Côte'};
 export const tileLabel=(g,t,cost)=>`${t.name?t.name+' · ':''}${names[t.type]||t.type}${t.key===g.pos?' · position actuelle':''}${t.id===g.arrivalId?' · arrivée':''} · ${cost(g,t)} énergie`;
 export function cityLabels(nodes){return nodes.filter(t=>t.name).map(t=>({key:t.key,name:t.name,x:t.x-35,y:t.y+19,width:70,height:18}));}
-const marks={mer:'≈',cote:'',plaine:'·',moyenne_montagne:'⌃',montagne:'▲',ville:'●'};
+const marks={mer:'≈',cote:'',plaine:'·',moyenne_montagne:'⌃',montagne:'▲',col:'◆',ville:'●'};
 export function playableMap(g,reachable,cost,selected='',route=[],nextSteps=[],editMode=false){
  const nodes=Object.values(g.board),available=new Set(reachable.map(t=>t.key)),selectable=new Set(nextSteps),queued=new Map(route.map((key,i)=>[key,i+1])),visited=new Set(g.visited||[]);
  const points=Object.fromEntries(tilePolygons(g.board).map(t=>[t.key,t.points]));

@@ -33,3 +33,14 @@ test('neighbours with insufficient energy are inspectable but are not highlighte
  const html=playableMap(g,board[start].links.map(k=>board[k]),()=>1);
  assert(!html.includes(' reachable'));assert(html.includes('unaffordable'));assert(html.includes('tabindex="0"'));
 });
+
+test('mythic passes have a distinct map variant and accessible label',()=>{
+ const {board,edges,start,arrivalId}=europeBoard('Paris','Istanbul');
+ const pass=Object.values(board).find(t=>t.type==='montagne');pass.type='col';
+ const g={board,edges,pos:start,arrivalId,visited:[start],phase:'move',energy:10};
+ const html=playableMap(g,[],()=>4);
+ assert(html.includes('terrain-col'));
+ assert(html.includes('Col mythique'));
+ assert(html.includes('◆'));
+ assert(html.includes('4 énergie'));
+});

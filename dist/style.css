@@ -42,6 +42,7 @@ summary{cursor:pointer;font-weight:700;min-height:32px}
 .terrain-plaine .terrain-face{fill:#aec786}
 .terrain-moyenne_montagne .terrain-face{fill:#d6ad62}
 .terrain-montagne .terrain-face{fill:#aabcb5}
+.terrain-col .terrain-face{fill:#8f83ae}
 .terrain-ville .terrain-face{fill:#e8b876}
 .terrain-cote .terrain-face{fill:#80c6cd}
 .terrain-mer .terrain-face{fill:#176f9b}
@@ -76,6 +77,7 @@ summary{cursor:pointer;font-weight:700;min-height:32px}
 .supplied-map .terrain-plaine .terrain-face{fill:#a9c47b}
 .supplied-map .terrain-moyenne_montagne .terrain-face{fill:#e5bd69}
 .supplied-map .terrain-montagne .terrain-face{fill:#9eaaa5}
+.supplied-map .terrain-col .terrain-face{fill:#8877a8}
 .supplied-map .terrain-cote .terrain-face{fill:#c9eef0}
 .supplied-map .terrain-ville .terrain-face{fill:#e99b68}
 .map-ocean{fill:#9edbe7}
@@ -85,6 +87,20 @@ summary{cursor:pointer;font-weight:700;min-height:32px}
 .terrain-mer .terrain-mark,.terrain-cote .terrain-mark{fill:#247d9e;font-size:10px}
 .terrain-mer .terrain-mark{fill:#e2f8fc;opacity:.92}
 .terrain-montagne .terrain-mark,.terrain-moyenne_montagne .terrain-mark{fill:#52635d;font-size:10px}
+.terrain-col .terrain-mark{fill:#fff4cf;font-size:10px;opacity:1}
+.home-actions,.editor-controls,.map-menu-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.home-saved-maps{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:18px}
+.home-saved-maps button{min-height:38px;padding:7px 10px}
+.saved-map-card{display:block;padding:16px 18px}
+.saved-map-card>div{padding:0}
+.saved-map-card button{padding:9px 12px;min-height:38px}
+.map-editor-page h1{font-size:clamp(30px,4vw,48px);margin:8px 0}
+.map-editor-page .map{height:min(65vh,690px)}
+.editor-controls{background:#fffaf0;border:1px solid #d8dacb;border-radius:14px;padding:12px;margin-bottom:12px}
+.editor-controls label{margin:0;min-width:180px}
+.editor-controls>span{font-weight:700}
+.editor-controls button{min-height:42px}
+@media(max-width:760px){.home-actions button,.editor-controls button{flex:1 1 auto}.map-editor-page .map{height:60vh}.saved-map-card button{width:100%;margin-top:5px}}
 .terrain-ville .terrain-mark{fill:#a7472e;font-size:10px}
 .city-name{fill:#183f59;paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round;font:700 9px system-ui,sans-serif;text-anchor:middle;pointer-events:none}
 .supplied-map .map-tile.reachable .terrain-face{stroke:#fff59a;stroke-width:2;stroke-dasharray:3 3}
