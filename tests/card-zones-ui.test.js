@@ -6,6 +6,8 @@ import {CLASSIC} from '../dist/rules.js';
 
 test('the player sheet separates playable hand cards from placed cards',async()=>{
  const game=S.createMatch([{name:'Alice',bike:'gravel',voyage:'traversee'},{name:'Bob',bike:'randonneur',voyage:'nord'}],'plateau',CLASSIC,123);
+ game.cardVersion=2; // Preserve the UI contract for games saved before the 40-card deck.
+ for(const p of game.players)p.cardHand=[];
  game.players[0].cardHand=['vent-favorable','bonne-affaire','pluie-battante'];
  assert(S.playCard(game,1,game.players[0].id));
  assert(S.playCard(game,1,game.players[1].id));

@@ -39,9 +39,11 @@ test('a saved Europe game refreshes its click targets without losing the rider',
  assert.equal(S.player(restored).pos,p.pos);
  assert.equal(Object.keys(restored.board).length,Object.keys(europeBoard('Paris','Istanbul').board).length);
 });
-test('route is atomic, limited to five, excludes ferry, and pays each cell',()=>{
+test('route waits for every weather intervention, stays limited, and pays each cell',()=>{
  const m=match(),p=S.player(m),a=S.moves(m)[0];assert(a);
- const before=p.energy;assert(S.routeCheck(m,[a.key]).ok);assert(S.executeRoute(m,[a.key]));assert.equal(m.moved,1);assert.equal(p.energy,before-S.cost(m,a));
+ const before=p.energy,price=S.cost(m,a);assert(S.routeCheck(m,[a.key]).ok);assert(S.beginEventRoute(m,[a.key]).intervention);
+ assert(!S.executeRoute(m,[a.key]));while(m.phase==='card-intervention')assert(S.passEventIntervention(m));
+ assert.equal(m.moved,1);assert.equal(p.energy,before-price);
  assert(!S.routeCheck(m,Array(6).fill(a.key)).ok);
 });
 test('ferry is paid, requires confirmation API and ends the day with draw choice',()=>{

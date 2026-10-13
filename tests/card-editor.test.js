@@ -29,10 +29,13 @@ test('custom cards accept only known effect presets and bounded unique identitie
 
 test('new cards are playable, limited in solo, and embedded in saved games',()=>{
  const solo=S.createMatch([{name:'Solo',bike:'gravel',voyage:'traversee'}],'plateau',CLASSIC,4,[positive,negative]);
+ solo.cardVersion=2;
  const soloDraws=Array.from({length:100},()=>S.drawCard(solo));
  assert(soloDraws.includes(positive.id));
  assert(!soloDraws.includes(negative.id));
  const m=S.createMatch([{name:'Alice',bike:'gravel',voyage:'traversee'},{name:'Bob',bike:'gravel',voyage:'soleil'}],'plateau',CLASSIC,4,[positive,negative]);
+ m.cardVersion=2;
+ for(const p of m.players)p.cardHand=[];
  const alice=m.players[0],bob=m.players[1];alice.cardHand=[positive.id,negative.id];alice.energy=5;
  assert(S.playCard(m,0,alice.id));assert.equal(alice.energy,7);
  assert(S.playCard(m,0,bob.id));assert.deepEqual(bob.pendingCards,[negative.id]);

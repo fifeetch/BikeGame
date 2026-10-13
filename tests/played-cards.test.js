@@ -5,6 +5,8 @@ import {CLASSIC} from '../dist/rules.js';
 
 test('played cards leave the hand and remain identifiable after saving',()=>{
  const m=S.createMatch([{name:'Alice',bike:'gravel',voyage:'traversee'},{name:'Bob',bike:'randonneur',voyage:'nord'}],'plateau',CLASSIC,123);
+ m.cardVersion=2; // Historical card saves still use the former hand and pending-card rules.
+ for(const p of m.players)p.cardHand=[];
  const alice=m.players[0],bob=m.players[1],money=alice.money;
  alice.cardHand=['bonne-affaire','pluie-battante'];
  assert(S.playCard(m,0,alice.id));
