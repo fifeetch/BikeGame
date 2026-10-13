@@ -398,3 +398,42 @@ header.in-game .split-size input{width:100px;min-height:24px;margin:0;padding:0;
  .game.game-split .player-sheet-mount{grid-row:1 / 6}
  .game.game-split .player-sheet-dock .dock-hand{min-height:44px;padding:6px 10px;font-size:14px}
 }
+
+/* Catalogue et éditeur des cartes de jeu. */
+.home-editor-entry.card-entry{margin-top:12px;background:linear-gradient(125deg,#fff4df,#f3f4e8);border-color:#c7a36e}
+.card-editor-page{max-width:1500px;margin:0 auto;padding:26px 24px 48px}
+.card-editor-heading,.card-catalog-toolbar{display:flex;justify-content:space-between;align-items:start;gap:20px}
+.card-editor-heading h1{font-size:clamp(32px,4vw,52px);margin:8px 0}
+.card-editor-heading p,.card-catalog-toolbar p{color:#5b6d62}
+.card-editor-layout{display:grid;grid-template-columns:minmax(300px,380px) minmax(0,1fr);gap:20px;align-items:start}
+.card-editor-form{position:sticky;top:16px}
+.card-editor-form h2,.card-editor-catalog h2{font:700 27px Georgia,serif;margin:0 0 16px}
+.card-editor-form label{display:block;margin:13px 0;font-weight:750;color:#2c5041}
+.card-editor-form select,.card-editor-form input{display:block;width:100%;margin-top:6px;padding:11px;border:1px solid #a9bcae;border-radius:10px;background:#fff;color:#254a3c;font:inherit}
+.card-editor-preview{display:flex;flex-direction:column;gap:8px;min-height:180px;margin-top:16px;padding:16px;border:3px solid #4c8865;border-radius:17px;background:#f6fbeb;box-shadow:inset 0 0 0 4px #fff8e8}
+.card-editor-preview.negative{border-color:#bb7059;background:#fff1e8}
+.card-editor-preview>span:nth-child(2){font-size:11px;text-transform:uppercase;letter-spacing:.15em;font-weight:800}
+.card-editor-preview strong{font:700 23px Georgia,serif}
+.card-editor-preview p{margin:0;font-size:14px;line-height:1.4}
+.card-editor-buttons{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.card-editor-catalog{min-width:0;padding:20px;border:1px solid #dfdfd1;border-radius:18px;background:#fffdf7}
+.card-editor-catalog>h3{margin:24px 0 10px;font:700 21px Georgia,serif}
+.card-catalog-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(225px,1fr));gap:12px}
+.card-catalog-item{display:flex;gap:10px;min-width:0;padding:14px;border:2px solid #76a181;border-radius:14px;background:#f5faee}
+.card-catalog-item.negative{border-color:#c88d75;background:#fff4ed}
+.card-catalog-icon{display:grid;flex:none;place-items:center;width:44px;height:44px;border-radius:50%;background:#e3edda;font-size:25px}
+.card-catalog-item.negative .card-catalog-icon,.card-editor-preview.negative .card-catalog-icon{background:#f6ddcf}
+.card-catalog-item>div{min-width:0;display:flex;flex-direction:column;align-items:flex-start}
+.card-catalog-type{color:#4c785d;font-size:10px;font-weight:850;letter-spacing:.09em;text-transform:uppercase}
+.card-catalog-item.negative .card-catalog-type{color:#9c5846}
+.card-catalog-item h3{font:700 17px Georgia,serif;margin:5px 0;color:#254a3d}
+.card-catalog-item p{font-size:12px;line-height:1.4;margin:0 0 12px;color:#53695a}
+.card-catalog-item button{margin-top:auto;min-height:34px;padding:6px 10px;font-size:12px}
+.card-catalog-actions{display:flex;gap:6px;margin-top:auto}
+.card-import-label{display:inline-flex;align-items:center;gap:5px;min-height:44px;padding:8px 12px;border:1px solid #c6d2c1;border-radius:10px;background:#f2f4ea;font-size:13px;cursor:pointer}
+.card-import-label input{max-width:145px;font-size:11px}
+.card-archives{margin-top:20px;padding:13px;border:1px solid #d8d5c8;border-radius:12px}
+.card-archives summary{cursor:pointer;font-weight:750}
+.card-archives .card-catalog-grid{margin-top:15px}
+.card-editor-footnote{margin-top:20px;color:#647366;font-size:13px}
+@media(max-width:900px){.card-editor-layout{grid-template-columns:1fr}.card-editor-form{position:static}.card-editor-heading,.card-catalog-toolbar{flex-direction:column}}

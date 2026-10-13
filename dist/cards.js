@@ -20,4 +20,19 @@ export const CARDS=[
  {id:'pause',title:'Pause bienvenue',icon:'⚡',type:'positive',text:'Récupère 2 énergie.',target:'self',effect:{energy:2},weight:0,legacy:true},
  {id:'panorama',title:'Panorama',icon:'🏞️',type:'positive',text:'Gagne 2 points Aventure.',target:'self',effect:{points:2},weight:0,legacy:true}
 ];
-export const cardById=id=>CARDS.find(c=>c.id===id);
+export const CARD_PRESETS=CARDS.filter(c=>!c.legacy&&c.weight>0);
+export const MAX_CUSTOM_CARDS=20;
+export function makeCustomCard(input){
+ const id=String(input?.id||''),title=String(input?.title||'').trim(),template=String(input?.template||'');
+ const preset=CARD_PRESETS.find(c=>c.id===template);
+ if(!/^custom-[a-z0-9-]{1,64}$/.test(id)||!title||title.length>50||!preset)throw Error('Carte invalide : nom (1 à 50 caractères) ou effet inconnu.');
+ return {...preset,id,title,template,weight:1};
+}
+export function normalizeCustomCards(input){
+ if(!Array.isArray(input)||input.length>MAX_CUSTOM_CARDS)throw Error('Le paquet personnalisé est invalide ou dépasse '+MAX_CUSTOM_CARDS+' cartes.');
+ const cards=input.map(makeCustomCard),ids=new Set(cards.map(c=>c.id));
+ if(ids.size!==cards.length)throw Error('Deux cartes personnalisées portent le même identifiant.');
+ return cards;
+}
+export const effectiveCards=game=>[...CARDS,...(game?.customCards||[])];
+export const cardById=(id,game)=>game?.customCards?.find(c=>c.id===id)||CARDS.find(c=>c.id===id);
