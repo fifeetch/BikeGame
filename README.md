@@ -12,6 +12,8 @@ Sur la carte, sélectionner successivement les cases voisines d’un itinéraire
 
 Chaque joueur commence avec trois cartes de jeu, distinctes de sa carte Voyage. À la fin de **chaque** journée, y compris travail, hébergement ou ferry, il pioche deux cartes, en garde une et défausse l’autre. Les six cartes positives (boost, ravito, coup de main, vent favorable, bonne affaire et abri trouvé) se jouent pendant son tour. Les six cartes négatives se donnent à un adversaire et sont résolues au début de son prochain tour : crevaison (chambre à air ou −1 déplacement), panne mécanique (kit ou −2 énergie), pluie (−1 déplacement), faim (nourriture ou −2 énergie), mauvaise nuit (−1 énergie) et détour (+1 déplacement avec +1 énergie sur ce déplacement). La limite de cinq cases par tour s’applique toujours. Travail, bivouac, camping et hôtel consomment une journée ; leurs durées restent réglables. « Abri trouvé » donne un bivouac gratuit et +2 énergie.
 
+La fiche joueur interactive remplace la longue colonne latérale : un résumé compact reste visible près du plateau, et la fiche détaillée regroupe le vélo, les ressources, l’équipement, l’objectif, les actions du jour, les cartes, les notes et l’aide des terrains dans trois vues adaptées aux petits et grands écrans.
+
 ## Sources et vérification
 
 `scripts/build-europe-board.py` relève les cases de `dist/assets/europe/nouvelle-carte.png` et régénère `board-data.js`. `dist/europe.js` ajoute les villes et liaisons, `dist/simulator.js` contrôle les règles, `dist/cards.js` décrit les cartes, et `dist/app.js` gère l’interface. Les anciennes sauvegardes Europe sont adaptées à la nouvelle grille ; une copie préalable est conservée dans le navigateur sous `velo-save-before-new-map`.

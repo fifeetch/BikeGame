@@ -106,3 +106,45 @@ summary{cursor:pointer;font-weight:700;min-height:32px}
 .card-choice-list article button{width:100%}
 .card-resolution-choices{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}
 .card-resolution-choices button{flex:1 1 210px}
+.layout{grid-template-columns:minmax(0,1fr)}
+.player-sheet-dock{position:fixed;z-index:5;right:22px;bottom:18px;display:flex;align-items:center;gap:12px;padding:8px 10px 8px 14px;border:1px solid #cbd7c9;border-radius:16px;background:#fffdf3ed;box-shadow:0 8px 26px #1c382b30;backdrop-filter:blur(10px)}
+.dock-resources{display:flex;gap:12px;color:#284e42;font-weight:750;font-size:14px}
+.player-sheet-dock button{white-space:nowrap}
+.player-sheet-modal{max-width:1180px!important;width:min(96vw,1180px);padding:24px 28px}
+.player-sheet-head{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.player-sheet-head h2{display:flex;align-items:center;gap:10px;margin:6px 0 0}
+.player-sheet-head h2 i{display:inline-block;width:13px;height:32px;border-radius:9px;background:var(--player-color)}
+.sheet-close{font-size:18px;min-width:44px}
+.sheet-tabs{display:flex;gap:8px;border-bottom:1px solid #d9dfd2;margin:18px 0 15px;padding-bottom:10px;overflow-x:auto}
+.sheet-tabs button{flex:none;background:#ececdf;color:#31584c}
+.sheet-tabs button.active{background:#234e43;color:#fff}
+.sheet-tabs button b{display:inline-grid;place-items:center;min-width:20px;height:20px;border-radius:50%;background:#d8533d;color:white;font-size:12px}
+.sheet-tab-content{max-height:min(67vh,740px);overflow:auto;padding:1px 4px 6px}
+.sheet-overview{display:grid;grid-template-columns:1.2fr 1fr;gap:14px}
+.sheet-bike,.sheet-card,.sheet-resource,.sheet-movement{background:#fffdf7;border:1px solid #e0ddcf;border-radius:16px;padding:16px}
+.sheet-bike{grid-column:1/-1;display:flex;align-items:center;gap:14px;background:linear-gradient(110deg,#e7f0dc,#fffdf6 55%,#f8edcf)}
+.sheet-bike-icon{font-size:44px}
+.sheet-bike h3,.sheet-bike p{margin:3px 0}
+.sheet-day{margin-left:auto;text-align:center;color:#90713c;font-size:11px;letter-spacing:1px}
+.sheet-day strong{display:block;color:#234e43;font-size:24px}
+.sheet-resource-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.sheet-resource{min-height:118px}
+.sheet-resource>div:first-child{display:flex;align-items:center;gap:8px;font-weight:700}
+.sheet-resource>div:first-child span{font-size:22px}
+.sheet-resource>strong{display:block;font-size:26px;margin-top:3px;color:#244b40}
+.sheet-resource>strong small{font-size:14px;color:#748176}
+.sheet-resource p{font-size:12px;color:#6b796d;margin:5px 0 0}
+.sheet-resource.energy{border-color:#e5bc53}.sheet-resource.food{border-color:#9ab97e}.sheet-resource.money{border-color:#8caecb}.sheet-resource.points{border-color:#d08a79}
+.resource-track{height:7px;background:#e4e6d8;border-radius:9px;overflow:hidden;margin-top:5px}
+.resource-track i{display:block;height:100%;background:linear-gradient(90deg,#78ad69,#e8bd4b);border-radius:9px}
+.sheet-section-heading{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.sheet-section-heading h3,.sheet-card h3{font:20px Georgia,serif;margin:0 0 10px;color:#244b40}
+.sheet-section-heading span{font-size:12px;font-weight:700;color:#748176}
+.sheet-equipment{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.sheet-item{display:flex;align-items:center;gap:8px;padding:8px 9px;border:1px dashed #d4d8ca;border-radius:11px;color:#82897d}
+.sheet-item>span{font-size:22px}.sheet-item div{min-width:0;flex:1}.sheet-item strong,.sheet-item small{display:block}.sheet-item strong{font-size:13px}.sheet-item small{font-size:11px}.sheet-item>b{font-size:18px}
+.sheet-item.owned{border-style:solid;border-color:#88b598;background:#e9f4e8;color:#285b46}
+.sheet-objective{grid-column:1/-1}.sheet-voyage{display:grid;grid-template-columns:minmax(130px,.8fr) 1.2fr;gap:12px}.voyage-title{padding:12px;border-radius:12px;background:#eef1e6}.voyage-title strong,.voyage-title span{display:block}.voyage-title span{font-size:13px;margin-top:6px}.sheet-movement{grid-column:1/-1;display:flex;align-items:center;gap:14px;background:#f4ead1}.sheet-movement strong{font-size:16px}.sheet-movement span{font-weight:800}.sheet-movement small{margin-left:auto;color:#69796b}
+.sheet-actions{max-width:880px;margin:auto}.sheet-action-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.sheet-action-grid button{background:#eef0e4;color:#234e43;text-align:left}.sheet-action-grid .sheet-end-day{background:#234e43;color:white}.sheet-rule-note{display:flex;gap:12px;margin-top:16px;padding:14px;border-radius:12px;background:#e8eee4;color:#50665a;font-size:13px;line-height:1.5}.sheet-rule-note strong{white-space:nowrap;color:#234e43}
+.sheet-hand{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}.sheet-hand .game-card{min-height:220px}.sheet-pending{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px}.sheet-pending>div{display:grid;grid-template-columns:32px 1fr;gap:3px 8px;padding:10px;border:1px solid #e7ad91;background:#fff2eb;border-radius:12px}.sheet-pending>div>span{grid-row:span 2;font-size:24px}.sheet-pending small{font-size:12px;color:#7b655d}.sheet-log{max-height:190px;overflow:auto}.sheet-terrain-help{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:7px}.sheet-terrain-help>div{display:grid;grid-template-columns:30px 1fr;gap:2px 7px;align-items:center;padding:9px;border-radius:10px;background:#f0f1e7}.sheet-terrain-help span{grid-row:span 2;font-size:23px}.sheet-terrain-help small{font-size:11px;color:#67766b}
+@media(max-width:760px){.player-sheet-dock{left:8px;right:8px;bottom:8px;justify-content:space-between;padding:7px 8px}.dock-resources{gap:7px;font-size:12px}.player-sheet-dock button{padding:9px 10px;font-size:12px}.player-sheet-modal{width:100%;max-width:none!important;padding:18px 14px;border-radius:18px}.sheet-tab-content{max-height:66vh}.sheet-overview{grid-template-columns:1fr}.sheet-bike,.sheet-objective,.sheet-movement{grid-column:1}.sheet-bike-icon{font-size:34px}.sheet-resource-grid{gap:7px}.sheet-equipment{grid-template-columns:1fr}.sheet-voyage{grid-template-columns:1fr}.sheet-action-grid{grid-template-columns:1fr}.sheet-rule-note{flex-direction:column;gap:4px}.sheet-movement{flex-wrap:wrap}.sheet-movement small{width:100%;margin-left:0}.sheet-tabs button{padding:10px 12px}.sheet-section-heading h3,.sheet-card h3{font-size:18px}}
