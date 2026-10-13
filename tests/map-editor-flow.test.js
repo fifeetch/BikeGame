@@ -38,6 +38,9 @@ test('menu editor saves and exports a col map, choice starts on it, and later ed
   click('data-voyage',elements.get('data-voyage')[0].dataset.voyage);
   assert(lastSheet.includes('player-sheet-inline player-mat'));
   assert(lastSheet.includes('PLATEAU DU CYCLISTE'));
+  assert(lastSheet.includes('<details class="sheet-extras">'));
+  assert(lastSheet.includes('Journal & aide des terrains'));
+  assert(!app.innerHTML.includes('dock-resources'));
   for(const action of ['eat','food','work','save','finish'])assert(lastSheet.includes(`data-action="${action}"`));
   let game=JSON.parse(storage.get('velo-save'));assert.equal(game.mapChoice,saved[0].id);assert.equal(game.rules.terrain.col,5);assert.equal(game.board[original.key].type,'col');assert.equal(S.cost(game,game.board[original.key]),5);
   click('data-action','home');controls.type='plaine';click('data-edit-map',saved[0].id);click('data-move',original.key);click('data-action','map-save');click('data-action','map-save-project');click('data-action','home');click('data-action','continue');

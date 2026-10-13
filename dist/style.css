@@ -141,7 +141,6 @@ summary{cursor:pointer;font-weight:700;min-height:32px}
 .card-resolution-choices button{flex:1 1 210px}
 .layout{grid-template-columns:minmax(0,1fr)}
 .player-sheet-dock{position:fixed;z-index:5;right:22px;bottom:18px;display:flex;align-items:center;gap:12px;padding:8px 10px 8px 14px;border:1px solid #cbd7c9;border-radius:16px;background:#fffdf3ed;box-shadow:0 8px 26px #1c382b30;backdrop-filter:blur(10px)}
-.dock-resources{display:flex;gap:12px;color:#284e42;font-weight:750;font-size:14px}
 .player-sheet-dock button{white-space:nowrap}
 .player-sheet-modal{max-width:1180px!important;width:min(96vw,1180px);padding:24px 28px}
 .player-sheet-head{display:flex;align-items:center;justify-content:space-between;gap:16px}
@@ -180,20 +179,17 @@ summary{cursor:pointer;font-weight:700;min-height:32px}
 .sheet-objective{grid-column:1/-1}.sheet-voyage{display:grid;grid-template-columns:minmax(130px,.8fr) 1.2fr;gap:12px}.voyage-title{padding:12px;border-radius:12px;background:#eef1e6}.voyage-title strong,.voyage-title span{display:block}.voyage-title span{font-size:13px;margin-top:6px}.sheet-movement{grid-column:1/-1;display:flex;align-items:center;gap:14px;background:#f4ead1}.sheet-movement strong{font-size:16px}.sheet-movement span{font-weight:800}.sheet-movement small{margin-left:auto;color:#69796b}
 .sheet-actions{max-width:880px;margin:auto}.sheet-action-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.sheet-action-grid button{background:#eef0e4;color:#234e43;text-align:left}.sheet-action-grid .sheet-end-day{background:#234e43;color:white}.sheet-rule-note{display:flex;gap:12px;margin-top:16px;padding:14px;border-radius:12px;background:#e8eee4;color:#50665a;font-size:13px;line-height:1.5}.sheet-rule-note strong{white-space:nowrap;color:#234e43}
 .sheet-hand{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}.sheet-hand .game-card{min-height:220px}.sheet-pending{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px}.sheet-pending>div{display:grid;grid-template-columns:32px 1fr;gap:3px 8px;padding:10px;border:1px solid #e7ad91;background:#fff2eb;border-radius:12px}.sheet-pending>div>span{grid-row:span 2;font-size:24px}.sheet-pending small{font-size:12px;color:#7b655d}.sheet-log{max-height:190px;overflow:auto}.sheet-terrain-help{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:7px}.sheet-terrain-help>div{display:grid;grid-template-columns:30px 1fr;gap:2px 7px;align-items:center;padding:9px;border-radius:10px;background:#f0f1e7}.sheet-terrain-help span{grid-row:span 2;font-size:23px}.sheet-terrain-help small{font-size:11px;color:#67766b}
-@media(max-width:760px){.player-sheet-dock{left:8px;right:8px;bottom:8px;justify-content:space-between;padding:7px 8px}.dock-resources{gap:7px;font-size:12px}.player-sheet-dock button{padding:9px 10px;font-size:12px}.player-sheet-modal{width:100%;max-width:none!important;padding:18px 14px;border-radius:18px}.sheet-tab-content{max-height:66vh}.sheet-overview{grid-template-columns:1fr}.sheet-bike,.sheet-objective,.sheet-movement{grid-column:1}.sheet-bike-icon{font-size:34px}.sheet-resource-grid{gap:7px}.sheet-equipment{grid-template-columns:1fr}.sheet-voyage{grid-template-columns:1fr}.sheet-action-grid{grid-template-columns:1fr}.sheet-rule-note{flex-direction:column;gap:4px}.sheet-movement{flex-wrap:wrap}.sheet-movement small{width:100%;margin-left:0}.sheet-tabs button{padding:10px 12px}.sheet-section-heading h3,.sheet-card h3{font-size:18px}}
+@media(max-width:760px){.player-sheet-dock{left:8px;right:8px;bottom:8px;justify-content:space-between;padding:7px 8px}.player-sheet-dock button{padding:9px 10px;font-size:12px}.player-sheet-modal{width:100%;max-width:none!important;padding:18px 14px;border-radius:18px}.sheet-tab-content{max-height:66vh}.sheet-overview{grid-template-columns:1fr}.sheet-bike,.sheet-objective,.sheet-movement{grid-column:1}.sheet-bike-icon{font-size:34px}.sheet-resource-grid{gap:7px}.sheet-equipment{grid-template-columns:1fr}.sheet-voyage{grid-template-columns:1fr}.sheet-action-grid{grid-template-columns:1fr}.sheet-rule-note{flex-direction:column;gap:4px}.sheet-movement{flex-wrap:wrap}.sheet-movement small{width:100%;margin-left:0}.sheet-tabs button{padding:10px 12px}.sheet-section-heading h3,.sheet-card h3{font-size:18px}}
 .map{height:min(70vh,760px);min-height:520px}
 .objective{grid-template-columns:90px minmax(150px,1fr) minmax(180px,1.2fr);gap:10px;padding:9px;margin-bottom:10px}
 .objective .voyage-art{aspect-ratio:1.8}
 .objective h3{font-size:19px;margin:3px 0}
 .objective-checks{font-size:12px;line-height:1.45}
 .player-sheet-dock{position:static;width:100%;margin:12px 0 2px;padding:13px 15px;display:grid;grid-template-columns:minmax(0,1fr);gap:12px;border:1px solid #cbd7c9;border-radius:16px;background:#fffdf3;box-shadow:0 4px 14px #1c382b18;backdrop-filter:none}
-.dock-player{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
-.dock-resources{gap:clamp(10px,3vw,28px);font-size:16px}
-.player-sheet-dock .dock-player>button{white-space:nowrap}
 .player-sheet-dock .dock-end-turn,.sheet-action-grid .sheet-end-day{width:100%;min-height:68px;padding:18px 22px;border-radius:14px;background:linear-gradient(110deg,#1d5144,#2e745c);color:#fff;text-align:center;font-size:clamp(20px,2.5vw,28px);font-weight:850;letter-spacing:.01em;box-shadow:0 5px 0 #153a31,0 9px 18px #1a483344}
 .player-sheet-dock .dock-end-turn:not(:disabled):hover,.sheet-action-grid .sheet-end-day:not(:disabled):hover{transform:translateY(-1px);box-shadow:0 6px 0 #153a31,0 12px 22px #1a483344}
 .player-sheet-dock .dock-end-turn:disabled,.sheet-action-grid .sheet-end-day:disabled{opacity:.48}
-@media(max-width:760px){.map{height:62vh;min-height:380px;max-height:620px}.objective{grid-template-columns:1fr 1fr;gap:7px;padding:8px}.objective .voyage-art{display:none}.objective-checks{font-size:10px}.dock-player{align-items:stretch;flex-direction:column;gap:9px}.dock-resources{justify-content:space-between;gap:5px;font-size:13px}.player-sheet-dock .dock-player>button{width:100%}.player-sheet-dock .dock-end-turn{min-height:64px;font-size:22px;padding:15px}.sheet-action-grid .sheet-end-day{min-height:64px}}
+@media(max-width:760px){.map{height:62vh;min-height:380px;max-height:620px}.objective{grid-template-columns:1fr 1fr;gap:7px;padding:8px}.objective .voyage-art{display:none}.objective-checks{font-size:10px}.player-sheet-dock .dock-end-turn{min-height:64px;font-size:22px;padding:15px}.sheet-action-grid .sheet-end-day{min-height:64px}}
 .player-sheet-mount{margin:28px 0 8px}
 .player-sheet-inline{padding:clamp(14px,2.5vw,28px);border:1px solid #d8dfd3;border-radius:22px;background:linear-gradient(145deg,#f6f5eb,#fffdf6 54%,#f1f3e8);box-shadow:0 10px 28px #203d3016}
 .player-sheet-inline .sheet-tab-content{max-height:none;overflow:visible}
@@ -270,11 +266,10 @@ header.in-game+.game{padding-top:8px}
 .player-mat .player-sheet-head h2{color:#fff8e6}
 .player-mat .player-sheet-head h2 i{background:var(--player-color);border:2px solid #fff7db}
 .player-mat .mat-day{flex:none;padding:9px 14px;border:2px solid #dfc38d;border-radius:10px;color:#fff3d1;font:700 13px Georgia,serif;letter-spacing:.1em}
-.player-mat .sheet-one-page{position:relative;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:13px;align-items:start}
+.player-mat .sheet-one-page{position:relative;display:grid;grid-template-columns:minmax(0,1fr);gap:13px;align-items:start}
 .player-mat .sheet-page-section{min-width:0;padding:14px;border:2px dashed #d3b77e;border-radius:16px;background:#21473494;color:#fff9ea}
 .player-mat .sheet-page-velo{grid-column:1/-1}
-.player-mat .sheet-page-cartes{grid-column:1}
-.player-mat .sheet-page-tour{grid-column:2}
+.player-mat .sheet-page-cartes,.player-mat .sheet-page-tour{grid-column:1}
 .player-mat .sheet-page-heading{margin-bottom:12px;padding-bottom:9px;border-bottom:1px solid #d8c594;color:#fff8e6;font:700 19px Georgia,serif}
 .player-mat .sheet-page-velo .sheet-overview{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:stretch}
 .player-mat .sheet-page-velo .sheet-bike{grid-column:1;grid-row:1}
@@ -304,17 +299,23 @@ header.in-game+.game{padding-top:8px}
 .player-mat .voyage-title{background:#efe0bb}
 .player-mat .sheet-item.owned{background:#e5f0dc}
 .player-mat .sheet-item:not(.owned){display:none}
-.player-mat .sheet-journal{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
-.player-mat .sheet-journal>.sheet-card:first-child,.player-mat .sheet-journal>.sheet-card:nth-child(2){grid-column:1/-1}
-.player-mat .sheet-journal>.sheet-card:nth-child(2){border-left:4px solid #bd8067}
+.player-mat .sheet-journal{display:grid;grid-template-columns:minmax(0,1fr);gap:9px}
+.player-mat .sheet-pending-zone{border-left:4px solid #bd8067}
 .player-mat .sheet-hand{display:flex;flex-wrap:wrap;gap:12px}
-.player-mat .sheet-hand .game-card{flex:1 1 185px;max-width:230px}
+.player-mat .sheet-hand .game-card{flex:1 1 185px;max-width:230px;min-height:245px}
 .player-mat .sheet-actions>.sheet-card{padding:14px}
-.player-mat .sheet-page-tour .sheet-action-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.player-mat .sheet-page-tour .sheet-action-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
 .player-mat .sheet-action-grid button{min-height:48px;padding:9px 11px;background:#e7ecd9;color:#294b3d;text-align:left;font-size:13px}
 .player-mat .sheet-action-grid button:not(:disabled):hover{background:#d8e5c9}
 .player-mat .sheet-action-grid button:focus-visible,.player-mat .sheet-hand button:focus-visible{outline:3px solid #bd872e;outline-offset:2px}
 .player-mat .sheet-rule-note{background:#ebe6d0}
 .player-mat .sheet-terrain-help{grid-template-columns:repeat(auto-fit,minmax(125px,1fr))}
-@media(max-width:1050px){.player-mat .sheet-one-page{grid-template-columns:1fr}.player-mat .sheet-page-velo,.player-mat .sheet-page-cartes,.player-mat .sheet-page-tour{grid-column:1}}
+.player-mat .sheet-extras{border:1px solid #d1b982;border-radius:10px;background:#fff7e6;color:#294b3d}
+.player-mat .sheet-extras summary{padding:12px 15px;font-weight:700;list-style-position:inside}
+.player-mat .sheet-extras summary:focus-visible{outline:3px solid #d19d42;outline-offset:2px}
+.player-mat .sheet-extras-content{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:0 12px 12px}
+.player-mat .sheet-extras-content .sheet-card{min-width:0}
+.player-sheet-dock{padding:8px;margin:9px 0 0}
+.player-sheet-dock .dock-end-turn{min-height:55px;padding:10px 18px;font-size:20px}
+@media(max-width:1050px){.player-mat .sheet-page-tour .sheet-action-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.player-mat .sheet-extras-content{grid-template-columns:1fr}}
 @media(max-width:700px){.player-mat{padding:12px;border-width:4px;border-radius:17px}.player-mat:before{inset:6px}.player-mat .player-sheet-head{padding:4px 2px 10px}.player-mat .mat-day{padding:7px 9px;font-size:11px}.player-mat .sheet-page-section{padding:11px}.player-mat .sheet-page-velo .sheet-overview{grid-template-columns:1fr}.player-mat .sheet-page-velo .sheet-bike,.player-mat .sheet-page-velo .sheet-movement,.player-mat .sheet-page-velo .sheet-resource-grid,.player-mat .sheet-page-velo .sheet-objective,.player-mat .sheet-page-velo .sheet-overview>.sheet-card:not(.sheet-objective){grid-column:1;grid-row:auto}.player-mat .sheet-page-velo .sheet-resource-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.player-mat .sheet-voyage{grid-template-columns:1fr}.player-mat .sheet-journal{grid-template-columns:1fr}.player-mat .sheet-journal>.sheet-card{grid-column:1!important}.player-mat .sheet-page-tour .sheet-action-grid{grid-template-columns:1fr}.player-mat .sheet-hand .game-card{max-width:none}.player-mat .sheet-resource{min-height:88px}}
