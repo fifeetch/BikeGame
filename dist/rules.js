@@ -2,14 +2,14 @@ import {events as legacyEvents} from './engine.js';
 
 export const COLORS=['#b74732','#267b91','#6d5699','#a77d1e','#427a4b','#b05181'];
 export const CLASSIC={
- name:'Classique',terrain:{plaine:1,montagne:2,cote:1,ville:0,camping:1,auberge:1,col:2,decouverte:1},
+ name:'Classique',terrain:{plaine:1,moyenne_montagne:2,montagne:3,cote:1,ville:0,camping:1,auberge:1,col:3,decouverte:1},ferryPrice:3,
  distance:5,startEnergy:8,maxEnergy:10,startMoney:5,startFood:3,salary:2,workDays:1,workCityOnly:true,
  bikes:{gravel:{name:'Gravel',capacity:4,mountainDiscount:0,extraDistance:0,extraFood:0},randonneur:{name:'Randonnée',capacity:8,mountainDiscount:0,extraDistance:0,extraFood:0}},
  rest:{bivouac:{name:'Bivouac',price:0,energy:3,days:1,tent:true,cityOnly:false},camping:{name:'Camping',price:1,energy:5,days:1,tent:false,cityOnly:false},hotel:{name:'Hôtel',price:3,energy:10,days:1,tent:false,cityOnly:true}},
  food:{energy:3,stoveBonus:2,price:1,quantity:2,maxPerTurn:1,cityOnly:true,restaurantPrice:1,restaurantEnergy:4},
- equipment:{tente:{name:'Tente',price:4,space:2,energyBonus:0},rechaud:{name:'Réchaud',price:3,space:1,energyBonus:0},chambre:{name:'Chambre à air',price:1,space:1,energyBonus:0},kit:{name:'Kit de réparation',price:3,space:1,energyBonus:0},gps:{name:'GPS',price:3,space:1,energyBonus:0},duvet:{name:'Matelas et duvet',price:3,space:2,energyBonus:1},secours:{name:'Trousse de secours',price:2,space:1,energyBonus:0},sacoches:{name:'Sacoches',price:2,space:1,energyBonus:0,foodBonus:3}},
+ equipment:{tente:{name:'Tente',price:2,space:2,energyBonus:0},rechaud:{name:'Réchaud',price:1,space:1,energyBonus:0},chambre:{name:'Chambre à air',price:1,space:1,energyBonus:0},kit:{name:'Kit de réparation',price:1,space:1,energyBonus:0},gps:{name:'GPS',price:3,space:1,energyBonus:0},duvet:{name:'Matelas et duvet',price:3,space:2,energyBonus:1},secours:{name:'Trousse de secours',price:2,space:1,energyBonus:0},sacoches:{name:'Sacoches',price:2,space:1,energyBonus:0,foodBonus:3}},
  probabilities:{negative:50,positive:30,challenge:20},eventAfterWork:false,eventAfterRest:false,
- points:{plaine:1,montagne:3,cote:2,ville:2,camping:2,auberge:2,col:6,decouverte:4,objective:10},
+ points:{plaine:1,moyenne_montagne:2,montagne:3,cote:2,ville:2,camping:2,auberge:2,col:6,decouverte:4,objective:10},
  victory:{mode:'objectives',points:40,turns:20,allObjectives:false},
  events:legacyEvents.map(e=>({...e,id:'legacy-'+e.id,category:Object.values(e.effect).some(v=>v<0)?'negative':'positive',protect:e.id===16?'chambre':e.id===7?'tente':e.protect||'',consume:e.id===16,weight:1})).concat([
  {id:'blessure',title:'Petite chute',text:'Une blessure légère demande des soins.',terrain:'general',category:'negative',weight:1,protect:'secours',consume:false,effect:{energy:-2}},

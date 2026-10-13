@@ -66,6 +66,16 @@ summary{cursor:pointer;font-weight:700;min-height:32px}
 .rider-shadow{fill:#173b3b;opacity:.2}
 .rider-base{fill:#fff9e8;stroke:#264d40;stroke-width:1.5}
 .map-ferries path{fill:none;stroke:#668e9f;stroke-width:2.5;stroke-dasharray:5 7}
+.supplied-map .terrain-face{fill:transparent;stroke:transparent;stroke-width:2.5}
+.supplied-map .map-tile.reachable .terrain-face{stroke:#fff59a;stroke-width:2;stroke-dasharray:3 3}
+.supplied-map .map-tile.queued .terrain-face{stroke:#ef5e38;stroke-width:4;stroke-dasharray:none}
+.supplied-map .map-tile.here .terrain-face{stroke:#174e7a;stroke-width:3;stroke-dasharray:none}
+.supplied-map .map-tile:hover .terrain-face,.supplied-map .map-tile:focus-visible .terrain-face{stroke:#205b86;stroke-width:3;stroke-dasharray:none}
+.supplied-map .map-tile.visited:not(.queued):not(.here) .terrain-face,.supplied-map .map-tile.destination:not(.queued) .terrain-face,.supplied-map .map-tile.departure:not(.queued) .terrain-face{stroke:transparent}
+.route-numbers{pointer-events:none}.route-numbers circle{fill:#fff9df;stroke:#e65c37;stroke-width:2}.route-numbers text{fill:#173e4a;text-anchor:middle;font:700 9px system-ui,sans-serif}
+.cap-label{fill:#194369;paint-order:stroke;stroke:#fff;stroke-width:2px;font:700 11px system-ui,sans-serif;text-anchor:middle}
+.route-buttons{display:flex;gap:8px;flex-wrap:wrap}.route-planner small{line-height:1.4}
+.equipment-grid,.card-choice-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:18px 0}.equipment-choice,.card-choice-list article{display:flex;flex-direction:column;gap:8px;padding:16px;border:1px solid #bbd2c9;border-radius:12px;background:#fffdf7;text-align:left}.equipment-choice.owned{border:2px solid #317857;background:#e7f4e7}.equipment-choice strong{font-size:16px}.equipment-choice small{color:#456b62}.card-choice-list article button{margin-top:auto}
 .cell-details{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#fffdf5;border:1px solid #d4ddce;border-radius:12px;padding:12px 15px;margin-top:10px;min-height:68px}
 .cell-details strong,.cell-details small{display:block}
 .cell-details small{margin-top:3px;color:#68776c;font-size:12px}

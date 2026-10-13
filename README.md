@@ -1,46 +1,19 @@
-# L’Aventure à Vélo — simulateur de jeu de société
+# L’Aventure à Vélo
 
-Jeu local de 1 à 6 joueurs : plateau Europe à 464 hexagones ou construction avec 48 tuiles. Un tour individuel représente une journée. Les vélos, inventaires, ressources, parcours et objectifs sont indépendants ; plateau, réseau et règles sont communs. Chaque joueur tire trois Voyages puis en choisit un.
+Jeu de société local pour 1 à 6 joueurs. Le mode Europe utilise la nouvelle image fournie, calée sur une unique grille de plus de 750 hexagones égaux. Le mode Tuiles reste disponible.
 
-## Lancer
+## Jouer
 
-Aucune dépendance à installer. Node 18+ pour les tests, Python 3 pour le serveur :
+Ouvrir le [site hébergé](https://aventure-velo-philippe.fifeetch.chatgpt.site/) ou démarrer un serveur statique sur `dist/`. Une partie est enregistrée dans le navigateur ; Paramètres permet de l’exporter/importer en JSON. Le site ne peut pas écrire directement sur `D:` depuis le navigateur.
 
-```
-npm test
-npm start
-```
+Après le choix du vélo (4 ou 8 emplacements), chaque joueur achète son matériel sur son budget de départ. La tente permet le bivouac ; le réchaud permet de manger hors ville ou auberge ; le kit répare une crevaison. Les prix et emplacements, comme les coûts de terrain, sont modifiables dans Règles. La moyenne montagne est une catégorie distincte (2 énergie par défaut), la haute montagne coûte 3 ; plaine/côte 1 et ville 0.
 
-Ouvrir http://localhost:5173. Sur mobile, utiliser le lien hébergé HTTPS. Le service worker met les fichiers en cache ; l’installation dépend des capacités du navigateur et les sauvegardes restent propres à chaque navigateur.
+Sur la carte, sélectionner successivement les cases voisines d’un itinéraire, puis cliquer « Effectuer le parcours ». L’énergie est déduite pour chaque case, dans l’ordre, avec un maximum de cinq cases par journée. Les ferries se prennent depuis leurs ports : destination affichée, confirmation, tarif modifiable (3 pièces par défaut) et fin de journée. Le départ Copenhague → Oslo est opérationnel.
 
-## Architecture et décisions
+Chaque joueur commence avec trois cartes de jeu, distinctes de sa carte Voyage. À la fin de **chaque** journée, y compris travail, hébergement ou ferry, il pioche deux cartes, en garde une et défausse l’autre. Les cartes se jouent pendant son tour. « Crevaison » vise un autre joueur : à son prochain tour, il répare avec un kit ou retourne à sa dernière ville et perd cette journée. Travail, bivouac, camping et hôtel consomment une journée ; leurs durées restent réglables.
 
-`dist/engine.js` conserve le générateur, les routes et les mécanismes du prototype. `dist/simulator.js` réutilise ces mécanismes pour la partie multijoueur (sauvegarde version 2). `dist/rules.js` centralise les valeurs Classiques et leur validation. `dist/app.js` gère l’interface et la persistance. `style.css` conserve l’identité visuelle et `sw.js` le cache hors connexion. L’ancienne interface solo reste comme référence dans `scripts/legacy-app.js`, sans être chargée par le jeu.
+## Sources et vérification
 
-JavaScript natif modulaire a été retenu pour une première version sans installation de dépendances, plutôt que React/TypeScript recommandés. Aucun backend ni Phaser nécessaire. Le plateau se déplace par défilement tactile et se zoome avec boutons. Pas de zoom par pincement pour cette version.
+`scripts/build-europe-board.py` relève les cases de `dist/assets/europe/nouvelle-carte.png` et régénère `board-data.js`. `dist/europe.js` ajoute les villes et liaisons, `dist/simulator.js` contrôle les règles, `dist/cards.js` décrit les cartes, et `dist/app.js` gère l’interface. Les anciennes sauvegardes Europe sont adaptées à la nouvelle grille ; une copie préalable est conservée dans le navigateur sous `velo-save-before-new-map`.
 
-Par défaut : maximum 5 cases par journée (réglable de 1 à 5), plaine/côte 1 énergie, montagne/col 2, ville 0. Aucun dé ni pénalité cachée. Travail et repos occupent la journée entière : pas de déplacement ni pose de tuile ce jour-là. Bivouac gratuit avec tente, camping et hôtel payants. Les durées peuvent être réglées entre 1 et 30 jours ; l’ordre des joueurs suit leur prochain jour disponible. Une seule carte est tirée à la fin de chaque journée de voyage, sur le terrain final, avec 50 % négatifs / 30 % positifs / 20 % défis. Travail et repos n’en tirent pas par défaut ; deux options permettent de les activer. Le joueur suivant attend la résolution. Les points de première visite ne sont pas répétés et un objectif n’est primé qu’une fois. La capacité du Gravel est 4, celle du vélo de Randonnée 8. Une main bloquée conserve le secours de routes du prototype.
-
-Le bouton « ⚙️ Règles » permet de modifier pendant la partie les coûts, départs, salaire, repos, repas, vélos, inventaires, équipements, probabilités, effets et coûts des défis, score et victoire. Validation atomique : une configuration incorrecte ne change pas la partie. Les changements concernent les prochaines actions ; ressources déjà détenues et carte Événement déjà tirée sont conservées. Les valeurs de départ concernent uniquement les nouvelles parties. Classique est toujours disponible et les profils Personnalisés sont sauvegardables. Le classement utilise les points Aventure ; victoire par premier/tous les objectifs, seuil de points ou nombre de jours.
-
-La sauvegarde automatique et le bouton Sauvegarder utilisent le navigateur. Paramètres permet d’exporter/importer un JSON complet (règles, joueurs, journée en cours, carte en attente, historique et statistiques), à conserver notamment dans le dossier choisi sur D:. Le site web n’écrit pas directement sur ce disque. Les anciens jeux solo sont migrés sans perdre ressources ou historique d’objectif, avec une copie navigateur `velo-save-before-multiplayer`. L’import conserve la partie remplacée sous `velo-save-before-import`.
-
-## Vérification
-
-Tests automatisés des connexions, rotations, déplacements, coûts, événements, équipements, score, sérialisation et simulation de parties complètes. L’apparence et l’installation Android nécessitent encore une validation sur appareil réel.
-
-
-## Deux versions
-L’accueil propose Plateau Europe ou Tuiles, puis les joueurs, leurs vélos et trois cartes par joueur. Le plateau utilise une carte hexagonale simple définie dans `dist/europe.js`. Les reliefs sont simplifiés : ce n’est pas une carte de navigation. Les ferries sont en pointillés. En Tuiles, les villes de départ sont préposées sur le plateau commun ; les villes d’arrivée rejoignent le paquet partagé, au besoin en remplaçant une plaine, sans dépasser 48 tuiles. Le mode et le réseau sont sauvegardés ; les anciennes sauvegardes sans `mode` restent en Tuiles.
-
-Les tests vérifient une réalisation effective des cinq Voyages sur le plateau, l’absence de pose, les déplacements et la reprise du mode. L’interface a un test de navigation sans navigateur ; l’affichage réel et le tactile sur téléphone restent à vérifier.
-
-## Plateau hexagonal — base de travail
-
-Le plateau Europe utilise une seule grille axiale de 464 hexagones réguliers de rayon 24 unités. `dist/europe.js` définit la géométrie et les six voisins terrestres ; `dist/europe-map.js` dessine ces mêmes hexagones comme cibles interactives. Les villes remplacent une case de la grille et les littoraux ne découpent pas les cases. Les ferries historiques constituent les seules liaisons à distance. Les terrains restent simples afin de valider la base avant une nouvelle illustration.
-
-`dist/europe-legacy.js` conserve la géographie et le générateur précédent comme référence de migration. Les sauvegardes de plateau antérieures sont converties en version de carte 3. Ressources, événements, score et historique des terrains des cartes Voyage sont conservés ; la position rejoint l’hexagone le plus proche. Le navigateur garde aussi une copie sous `velo-save-before-hexagones` avant conversion. Le mode Tuiles conserve son fonctionnement.
-
-Une case s’inspecte au clic, au toucher ou avec Entrée/Espace ; « Rouler ici » confirme le déplacement quand il est permis. Les voisins accessibles ont un contour doré, les visites un contour vert pointillé, la sélection un contour bleu. Le zoom agrandit la même géométrie pour toute la carte. La mer ne constitue pas une case jouable.
-
-Régénérer la vignette SVG avec `node scripts/prepare-europe.mjs`. Les tests couvrent les dimensions identiques de toutes les cases, l’adjacence, la connectivité, les cinq Voyages, les étiquettes et la conversion de sauvegardes. Un contrôle navigateur à 390 × 844 vérifie la mise en page mobile ; cela ne remplace pas un essai sur appareil Android réel.
+Exécuter les tests récents avec `node --test tests/new-map-game.test.js`. Certains tests historiques des événements automatiques et de l’ancienne carte décrivent volontairement l’ancienne version et doivent encore être réécrits avant qu’un `npm test` global ne repasse au vert. L’essai visuel sur un téléphone réel reste également à faire.
