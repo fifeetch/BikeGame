@@ -2,7 +2,7 @@ import * as E from './engine.js';
 import * as S from './simulator.js';
 import {CLASSIC,COLORS,clone,validateRules,setPath} from './rules.js';
 import {drawVoyages,progress} from './voyages.js';
-import {playableMap} from './europe-map.js?v=france-textures-2';
+import {playableMap} from './europe-map.js?v=classic-restored-1';
 import {artFor} from './tile-art.js';
 import {MAP_WIDTH,MAP_HEIGHT} from './europe.js';
 import {cardById} from './cards.js';

@@ -72,10 +72,6 @@ summary{cursor:pointer;font-weight:700;min-height:32px}
 .rider-base{fill:#fff9e8;stroke:#264d40;stroke-width:1.5}
 .map-ferries path{fill:none;stroke:#668e9f;stroke-width:2.5;stroke-dasharray:5 7}
 .supplied-map .terrain-face{stroke:#fff8e7;stroke-width:1.15;stroke-linejoin:round}
-.supplied-map .terrain-texture{pointer-events:none}
-.supplied-map .france-textured .terrain-face{fill:none!important}
-.supplied-map .france-textured .terrain-mark{opacity:.28}
-.supplied-map .france-textured .terrain-face{stroke:#fff8e7;stroke-width:1.15}
 .supplied-map .terrain-mer .terrain-face{fill:#176f9b}
 .supplied-map .terrain-plaine .terrain-face{fill:#a9c47b}
 .supplied-map .terrain-moyenne_montagne .terrain-face{fill:#e5bd69}
