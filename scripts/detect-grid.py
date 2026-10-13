@@ -1,64 +1,66 @@
-"""Locate equal-size hex centres from the actual borders in the supplied map."""
-from PIL import Image
-import numpy as np
-import math
+"""Locate hex centres from the coloured tile interiors of the supplied map."""
 from pathlib import Path
-import re
 import json
+import math
+import re
+import runpy
 
-image=Image.open('dist/assets/europe/nouvelle-carte.png').convert('RGB')
-rgb=np.asarray(image,dtype=np.int16)
-light=rgb.min(axis=2)
-radius=25/1.5
-offsets=[]
-for i in range(6):
- a=(i*60-90)*math.pi/180;b=((i+1)*60-90)*math.pi/180
- for t in (.25,.5,.75):
-  offsets.append((round(radius*(math.cos(a)*(1-t)+math.cos(b)*t)),round(radius*(math.sin(a)*(1-t)+math.sin(b)*t))))
-edge_sum=np.zeros_like(light,dtype=np.int32)
-edge_hits=np.zeros_like(light,dtype=np.int16)
-for dx,dy in offsets:
- src=light[max(0,dy):light.shape[0]+min(0,dy),max(0,dx):light.shape[1]+min(0,dx)]
- dest_y=slice(max(0,-dy),light.shape[0]-max(0,dy))
- dest_x=slice(max(0,-dx),light.shape[1]-max(0,dx))
- edge_sum[dest_y,dest_x]+=src
- edge_hits[dest_y,dest_x]+=src>140
-score=edge_sum/len(offsets)-light
-score[edge_hits<10]=-1000
-score[:30,:]=-1000;score[770:,:]=-1000;score[:,:25]=-1000;score[:,1220:]=-1000
-def kind(x,y):
- # Evaluate a ring, not the centre, which may be hidden by a city icon.
+data=runpy.run_path('scripts/segment-grid.py')
+components=data['components']
+rgb=data['rgb']
+h,w=rgb.shape[:2]
+names={1:'cote',2:'plaine',3:'moyenne_montagne',4:'montagne'}
+seeds=[]
+for area,x,y,x0,y0,x1,y1,label in components:
+ if 120<=area<=850 and 15<=x1-x0<=36 and 15<=y1-y0<=38:
+  seeds.append((area,x,y,names[label]))
+centres=[]
+for _,x,y,kind in sorted(seeds,reverse=True):
+ if all(math.hypot(x-a,y-b)>=23 for a,b,_ in centres):centres.append([x,y,kind])
+
+def terrain_at(x,y):
  votes={}
- for dx,dy in [(-7,-6),(7,-6),(-7,6),(7,6),(-3,-10),(3,-10),(-3,10),(3,10)]:
-  r,g,b=[int(v) for v in rgb[y+dy,x+dx]]
-  k=None
-  if b>g+17 and b>r+45 and g>95:k='cote'
-  elif g>r+9 and g>b+24 and r>70:k='plaine'
-  elif r>g+9 and g>b+23 and r>125:k='moyenne_montagne'
-  elif max(r,g,b)<180 and min(r,g,b)>55 and max(r,g,b)-min(r,g,b)<50:k='montagne'
-  if k:votes[k]=votes.get(k,0)+1
- return max(votes,key=votes.get) if votes and max(votes.values())>=3 else None
-order=np.argsort(score.ravel())[::-1]
-chosen=[]
-occupied=np.zeros_like(light,dtype=np.uint8)
-for idx in order:
- y,x=divmod(int(idx),light.shape[1])
- if score[y,x]<30 or len(chosen)>=1100:break
- if occupied[y,x]:continue
- k=kind(x,y)
- if not k:continue
- chosen.append((x,y,k,round(float(score[y,x]),1)))
- # A real tile's closest neighbour is about 29 px away.
- yy,xx=np.ogrid[max(0,y-23):min(light.shape[0],y+24),max(0,x-23):min(light.shape[1],x+24)]
- occupied[max(0,y-23):min(light.shape[0],y+24),max(0,x-23):min(light.shape[1],x+24)][(xx-x)**2+(yy-y)**2<23**2]=1
+ for radius in (6,9):
+  for i in range(12):
+   xx=round(x+radius*math.cos(i*math.pi/6))
+   yy=round(y+radius*math.sin(i*math.pi/6))
+   if not (0<=xx<w and 0<=yy<h):continue
+   r,g,b=map(int,rgb[yy,xx]);label=0
+   if b>g+12 and b>r+60 and g>115 and r<135:label=1
+   elif g>r+4 and g>b+20 and r>95 and b<125:label=2
+   elif r>g+12 and g>b+17 and r>160 and b<125:label=3
+   elif max(r,g,b)-min(r,g,b)<60 and max(r,g,b)<200 and min(r,g,b)>50:label=4
+   if label:votes[label]=votes.get(label,0)+1
+ if not votes:return (0,None)
+ label=max(votes,key=votes.get)
+ return votes[label],names[label]
+
+directions=((29,0),(-29,0),(14.5,25),(-14.5,25),(14.5,-25),(-14.5,-25))
+for _ in range(5):
+ additions=[]
+ for sx,sy,_kind in centres:
+  for dx,dy in directions:
+   px,py=round(sx+dx),round(sy+dy)
+   if not (25<px<w-25 and 30<py<770):continue
+   if any(math.hypot(px-x,py-y)<21 for x,y,_ in centres+additions):continue
+   candidates=[]
+   for yy in range(py-5,py+6):
+    for xx in range(px-5,px+6):
+     score,kind=terrain_at(xx,yy)
+     if kind:candidates.append((score,-math.hypot(xx-px,yy-py),xx,yy,kind))
+   if not candidates:continue
+   score,_,x,y,kind=max(candidates)
+   if score>=12 and all(math.hypot(x-a,y-b)>=23 for a,b,_ in centres+additions):
+    additions.append([x,y,kind])
+ if not additions:break
+ centres+=additions
+
 source=Path('dist/europe.js').read_text(encoding='utf8')
 anchors={m.group(1) or m.group(2):(int(m.group(3)),int(m.group(4))) for m in re.finditer(r"(?:'([^']+)'|([A-Za-zÀ-ÿ-]+)):\[(\d+),(\d+)\]",source)}
-for name,(x,y) in anchors.items():
- i=min(range(len(chosen)),key=lambda i:(chosen[i][0]-x)**2+(chosen[i][1]-y)**2)
- nearest=math.hypot(chosen[i][0]-x,chosen[i][1]-y)
- if nearest<18:
-  chosen[i]=(x,y,'ville' if name!='Cap Nord' else 'cote',chosen[i][3],name)
- else:chosen.append((x,y,'ville' if name!='Cap Nord' else 'cote',0,name))
-cells=[{'x':x,'y':y,'type':kind,'name':name if len(cell)>4 else ''} for cell in sorted(chosen,key=lambda c:(c[1],c[0])) for x,y,kind in [cell[:3]] for name in [cell[4] if len(cell)>4 else '']]
+city=[[x,y,'cote' if name=='Cap Nord' else 'ville',name] for name,(x,y) in anchors.items()]
+centres=[c for c in centres if all(math.hypot(c[0]-x,c[1]-y)>=23 for x,y,_,_ in city)]
+cells=[{'x':x,'y':y,'type':kind,'name':''} for x,y,kind in centres]
+cells += [{'x':x,'y':y,'type':kind,'name':name} for x,y,kind,name in city]
+cells.sort(key=lambda c:(c['y'],c['x']))
 Path('dist/assets/europe/board-data.js').write_text('export const MAP_CELLS='+json.dumps(cells,ensure_ascii=False,separators=(',',':'))+';\n',encoding='utf8')
-print('aligned cells',len(cells),'named cities',sum(bool(c['name']) for c in cells))
+print('aligned cells',len(cells),'named cities',len(city))

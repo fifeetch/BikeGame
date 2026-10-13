@@ -1,6 +1,6 @@
 import {MAP_CELLS} from './assets/europe/board-data.js';
 
-export const MAP_VERSION=5;
+export const MAP_VERSION=7;
 export const MAP_WIDTH=1261, MAP_HEIGHT=842, HEX_RADIUS=25/1.5;
 export const HEX_DIRECTIONS=[[1,0],[1,1],[0,1],[-1,0],[-1,-1],[0,-1]];
 export const hexKey=(q,r)=>`hex-${q}-${r}`;
@@ -18,9 +18,16 @@ export function europeBoard(from,to){
  const link=(a,b,ferry=false)=>{if(!a||!b||a===b||a.links.includes(b.key))return;a.links.push(b.key);b.links.push(a.key);edges.push({a:a.key,b:b.key,ferry});};
  // The supplied artwork has small local shifts: use the centres measured from
  // its visible borders. Every hit polygon keeps the same regular size.
+ const neighbours=[];
  for(let i=0;i<nodes.length;i++)for(let j=i+1;j<nodes.length;j++){
   const a=nodes[i],b=nodes[j],d=Math.hypot(a.x-b.x,a.y-b.y);
-  if(d>=22&&d<=35)link(a,b);
+  if(d>=22&&d<=(a.name||b.name?39:35))neighbours.push({a,b,d});
+ }
+ neighbours.sort((x,y)=>x.d-y.d);
+ const landDegree=new Map(nodes.map(t=>[t.key,0]));
+ for(const {a,b} of neighbours){
+  if(landDegree.get(a.key)>=6||landDegree.get(b.key)>=6)continue;
+  link(a,b);landDegree.set(a.key,landDegree.get(a.key)+1);landDegree.set(b.key,landDegree.get(b.key)+1);
  }
  // Port-to-port crossings are separate actions, never ordinary land steps.
  for(const [a,b] of [['Londres','Bruxelles'],['Copenhague','Oslo'],['Venise','Zagreb'],['Thessalonique','Istanbul']])link(byName[a],byName[b],true);

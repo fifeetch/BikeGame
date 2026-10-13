@@ -9,22 +9,35 @@ const match=()=>S.createMatch(roster,'plateau',CLASSIC,123);
 
 test('supplied map has one regular hit hex per cell, medium mountain, and city anchors',()=>{
  const {board,edges}=europeBoard('Paris','Istanbul'),cells=Object.values(board);
- assert.equal(MAP_VERSION,5);assert(cells.length>700);
+ assert.equal(MAP_VERSION,7);assert(cells.length>700);
  assert(cells.some(t=>t.type==='moyenne_montagne'));
  assert.equal(board['city-Copenhague'].name,'Copenhague');
  for(const t of cells){const v=hexVertices(t);assert.equal(v.length,6);for(const [x,y] of v)assert(Math.abs(Math.hypot(x-t.x,y-t.y)-HEX_RADIUS)<1e-8);}
+ for(let i=0;i<cells.length;i++)for(let j=i+1;j<cells.length;j++){
+  assert(Math.hypot(cells[i].x-cells[j].x,cells[i].y-cells[j].y)>=23,
+   `Zones superposées : ${cells[i].key} et ${cells[j].key}`);
+ }
  assert(edges.some(e=>e.ferry&&[e.a,e.b].includes('city-Oslo')&&[e.a,e.b].includes('city-Copenhague')));
  for(const e of edges.filter(e=>!e.ferry)){
   const a=board[e.a],b=board[e.b],d=Math.hypot(a.x-b.x,a.y-b.y);
-  assert(d>=22&&d<=35,`${e.a}–${e.b}: ${d}`);
+  assert(d>=22&&d<=(a.name||b.name?39:35),`${e.a}–${e.b}: ${d}`);
  }
+ for(const t of cells)assert(t.links.filter(k=>!edges.some(e=>e.ferry&&((e.a===t.key&&e.b===k)||(e.b===t.key&&e.a===k)))).length<=6,t.key+' a trop de voisins terrestres');
  assert.deepEqual([board['city-Barcelone'].x,board['city-Barcelone'].y],[310,585]);
+ for(const name of ['Barcelone','Skopje','Athènes'])assert(board['city-'+name].links.length>=2,name+' ne permet pas de sortir de la ville');
  const seen=new Set(['city-Paris']),todo=['city-Paris'];while(todo.length){for(const k of board[todo.shift()].links)if(!seen.has(k)){seen.add(k);todo.push(k);}}
  for(const t of cells.filter(t=>t.name))assert(seen.has(t.key),t.name+' is isolated');
 });
 test('setup equipment respects prices, capacity and grants three cards',()=>{
  const m=match(),p=S.player(m);assert.equal(p.money,1);assert.equal(S.inventorySpace(m),4);assert.equal(p.cardHand.length,3);
  assert.throws(()=>S.createMatch([{...roster[0],items:['tente','duvet','kit']}],'plateau',CLASSIC,1));
+});
+test('a saved Europe game refreshes its click targets without losing the rider',()=>{
+ const old=match(),p=S.player(old);old.mapVersion=5;
+ const restored=S.load(S.serialize(old));
+ assert.equal(restored.mapVersion,MAP_VERSION);
+ assert.equal(S.player(restored).pos,p.pos);
+ assert.equal(Object.keys(restored.board).length,Object.keys(europeBoard('Paris','Istanbul').board).length);
 });
 test('route is atomic, limited to five, excludes ferry, and pays each cell',()=>{
  const m=match(),p=S.player(m),a=S.moves(m)[0];assert(a);
