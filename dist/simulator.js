@@ -1,5 +1,5 @@
 import * as E from './engine.js';
-import {europeBoard} from './europe.js';
+import {europeBoard,MAP_VERSION} from './europe.js';
 import {voyages,progress} from './voyages.js';
 import {CLASSIC,COLORS,clone,validateRules} from './rules.js';
 import {CARDS,cardById} from './cards.js';
@@ -99,7 +99,7 @@ export function load(text){
  const ids=new Set();for(const p of raw.players){if(!raw.board[p.pos]||ids.has(p.id)||typeof p.id!=='string'||typeof p.name!=='string'||!/^#[0-9a-f]{6}$/i.test(p.color)||!voyages.some(v=>v.id===p.voyage)||!raw.rules.bikes[p.bike]||!Array.isArray(p.items)||p.items.some(i=>!raw.rules.equipment[i])||!Array.isArray(p.visited)||!Array.isArray(p.travel)||!Array.isArray(p.travelHistory)||!Array.isArray(p.log)||!p.stats||!count(p.availableDay)||p.availableDay<1||!['energy','food','money','points'].every(k=>Number.isFinite(p[k])&&p[k]>=0))throw Error('Joueur invalide dans la sauvegarde.');ids.add(p.id);}
  if(raw.phase==='event'&&!raw.event||raw.event&&(raw.phase!=='event'||!['negative','positive','challenge'].includes(raw.event.category)||!raw.event.effect||Object.entries(raw.event.effect).some(([k,v])=>!['energy','food','money','points'].includes(k)||!Number.isFinite(v))))throw Error('Événement sauvegardé invalide.');
  if(raw.mode==='plateau'&&(!Array.isArray(raw.edges)||raw.edges.some(e=>!raw.board[e.a]||!raw.board[e.b])))throw Error('Liaisons invalides.');
- if(raw.mode==='plateau'&&raw.mapVersion<4){const map=europeBoard(voyages[0].from,voyages[0].to),oldBoard=raw.board,nodes=Object.values(map.board),remap=k=>{const old=oldBoard[k];if(!old)return map.start;if(old.name&&map.board['city-'+old.name])return 'city-'+old.name;return nodes.reduce((best,t)=>Math.hypot(t.x-old.x*1261/1536,t.y-old.y*842/1024)<Math.hypot(best.x-old.x*1261/1536,best.y-old.y*842/1024)?t:best).key;};for(const p of raw.players){p.pos=remap(p.pos);p.visited=[...new Set(p.visited.map(remap))];p.travel=p.travel.map(remap);p.travelHistory=p.travelHistory.map(h=>({...h,boardKey:remap(h.boardKey)}));}raw.board=map.board;raw.edges=map.edges;raw.mapVersion=4;}
+ if(raw.mode==='plateau'&&raw.mapVersion<MAP_VERSION){const map=europeBoard(voyages[0].from,voyages[0].to),oldBoard=raw.board,nodes=Object.values(map.board),scaleX=raw.mapVersion<4?1261/1536:1,scaleY=raw.mapVersion<4?842/1024:1,remap=k=>{const old=oldBoard[k];if(!old)return map.start;if(old.name&&map.board['city-'+old.name])return 'city-'+old.name;return nodes.reduce((best,t)=>Math.hypot(t.x-old.x*scaleX,t.y-old.y*scaleY)<Math.hypot(best.x-old.x*scaleX,best.y-old.y*scaleY)?t:best).key;};for(const p of raw.players){p.pos=remap(p.pos);p.visited=[...new Set(p.visited.map(remap))];p.travel=p.travel.map(remap);p.travelHistory=p.travelHistory.map(h=>({...h,boardKey:remap(h.boardKey)}));}raw.board=map.board;raw.edges=map.edges;raw.mapVersion=MAP_VERSION;}
  raw.cardVersion=1;raw.cardChoices||=[];for(const p of raw.players){p.cardHand||=[];p.flat=!!p.flat;p.lastCity=raw.board[p.lastCity]?p.lastCity:(p.visited.findLast(k=>raw.board[k]?.type==='ville')||p.pos);}
  return raw;
 }

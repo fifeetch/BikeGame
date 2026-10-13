@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {europeBoard,MAP_VERSION,HEX_RADIUS,hexVertices,axialDistance} from '../dist/europe.js';
+import {europeBoard,MAP_VERSION,HEX_RADIUS,hexVertices} from '../dist/europe.js';
 import * as S from '../dist/simulator.js';
 import {CLASSIC,clone} from '../dist/rules.js';
 
@@ -9,12 +9,16 @@ const match=()=>S.createMatch(roster,'plateau',CLASSIC,123);
 
 test('supplied map has one regular hit hex per cell, medium mountain, and city anchors',()=>{
  const {board,edges}=europeBoard('Paris','Istanbul'),cells=Object.values(board);
- assert.equal(MAP_VERSION,4);assert(cells.length>700);
+ assert.equal(MAP_VERSION,5);assert(cells.length>700);
  assert(cells.some(t=>t.type==='moyenne_montagne'));
  assert.equal(board['city-Copenhague'].name,'Copenhague');
  for(const t of cells){const v=hexVertices(t);assert.equal(v.length,6);for(const [x,y] of v)assert(Math.abs(Math.hypot(x-t.x,y-t.y)-HEX_RADIUS)<1e-8);}
  assert(edges.some(e=>e.ferry&&[e.a,e.b].includes('city-Oslo')&&[e.a,e.b].includes('city-Copenhague')));
- for(const e of edges.filter(e=>!e.ferry))assert.equal(axialDistance(board[e.a],board[e.b]),1);
+ for(const e of edges.filter(e=>!e.ferry)){
+  const a=board[e.a],b=board[e.b],d=Math.hypot(a.x-b.x,a.y-b.y);
+  assert(d>=22&&d<=35,`${e.a}–${e.b}: ${d}`);
+ }
+ assert.deepEqual([board['city-Barcelone'].x,board['city-Barcelone'].y],[310,585]);
  const seen=new Set(['city-Paris']),todo=['city-Paris'];while(todo.length){for(const k of board[todo.shift()].links)if(!seen.has(k)){seen.add(k);todo.push(k);}}
  for(const t of cells.filter(t=>t.name))assert(seen.has(t.key),t.name+' is isolated');
 });

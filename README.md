@@ -1,6 +1,6 @@
 # L’Aventure à Vélo
 
-Jeu de société local pour 1 à 6 joueurs. Le mode Europe utilise la nouvelle image fournie, calée sur une unique grille de plus de 750 hexagones égaux. Le mode Tuiles reste disponible.
+Jeu de société local pour 1 à 6 joueurs. Le mode Europe utilise la nouvelle image fournie, avec plus de 700 hexagones de même taille dont les centres sont relevés sur les cases visibles de la carte. Le mode Tuiles reste disponible.
 
 ## Jouer
 
