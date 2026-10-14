@@ -131,16 +131,16 @@ def boat(w,rng):
         d.polygon([(W_*0.48,H_*0.22),(W_*0.48,H_*0.66),(W_*0.14,H_*0.66)],fill=(232,226,214,255))
     return sprite(w,h,fn)
 # ---------- placement ----------
-def run(img,P):
-    W,H=img.size
+def place(P):
     fld=P['fld']; forest=P['forest']
     Fx=B.F
     land_at=lambda x,y: fld[min(int(y*Fx),fld.shape[0]-1),min(int(x*Fx),fld.shape[1]-1)]>0.56
     forest_at=lambda x,y: forest[min(int(y*Fx),forest.shape[0]-1),min(int(x*Fx),forest.shape[1]-1)]
-    items=[]   # (y_feet, sprite, x_left, y_top)
+    items=[]   # (y_feet, sprite, x_left, y_top, index_cellule)
+    cur=[-1]
     S_=B.S*SC; Rr=B.R*SC
     def add(sp,fx,fy):  # fx,fy = point des pieds en px
-        items.append((fy,sp,int(fx-sp.width/2),int(fy-sp.height*0.92)))
+        items.append((fy,sp,int(fx-sp.width/2),int(fy-sp.height*0.92),cur[0]))
     def inside_hex(c,jx,jy,k=0.78):
         return abs(jx)<S_*0.5*k and abs(jy)<Rr*k*0.9
     def poisson(r,n,dmin,kx=0.40,ky=0.36,oy=0.0,tries=60):
@@ -150,7 +150,8 @@ def run(img,P):
             x=r.uniform(-kx,kx); y=r.uniform(-ky,ky)+oy
             if all((x-px)**2+(y-py)**2>dmin**2 for px,py in pts): pts.append((x,y))
         return pts
-    for c in B.cells:
+    for ci,c in enumerate(B.cells):
+        cur[0]=ci
         cx,cy=c['x']*SC,c['y']*SC; r=rnd(c)
         cl=c['cls']
         if cl=='montagne':
@@ -188,16 +189,23 @@ def run(img,P):
         elif cl=='ville':
             halo=Image.new('RGBA',(int(S_*1.5),int(S_*1.5)),(0,0,0,0)); hd=ImageDraw.Draw(halo)
             hd.ellipse([S_*0.14,S_*0.14,S_*1.36,S_*1.36],fill=(226,210,174,170)); halo=halo.filter(ImageFilter.GaussianBlur(S_*0.10))
-            items.append((cy-1000,halo,int(cx-halo.width/2),int(cy-halo.height/2)))
+            items.append((cy-1000,halo,int(cx-halo.width/2),int(cy-halo.height/2),ci))
             hs=[(-0.30,-0.12),(0.12,-0.22),(0.32,0.04),(-0.12,0.12),(0.16,0.24),(-0.36,0.22),(0.0,-0.02)]
             r.shuffle(hs)
             for i,(dx,dy) in enumerate(hs[:r.randint(5,7)]):
                 add(house(S_*r.uniform(0.28,0.36),r),cx+dx*S_,cy+dy*S_+S_*0.18)
             add(church(S_*0.24,r),cx+r.uniform(-0.05,0.08)*S_,cy-0.04*S_+S_*0.18)
     items.sort(key=lambda t:t[0])
+    return items
+def run(img,P):
+    W,H=img.size
+    items=place(P)
     out=img.convert('RGBA')
-    for fy,sp,x,y in items:
+    for fy,sp,x,y,ci in items:
         out.alpha_composite(sp,(x,y)) if (x>=0 and y>=0 and x+sp.width<=W and y+sp.height<=H) else out.paste(sp,(x,y),sp)
+    return boats(out,P)
+def boats(out,P):
+    fld=P['fld'];Fx=B.F;S_=B.S*SC
     # bateaux au large
     rng=random.Random(5)
     placed=0;tries=0

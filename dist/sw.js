@@ -1,6 +1,6 @@
-const CACHE='aventure-velo-v43-terrain-art';
+const CACHE='aventure-velo-v44-terrain-dyn';
 const FILES=['./','./index.html','./style.css','./app.js','./card-editor.js','./event-cards.js','./event-card-engine.js','./event-card-ui.js','./engine.js','./simulator.js','./europe.js','./europe-map.js','./map-library.js','./cards.js','./rules.js','./voyages.js','./tile-art.js','./assets/europe/board-data.js','./assets/europe/nouvelle-carte.png','./assets/voyages/cards.png','./assets/voyages/atlantique-alpes.png','./assets/voyages/routes-est.png','./assets/voyages/balkans.png','./manifest.json','./icon.svg','./icon-192.png','./icon-512.png'];
-FILES.push('./style.css?v=terrain-art-1','./app.js?v=terrain-art-1','./board-renderer.js','./board-renderer-svg.js','./board-hit-test.js','./terrain-art.js','./assets/terrain/europe-terrain.webp');
+FILES.push('./style.css?v=terrain-art-1','./app.js?v=terrain-art-1','./board-renderer.js','./board-renderer-svg.js','./board-hit-test.js','./terrain-art.js','./terrain-dynamic.js','./terrain-patches.js','./assets/terrain/europe-terrain.webp','./assets/terrain/europe-ground.webp','./assets/terrain/patches.webp');
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(FILES)));self.skipWaiting();});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));self.clients.claim();});
 self.addEventListener('fetch',e=>{if(e.request.method==='GET'&&new URL(e.request.url).origin===self.location.origin)e.respondWith(fetch(e.request).catch(()=>caches.match(e.request)));});

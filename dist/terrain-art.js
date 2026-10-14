@@ -1,8 +1,10 @@
 // Fond de terrain illustré : UNE seule image posée sous le plateau SVG.
 // Les hexagones SVG restent les cases de déplacement (clics, surbrillances, règles du jeu).
 // L'image a été fabriquée à partir de la carte d'origine (MAP_CELLS). Si la carte est modifiée
-// dans l'éditeur, les cases changées retombent automatiquement sur l'ancien dessin à pictogrammes.
+// dans l'éditeur, terrain-dynamic.js redessine en direct les cases changées dans le même style peint
+// (en attendant que ses images soient chargées, ou si elles échouent, on retombe sur l'ancien dessin à pictogrammes).
 import {MAP_CELLS} from './assets/europe/board-data.js';
+import {createDynamicLayer} from './terrain-dynamic.js';
 
 export const TERRAIN_ART_SRC='./assets/terrain/europe-terrain.webp';
 export const TERRAIN_ART_STORAGE='aventure-velo-illustrations';
@@ -37,6 +39,7 @@ export function createTerrainLayer(container,{src=TERRAIN_ART_SRC}={}){
   get ready(){return ready;},
   get failed(){return failed;},
   onStatus(fn){listeners.add(fn);if(ready)fn(true);if(failed)fn(false);},
-  destroy(){img.remove();listeners.clear();}
+  dynamic:createDynamicLayer(container),
+  destroy(){img.remove();this.dynamic?.destroy();listeners.clear();}
  };
 }

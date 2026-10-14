@@ -34,3 +34,11 @@ Règles, moteur, sauvegardes, éditeur, cartes événement : aucun fichier du mo
 - **Données de la carte (non modifiées, à décider)** : dans les règles, l'Angleterre est reliée à la Belgique/France par une chaîne de cases « côte » (ex. Londres → Bruxelles par 3 cases de côte). Sur la planche d'origine, c'est de la mer avec un bac. Même chose pour l'Irlande–Angleterre. Visuellement c'est réglé ; pour que le jeu suive, il faudrait couper ces liaisons dans les données (cases → mer) et garder les bacs : cela change les règles, donc je ne l'ai pas fait sans ton accord.
 - Quelques cases isolées en bordure de la carte (droite et bas) viennent des données de la carte d'origine, pas de l'image.
 - Les routes ne sont pas encore dessinées (prévu : éditeur de routes, étape ultérieure).
+
+## Éditeur de carte : dessin en direct des cases modifiées
+
+Quand une case est changée dans l'éditeur (ou qu'on ouvre une carte personnalisée), le jeu ne retombe plus sur les anciens pictogrammes :
+il affiche le sol peint sans motifs (`europe-ground.webp`) et redessine, case par case, les arbres, collines, montagnes et villes
+à partir d'une planche de motifs (`patches.webp`, index dans `terrain-patches.js`). Une case de mer entourée de terre devient un petit lac,
+et les nouveaux rivages reçoivent une bande de sable. Ces fichiers ne sont chargés qu'à la première modification.
+Pour les régénérer : `cd tools/peinture && python3 atlas.py <dossier-de-sortie>`. Les règles du jeu et les types de terrain ne sont pas touchés.

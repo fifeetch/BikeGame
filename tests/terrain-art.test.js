@@ -58,3 +58,42 @@ test('the baked terrain image is shipped and listed for offline use', async()=>{
  assert(sw.includes('./assets/terrain/europe-terrain.webp')&&sw.includes('./terrain-art.js'));
  const info=await stat(new URL('../dist/assets/terrain/europe-terrain.webp',import.meta.url));assert(info.size>1e6);
 });
+
+// ---- redessin en direct des cases modifiées (éditeur, cartes personnalisées) ----
+import {planDynamic,staleCount,groundGroup} from '../dist/terrain-dynamic.js';
+import {CELL_PATCHES,GROUND_PATCHES} from '../dist/terrain-patches.js';
+const nodesOf=()=>Object.values(europeBoard('Paris','Istanbul').board).map(t=>({...t}));
+
+test('dynamic art: the untouched Europe needs no patch and draws every motif of the baked map', ()=>{
+ const nodes=nodesOf();assert.equal(staleCount(nodes),0);
+ const plan=planDynamic(nodes);assert.equal(plan.ground.length,0);assert.equal(plan.motifs.length,Object.keys(CELL_PATCHES).length);
+ assert(plan.motifs.every((m,i)=>i===0||plan.motifs[i-1].t.y<=m.t.y),'les motifs sont dessinés de haut en bas');
+});
+
+test('dynamic art: an edited cell gets ground of its new type and motifs of its new type', ()=>{
+ const nodes=nodesOf(),plain=nodes.find(t=>t.type==='plaine'&&!t.name);plain.type='montagne';
+ assert.equal(staleCount(nodes),1);const plan=planDynamic(nodes);
+ assert.equal(plan.ground.filter(g=>g.t===plain&&g.pass===0).length,1,'un morceau de sol de montagne');
+ assert(plan.motifs.some(m=>m.t===plain),'des montagnes sont dessinées sur la case');
+ assert.equal(groundGroup('col'),'montagne');assert.equal(groundGroup('ville'),'plaine');assert.equal(groundGroup('moyenne_montagne'),'colline');
+ assert.equal(groundGroup('mer',1),'mer0');assert.equal(groundGroup('mer',4),'mer1');assert.equal(groundGroup('mer',9),'mer2');
+});
+
+test('dynamic art: a sea cell surrounded by land becomes a small lake, and new coasts get a beach band', ()=>{
+ const nodes=nodesOf(),by=new Map(nodes.map(t=>[`${t.q},${t.r}`,t]));
+ const inland=nodes.find(t=>t.type==='plaine'&&[[1,0],[1,1],[0,1],[-1,0],[-1,-1],[0,-1]].every(([a,b])=>by.get(`${t.q+a},${t.r+b}`)?.type==='plaine'));
+ inland.type='mer';const plan=planDynamic(nodes);
+ assert(plan.ground.some(g=>g.t===inland&&g.pass===1)&&plan.ground.some(g=>g.t===inland&&g.pass===2),'rive puis eau');
+ assert(!plan.motifs.some(m=>m.t===inland),'pas d’arbres dans un lac');
+ const coast=nodes.find(t=>t.type==='cote'&&!t.name);coast.type='plaine';
+ assert(planDynamic(nodes).ground.some(g=>g.t===coast&&g.pass===3),'bande de rivage sur le côté qui touche la mer');
+ assert.equal(GROUND_PATCHES.shore.length,6);
+});
+
+test('dynamic art images are shipped and listed for offline use', async()=>{
+ const {readFile,stat}=await import('node:fs/promises');
+ const sw=await readFile(new URL('../dist/sw.js',import.meta.url),'utf8');
+ for(const f of ['./terrain-dynamic.js','./terrain-patches.js','./assets/terrain/europe-ground.webp','./assets/terrain/patches.webp'])assert(sw.includes(f),f);
+ assert((await stat(new URL('../dist/assets/terrain/europe-ground.webp',import.meta.url))).size>5e5);
+ assert((await stat(new URL('../dist/assets/terrain/patches.webp',import.meta.url))).size>1e5);
+});

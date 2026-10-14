@@ -16,6 +16,7 @@ export function createSVGBoardRenderer(container,options={}){
  let artWanted=options.art!==false&&readArtPreference(),artLayer=options.art===false?null:createTerrainLayer(container),artReady=false;
  const artOn=()=>Boolean(artLayer&&artWanted&&artReady);
  artLayer?.onStatus(ok=>{artReady=ok;if(state)update(state);});
+ artLayer?.dynamic?.onChange(()=>{if(state&&!destroyed)update(state);});
  const cells=new Map(),cityNodes=new Map(),routeNodes=new Map(),playerNodes=new Map();
  let state=null,context=null,hit=null,geometry='',seaSignature='',hoverKey='',callback=null,destroyed=false,camera={zoom:1.05};
  let diagnostics={updates:0,changedCells:0,createdCells:0,removedCells:0,seaRebuilt:false,lastUpdateMs:0};
@@ -44,14 +45,15 @@ export function createSVGBoardRenderer(container,options={}){
   const {g,reachable=[],cost=()=>0,selected='',route=[],nextSteps=[],editMode=false}=state;
   context=mapContext(g,reachable,cost,selected,route,nextSteps,editMode);diagnostics={...diagnostics,updates:diagnostics.updates+1,changedCells:0,createdCells:0,removedCells:0,seaRebuilt:false};
   attrsTo(svg,{class:`playable-europe supplied-map ${editMode?'map-edit-mode':''} ${artOn()?'art-on':''}`.trim()});
-  if(artLayer)artLayer.el.hidden=!artOn();
-  const nodes=Object.values(g.board),shape=nodes.map(t=>`${t.key}:${t.x}:${t.y}`).join('|');
+  const nodes=Object.values(g.board),dyn=Boolean(artLayer?.dynamic?.sync(nodes,artOn()));
+  if(artLayer)artLayer.el.hidden=!artOn()||dyn;
+  const shape=nodes.map(t=>`${t.key}:${t.x}:${t.y}`).join('|');
   if(shape!==geometry){geometry=shape;hit=createHexHitIndex(g.board);}
-  const art=artOn(),seaCells=nodes.filter(t=>t.type==='mer'&&(!art||isCellStale(t)));
+  const art=artOn(),seaCells=nodes.filter(t=>t.type==='mer'&&(!art||(isCellStale(t)&&!dyn)));
   const seaKeys=`${art}:`+seaCells.map(t=>`${t.key}:${t.x}:${t.y}`).join('|');
   if(seaKeys!==seaSignature){seaSignature=seaKeys;attrsTo(sea,{d:seaPath(Object.fromEntries(seaCells.map(t=>[t.key,t])))});diagnostics.seaRebuilt=true;}
   const landKeys=new Set();
-  for(const t of nodes){if(t.type==='mer')continue;landKeys.add(t.key);const p=tilePresentation(context,t),stale=art&&isCellStale(t),signature=JSON.stringify([p,t.type,t.x,t.y,art,stale]);let record=cells.get(t.key);
+  for(const t of nodes){if(t.type==='mer')continue;landKeys.add(t.key);const p=tilePresentation(context,t),stale=art&&!dyn&&isCellStale(t),signature=JSON.stringify([p,t.type,t.x,t.y,art,stale]);let record=cells.get(t.key);
    if(!record){const el=make('g',{'data-board-key':t.key}),polygon=make('polygon',{class:'terrain-face'}),icon=make('use',{class:'terrain-icon',width:14,height:14,'aria-hidden':true});el.append(polygon,icon);lands.append(el);record={el,polygon,icon,signature:''};cells.set(t.key,record);diagnostics.createdCells++;}
    if(record.signature===signature)continue;record.signature=signature;diagnostics.changedCells++;
    attrsTo(record.el,{class:art&&!stale?`${p.className} art-cell`:p.className,'aria-label':p.label,'aria-pressed':p.pressed,'aria-disabled':p.canSelect?null:true,'data-move':p.canSelect?t.key:null,role:p.canSelect?'button':null,tabindex:p.canSelect?'0':null});
