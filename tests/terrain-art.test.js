@@ -93,7 +93,42 @@ test('dynamic art: a sea cell surrounded by land becomes a small lake, and new c
 test('dynamic art images are shipped and listed for offline use', async()=>{
  const {readFile,stat}=await import('node:fs/promises');
  const sw=await readFile(new URL('../dist/sw.js',import.meta.url),'utf8');
- for(const f of ['./terrain-dynamic.js','./terrain-patches.js','./assets/terrain/europe-ground.webp','./assets/terrain/patches.webp'])assert(sw.includes(f),f);
+ for(const f of ['./terrain-variants.js','./terrain-dynamic.js','./terrain-patches.js','./assets/terrain/europe-ground.webp','./assets/terrain/patches.webp'])assert(sw.includes(f),f);
  assert((await stat(new URL('../dist/assets/terrain/europe-ground.webp',import.meta.url))).size>5e5);
  assert((await stat(new URL('../dist/assets/terrain/patches.webp',import.meta.url))).size>1e5);
+});
+
+// ---- variantes d'apparence ----
+import {TERRAIN_VARIANTS,variantsFor,validVariant} from '../dist/terrain-variants.js';
+import {MOTIF_PATCHES} from '../dist/terrain-patches.js';
+import {normalizeMap,applyMap} from '../dist/map-library.js';
+
+test('variants: every proposed variant has its own artwork, and the rules never see it', ()=>{
+ for(const [type,list] of Object.entries(TERRAIN_VARIANTS)){
+  assert.equal(variantsFor(type).length,list.length);
+  if(type==='mer')continue;
+  for(const [id] of list)assert(MOTIF_PATCHES[`${type}:${id}`]?.length>0,`motifs ${type}:${id}`);
+  if(type!=='ville')for(const [id] of list)assert(GROUND_PATCHES[`${type}:${id}`]?.length>0,`sol ${type}:${id}`);
+ }
+ assert.equal(validVariant('cote','falaise'),true);assert.equal(validVariant('cote','foret'),false);assert.equal(validVariant('plaine',''),false);
+ assert.deepEqual(variantsFor('col'),[]);
+});
+
+test('variants: saved maps keep a valid variant, drop an unknown one and apply it as a cosmetic field only', ()=>{
+ const base=europeBoard('Paris','Istanbul'),cell=Object.values(base.board).find(t=>t.type==='plaine'&&!t.name),key=`${cell.q},${cell.r}`;
+ const ok=normalizeMap({name:'t',cells:{[key]:{type:'cote',name:'',variant:'plage'}}});assert.equal(ok.cells[key].variant,'plage');
+ const bad=normalizeMap({name:'t',cells:{[key]:{type:'cote',name:'',variant:'foret'}}});assert.equal('variant' in bad.cells[key],false);
+ const plain=normalizeMap({name:'t',cells:{[key]:{type:'plaine',name:''}}});assert.deepEqual(plain.cells[key],{type:'plaine',name:''});
+ const game={mode:'plateau',board:{[cell.key]:{...cell}}};applyMap(game,ok);
+ assert.equal(game.board[cell.key].type,'cote');assert.equal(game.board[cell.key].variant,'plage');
+});
+
+test('dynamic art: a variant on an unchanged cell, or a coast turned into plain, is visibly redrawn', ()=>{
+ const nodes=nodesOf(),plain=nodes.find(t=>t.type==='plaine'&&!t.name);plain.variant='champs';
+ assert.equal(staleCount(nodes),1);let plan=planDynamic(nodes);
+ assert(plan.ground.some(g=>g.t===plain&&g.pass===0),'sol de champs');assert(plan.motifs.some(m=>m.t===plain));
+ plain.variant='';const coast=nodes.find(t=>t.type==='cote'&&!t.name);coast.type='plaine';
+ plan=planDynamic(nodes);assert(plan.ground.some(g=>g.t===coast&&g.pass===0),'une côte devenue plaine change de sol');
+ const cliff=nodes.find(t=>t.type==='cote'&&!t.name&&t!==coast);cliff.variant='falaise';
+ plan=planDynamic(nodes);assert(plan.ground.some(g=>g.t===cliff&&g.pass===3&&GROUND_PATCHES.shoreCliff.includes(g.rect)),'bande de falaise');
 });

@@ -1,5 +1,6 @@
 import {europeBoard} from './europe.js';
 
+import {validVariant} from './terrain-variants.js';
 export const EDITABLE_TERRAINS=new Set(['mer','cote','plaine','moyenne_montagne','montagne','col','ville']);
 const base=europeBoard('Paris','Istanbul');
 const editable=new Map(Object.values(base.board).filter(t=>!t.name).map(t=>[`${t.q},${t.r}`,t]));
@@ -15,7 +16,8 @@ export function normalizeMap(input){
  for(const [key,patch] of entries){
   if(!editable.has(key)||!patch||typeof patch!=='object'||Array.isArray(patch)||!EDITABLE_TERRAINS.has(patch.type))throw Error('Case de carte invalide : '+key);
   const cityName=patch.type==='ville'?String(patch.name||'Ville personnalisée').trim().slice(0,40)||'Ville personnalisée':'';
-  cells[key]={type:patch.type,name:cityName};
+  const variant=validVariant(patch.type,patch.variant)?patch.variant:'';
+  cells[key]=variant?{type:patch.type,name:cityName,variant}:{type:patch.type,name:cityName};
  }
  return {version:2,name,cells,terrain:{col:effort}};
 }
@@ -25,7 +27,7 @@ export function applyMap(game,map){
  const definition=normalizeMap(map);
  for(const t of Object.values(game.board)){
   const patch=definition.cells[`${t.q},${t.r}`];
-  if(patch&&!t.name){t.type=patch.type;t.name=patch.name;}
+  if(patch&&!t.name){t.type=patch.type;t.name=patch.name;if(patch.variant)t.variant=patch.variant;else delete t.variant;}
  }
  return game;
 }

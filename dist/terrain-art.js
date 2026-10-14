@@ -5,6 +5,7 @@
 // (en attendant que ses images soient chargées, ou si elles échouent, on retombe sur l'ancien dessin à pictogrammes).
 import {MAP_CELLS} from './assets/europe/board-data.js';
 import {createDynamicLayer} from './terrain-dynamic.js';
+import {validVariant} from './terrain-variants.js';
 
 export const TERRAIN_ART_SRC='./assets/terrain/europe-terrain.webp';
 export const TERRAIN_ART_STORAGE='aventure-velo-illustrations';
@@ -13,7 +14,7 @@ export const TERRAIN_ART_STORAGE='aventure-velo-illustrations';
 const baked=new Map(MAP_CELLS.map(c=>[`${c.q},${c.r}`,c.type]));
 // La clé du jeu est "hex-q-r" ; on la convertit pour comparer.
 const bakedType=t=>baked.get(`${t.q},${t.r}`);
-export const isCellStale=t=>bakedType(t)!==t.type;
+export const isCellStale=t=>bakedType(t)!==t.type||validVariant(t.type,t.variant);
 
 export function readArtPreference(storage=globalThis.localStorage){
  try{return storage?.getItem(TERRAIN_ART_STORAGE)!=='off';}catch{return true;}

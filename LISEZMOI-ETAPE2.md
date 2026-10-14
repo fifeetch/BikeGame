@@ -42,3 +42,9 @@ il affiche le sol peint sans motifs (`europe-ground.webp`) et redessine, case pa
 à partir d'une planche de motifs (`patches.webp`, index dans `terrain-patches.js`). Une case de mer entourée de terre devient un petit lac,
 et les nouveaux rivages reçoivent une bande de sable. Ces fichiers ne sont chargés qu'à la première modification.
 Pour les régénérer : `cd tools/peinture && python3 atlas.py <dossier-de-sortie>`. Les règles du jeu et les types de terrain ne sont pas touchés.
+
+### Variantes d'apparence (éditeur)
+Dans « Modifier cette case », le menu **Apparence** propose des variantes du terrain choisi (ex. côte : plage de sable, falaises, côte verte, port ;
+plaine : prairie fleurie, champs, forêt ; collines ocre/vertes/boisées ; montagne rocheuse/boisée/enneigée ; village/ville/grande ville ;
+mer profonde/peu profonde/lac). C'est purement visuel : la variante est enregistrée avec la carte (champ `variant`) mais ne change aucune règle.
+Les dessins viennent de `tools/peinture/variants.py` (relancer `atlas.py` pour régénérer la planche).

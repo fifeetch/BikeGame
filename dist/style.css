@@ -632,3 +632,6 @@ body:has(.home),body:has(.journey-page){background:#f3efe4;background-image:radi
 .supplied-map.art-on .art-cell.here .terrain-face{fill:transparent;stroke:#174e7a;stroke-width:3;stroke-dasharray:none}
 .supplied-map.art-on .art-cell:hover .terrain-face,.supplied-map.art-on .art-cell:focus-visible .terrain-face{stroke:#fff;stroke-width:2.5;stroke-dasharray:none}
 .supplied-map.art-on .art-cell.here:hover .terrain-face{stroke:#174e7a}
+
+.variant-preview{display:block;margin:.4rem auto;width:140px;height:140px;border-radius:14px;border:1px solid #0003;background:#7aab4c}
+.tile-variant-field[hidden]{display:none}

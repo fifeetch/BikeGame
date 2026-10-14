@@ -11,6 +11,8 @@ import {readArtPreference} from './terrain-art.js';
 import {EVENT_CARDS,eventCardById as resolveEventCard,normalizeEventEdits} from './event-cards.js';
 import {eventFace} from './event-card-ui.js';
 import {EDITABLE_TERRAINS,normalizeMap,applyMap} from './map-library.js';
+import {variantsFor,validVariant} from './terrain-variants.js';
+import {drawVariantPreview} from './terrain-dynamic.js';
 const app=document.querySelector('#app');
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let artPref=readArtPreference();
@@ -127,7 +129,7 @@ function rulesForm(){
 }
 function prepareDraft(source){draft=validateRules(source||(m&&screen==='game'?m.rules:setupRules));for(const e of draft.events){e.effect={energy:0,money:0,food:0,points:0,...e.effect};e.cost={energy:0,money:0,food:0,...e.cost};}}
 function overlay(){let content='',wide=false;
- if(modal==='map-editor'){const t=editorGame?.board[mapEditKey];content=t?t.key.startsWith('city-')?`<h2>${esc(t.name)}</h2><p>Cette ville sert aux voyages et aux ferries. Son emplacement et son nom sont conservés pour garder les parcours jouables.</p>${btn('Fermer','close','light')}`:`<h2>Modifier cette case</h2><p>Hexagone ${t.q}, ${t.r} · ${esc(E.terrains[t.type]?.name||t.type)}</p><label>Type de terrain <select id="map-tile-type">${[['mer','Mer'],['cote','Côte'],['plaine','Plaine'],['moyenne_montagne','Moyenne montagne'],['montagne','Haute montagne'],['col','Col mythique'],['ville','Ville']].map(([id,label])=>`<option value="${id}" ${t.type===id?'selected':''}>${label}</option>`).join('')}</select></label><label>Nom si c’est une ville <input id="map-tile-name" maxlength="40" value="${esc(t.type==='ville'?t.name:'')}" placeholder="Ex. Village du col"/></label><label>Effort des cols mythiques <span class="rule-input-unit"><input id="map-col-effort" type="number" min="0" max="10" step="1" value="${editorColEffort}"/> énergie</span></label><p class="muted">Ce coût s’applique à tous les cols de cette carte et sera enregistré dans le fichier.</p><p role="alert">${esc(message)}</p>${btn('Enregistrer la case','map-save')}${btn('Annuler','close','light')}`:'<p>Case introuvable.</p>';}
+ if(modal==='map-editor'){const t=editorGame?.board[mapEditKey];content=t?t.key.startsWith('city-')?`<h2>${esc(t.name)}</h2><p>Cette ville sert aux voyages et aux ferries. Son emplacement et son nom sont conservés pour garder les parcours jouables.</p>${btn('Fermer','close','light')}`:`<h2>Modifier cette case</h2><p>Hexagone ${t.q}, ${t.r} · ${esc(E.terrains[t.type]?.name||t.type)}</p><label>Type de terrain <select id="map-tile-type">${[['mer','Mer'],['cote','Côte'],['plaine','Plaine'],['moyenne_montagne','Moyenne montagne'],['montagne','Haute montagne'],['col','Col mythique'],['ville','Ville']].map(([id,label])=>`<option value="${id}" ${t.type===id?'selected':''}>${label}</option>`).join('')}</select></label><label class="tile-variant-field">Apparence <select id="map-tile-variant" data-current="${esc(t.variant||'')}"></select></label><canvas id="map-tile-preview" class="variant-preview" width="96" height="96" role="img" aria-label="Aperçu de la case"></canvas><label>Nom si c’est une ville <input id="map-tile-name" maxlength="40" value="${esc(t.type==='ville'?t.name:'')}" placeholder="Ex. Village du col"/></label><label>Effort des cols mythiques <span class="rule-input-unit"><input id="map-col-effort" type="number" min="0" max="10" step="1" value="${editorColEffort}"/> énergie</span></label><p class="muted">Ce coût s’applique à tous les cols de cette carte et sera enregistré dans le fichier.</p><p role="alert">${esc(message)}</p>${btn('Enregistrer la case','map-save')}${btn('Annuler','close','light')}`:'<p>Case introuvable.</p>';}
  if(modal==='rules'){content=rulesForm();wide=true;}
  else if(modal==='settings')content=`<h2>Paramètres</h2><p>Un tour = une journée. Travail, bivouac, camping et hôtel consomment au moins une journée. Maximum : 5 cases par jour.</p>${btn('Modifier les journées et les règles','rules')}<p>Sauvegarde automatique : ${auto?'activée':'désactivée'}.</p>${btn('Activer / désactiver','autosave','light')}${m?btn('Exporter la partie (.json)','export','light'):''}<label class="file-import">Importer une partie <input id="import-save" type="file" accept="application/json,.json"/></label><p class="muted">Stockage dans ce navigateur. Exporte le fichier pour le conserver dans ton dossier sur D: ou sur un autre ordinateur.</p><p role="alert">${esc(message)}</p>${btn('Fermer','close','light')}`;
  else if(modal==='shop'){const p=S.player(m);content=`<h2>Inventaire de ${esc(p.name)}</h2><p>${S.inventorySpace(m)}/${m.rules.bikes[p.bike].capacity} emplacements · achats en ville.</p><div class="shop">${Object.entries(m.rules.equipment).map(([id,e])=>`<button data-buy="${id}" ${p.items.includes(id)||p.money<e.price||S.inventorySpace(m)+e.space>m.rules.bikes[p.bike].capacity||m.board[p.pos].type!=='ville'?'disabled':''}>${esc(e.name)} · ${e.price} pièces · ${e.space} place(s)${p.items.includes(id)?' · acquis':''}</button>${p.items.includes(id)?`<button class="light" data-discard="${id}">Déposer ${esc(e.name)} (sans remboursement)</button>`:''}`).join('')}</div><p role="status">${esc(message)}</p>${btn('Fermer','close','light')}`;}
@@ -165,7 +167,8 @@ function act(a){message='';
   const t=editorGame?.board[mapEditKey],type=document.querySelector('#map-tile-type')?.value,name=(document.querySelector('#map-tile-name')?.value||'').trim(),effort=Number(document.querySelector('#map-col-effort')?.value);
   if(t&&!t.key.startsWith('city-')&&EDITABLE_TERRAINS.has(type))try{
    if(!Number.isInteger(effort)||effort<0||effort>10)throw Error('L’effort du col doit être un entier de 0 à 10.');
-   const cells={...customMap,[`${t.q},${t.r}`]:{type,name:type==='ville'?(name||'Ville personnalisée'):''}};
+   const variant=document.querySelector('#map-tile-variant')?.value||'';
+   const cells={...customMap,[`${t.q},${t.r}`]:{type,name:type==='ville'?(name||'Ville personnalisée'):'',...(validVariant(type,variant)?{variant}:{})}};
    const candidate=buildEditorGame(cells);
    if(!mapIsPlayable(candidate))throw Error('Cette modification isole une ville. Garde un passage terrestre vers les autres villes.');
    customMap=cells;editorGame=candidate;editorColEffort=effort;modal='';mapEditKey='';message='Case modifiée. Enregistre la carte pour la retrouver au menu.';
@@ -243,6 +246,12 @@ function bindCardEditor(){
  const importInput=document.querySelector('#import-cards');if(importInput)importInput.onchange=async()=>{try{const file=importInput.files?.[0];if(!file||file.size>1_000_000)throw Error('Choisis un fichier JSON de moins de 1 Mo.');const raw=JSON.parse(await file.text()),incoming=normalizeCustomCards(Array.isArray(raw)?raw:raw?.version===1?raw.cards:null),merged=new Map([...customCards,...incoming].map(card=>[card.id,card]));storeCustomCards(normalizeCustomCards([...merged.values()]));message=incoming.length+' ancienne(s) variante(s) importée(s) en archive.';render();}catch(e){message='Import refusé : '+e.message;render();}};
 }
 function bind(){
+ const tileType=document.querySelector('#map-tile-type'),tileVariant=document.querySelector('#map-tile-variant'),tilePreview=document.querySelector('#map-tile-preview');
+ if(tileType&&tileVariant){
+  const draw=()=>{if(tilePreview)drawVariantPreview(tilePreview,tileType.value,tileVariant.value);};
+  const fill=keep=>{const list=variantsFor(tileType.value);tileVariant.innerHTML='<option value="">Classique</option>'+list.map(([id,label])=>`<option value="${id}">${label}</option>`).join('');tileVariant.value=list.some(([id])=>id===keep)?keep:'';tileVariant.closest('label').hidden=!list.length;draw();};
+  tileType.onchange=()=>fill('');tileVariant.onchange=draw;fill(tileVariant.dataset.current||'');
+ }
  const editorNameInput=document.querySelector('#editor-map-name');if(editorNameInput)editorNameInput.oninput=()=>{editorName=editorNameInput.value;};
  document.querySelectorAll('[data-action]').forEach(el=>el.onclick=()=>act(el.dataset.action));
  bindCardEditor();

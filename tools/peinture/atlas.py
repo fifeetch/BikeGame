@@ -95,7 +95,7 @@ for v in range(4):
 
 # ---- rivages : bande de sable + eau peu profonde le long d'un côté d'hexagone qui touche la mer ----
 K=int(S*SC*1.1)
-def shore(i):
+def shore(i,cliff=False):
     ang=math.radians(60*i)            # 0=E, 60=SE, 120=SO, 180=O, 240=NO, 300=NE (y vers le bas)
     n=(math.cos(ang),math.sin(ang)); t=(-n[1],n[0])
     def strip(inner,outer,half,fill,blur):
@@ -105,12 +105,25 @@ def shore(i):
         d.polygon(pts,fill=fill)
         return lay.filter(ImageFilter.GaussianBlur(blur*SC))
     halo=strip(-0.05*S*SC,0.46*S*SC,R*SC*0.62,(150,214,232,95),0.14*S)
+    if cliff:
+        shade=strip(0.0,0.22*S*SC,R*SC*0.58,(24,52,82,90),0.06*S); halo.alpha_composite(shade)
+        rock_=strip(-0.14*S*SC,0.05*S*SC,R*SC*0.52,(112,100,86,235),0.03*S); halo.alpha_composite(rock_)
+        top=strip(-0.17*S*SC,-0.07*S*SC,R*SC*0.48,(188,174,150,230),0.02*S); halo.alpha_composite(top); return halo
     sand=strip(-0.10*S*SC,0.06*S*SC,R*SC*0.50,(232,218,164,215),0.05*S)
     halo.alpha_composite(sand); return halo
 for i in range(6):
     gpacks.append(('shore',shore(i),-K/SC,-K/SC,2*K/SC,2*K/SC))
+    gpacks.append(('shoreCliff',shore(i,True),-K/SC,-K/SC,2*K/SC,2*K/SC))
+# ---- variantes de terrain (éditeur) ----
+import variants as V
+crops={}
+for name,crop,*_ in gpacks:
+    if name in('plaine','colline','montagne'): crops.setdefault(name,[]).append(crop)
+vg,vm=V.build(crops)
+for key,img in vg: gpacks.append((key,img,-hw/SC,-hh/SC,2*hw/SC,2*hh/SC))
+print('variantes',len(vg),len(vm))
 # ---- planche ----
-allp=[('c',)+p for p in packs]+[('g',)+p for p in gpacks]
+allp=[('c',)+p for p in packs]+[('g',)+p for p in gpacks]+[('m',)+p for p in vm]
 def scaled(im): return im.resize((max(1,round(im.width*AS/SC)),max(1,round(im.height*AS/SC))),Image.LANCZOS)
 sc=[(kind,key,scaled(im),ox,oy,wu,hu) for kind,key,im,ox,oy,wu,hu in allp]
 sc.sort(key=lambda t:-t[2].height)
@@ -120,16 +133,17 @@ for kind,key,im,ox,oy,wu,hu in sc:
     place.append((kind,key,im,x,y,ox,oy,wu,hu)); x+=im.width; rowh=max(rowh,im.height)
 HA=y+rowh
 atlas=Image.new('RGBA',(WA,HA),(0,0,0,0))
-cellsidx={}; gidx={}
+cellsidx={}; gidx={}; midx={}
 r2=lambda v:round(v,2)
 for kind,key,im,px,py,ox,oy,wu,hu in place:
     atlas.paste(im,(px,py))
     rec=[px,py,im.width,im.height,r2(ox),r2(oy),r2(wu),r2(hu)]
     if kind=='c': cellsidx[key]=rec
+    elif kind=='m': midx.setdefault(key,[]).append(rec)
     else: gidx.setdefault(key,[]).append(rec)
 print('planche',atlas.size)
 out=sys.argv[1] if len(sys.argv)>1 else '.'
 atlas.save(out+'/patches.webp','WEBP',quality=86,alpha_quality=100,method=5)
 ground.convert('RGB').save(out+'/europe-ground.webp','WEBP',quality=82,method=5)
-open(out+'/terrain-patches.js','w').write("// Généré par tools/peinture/atlas.py : ne pas modifier à la main.\nexport const PATCH_SCALE=%d;\nexport const CELL_PATCHES=%s;\nexport const GROUND_PATCHES=%s;\n"%(AS,json.dumps(cellsidx,separators=(',',':')),json.dumps(gidx,separators=(',',':'))))
+open(out+'/terrain-patches.js','w').write("// Généré par tools/peinture/atlas.py : ne pas modifier à la main.\nexport const PATCH_SCALE=%d;\nexport const CELL_PATCHES=%s;\nexport const GROUND_PATCHES=%s;\nexport const MOTIF_PATCHES=%s;\n"%(AS,json.dumps(cellsidx,separators=(',',':')),json.dumps(gidx,separators=(',',':')),json.dumps(midx,separators=(',',':'))))
 print('fini',round(__import__('time').time()-t0))

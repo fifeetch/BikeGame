@@ -34,34 +34,36 @@ def tree_pine(size,rng):
             d.polygon([(cx,top*h*s),(cx-half*w*s,bot*h*s),(cx-half*w*s*0.15,bot*h*s)],fill=mix(g,(120,170,100),0.35)+(255,))
             d.line(P+[P[0]],fill=mix(g,(8,30,20),0.55)+(255,),width=max(1,int(s*0.5)))
     return sprite(w,h,fn)
-def mound(wid,hei,rng):
+def mound(wid,hei,rng,pal=None):
+    pal=pal or {}
+    cb=pal.get('body',(203,172,102));cl=pal.get('lit',(228,201,134));cs=pal.get('shade',(160,128,70));cn=pal.get('line',(132,98,52));cg=pal.get('shadow',(110,80,40))
     w=wid; h=hei*1.15
     def fn(d,s):
         base=hei*s*1.0+hei*s*0.10
-        d.ellipse([w*s*0.04,base-hei*s*0.18,w*s*0.98,base+hei*s*0.12],fill=(110,80,40,60))     # ombre au sol
+        d.ellipse([w*s*0.04,base-hei*s*0.18,w*s*0.98,base+hei*s*0.12],fill=cg+(60,))     # ombre au sol
         # corps : demi-ellipse
         pts=[]
         for i in range(0,181,4):
             a=math.radians(i); pts.append((w*s*0.5-math.cos(a)*w*s*0.46,base-math.sin(a)*hei*s))
         body=[(w*s*0.04,base)]+pts+[(w*s*0.96,base)]
-        d.polygon(body,fill=(203,172,102,255))
+        d.polygon(body,fill=cb+(255,))
         # éclairage haut-gauche
         lit=[]
         for i in range(0,181,4):
             a=math.radians(i); lit.append((w*s*0.46-math.cos(a)*w*s*0.36,base-math.sin(a)*hei*s*0.90))
-        d.polygon([(w*s*0.10,base-hei*s*0.05)]+lit+[(w*s*0.50,base-hei*s*0.10)],fill=(228,201,134,255))
+        d.polygon([(w*s*0.10,base-hei*s*0.05)]+lit+[(w*s*0.50,base-hei*s*0.10)],fill=cl+(255,))
         # ombre côté bas-droit
         sh=[]
         for i in range(100,181,4):
             a=math.radians(i); sh.append((w*s*0.5-math.cos(a)*w*s*0.46,base-math.sin(a)*hei*s))
-        d.polygon(sh+[(w*s*0.96,base),(w*s*0.62,base-hei*s*0.12)],fill=(160,128,70,255))
-        d.line(pts,fill=(132,98,52,255),width=max(1,int(s*0.8)),joint='curve')
+        d.polygon(sh+[(w*s*0.96,base),(w*s*0.62,base-hei*s*0.12)],fill=cs+(255,))
+        d.line(pts,fill=cn+(255,),width=max(1,int(s*0.8)),joint='curve')
         # touffes
         for _ in range(rng.randint(2,4)):
             x=rng.uniform(0.25,0.75)*w*s; y=base-rng.uniform(0.15,0.55)*hei*s
             d.line([(x-s*1.2,y),(x,y-s*1.4),(x+s*1.2,y)],fill=(120,128,60,255),width=max(1,int(s*0.6)))
     return sprite(w,h,fn)
-def peak(wid,hei,rng):
+def peak(wid,hei,rng,snow=False):
     w=wid; h=hei*1.08
     def fn(d,s):
         W_=w*s; H_=hei*s
@@ -75,6 +77,7 @@ def peak(wid,hei,rng):
         zig=[apex,(W_*(a+0.03),H_*0.20),(W_*(a-0.03),H_*0.38),(W_*(a+0.04),H_*0.57),(W_*(a-0.01),H_*0.78),(sx,H_)]
         d.ellipse([-W_*0.06,H_-hei*s*0.07,W_*1.06,H_+hei*s*0.07],fill=(70,64,60,80))
         lit_c=(190,183,171); sh_c=(112,107,108)
+        if snow: lit_c=(247,249,252); sh_c=(186,198,218)
         d.polygon([L,s1,apex]+zig[1:],fill=lit_c+(255,))
         d.polygon([apex,n1,s2,R_,(sx,H_)]+zig[-2:0:-1],fill=sh_c+(255,))
         # strates
