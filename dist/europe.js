@@ -1,8 +1,8 @@
 import {MAP_CELLS} from './assets/europe/board-data.js';
 
-export const MAP_VERSION=10;
+export const MAP_VERSION=11;
 // Ferries : de port à port, comme les liaisons réelles les plus utilisées.
-export const FERRY_ROUTES=[['Calais','Douvres'],['Helsingør','Helsingborg'],['Hirtshals','Kristiansand'],['Ancona','Split'],['Thessalonique','Izmir']];
+export const FERRY_ROUTES=[['Calais','Douvres'],['Dublin','Holyhead'],['Helsingør','Helsingborg'],['Hirtshals','Kristiansand'],['Ancona','Split'],['Thessalonique','Izmir']];
 export const MAP_WIDTH=1261, MAP_HEIGHT=842, HEX_SPACING=29/Math.sqrt(2), HEX_RADIUS=HEX_SPACING/Math.sqrt(3), HEX_ROW_STEP=HEX_RADIUS*1.5;
 export const HEX_DIRECTIONS=[[1,0],[1,1],[0,1],[-1,0],[-1,-1],[0,-1]];
 export const hexKey=(q,r)=>`hex-${q}-${r}`;

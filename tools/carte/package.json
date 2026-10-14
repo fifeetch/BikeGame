@@ -1,0 +1,14 @@
+{
+  "name": "carte-europe-outils",
+  "private": true,
+  "type": "module",
+  "description": "Reconstruit le plateau Europe à partir de la vraie géographie (côtes Natural Earth, relief, villes).",
+  "scripts": {
+    "carte": "node construire-carte.mjs ../../dist/assets/europe/board-data.js ../peinture/etiquettes.json ../decor/rivieres.json"
+  },
+  "dependencies": {
+    "d3-geo": "^3.1.1",
+    "topojson-client": "^3.1.0",
+    "world-atlas": "^2.0.2"
+  }
+}

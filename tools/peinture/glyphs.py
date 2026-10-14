@@ -240,7 +240,10 @@ def waves(img,P,n=900):
         sp=rng.choice(cache); img.alpha_composite(sp,(int(x*SC-sp.width/2),int(y*SC-sp.height/2))); k+=1
     return img
 # ---------- noms de mers et rose des vents ----------
-def labels(img):
+P_ref=None
+def labels(img,P=None):
+    global P_ref
+    P_ref=P if P is not None else P_ref
     d=ImageDraw.Draw(img,'RGBA')
     f_path='/usr/share/fonts/truetype/liberation/LiberationSerif-Italic.ttf'
     def text(txt,x,y,size,ang=0,fill=(235,246,252,225)):
@@ -253,11 +256,20 @@ def labels(img):
             ld.text((xx,size*SC*0.4),ch,font=font,fill=fill); xx+=font.getlength(ch)+sp
         lay=lay.rotate(ang,expand=True,resample=Image.BICUBIC)
         img.alpha_composite(lay,(int(x*SC-lay.width/2),int(y*SC-lay.height/2)))
-    for t,x,y,s,a in [('OCÉAN ATLANTIQUE',120,390,17,78),('MER DU NORD',432,205,10,8),('MER DE NORVÈGE',475,105,12,-20),('MER BALTIQUE',735,285,11,-8),
-                      ('MER MÉDITERRANÉE',420,735,14,0),('MER NOIRE',1110,585,11,-6),('MER DE BARENTS',1165,65,10,0)]:
+    # Noms des mers : positions calculées par tools/carte (vraie géographie projetée), sinon liste par défaut.
+    import os,json
+    path=os.path.join(os.path.dirname(os.path.abspath(__file__)),'etiquettes.json')
+    seas=json.load(open(path)) if os.path.exists(path) else [('OCÉAN ATLANTIQUE',120,390,17,78),('MER MÉDITERRANÉE',420,735,14,0)]
+    for t,x,y,s,a in seas:
         text(t,x,y,s,a)
-    # rose des vents
-    cx,cy,rr=120*SC,770*SC,46*SC
+    # rose des vents : dans le premier coin de mer libre (loin des côtes)
+    spots=[(75,735),(70,330),(1190,800)]
+    fx=B.F
+    def open_sea(x,y,r=60):
+        ys=slice(max(0,int((y-r)*fx)),int((y+r)*fx)); xs=slice(max(0,int((x-r)*fx)),int((x+r)*fx))
+        return P_ref['fld'][ys,xs].max()<0.05
+    px,py=next(((x,y) for x,y in spots if open_sea(x,y)),spots[0])
+    cx,cy,rr=px*SC,py*SC,46*SC
     lay=Image.new('RGBA',(int(rr*3),int(rr*3)),(0,0,0,0)); ld=ImageDraw.Draw(lay); c0=rr*1.5
     ld.ellipse([c0-rr*0.82,c0-rr*0.82,c0+rr*0.82,c0+rr*0.82],outline=(240,250,255,160),width=SC)
     for i in range(8):
@@ -274,6 +286,6 @@ if __name__=='__main__':
     img=Image.fromarray((arr*255).astype('uint8'))
     out=run(img,P); print('glyphs',time.time()-t)
     out=waves(out,P)
-    out=labels(out); print('labels',time.time()-t)
+    out=labels(out,P); print('labels',time.time()-t)
     out=out.convert('RGB'); out.save('final.png')
     out.resize((1600,1068),Image.LANCZOS).save('final-small.png'); out.crop((1400,1000,3000,2000)).save('final-crop.png')

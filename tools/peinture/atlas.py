@@ -9,7 +9,7 @@ t0=__import__('time').time()
 P=B.build(); arr=B.finish(P)
 ground0=Image.fromarray((arr*255).astype('uint8')).convert('RGBA')
 ground0=G.waves(ground0,P)                       # sol + vagues (sert aussi de source pour les morceaux de sol)
-ground=G.boats(ground0.copy(),P); ground=G.labels(ground)
+ground=G.boats(ground0.copy(),P); ground=G.labels(ground,P)
 ground.convert('RGB').save('ground.png')
 print('sol',round(__import__('time').time()-t0))
 cells=B.cells; idx={(c['q'],c['r']):i for i,c in enumerate(cells)}

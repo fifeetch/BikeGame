@@ -15,23 +15,32 @@ test('drawn roads only follow links that already exist between neighbouring land
  for(const edge of [...net.main,...net.minor]){const [a,b]=edge.split('|');assert(board[a].links.includes(b),`${a} → ${b} n'est pas une liaison existante`);assert.notEqual(board[a].type,'mer');assert.notEqual(board[b].type,'mer');}
 });
 
-test('ferries link real port cities, never through land, and every voyage stays possible',()=>{
+test('ferries link real port cities and every voyage stays possible',()=>{
  const {board,edges}=europeBoard('Paris','Istanbul'),ferries=edges.filter(e=>e.ferry);
  assert.deepEqual(ferries.map(e=>[board[e.a].name,board[e.b].name]),FERRY_ROUTES);
  for(const e of ferries)for(const k of [e.a,e.b]){const t=board[k];assert.equal(t.type,'ville');}
- // L'Angleterre est une île : Londres ne rejoint Bruxelles que par le ferry Calais–Douvres.
- const noFerry=structuredClone(board);for(const e of ferries){noFerry[e.a].links=noFerry[e.a].links.filter(k=>k!==e.b);noFerry[e.b].links=noFerry[e.b].links.filter(k=>k!==e.a);}
- assert(!reach(noFerry,'city-Londres').has('city-Bruxelles'));assert(reach(board,'city-Londres').has('city-Bruxelles'));
+ assert(reach(board,'city-Londres').has('city-Bruxelles'));assert(reach(board,'city-Dublin').has('city-Paris'));
  for(const v of voyages){const b=europeBoard(v.from,v.to),arrival=Object.values(b.board).find(t=>t.id===b.arrivalId);assert(reach(b.board,b.start).has(arrival.key),`${v.from} → ${v.to}`);}
 });
 
-test('map corrections: no broken city names, the Black Sea is closed and the east edge is land',()=>{
- const names=MAP_CELLS.filter(c=>c.name).map(c=>c.name);
- assert(names.includes('Saint-Pétersbourg')&&names.includes('Athènes'));assert(!names.some(n=>n.includes('Ã')||n==='nes'));
- const eastSea=MAP_CELLS.filter(c=>c.type==='mer'&&c.x>1215&&c.r>=5&&c.r<=26);assert.equal(eastSea.length,0);
+test('real geography: London inland, Lisbon south of Madrid, new cities, islands reached only by ferry',()=>{
+ const byName=Object.fromEntries(MAP_CELLS.filter(c=>c.name).map(c=>[c.name,c]));
+ for(const n of ['Lille','Marseille','Holyhead','Saint-Pétersbourg','Athènes'])assert(byName[n],n);
+ assert(!Object.keys(byName).some(n=>n.includes('Ã')||n==='nes'));
+ const at=new Map(MAP_CELLS.map(c=>[`${c.q},${c.r}`,c])),dirs=[[1,0],[1,1],[0,1],[-1,0],[-1,-1],[0,-1]];
+ const seaSide=c=>dirs.some(([a,b])=>at.get(`${c.q+a},${c.r+b}`)?.type==='mer');
+ assert(!seaSide(byName.Londres),'Londres est à l\'intérieur des terres');
+ for(const port of ['Calais','Douvres','Dublin','Holyhead','Helsingør','Helsingborg','Lisbonne','Marseille'])assert(seaSide(byName[port]),port);
+ assert(byName.Lisbonne.y>byName.Madrid.y,'Lisbonne est plus au sud que Madrid');
+ assert(byName.Lille.y<byName.Paris.y&&byName.Marseille.y>byName.Lyon.y);
+ // Irlande et Grande-Bretagne sont des îles : sans ferry, Dublin et Londres ne rejoignent pas Paris.
+ const {board,edges}=europeBoard('Paris','Istanbul'),noFerry=structuredClone(board);
+ for(const e of edges.filter(e=>e.ferry)){noFerry[e.a].links=noFerry[e.a].links.filter(k=>k!==e.b);noFerry[e.b].links=noFerry[e.b].links.filter(k=>k!==e.a);}
+ const fromParis=reach(noFerry,'city-Paris');assert(!fromParis.has('city-Londres'));assert(!fromParis.has('city-Dublin'));assert(!reach(noFerry,'city-Londres').has('city-Dublin'));
 });
 
 test('decor is purely visual and sits on land cells of the base map',()=>{
+ assert(DECOR.rivers.some(r=>r.name==='Danube')&&DECOR.rivers.some(r=>r.name==='Seine'));
  const land=new Set(MAP_CELLS.filter(c=>c.type!=='mer').map(c=>`${c.q},${c.r}`));
  for(const [,, , ,q,r]of DECOR.forests)assert(land.has(`${q},${r}`));
  for(const [,,,q,r]of DECOR.villages)assert(land.has(`${q},${r}`));

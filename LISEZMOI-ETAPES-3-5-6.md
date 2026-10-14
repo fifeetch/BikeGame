@@ -23,19 +23,24 @@ Branche : `option-b-etape2` (même branche que l'étape 2). Les règles du moteu
 - **Météo légère** : quelques ombres de nuages qui passent lentement.
 - Dans **Paramètres → Affichage du plateau** : « Réduire les animations » (tout devient instantané, la météo est masquée) et « Masquer la météo ». Par défaut, le jeu suit le réglage « réduire les animations » de l'appareil.
 
-## Corrections de la carte (demandées par Fi)
-- **4 zones de mer** : la Manche (l'Angleterre devient une île), le golfe du Lion, la mer Tyrrhénienne et l'Adriatique (28 cases passées en mer).
-- **Bord est** redevenu de la terre (Russie, Caucase, Anatolie : 78 cases). Mer de Barents et Méditerranée conservées, mer Noire fermée.
-- **Ferries de port à port** : Calais–Douvres, Helsingør–Helsingborg, Hirtshals–Kristiansand, Ancona–Split, Thessalonique–Izmir. Les nouveaux ports sont de **vraies villes** (9 villes ajoutées).
-- Les cases « côte » sans mer voisine sont peintes en terre, et non plus en hauts-fonds. Leur type ne change pas dans les règles.
-- Noms réparés : « Saint-Pétersbourg » et « Athènes ».
-- `MAP_VERSION` passe à 10. Une partie déjà commencée est convertie à l'ouverture, et un cycliste resté sur une case devenue mer est replacé sur la terre la plus proche.
-- Script rejouable : `node tools/carte/corrections-carte.mjs`. Peinture : `tools/peinture` (`python3 glyphs.py`, puis `python3 atlas.py <dossier>`).
+## Carte reconstruite sur la vraie géographie (carte n° 11)
+Le plateau n'est plus corrigé à la main : il est **recalculé** à partir de données réelles, sur la même grille d'hexagones.
+- **Côtes** : tracé réel de l'Europe (Natural Earth 1:50m, domaine public), projeté sur la grille.
+- **Projection** : cylindrique (méridiens verticaux, parallèles horizontaux), comme les cartes habituelles. Le Portugal est bien au sud de l'Espagne et la côte turque est horizontale. Une « loupe » douce agrandit l'Europe de l'Ouest (cases d'environ 85-95 km) et resserre la Russie et le Grand Nord (100-110 km).
+- **Relief** : vraies chaînes de montagnes (Pyrénées entre la France et l'Espagne, Alpes, Apennins, Carpates, Balkans, Alpes dinariques, Alpes scandinaves, Caucase, Pontiques, Taurus, Oural...) et collines (Massif central, Bohême, Meseta...). Pays-Bas, Pologne et Russie sont plats.
+- **Villes** à leurs vraies coordonnées. Londres est à l'intérieur des terres. Nouvelles villes : **Lille**, **Marseille**, **Holyhead**.
+- **Îles** : la Grande-Bretagne et l'Irlande ne sont reliées que par ferry.
+- **Ferries** : Calais–Douvres, **Dublin–Holyhead** (nouveau), Helsingør–Helsingborg, Hirtshals–Kristiansand, Ancona–Split, Thessalonique–Izmir.
+- **Danemark** retouché case par case : Jutland, Seeland (Helsingør et Copenhague) relié au Jutland, Øresund en mer face à Helsingborg.
+- Noms des mers et grands fleuves placés sur la vraie géographie (fleuves dans le décor, visibles de près).
+- `MAP_VERSION` passe à 11. Une partie en cours est convertie à l'ouverture. **Les cartes de l'éditeur sont supprimées** (elles visaient l'ancienne grille) ; une copie de secours reste dans le navigateur (`velo-maps-ancienne-grille`).
+- Longueur des voyages, en cases, sans ferry : Paris → Istanbul 40 → 30, Barcelone → Rome 17 → 14, Lyon → Vienne 15 → 13, Amsterdam → Prague 12 → 11, Bordeaux → Zurich 14 → 11, Berlin → Bucarest 21 → 16, Venise → Thessalonique 18 → 12. Copenhague → Cap Nord est maintenant faisable par la terre (36 cases) ou par le ferry Helsingør–Helsingborg.
+- Pour régénérer : `cd tools/carte && npm install && npm run carte`, puis `node tools/decor/make-decor.mjs`, puis la peinture dans `tools/peinture` (`python3 glyphs.py`, puis `python3 atlas.py <dossier>`). Les réglages (villes, relief, détroits, retouches) sont dans `tools/carte/geographie.mjs`.
 
 ## Fichiers
-- Nouveaux : `dist/board-camera.js`, `dist/board-roads.js`, `dist/display-prefs.js`, `dist/assets/europe/decor-data.js`, `tests/plateau-etape3.test.js`, `tools/decor/`, `tools/carte/`.
+- Nouveaux : `dist/board-camera.js`, `dist/board-roads.js`, `dist/display-prefs.js`, `dist/assets/europe/decor-data.js`, `tests/plateau-etape3.test.js`, `tools/decor/`, `tools/carte/` (construction de la carte).
 - Modifiés : `dist/board-renderer-svg.js`, `dist/app.js` (boutons et préférences d'affichage, ferries, liste des ferries partagée), `dist/europe.js` (`FERRY_ROUTES`, `MAP_VERSION` 10), `dist/assets/europe/board-data.js`, images de `dist/assets/terrain/`, `dist/style.css`, `dist/sw.js`, `dist/index.html`.
 - Tests mis à jour pour la nouvelle carte : nouveau ferry dans 2 tests, nombre de cases terrestres calculé, test de caméra adapté à la nouvelle caméra.
 
 ## Tests
-`npm test` : 122 tests, 98 réussis, et les **mêmes 24 échecs** qu'avant (aucun nouvel échec), plus 5 nouveaux tests verts.
+`npm test` : 122 tests, 99 réussis, 23 échecs. Ces échecs faisaient déjà partie des 24 qui échouaient avant l'étape 1 : aucun nouvel échec, et un ancien test repasse au vert (« les cinq voyages réalisables »).

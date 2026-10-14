@@ -1,8 +1,9 @@
 // Génère dist/assets/europe/decor-data.js : calque de décor PUREMENT VISUEL
 // (rivières, bosquets, petits lacs, hameaux). Ne change aucune règle et ne modifie pas board-data.js.
 // Usage (depuis la racine du dépôt) : node tools/decor/make-decor.mjs
+// Les fleuves viennent de tools/decor/rivieres.json, produit par tools/carte (npm run carte).
 import {MAP_CELLS} from '../../dist/assets/europe/board-data.js';
-import {writeFileSync} from 'node:fs';
+import {writeFileSync,readFileSync} from 'node:fs';
 
 const DIRS=[[1,0],[1,1],[0,1],[-1,0],[-1,-1],[0,-1]];
 const at=new Map(MAP_CELLS.map(c=>[`${c.q},${c.r}`,c]));
@@ -15,42 +16,11 @@ const r1=v=>Math.round(v*10)/10;
 const cities=land.filter(c=>c.type==='ville');
 const distCity=c=>Math.min(...cities.map(v=>Math.hypot(v.x-c.x,v.y-c.y)));
 
-// ---------- Rivières : tracées de case terrestre en case terrestre (évitent la mer et les montagnes) ----------
-const RIVERS={
- Danube:[[565,442],[625,442],[702,458],[774,476],[794,547],[870,548],[940,548],[1000,525]],
- Rhin:[[548,450],[522,402],[492,352],[462,325]],
- Seine:[[392,432],[353,423],[312,396]],
- Loire:[[402,474],[352,466],[292,456]],
- Rhône:[[505,470],[415,494],[418,548]],
- Garonne:[[310,532],[275,500],[255,474]],
- Elbe:[[662,418],[640,378],[602,330],[580,305]],
- Oder:[[722,412],[694,356],[684,302]],
- Vistule:[[772,440],[784,352],[772,300]],
- Pô:[[482,522],[560,522],[618,526]],
- Tage:[[205,600],[125,615],[62,616]],
- Èbre:[[212,548],[270,566],[300,576]],
- Dniepr:[[1002,322],[1009,423],[998,486],[992,522]]
-};
-const weight={plaine:1,ville:1.3,cote:2.2,moyenne_montagne:3,montagne:9,col:7};
-const nearestLand=([x,y],filter=()=>true)=>land.filter(filter).reduce((b,c)=>{const d=Math.hypot(c.x-x,c.y-y);return d<b.d?{c,d}:b;},{c:null,d:1e9}).c;
-function path(a,b){
- const dist=new Map([[a,0]]),prev=new Map(),open=[a];
- while(open.length){open.sort((u,v)=>dist.get(u)-dist.get(v));const u=open.shift();if(u===b)break;
-  for(const v of near(u)){if(v.type==='mer')continue;const d=dist.get(u)+(weight[v.type]||1)*(1+hash(v.q,v.r,7)*.35);if(d<(dist.get(v)??1e9)){dist.set(v,d);prev.set(v,u);if(!open.includes(v))open.push(v);}}}
- const out=[b];while(out[0]!==a){const p=prev.get(out[0]);if(!p)return [a,b];out.unshift(p);}return out;
-}
-const rivers=[];
-for(const [name,anchors]of Object.entries(RIVERS)){
- const cells=anchors.map((p,i)=>i===anchors.length-1?nearestLand(p,seaSide):nearestLand(p));
- let chain=[cells[0]];for(let i=1;i<cells.length;i++)chain.push(...path(cells[i-1],cells[i]).slice(1));
- chain=chain.filter((c,i)=>chain.indexOf(c)===i);
- // Décalage léger hors du centre des cases (les jetons et les numéros y sont posés).
- const points=chain.map(c=>{const a=hash(c.q,c.r,3)*Math.PI*2,d=3+hash(c.q,c.r,4)*3;return [r1(c.x+Math.cos(a)*d),r1(c.y+Math.sin(a)*d),c.q,c.r];});
- // Embouchure : on prolonge vers la mer voisine la plus proche.
- const last=chain.at(-1),sea=near(last).filter(n=>n.type==='mer').sort((u,v)=>Math.hypot(u.x-last.x,u.y-last.y)-Math.hypot(v.x-last.x,v.y-last.y))[0];
- if(sea)points.push([r1((last.x+sea.x)/2),r1((last.y+sea.y)/2),last.q,last.r]);
- rivers.push({name,points});
-}
+// ---------- Rivières : tracés réels projetés sur le plateau par tools/carte (rivieres.json) ----------
+// Chaque point garde la case (q, r) la plus proche ; les points en mer sont retirés au dessin.
+const nearestCell=(x,y)=>MAP_CELLS.reduce((b,c)=>{const d=(c.x-x)**2+(c.y-y)**2;return d<b.d?{c,d}:b;},{c:null,d:1e9}).c;
+const riverLines=JSON.parse(readFileSync(new URL('./rivieres.json',import.meta.url),'utf8'));
+const rivers=Object.entries(riverLines).map(([name,pts])=>({name,points:pts.map(([x,y])=>{const c=nearestCell(x,y);return [r1(x),r1(y),c.q,c.r];}).filter(([,,q,r])=>at.get(`${q},${r}`)?.type!=='mer')})).filter(r=>r.points.length>1);
 const riverCells=new Set(rivers.flatMap(r=>r.points.map(p=>`${p[2]},${p[3]}`)));
 
 // ---------- Bosquets, lacs, hameaux ----------
