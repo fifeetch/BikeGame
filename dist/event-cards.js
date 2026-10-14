@@ -17,7 +17,7 @@ export const EVENT_CARDS=[
  make(7,'Coup de pouce','positive','Un autre voyageur arrive au bon moment pour t’aider.','Annule une carte négative ou climatique qui vient d’être jouée contre toi.','cancel_attack',0,'🛡️'),
  make(8,'Paysage exceptionnel','positive','Un panorama incroyable récompense tes efforts.','Gagne immédiatement 2 points Aventure.','gain_points',2,'🏞️'),
  make(9,'Raccourci découvert','positive','Un cycliste local t’indique un itinéraire plus facile.','Ignore les surcoûts d’énergie liés au terrain pendant ton prochain déplacement.','terrain_shortcut',0,'🧭'),
- make(10,'Covoiturage improvisé','positive','Un véhicule accepte de transporter ton vélo sur quelques kilomètres.','Avance gratuitement jusqu’à 3 cases en suivant une route existante.','free_steps',3,'🚐'),
+ make(10,'Covoiturage improvisé','positive','Un véhicule accepte de transporter ton vélo sur quelques kilomètres.','Avance gratuitement jusqu’à 3 cases en suivant une route existante.','free_road_steps',3,'🚐'),
  make(11,'Crevaison','negative','Un morceau de verre met fin à ta progression.','Le joueur ciblé perd 1 énergie. Pneus renforcés annule l’effet.','puncture',1,'🛞'),
  make(12,'Casse mécanique','negative','Un problème de transmission immobilise ton vélo.','Le joueur ciblé perd son prochain déplacement. Outils multifonctions annule l’effet.','mechanical',0,'🔧'),
  make(13,'Vent de face','negative','Un vent contraire transforme la route en épreuve.','Le prochain déplacement du joueur ciblé coûte 2 énergies supplémentaires.','headwind_next',2,'💨'),
@@ -49,4 +49,18 @@ export const EVENT_CARDS=[
  make(39,'Carnet de voyage','permanent','Chaque ville traversée enrichit ton aventure.','Toutes les 3 nouvelles villes depuis l’activation : +2 points Aventure.','travel_journal',2,'📓'),
  make(40,'Réseau Warmshowers','permanent','La communauté accueille les cyclistes.','Une fois par tour, à l’arrivée dans une ville : +1 énergie.','warmshowers',1,'🏠')
 ];
-export const eventCardById=id=>EVENT_CARDS.find(card=>card.id===id);
+const officialCard=id=>EVENT_CARDS.find(card=>card.id===id);
+export function normalizeEventEdits(edits=[]){
+ if(!Array.isArray(edits)||edits.length>EVENT_CARDS.length)throw Error('La bibliothèque des cartes Événement est invalide.');
+ const seen=new Set();return edits.map(edit=>{
+  const slot=officialCard(edit?.slotId),effect=officialCard(edit?.templateId),name=String(edit?.name||'').trim(),description=String(edit?.description||'').trim();
+  if(!slot||!effect||slot.category!==effect.category||seen.has(slot.id)||!name||name.length>50||!description||description.length>180)throw Error('Variante de carte invalide : choisis un effet de la même catégorie et un texte court.');
+  seen.add(slot.id);return {slotId:slot.id,templateId:effect.id,name,description};
+ });
+}
+export function eventCardById(id,game){
+ const base=officialCard(id),edit=game?.eventCardEdits?.find(entry=>entry.slotId===id);if(!base||!edit)return base;
+ const effect=officialCard(edit.templateId);if(!effect||effect.category!==base.category)return base;
+ return {...base,name:edit.name,title:edit.name,description:edit.description,effectText:effect.effectText,text:effect.effectText,effectType:effect.effectType,effectValue:effect.effectValue,playTiming:effect.playTiming,terrainCondition:effect.terrainCondition,icon:effect.icon};
+}
+export const eventCardsFor=game=>EVENT_CARDS.map(base=>eventCardById(base.id,game));

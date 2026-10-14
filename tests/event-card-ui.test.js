@@ -14,10 +14,10 @@ test('four card faces use the same portrait structure and exact category palette
  }
 });
 
-test('menu catalogue exposes all forty official event cards without erasing the archive',()=>{
+test('menu catalogue exposes all forty event cards without erasing the archive',()=>{
  const html=renderCardEditor([],{id:'',title:'',template:'coup-boost'});
- assert(html.includes('Les 40 cartes Événement officielles'));
- assert.equal((html.match(/class="event-face /g)||[]).length,40);
+ assert(html.includes('Les 40 cartes Événement'));
+ assert.equal((html.match(/data-event-card-edit=/g)||[]).length,40);
  for(const c of EVENT_CARDS)assert(html.includes(c.name),c.id);
  assert(html.includes('Archives de l’ancien système'));
 });

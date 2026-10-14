@@ -4,9 +4,11 @@ import {EVENT_CARDS,eventCardById} from './event-cards.js';
 export const HAND_LIMIT=3;
 export const BONUS_LIMIT=2;
 export const isEventGame=m=>m?.cardVersion===3;
-export const card=id=>eventCardById(id);
+export const card=(id,m)=>eventCardById(id,m);
 export const hasBonus=(p,id)=>p.bonusCards?.includes(id)||false;
-export const foodCapacity=(m,p)=>Math.max(m.rules.maxFood,m.rules.startFood+(m.rules.bikes[p.bike]?.extraFood||0)+p.items.reduce((n,id)=>n+(m.rules.equipment[id]?.foodBonus||0),0))+(hasBonus(p,'evt-33')?3:0);
+const bonusForEffect=(m,p,type)=>p.bonusCards?.map(id=>card(id,m)).find(c=>c?.effectType===type);
+export const hasBonusEffect=(m,p,type)=>!!bonusForEffect(m,p,type);
+export const foodCapacity=(m,p)=>Math.max(m.rules.maxFood,m.rules.startFood+(m.rules.bikes[p.bike]?.extraFood||0)+p.items.reduce((n,id)=>n+(m.rules.equipment[id]?.foodBonus||0),0))+(hasBonusEffect(m,p,'food_capacity')?3:0);
 export function note(m,actor,text,kind='card',extra={}){
  m.history.push({turn:m.turn,round:m.round,player:actor.id,name:actor.name,kind,text,...extra});
  actor.log.unshift(text);actor.log=actor.log.slice(0,8);
@@ -21,19 +23,19 @@ export function drawChoices(m){m.cardChoices=[draw(m),draw(m)].filter(Boolean);m
 export function keepChoice(m,index){if(m.phase!=='card-choice'||!m.cardChoices[index])return false;
  const p=m.players[m.activeIndex],kept=m.cardChoices[index];p.cardHand.push(kept);
  m.cardChoices.forEach((id,i)=>{if(i!==index)discard(m,id);});m.cardChoices=[];
- note(m,p,`${p.name} garde ${card(kept)?.name||kept}.`);
+ note(m,p,`${p.name} garde ${card(kept,m)?.name||kept}.`);
  if(p.cardHand.length>HAND_LIMIT)m.phase='card-discard';return true;
 }
 export function discardHand(m,index){const p=m.players[m.activeIndex];if(m.phase!=='card-discard'||!p.cardHand[index])return false;
- const [id]=p.cardHand.splice(index,1);discard(m,id);note(m,p,`${p.name} défausse ${card(id)?.name||id}.`);return true;
+ const [id]=p.cardHand.splice(index,1);discard(m,id);note(m,p,`${p.name} défausse ${card(id,m)?.name||id}.`);return true;
 }
 export function removeBonus(m,p,index){if(!Number.isInteger(index)||index<0||index>=p.bonusCards.length)return false;
  const [id]=p.bonusCards.splice(index,1);discard(m,id);
- if(id==='evt-33')p.food=Math.min(p.food,foodCapacity(m,p));
- if(id==='evt-39')p.journalCities=[];
- note(m,p,`${p.name} perd ${card(id)?.name||id}.`);return true;
+ if(card(id,m)?.effectType==='food_capacity')p.food=Math.min(p.food,foodCapacity(m,p));
+ if(card(id,m)?.effectType==='travel_journal')p.journalCities=[];
+ note(m,p,`${p.name} perd ${card(id,m)?.name||id}.`);return true;
 }
-export function climateEligible(m,id,route=m.cardWindow?.route){const c=card(id);if(!c||c.category!=='climatic')return false;
+export function climateEligible(m,id,route=m.cardWindow?.route){const c=card(id,m);if(!c||c.category!=='climatic')return false;
  if(!route?.length)return ['heatwave','freezing_cold'].includes(c.effectType);
  if(c.terrainCondition==='cote')return route.some(k=>m.board[k]?.type==='cote');
  if(c.terrainCondition==='sans_route')return route.some(k=>!m.board[k]?.roads?.length);
@@ -46,7 +48,7 @@ export function beginRouteWindow(m,route){if(!Array.isArray(route)||!route.lengt
 }
 export function currentResponder(m){return m.cardWindow?.responders[m.cardWindow.responderIndex]||null;}
 export function passIntervention(m){if(m.phase!=='card-intervention'||!m.cardWindow||m.pendingAttack)return false;m.cardWindow.responderIndex++;return true;}
-export function beginAttack(m,actorId,index,targetId){const actor=m.players.find(p=>p.id===actorId),target=m.players.find(p=>p.id===targetId),c=card(actor?.cardHand[index]);
+export function beginAttack(m,actorId,index,targetId){const actor=m.players.find(p=>p.id===actorId),target=m.players.find(p=>p.id===targetId),c=card(actor?.cardHand[index],m);
  if(!actor||!target||actor===target||!c||m.pendingAttack||m.done||!['negative','climatic'].includes(c.category))return false;
  if(c.category==='negative'&&(actor!==m.players[m.activeIndex]||!['move','place'].includes(m.phase)||actor.cardPlayedTurn===m.turn||actor.negativePlayedTurn===m.turn))return false;
  if(c.category==='climatic'){
@@ -57,16 +59,16 @@ export function beginAttack(m,actorId,index,targetId){const actor=m.players.find
  if(c.category==='climatic'&&m.cardWindow)m.cardWindow.climateUsed=true;
  m.pendingAttack={cardId:c.id,actorId,targetId};note(m,actor,`${actor.name} joue ${c.name} contre ${target.name}.`,'card-attack',{cardId:c.id,targetId});return true;
 }
-export function defend(m){const a=m.pendingAttack;if(!a)return false;const p=m.players.find(q=>q.id===a.targetId),i=p.cardHand.indexOf('evt-07');if(i<0)return false;
- discard(m,p.cardHand.splice(i,1)[0]);discard(m,a.cardId);note(m,p,`${p.name} utilise Coup de pouce : attaque annulée.`,'card-defense');m.pendingAttack=null;return true;
+export function defend(m){const a=m.pendingAttack;if(!a)return false;const p=m.players.find(q=>q.id===a.targetId),i=p.cardHand.findIndex(id=>card(id,m)?.effectType==='cancel_attack');if(i<0)return false;
+ const [id]=p.cardHand.splice(i,1);discard(m,id);discard(m,a.cardId);note(m,p,`${p.name} utilise ${card(id,m)?.name||'une défense'} : attaque annulée.`,'card-defense');m.pendingAttack=null;return true;
 }
 function loseEnergy(p,n){p.energy=Math.max(0,p.energy-n);}
-export function resolveAttack(m,choice={}){const a=m.pendingAttack;if(!a)return false;const c=card(a.cardId),p=m.players.find(q=>q.id===a.targetId),actor=m.players.find(q=>q.id===a.actorId);if(!c||!p||!actor)return false;
+export function resolveAttack(m,choice={}){const a=m.pendingAttack;if(!a)return false;const c=card(a.cardId,m),p=m.players.find(q=>q.id===a.targetId),actor=m.players.find(q=>q.id===a.actorId);if(!c||!p||!actor)return false;
  if(['fall','damage_bonus'].includes(c.effectType)&&p.bonusCards.length&&(!Number.isInteger(choice.bonusIndex)||choice.bonusIndex<0||choice.bonusIndex>=p.bonusCards.length))return false;
  if(c.effectType==='freezing_cold'&&p.food>0&&!['food','energy'].includes(choice.resource))return false;
- let protectedBy='';if(c.effectType==='puncture'&&hasBonus(p,'evt-31'))protectedBy='Pneus renforcés';
- if(c.effectType==='mechanical'&&hasBonus(p,'evt-32'))protectedBy='Outils multifonctions';
- if(['wrong_turn','road_closed'].includes(c.effectType)&&hasBonus(p,'evt-35'))protectedBy='GPS de randonnée';
+ let protectedBy='';if(c.effectType==='puncture')protectedBy=bonusForEffect(m,p,'puncture_immunity')?.name||'';
+ if(c.effectType==='mechanical')protectedBy=bonusForEffect(m,p,'mechanical_immunity')?.name||'';
+ if(['wrong_turn','road_closed'].includes(c.effectType))protectedBy=bonusForEffect(m,p,'gps_immunity')?.name||'';
  let deferred=false;if(!protectedBy){switch(c.effectType){
   case 'puncture':case 'food_poisoning':case 'heatwave':loseEnergy(p,c.effectValue);break;
   case 'mechanical':p.pendingEffects.push({cardId:c.id,kind:'skip_move'});deferred=true;break;
@@ -88,7 +90,7 @@ export function resolveAttack(m,choice={}){const a=m.pendingAttack;if(!a)return 
  }}
  if(!deferred)discard(m,c.id);note(m,p,protectedBy?`${p.name} est protégé par ${protectedBy}.`:`${p.name} subit ${c.name} : ${c.effectText}`,'card-result',{cardId:c.id});m.pendingAttack=null;return true;
 }
-export function playOwnCard(m,index,replaceIndex){const p=m.players[m.activeIndex],c=card(p.cardHand[index]);if(!c||m.done||!['move','place'].includes(m.phase)||!['positive','permanent'].includes(c.category))return false;
+export function playOwnCard(m,index,replaceIndex){const p=m.players[m.activeIndex],c=card(p.cardHand[index],m);if(!c||m.done||!['move','place'].includes(m.phase)||!['positive','permanent'].includes(c.category))return false;
  if(p.cardPlayedTurn===m.turn)return false;
  if(c.effectType==='cancel_attack')return false;
  if(c.category==='permanent'&&p.bonusCards.length>=BONUS_LIMIT&&(!Number.isInteger(replaceIndex)||replaceIndex<0||replaceIndex>=BONUS_LIMIT))return false;
@@ -97,7 +99,8 @@ export function playOwnCard(m,index,replaceIndex){const p=m.players[m.activeInde
  p.cardPlayedTurn=m.turn;
  if(c.category==='permanent'){p.bonusCards.push(c.id);note(m,p,`${p.name} équipe ${c.name}.`,'card-bonus',{cardId:c.id});return true;}
  switch(c.effectType){
-  case 'free_steps':p.freeSteps=(p.freeSteps||0)+c.effectValue;if(c.id==='evt-10')p.freeRoadSteps=(p.freeRoadSteps||0)+c.effectValue;else p.freeGeneralSteps=(p.freeGeneralSteps||0)+c.effectValue;break;
+  case 'free_road_steps':p.freeSteps=(p.freeSteps||0)+c.effectValue;p.freeRoadSteps=(p.freeRoadSteps||0)+c.effectValue;break;
+  case 'free_steps':p.freeSteps=(p.freeSteps||0)+c.effectValue;p.freeGeneralSteps=(p.freeGeneralSteps||0)+c.effectValue;break;
   case 'gain_food':p.food=Math.min(foodCapacity(m,p),p.food+c.effectValue);break;
   case 'gain_energy':p.energy=Math.min(m.rules.maxEnergy,p.energy+c.effectValue);break;
   case 'gain_money':p.money+=c.effectValue;break;
@@ -107,7 +110,7 @@ export function playOwnCard(m,index,replaceIndex){const p=m.players[m.activeInde
  }
  discard(m,c.id);note(m,p,`${p.name} joue ${c.name} : ${c.effectText}`,'card-play',{cardId:c.id});return true;
 }
-export function onCityVisit(m,p,cityKey){if(hasBonus(p,'evt-40')&&p.warmTurn!==m.turn){p.energy=Math.min(m.rules.maxEnergy,p.energy+1);p.warmTurn=m.turn;note(m,p,`${p.name} récupère 1 énergie grâce à Réseau Warmshowers.`);}
- if(hasBonus(p,'evt-39')&&!p.journalCities.includes(cityKey)){p.journalCities.push(cityKey);if(p.journalCities.length%3===0){p.points+=2;note(m,p,`${p.name} gagne 2 points grâce au Carnet de voyage.`);}}
+export function onCityVisit(m,p,cityKey){const warm=bonusForEffect(m,p,'warmshowers'),journal=bonusForEffect(m,p,'travel_journal');if(warm&&p.warmTurn!==m.turn){p.energy=Math.min(m.rules.maxEnergy,p.energy+1);p.warmTurn=m.turn;note(m,p,`${p.name} récupère 1 énergie grâce à ${warm.name}.`);}
+ if(journal&&!p.journalCities.includes(cityKey)){p.journalCities.push(cityKey);if(p.journalCities.length%3===0){p.points+=2;note(m,p,`${p.name} gagne 2 points grâce à ${journal.name}.`);}}
 }
-export function onTurnEnd(m,p){if(hasBonus(p,'evt-34')){const old=p.energy;p.energy=Math.min(m.rules.maxEnergy,p.energy+1);if(p.energy>old)note(m,p,`${p.name} récupère 1 énergie grâce au Panneau solaire.`);}}
+export function onTurnEnd(m,p){const solar=bonusForEffect(m,p,'solar');if(solar){const old=p.energy;p.energy=Math.min(m.rules.maxEnergy,p.energy+1);if(p.energy>old)note(m,p,`${p.name} récupère 1 énergie grâce à ${solar.name}.`);}}
