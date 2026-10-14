@@ -44,3 +44,12 @@ Le plateau n'est plus corrigé à la main : il est **recalculé** à partir de d
 
 ## Tests
 `npm test` : 122 tests, 99 réussis, 23 échecs. Ces échecs faisaient déjà partie des 24 qui échouaient avant l'étape 1 : aucun nouvel échec, et un ancien test repasse au vert (« les cinq voyages réalisables »).
+
+## Menus « carte d'aventure » (style C)
+Les écrans d'avant partie sont refaits dans le style choisi sur la planche de maquettes :
+- **Écran titre vivant** : la carte peinte en plein écran glisse lentement, des nuages passent, un cycliste roule sur l'itinéraire Paris → Istanbul. Les menus sont des panneaux en bois. Tout s'arrête avec l'option « Réduire les animations ».
+- **1. Plateau** : la carte d'Europe en grand, « Mes cartes », l'atelier, l'import et le mode tuiles.
+- **2. Cyclistes** : un panneau par cycliste avec sa couleur.
+- **3. Garage** (pour chaque cycliste) : choix du vélo (Gravel ou Randonnée, effets lus dans les règles) et chargement des sacoches. Chaque objet acheté va dans une vraie sacoche dessinée sur le vélo ; la bourse, les places et une jauge de poids réagissent en direct. Le poids est une ambiance : il ne change pas les règles.
+- **4. Voyage** : trois cartes illustrées avec la longueur du voyage en cases.
+- Les règles du jeu ne changent pas. Fichier : `dist/menus.js` ; styles en fin de `dist/style.css` (bloc « Menus style C »).
