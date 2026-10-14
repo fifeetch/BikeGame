@@ -15,7 +15,8 @@ def sea_nb(c):
     return False
 for c in cells:
     c['cls']={'mer':'mer','plaine':'plaine','moyenne_montagne':'colline','montagne':'montagne','ville':'ville'}.get(c['type'])
-    if c['type']=='cote': c['cls']='cote' if sea_nb(c) else 'haut_fond'
+    # Une case « côte » qui ne touche aucune mer est peinte comme de la terre (et non plus en hauts-fonds).
+    if c['type']=='cote': c['cls']='cote' if sea_nb(c) else 'plaine'
 w,h=Wb*F,Hb*F
 def hexpts(c,sc,k=1.03):
     return [(c['x']*sc+R*sc*k*math.cos(math.radians(a*60-90)),c['y']*sc+R*sc*k*math.sin(math.radians(a*60-90))) for a in range(6)]
@@ -91,6 +92,8 @@ def finish(P,SCf=SC):
     shoal=np.clip(G(P['mask_haut'],F*2.2)*1.6,0,1)[...,None]
     sea=sea*(1-0.75*shoal)+rgb(0.66,0.90,0.82)*0.75*shoal
     lab,nl=ndi.label(~land2); lake=(lab!=lab[0,0])&(~land2)
+    # Une grande étendue d'eau fermée (ex. la mer Noire) reste peinte en mer ; seules les petites deviennent des lacs.
+    sizes=ndi.sum(lake,lab,range(nl+1)); big=np.zeros(nl+1,bool); big[1:]=sizes[1:]>lake.size*0.005; lake=lake&~big[lab]
     lake_d=ndi.distance_transform_edt(lake).astype(np.float32)/F
     lk=np.array([(0.55,0.82,0.88),(0.36,0.70,0.85),(0.24,0.58,0.80)],np.float32)
     lake_col=np.stack([np.interp(lake_d,[0,1.5,5],lk[:,i]) for i in range(3)],-1).astype(np.float32)

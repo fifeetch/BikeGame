@@ -1,6 +1,8 @@
 import {MAP_CELLS} from './assets/europe/board-data.js';
 
-export const MAP_VERSION=9;
+export const MAP_VERSION=10;
+// Ferries : de port à port, comme les liaisons réelles les plus utilisées.
+export const FERRY_ROUTES=[['Calais','Douvres'],['Helsingør','Helsingborg'],['Hirtshals','Kristiansand'],['Ancona','Split'],['Thessalonique','Izmir']];
 export const MAP_WIDTH=1261, MAP_HEIGHT=842, HEX_SPACING=29/Math.sqrt(2), HEX_RADIUS=HEX_SPACING/Math.sqrt(3), HEX_ROW_STEP=HEX_RADIUS*1.5;
 export const HEX_DIRECTIONS=[[1,0],[1,1],[0,1],[-1,0],[-1,-1],[0,-1]];
 export const hexKey=(q,r)=>`hex-${q}-${r}`;
@@ -21,7 +23,7 @@ export function europeBoard(from,to){
  const byAxial=new Map(nodes.map(t=>[`${t.q},${t.r}`,t]));
  for(const a of nodes){if(a.type==='mer')continue;for(const [dq,dr] of HEX_DIRECTIONS){const b=byAxial.get(`${a.q+dq},${a.r+dr}`);if(b&&b.type!=='mer')link(a,b);}}
  // Port-to-port crossings are separate actions, never ordinary land steps.
- for(const [a,b] of [['Londres','Bruxelles'],['Copenhague','Oslo'],['Venise','Zagreb'],['Thessalonique','Istanbul']])link(byName[a],byName[b],true);
+ for(const [a,b] of FERRY_ROUTES)link(byName[a],byName[b],true);
  const start=byName[from],arrival=byName[to];if(!start||!arrival)throw Error('Ville du voyage absente du plateau');start.id=0;
  return {board,edges,start:start.key,arrivalId:arrival.id};
 }

@@ -49,9 +49,10 @@ test('route waits for every weather intervention, stays limited, and pays each c
 test('ferry is paid, requires confirmation API and ends the day with draw choice',()=>{
  const r=clone(CLASSIC);r.eventCards.categories.negative=false;r.eventCards.categories.climatic=false;
  const m=S.createMatch([{name:'A',bike:'gravel',voyage:'nord'}],'plateau',r,1),p=S.player(m);
- assert.equal(p.pos,'city-Copenhague');assert(S.ferryOptions(m).some(t=>t.key==='city-Oslo'));
- assert(!S.moves(m).some(t=>t.key==='city-Oslo'));assert(!S.move(m,'city-Oslo'));
- assert(S.travelFerry(m,'city-Oslo'));assert.equal(p.pos,'city-Oslo');assert.equal(p.money,2);assert.equal(m.phase,'card-choice');
+ // Ferries de port à port : le cycliste part du port danois de Helsingør vers Helsingborg (Suède).
+ assert.equal(p.pos,'city-Copenhague');assert(!S.ferryOptions(m).length);p.pos='city-Helsingør';assert(S.ferryOptions(m).some(t=>t.key==='city-Helsingborg'));
+ assert(!S.moves(m).some(t=>t.key==='city-Helsingborg'));assert(!S.move(m,'city-Helsingborg'));
+ assert(S.travelFerry(m,'city-Helsingborg'));assert.equal(p.pos,'city-Helsingborg');assert.equal(p.money,2);assert.equal(m.phase,'card-choice');
  assert.equal(m.cardChoices.length,2);assert(S.chooseCard(m,0));assert.equal(p.cardHand.length,4);
 });
 test('flat card hits another player on their next day; kit repairs, no kit returns to city',()=>{

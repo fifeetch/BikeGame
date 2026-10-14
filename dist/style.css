@@ -666,3 +666,128 @@ body:has(.home),body:has(.journey-page){background:#f3efe4;background-image:radi
  .game.game-split .route-planner .route-buttons button{min-height:36px;padding:5px 12px;font-size:14px}
  .game.game-split .layout>section:first-child{gap:6px 14px}
 }
+
+/* ===== Étape 3 : caméra (glisser, pincer, molette), mini-carte, plateau sur la majeure partie de l'écran ===== */
+.map.board-camera{position:relative;overflow:hidden;touch-action:none;cursor:grab;overscroll-behavior:contain;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;background:radial-gradient(120% 90% at 50% 45%,#2a6eb0,#1b4f8c 70%,#173f73)}
+.map.board-camera.is-dragging{cursor:grabbing}
+.map.board-camera>.europe-world{position:absolute;left:0;top:0;margin:0;border:0;border-radius:0;box-shadow:none;transform-origin:0 0;background:#1d5fa3}
+.map.board-camera .playable-europe{width:100%;height:100%}
+.map.board-camera:focus-visible{outline:3px solid #f4c84c;outline-offset:-3px}
+.maptools{z-index:5}
+.maptools .sheet-toggle{white-space:nowrap}
+.maptools .sheet-toggle.active{background:#254f40;color:#fff8e9}
+/* Mini-carte repliable : cadre de vue + jetons des joueurs ; un clic ou un glisser déplace la vue. */
+.board-minimap{position:absolute;left:10px;bottom:10px;z-index:5;display:flex;flex-direction:column;align-items:flex-start;gap:4px;pointer-events:none}
+.board-minimap>*{pointer-events:auto}
+.minimap-toggle{order:-1;min-width:34px;min-height:34px;padding:2px 8px;border-radius:999px;border:1px solid #d6cdb4;background:#faf8efee;color:#234e43;font-size:15px;line-height:1;box-shadow:0 2px 6px #0003;cursor:pointer}
+.board-minimap:not(.collapsed) .minimap-toggle{position:absolute;right:-12px;top:-12px;min-width:26px;min-height:26px;padding:0;font-size:12px}
+.minimap-body{position:relative;width:190px;aspect-ratio:1261/842;border-radius:10px;overflow:hidden;border:2px solid #fffdf3;background:#1d5fa3;box-shadow:0 4px 14px #0005;cursor:crosshair;touch-action:none}
+.minimap-body[hidden]{display:none}
+.minimap-art{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none}
+.minimap-overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.minimap-view{fill:#fffdf322;stroke:#fffdf3;stroke-width:2px;vector-effect:non-scaling-stroke;rx:6}
+.minimap-dots circle{stroke:#fff;stroke-width:1.5px;vector-effect:non-scaling-stroke}
+.minimap-dots circle.active{stroke:#f4c84c;stroke-width:2.5px}
+@media(max-width:700px){.minimap-body{width:132px}.board-minimap{left:8px;bottom:8px}}
+/* Météo légère : quelques ombres de nuages qui passent lentement (transformations GPU, désactivable). */
+.board-weather{position:absolute;inset:0;z-index:2;overflow:hidden;pointer-events:none}
+.board-weather[hidden]{display:none}
+.board-weather .cloud{position:absolute;left:0;width:520px;height:300px;border-radius:50%;background:radial-gradient(closest-side,#0b263526,#0b263512 60%,transparent);will-change:transform;animation:cloud-drift 110s linear infinite}
+.board-weather .cloud.c0{top:4%;animation-delay:-20s}
+.board-weather .cloud.c1{top:42%;width:640px;height:340px;animation-duration:150s;animation-delay:-95s;background:radial-gradient(closest-side,#ffffff2b,#ffffff10 60%,transparent)}
+.board-weather .cloud.c2{top:66%;animation-duration:130s;animation-delay:-60s}
+.board-weather .cloud.c3{top:20%;width:380px;height:220px;animation-duration:95s;animation-delay:-5s;background:radial-gradient(closest-side,#ffffff24,#ffffff0c 60%,transparent)}
+@keyframes cloud-drift{from{transform:translate3d(-700px,0,0)}to{transform:translate3d(calc(100vw + 200px),40px,0)}}
+
+/* Plateau prioritaire : la fiche joueur se replie (grand écran) ou devient un tiroir latéral (tablette, téléphone). */
+@media(min-width:980px){
+ .game.game-split.sheet-collapsed .layout>section:first-child{grid-template-columns:minmax(0,1fr) 0;column-gap:0}
+ .game.sheet-collapsed .player-sheet-mount{display:none}
+ .game:not(.game-split) .map{height:calc(100dvh - 230px);min-height:480px;max-height:none}
+ .sheet-drawer-close,.sheet-backdrop{display:none}
+}
+@media(max-width:979px){
+ .game .map{height:calc(100dvh - 215px);min-height:340px;max-height:none}
+ .game .player-sheet-mount{position:fixed;top:0;right:0;bottom:0;z-index:60;width:min(460px,94vw);margin:0;overflow:auto;overscroll-behavior:contain;background:#f6f1e6;box-shadow:-10px 0 30px #0004;transform:translateX(105%);transition:transform .28s ease;visibility:hidden}
+ .game.sheet-open .player-sheet-mount{transform:none;visibility:visible}
+ .sheet-drawer-close{position:sticky;top:0;z-index:2;display:block;width:100%;margin:0;border-radius:0}
+ .sheet-backdrop{display:none}
+ .game.sheet-open .sheet-backdrop{display:block;position:fixed;inset:0;z-index:55;background:#0f201a66}
+ header.in-game{gap:6px;padding:6px 10px}
+ header.in-game nav button{min-height:34px;padding:4px 10px;font-size:13px}
+ header.in-game .event-pile{min-height:34px;padding:2px 8px}
+ header.in-game .event-pile small{display:none}
+}
+@media(max-width:560px){
+ .game .map{height:calc(100dvh - 250px);min-height:320px}
+ .maptools{top:8px;right:8px;gap:4px;flex-wrap:wrap;justify-content:flex-end;max-width:calc(100% - 16px)}
+ .maptools button{min-width:40px;min-height:40px;padding:4px 9px;font-size:14px}
+}
+html.reduce-motion .game .player-sheet-mount{transition:none}
+
+/* ===== Étape 5 : routes (décoratives), ferries (élément de jeu) et calque de décor ===== */
+.board-roads,.board-decor,.route-trail,.board-halos{pointer-events:none}
+.board-roads path{fill:none;stroke-linecap:round;stroke-linejoin:round}
+.road-main-case{stroke:#5f4325;stroke-opacity:.55;stroke-width:3.2}
+.road-main{stroke:#f6e7bf;stroke-opacity:.92;stroke-width:1.7}
+.road-minor{stroke:#7b5a33;stroke-opacity:.6;stroke-width:.9;stroke-dasharray:2 1.7;opacity:0;transition:opacity .35s}
+.board-roads[data-detail="true"] .road-minor{opacity:1}
+.supplied-map:not(.art-on) .road-main-case{stroke-opacity:.35}
+.board-decor{opacity:0;transition:opacity .4s}
+.board-decor[data-visible="true"]{opacity:.9}
+.supplied-map:not(.art-on) .board-decor{display:none}
+.decor-river{fill:none;stroke:#4d94c4;stroke-opacity:.75;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round}
+.decor-lakes ellipse{fill:#5ea6d2;fill-opacity:.8;stroke:#efe4bf;stroke-width:.6}
+.decor-conifers{fill:#2d5a37;fill-opacity:.55}
+.decor-leafy{fill:#3c7637;fill-opacity:.5}
+.decor-walls{fill:#f1e7cf;fill-opacity:.85}
+.decor-roofs{fill:#a4513a;fill-opacity:.75}
+.ferry-hit{fill:none;stroke:transparent;stroke-width:16;pointer-events:none}
+.ferry.available .ferry-hit{pointer-events:stroke;cursor:pointer}
+.ferry-case{fill:none;stroke:#fffdf3;stroke-opacity:.75;stroke-width:3.4;stroke-linecap:round}
+.ferry-line{fill:none;stroke:#1f6fb4;stroke-width:1.7;stroke-dasharray:3.5 3;stroke-linecap:round}
+.ferry.available .ferry-case{stroke-opacity:1;stroke-width:4.6}
+.ferry.available .ferry-line{stroke:#0b5aa6;stroke-width:2.3;animation:ferry-flow 1.1s linear infinite}
+.ferry.available:hover .ferry-case,.ferry.available:focus-visible .ferry-case{stroke:#fff6b5}
+.ferry:focus{outline:none}
+.ferry-boat{pointer-events:none}
+.ferry.available .ferry-boat{pointer-events:auto;cursor:pointer}
+.ferry-boat-inner{transform:scale(var(--sym,1))}
+.ferry-boat-bg{fill:#fffdf5;stroke:#1f6fb4;stroke-width:1.2}
+.ferry-hull{fill:#1f6fb4}.ferry-cabin{fill:#fff;stroke:#1f6fb4;stroke-width:.6}.ferry-funnel{fill:#d9573b}
+.ferry.available .ferry-boat-bg{fill:#fff4b8;stroke:#0b5aa6;stroke-width:1.8;animation:ferry-glow 1.8s ease-in-out infinite}
+.ferry-label{display:none;font:800 8.5px system-ui,sans-serif;fill:#0d3d66;paint-order:stroke;stroke:#fffdf3;stroke-width:3px;stroke-linejoin:round;text-anchor:middle}
+.ferry.available .ferry-label{display:block}
+@keyframes ferry-flow{to{stroke-dashoffset:-13}}
+@keyframes ferry-glow{50%{stroke-opacity:.35}}
+
+/* ===== Étape 6 : animations discrètes (affichage uniquement) ===== */
+.route-trail-case{fill:none;stroke:#fffdf3;stroke-opacity:.9;stroke-width:calc(4.8px * var(--sym,1));stroke-linecap:round;stroke-linejoin:round}
+.route-trail-line{fill:none;stroke:#e65c37;stroke-width:calc(2.4px * var(--sym,1));stroke-linecap:round;stroke-linejoin:round}
+.route-number-inner,.rider-inner{transform:scale(var(--sym,1))}
+.sel-halo{animation:halo-in .3s ease-out}
+.sel-halo circle{fill:#fff7c2;fill-opacity:.3;stroke:#fffdf3;stroke-opacity:.8;stroke-width:1.4}
+@keyframes halo-in{from{opacity:0}}
+.dest-pulse-inner{transform:scale(var(--sym,1))}
+.pulse-ring{fill:#e0663f14;stroke:#e0663f;stroke-width:2.2;transform-box:fill-box;transform-origin:center;animation:dest-pulse 3s ease-out infinite}
+.pulse-ring.late{fill:none;animation-delay:1.5s}
+@keyframes dest-pulse{0%{transform:scale(.75);opacity:.9}100%{transform:scale(1.9);opacity:0}}
+.rider-token.active .rider-base{stroke:#fff6b0;stroke-width:3}
+.rider-token.active .rider-inner{filter:drop-shadow(0 0 3px #fff8)}
+.city-names .city-name{font-size:calc(9px * var(--lab,1));stroke-width:calc(3px * var(--lab,1));transform:translateY(calc(var(--lab,1) * 12px + 10px))}
+.motion-reduced .pulse-ring,.motion-reduced .ferry.available .ferry-line,.motion-reduced .ferry.available .ferry-boat-bg,.motion-reduced .sel-halo{animation:none}
+.motion-reduced .pulse-ring{opacity:.85}.motion-reduced .pulse-ring.late{display:none}
+.motion-reduced .board-decor,.motion-reduced .road-minor{transition:none}
+@media(prefers-reduced-motion:reduce){.board-weather .cloud{animation:none}}
+@media(max-width:560px){
+ .maptools .tool-label{display:none}
+ .game .player-sheet-dock{display:flex;gap:6px;padding:4px}
+ .game .player-sheet-dock button{flex:1 1 0;min-height:42px;padding:4px 6px;font-size:13px;line-height:1.15;box-shadow:none}
+ .game .player-sheet-dock .dock-end-turn{flex:1.4 1 0;font-size:15px}
+ .game .map{height:calc(100dvh - 290px);min-height:300px}
+}
+@media(max-width:979px){
+ .game .player-sheet-mount{overflow-x:hidden}
+ .game .player-sheet-mount .player-mat{zoom:1;width:auto;max-width:100%;min-width:0;box-sizing:border-box}
+}
+@media(max-width:560px){.game .player-sheet-dock button{min-width:0;white-space:normal;overflow-wrap:anywhere}}
