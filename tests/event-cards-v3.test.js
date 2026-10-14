@@ -18,10 +18,11 @@ test('forty event cards are unique, complete and use four category colours',()=>
  assert.notEqual(EVENT_CARDS[12].id,EVENT_CARDS[20].id);
 });
 
-test('solo keeps only self-playable cards so its hand cannot fill with opponent attacks',()=>{
+test('solo starts with all forty cards and resolves adverse starting draws automatically',()=>{
  const m=S.createMatch([{name:'Solo',bike:'gravel',voyage:'traversee'}],'plateau',CLASSIC,9);
- const all=[...m.eventDeck,...m.players[0].cardHand];assert.equal(all.length,20);
- assert(all.every(id=>C.card(id).targetType==='self'));assert.equal(S.load(S.serialize(m)).cardVersion,3);
+ const drawn=[...m.players[0].cardHand,...m.soloEventQueue,...(m.pendingAttack?[m.pendingAttack.cardId]:[])];
+ assert.equal(m.eventDeck.length,37);assert.equal(drawn.length,3);assert.equal(new Set([...m.eventDeck,...drawn]).size,40);
+ assert.equal(S.load(S.serialize(m)).cardVersion,3);
 });
 
 test('common deck deals three each, keeps one of two and requires chosen overflow discard',()=>{

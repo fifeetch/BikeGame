@@ -8,6 +8,7 @@ export const CLASSIC={
  rest:{bivouac:{name:'Bivouac',price:0,energy:3,days:1,tent:true,cityOnly:false},camping:{name:'Camping',price:1,energy:5,days:1,tent:false,cityOnly:false},hotel:{name:'Hôtel',price:3,energy:10,days:1,tent:false,cityOnly:true}},
  food:{energy:3,stoveBonus:2,price:1,quantity:2,maxPerTurn:1,cityOnly:true,restaurantPrice:1,restaurantEnergy:4},
  cardBalance:{foodEnergy:2,bivouacEnergy:1},
+ eventCards:{startingHand:3,handLimit:3,bonusLimit:2,drawPerTurn:2,shuffle:true,categories:{positive:true,negative:true,climatic:true,permanent:true}},
  equipment:{tente:{name:'Tente',price:2,space:2,energyBonus:0},rechaud:{name:'Réchaud',price:1,space:1,energyBonus:0},chambre:{name:'Chambre à air',price:1,space:1,energyBonus:0},kit:{name:'Kit de réparation',price:1,space:1,energyBonus:0},gps:{name:'GPS',price:3,space:1,energyBonus:0},duvet:{name:'Matelas et duvet',price:3,space:2,energyBonus:1},secours:{name:'Trousse de secours',price:2,space:1,energyBonus:0},sacoches:{name:'Sacoches',price:2,space:1,energyBonus:0,foodBonus:3}},
  probabilities:{negative:50,positive:30,challenge:20},eventAfterWork:false,eventAfterRest:false,
  points:{plaine:1,moyenne_montagne:2,montagne:3,cote:2,ville:2,camping:2,auberge:2,col:6,decouverte:4,objective:10},
@@ -26,6 +27,9 @@ export function validateRules(input){
  const walk=(v,path='')=>{for(const [k,n]of Object.entries(v)){const p=path+'.'+k;if(n&&typeof n==='object')walk(n,p);else if(typeof n==='number'&&(!Number.isFinite(n)||Math.abs(n)>100000||(!p.includes('.events.')&&n<0)))throw Error('Valeur incorrecte : '+p);else if(typeof n!=='number'&&typeof n!=='boolean'&&typeof n!=='string')throw Error('Valeur incorrecte : '+p);}};walk(r);
  const types=(base,v)=>{if(Array.isArray(base)){if(!Array.isArray(v))throw Error('Liste d’événements invalide');return;}for(const k of Object.keys(base)){if(base[k]&&typeof base[k]==='object')types(base[k],v[k]);else if(typeof base[k]!==typeof v[k])throw Error('Type invalide : '+k);}};types(CLASSIC,r);
  if(!Number.isInteger(r.distance)||r.distance<1||r.distance>5||r.startEnergy>r.maxEnergy||r.maxEnergy<1)throw Error('Distance : entier de 1 à 5 ; énergie de départ ≤ maximum.');
+ const cards=r.eventCards;
+ if(!Number.isInteger(cards.startingHand)||cards.startingHand<0||cards.startingHand>10||!Number.isInteger(cards.handLimit)||cards.handLimit<1||cards.handLimit>10||cards.startingHand>cards.handLimit||!Number.isInteger(cards.bonusLimit)||cards.bonusLimit<0||cards.bonusLimit>10||!Number.isInteger(cards.drawPerTurn)||cards.drawPerTurn<1||cards.drawPerTurn>5)throw Error('Cartes : départ de 0 à 10 (dans la limite de main), main de 1 à 10, bonus de 0 à 10, pioche de fin de tour de 1 à 5.');
+ if(!Object.values(cards.categories).some(Boolean))throw Error('Active au moins une catégorie de cartes Événement.');
  if(![r.workDays,...Object.values(r.rest).map(a=>a.days)].every(n=>Number.isInteger(n)&&n>=1&&n<=30))throw Error('Durée des actions : de 1 à 30 jours.');
  if(![r.startFood,r.maxFood,r.food.quantity,r.food.maxPerTurn,...Object.values(r.bikes).flatMap(b=>[b.capacity,b.extraDistance,b.extraFood]),...Object.values(r.equipment).map(e=>e.space)].every(Number.isInteger)||r.maxFood<r.startFood)throw Error('Quantités, capacités et distances : nombres entiers ; capacité nourriture ≥ départ.');
  if(Object.values(r.probabilities).reduce((a,b)=>a+b,0)!==100)throw Error('Les probabilités doivent totaliser 100 %.');
