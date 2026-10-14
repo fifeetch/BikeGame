@@ -507,6 +507,15 @@ header.in-game .event-pile small{grid-column:1;font-size:9px;line-height:1.1}
 }
 
 /* Carnet de route : accueil et étapes de préparation au départ. */
+.board-sea-face{pointer-events:all;stroke:none}
+.board-sea-cursor{pointer-events:none}
+.board-sea-outline{fill:#f4dc5b22;stroke:#e06b3c;stroke-width:2.5;stroke-dasharray:2 2}
+.board-cell-picker{position:absolute;left:10px;bottom:10px;z-index:4;display:flex;align-items:center;flex-wrap:wrap;gap:7px;max-width:calc(100% - 20px);padding:8px 10px;border:1px solid #d4c5a3;border-radius:12px;background:#fffaf0f2;box-shadow:0 3px 12px #234e4320;font-size:12px}
+.board-cell-picker[hidden]{display:none}
+.board-cell-picker label{display:flex;align-items:center;gap:4px;margin:0;font-size:12px}
+.board-cell-picker input{width:58px;min-height:32px;margin:0;padding:4px;border:1px solid #bdcab4;border-radius:6px;background:white;color:#244b40;font:inherit}
+.board-cell-picker button{min-height:32px;padding:5px 9px;font-size:12px}
+.board-cell-picker output{max-width:180px;color:#687063}
 body:has(.home),body:has(.journey-page){background:#f3efe4;background-image:radial-gradient(#967c4d0c .8px,transparent .8px);background-size:8px 8px}
 .home{max-width:1420px;min-height:calc(100vh - 74px);grid-template-columns:minmax(480px,1.03fr) minmax(430px,.97fr);gap:clamp(28px,5vw,76px);padding:36px 36px 46px;margin:0 auto;align-items:center}
 .home-copy{position:relative;z-index:1;padding:8px 0}

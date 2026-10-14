@@ -1,0 +1,43 @@
+<!doctype html><html lang="fr"><meta charset="utf-8"><title>Vérification du plateau — étape 1</title>
+<style>body{margin:20px;font:15px system-ui;background:#f5f2e9;color:#244b40}button,a{display:inline-block;padding:10px 15px;border:0;border-radius:9px;background:#234e43;color:white;margin-right:8px;text-decoration:none;cursor:pointer}iframe{width:100%;height:740px;border:1px solid #c7ccbc;border-radius:12px;margin-top:12px}pre{white-space:pre-wrap;padding:15px;background:#fffdf5;border:1px solid #d8d3c3;border-radius:12px}</style>
+<h1>Contrôles de l’étape 1</h1><p>Cette page utilise une partie de contrôle locale et restaure le stockage de cet aperçu après les vérifications.</p>
+<button id="run">Lancer les contrôles</button><a href="../dist/" target="_blank">Ouvrir le jeu de la branche</a><pre id="results" role="status">Prêt. Le site GitHub Pages principal n’est pas utilisé.</pre><iframe id="game" title="Partie de contrôle"></iframe>
+<script type="module">
+import * as S from '../dist/simulator.js';import {CLASSIC,clone} from '../dist/rules.js';
+const button=document.querySelector('#run'),output=document.querySelector('#results'),frame=document.querySelector('#game');
+const baseline=new URLSearchParams(location.search).get('baseline')==='1';
+const check=(value,message)=>{if(!value)throw Error(message);},paint=()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))),summary=a=>{const values=[...a].sort((a,b)=>a-b);return {median:+values[Math.floor(values.length/2)].toFixed(2),p95:+values[Math.min(values.length-1,Math.floor(values.length*.95))].toFixed(2)};};
+button.onclick=async()=>{
+ button.disabled=true;const backup=new Map(['velo-save','velo-auto','velo-maps','velo-custom-map','velo-split-view','velo-split-width'].map(k=>[k,localStorage.getItem(k)]));const results=[];
+ try{
+  const rules=clone(CLASSIC);rules.eventCards.startingHand=0;rules.eventCards.categories.negative=false;rules.eventCards.categories.climatic=false;rules.victory.mode='turns';rules.victory.turns=20;
+  const m=S.createMatch([{name:'Contrôle SVG',bike:'gravel',voyage:'nord'}],'plateau',rules,42),save=S.serialize(m);
+  localStorage.setItem('velo-save',save);localStorage.setItem('velo-auto','false');localStorage.setItem('velo-maps','[]');localStorage.removeItem('velo-custom-map');localStorage.setItem('velo-split-view','true');localStorage.setItem('velo-split-width','40');
+  frame.src=baseline?'../baseline/dist/?qa=board-step1':'../dist/?qa=board-step1';await new Promise((resolve,reject)=>{frame.onload=resolve;setTimeout(()=>reject(Error('Chargement trop long')),12000);});await paint();
+  const d=frame.contentDocument,w=frame.contentWindow;
+  const click=selector=>{const el=d.querySelector(selector);check(el,`Commande absente : ${selector}`);check(!el.disabled,`Commande désactivée : ${selector}`);const start=performance.now();el.dispatchEvent(new w.MouseEvent('click',{bubbles:true,cancelable:true}));return performance.now()-start;};
+  click('[data-action="continue"]');await paint();const svg=d.querySelector('.playable-europe'),land=d.querySelector('.hex-cells').firstElementChild;
+  check(svg,'Plateau absent après reprise');if(!baseline)check(!svg.querySelector('title'),'Titres restants');check(svg.querySelectorAll('.hex-cells>.map-tile').length===(baseline?2783:1486),'Nombre de cases incorrect');
+  results.push({test:'Reprise sauvegarde MAP_VERSION 9',ok:true,svgElements:svg.querySelectorAll('*').length+1,land:1486});
+  const clicks=[],visible=[],zoom=[];
+  for(let i=0;i<30;i++){
+   const target=d.querySelector('.map-tile.next-step[data-move]');check(target,'Aucune case sélectionnable');const begin=performance.now();clicks.push(click(`[data-move="${target.getAttribute('data-move')}"]`));await paint();visible.push(performance.now()-begin);if(!baseline)check(d.querySelector('.playable-europe')===svg&&d.querySelector('.hex-cells').firstElementChild===land,'SVG ou case reconstruits sur clic');click('[data-action="route-clear"]');
+  }
+  for(let i=0;i<10;i++){zoom.push(click('[data-action="zoomin"]'));await paint();zoom.push(click('[data-action="zoomout"]'));await paint();if(!baseline)check(d.querySelector('.playable-europe')===svg,'SVG reconstruit pendant zoom');}
+  results.push({test:'30 sélections + effacements, 20 actions de zoom',ok:true,clickSynchronousMs:summary(clicks),clickThroughTwoFramesMs:summary(visible),zoomSynchronousMs:summary(zoom),note:'Deux frames mesurent un délai d’affichage, pas le débit GPU ni les FPS d’un glisser.'});
+  if(baseline){output.textContent=JSON.stringify({ok:true,baseline:'203cf52',viewport:{width:w.innerWidth,height:w.innerHeight},results},null,2);return;}
+  click('[data-ferry="city-Oslo"]');check(d.querySelector('[data-action="ferry-confirm"]'),'Confirmation ferry absente');click('[data-action="ferry-confirm"]');check(d.querySelector('[data-action="choose-0"]'),'Pioche après ferry absente');click('[data-action="choose-0"]');check(d.querySelector('.rider-token').getAttribute('transform').includes(String(m.board['city-Oslo'].x)),'Cycliste absent à Oslo');check(d.querySelector('.playable-europe')===svg,'SVG reconstruit après ferry');results.push({test:'Ferry confirmé, jeton à Oslo et fin du tour',ok:true});
+  for(let safety=0;safety<100&&!d.querySelector('.modal h2')?.textContent.includes('Partie terminée');safety++){
+   if(d.querySelector('[data-action="choose-0"]'))click('[data-action="choose-0"]');else if(d.querySelector('[data-action="event-discard-0"]'))click('[data-action="event-discard-0"]');else if(d.querySelector('.player-sheet-dock [data-action="endturn"]'))click('.player-sheet-dock [data-action="endturn"]');else throw Error('Partie de contrôle bloquée');
+  }
+  check([...d.querySelectorAll('h2')].some(el=>el.textContent.includes('Partie terminée')),'Partie non terminée');check(d.querySelector('.playable-europe')===svg,'SVG remplacé en fin de partie');results.push({test:'Partie complète avec limite configurée de 20 jours',ok:true});
+  click('[data-action="home"]');click('[data-action="editor-new"]');await paint();const editorSVG=d.querySelector('.playable-europe'),seaPath=editorSVG.querySelector('.board-sea-face'),initialSea=seaPath.getAttribute('d'),sea=Object.values(m.board).find(t=>t.type==='mer');
+  const point=editorSVG.createSVGPoint();point.x=sea.x;point.y=sea.y;const client=point.matrixTransform(editorSVG.getScreenCTM());editorSVG.dispatchEvent(new w.MouseEvent('click',{bubbles:true,clientX:client.x,clientY:client.y}));check(d.querySelector('#map-tile-type')?.value==='mer','Clic géométrique de mer incorrect');click('[data-action="close"]');
+  const form=d.querySelector('.board-cell-picker'),fields=form.querySelectorAll('input');fields[0].value=sea.q;fields[1].value=sea.r;form.requestSubmit();check(d.querySelector('#map-tile-type')?.value==='mer','Coordonnées clavier de mer incorrectes');d.querySelector('#map-tile-type').value='col';click('[data-action="map-save"]');
+  check(d.querySelector(`.terrain-col[data-board-key="${sea.key}"]`),'Case de mer non convertie en col');check(d.querySelector('.playable-europe')===editorSVG&&seaPath===editorSVG.querySelector('.board-sea-face'),'Éditeur reconstruit');check(seaPath.getAttribute('d')!==initialSea,'Fond de mer non actualisé');
+  results.push({test:'Éditeur : mer cliquable, coordonnées clavier, conversion en col et mise à jour partielle',ok:true});check(localStorage.getItem('velo-save')===save,'Sauvegarde altérée par la vue');results.push({test:'Sauvegarde intacte après toutes les actions d’affichage',ok:true});
+  output.textContent=JSON.stringify({ok:true,viewport:{width:w.innerWidth,height:w.innerHeight},results},null,2);
+ }catch(error){output.textContent=JSON.stringify({ok:false,error:error.message,results},null,2);}
+ finally{for(const [key,value]of backup)value===null?localStorage.removeItem(key):localStorage.setItem(key,value);button.disabled=false;}
+};
+</script></html>
