@@ -1,10 +1,11 @@
 import {MAP_WIDTH,MAP_HEIGHT} from './europe.js';
 import {tileArtwork,seaArtwork,seaPath,polygonPoints,mapContext,tilePresentation} from './europe-map.js';
 import {createHexHitIndex} from './board-hit-test.js';
+import {createTerrainLayer,isCellStale,readArtPreference,writeArtPreference} from './terrain-art.js';
 
 const NS='http://www.w3.org/2000/svg';
 const clock=()=>globalThis.performance?.now?.()??Date.now();
-export function createSVGBoardRenderer(container){
+export function createSVGBoardRenderer(container,options={}){
  const doc=container.ownerDocument,make=(tag,attrs={})=>{const el=doc.createElementNS(NS,tag);attrsTo(el,attrs);return el;};
  function attrsTo(el,attrs){for(const [key,value]of Object.entries(attrs)){if(value===null){if(el.hasAttribute(key))el.removeAttribute(key);}else if(el.getAttribute(key)!==String(value))el.setAttribute(key,String(value));}}
  const svg=make('svg',{class:'playable-europe supplied-map',viewBox:`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`,'aria-label':'Plateau Europe sur grille régulière : chaque hexagone a la même taille'});
@@ -12,6 +13,9 @@ export function createSVGBoardRenderer(container){
  const ocean=make('rect',{class:'map-ocean',width:MAP_WIDTH,height:MAP_HEIGHT}),sea=make('path',{class:'board-sea-face',fill:'url(#board-sea-pattern)'});
  const lands=make('g',{class:'hex-cells'}),cities=make('g',{class:'city-names','aria-hidden':true}),numbers=make('g',{class:'route-numbers','aria-hidden':true}),tokens=make('g',{class:'map-symbols','aria-hidden':true}),seaCursor=make('g',{class:'board-sea-cursor','aria-hidden':true});
  svg.append(ocean,sea,lands,cities,numbers,tokens,seaCursor);container.append(svg);
+ let artWanted=options.art!==false&&readArtPreference(),artLayer=options.art===false?null:createTerrainLayer(container),artReady=false;
+ const artOn=()=>Boolean(artLayer&&artWanted&&artReady);
+ artLayer?.onStatus(ok=>{artReady=ok;if(state)update(state);});
  const cells=new Map(),cityNodes=new Map(),routeNodes=new Map(),playerNodes=new Map();
  let state=null,context=null,hit=null,geometry='',seaSignature='',hoverKey='',callback=null,destroyed=false,camera={zoom:1.05};
  let diagnostics={updates:0,changedCells:0,createdCells:0,removedCells:0,seaRebuilt:false,lastUpdateMs:0};
@@ -39,16 +43,18 @@ export function createSVGBoardRenderer(container){
   if(destroyed)throw Error('Renderer SVG détruit.');const started=clock();state=next;
   const {g,reachable=[],cost=()=>0,selected='',route=[],nextSteps=[],editMode=false}=state;
   context=mapContext(g,reachable,cost,selected,route,nextSteps,editMode);diagnostics={...diagnostics,updates:diagnostics.updates+1,changedCells:0,createdCells:0,removedCells:0,seaRebuilt:false};
-  attrsTo(svg,{class:`playable-europe supplied-map ${editMode?'map-edit-mode':''}`});
+  attrsTo(svg,{class:`playable-europe supplied-map ${editMode?'map-edit-mode':''} ${artOn()?'art-on':''}`.trim()});
+  if(artLayer)artLayer.el.hidden=!artOn();
   const nodes=Object.values(g.board),shape=nodes.map(t=>`${t.key}:${t.x}:${t.y}`).join('|');
   if(shape!==geometry){geometry=shape;hit=createHexHitIndex(g.board);}
-  const seaKeys=nodes.filter(t=>t.type==='mer').map(t=>`${t.key}:${t.x}:${t.y}`).join('|');
-  if(seaKeys!==seaSignature){seaSignature=seaKeys;attrsTo(sea,{d:seaPath(g.board)});diagnostics.seaRebuilt=true;}
+  const art=artOn(),seaCells=nodes.filter(t=>t.type==='mer'&&(!art||isCellStale(t)));
+  const seaKeys=`${art}:`+seaCells.map(t=>`${t.key}:${t.x}:${t.y}`).join('|');
+  if(seaKeys!==seaSignature){seaSignature=seaKeys;attrsTo(sea,{d:seaPath(Object.fromEntries(seaCells.map(t=>[t.key,t])))});diagnostics.seaRebuilt=true;}
   const landKeys=new Set();
-  for(const t of nodes){if(t.type==='mer')continue;landKeys.add(t.key);const p=tilePresentation(context,t),signature=JSON.stringify([p,t.type,t.x,t.y]);let record=cells.get(t.key);
+  for(const t of nodes){if(t.type==='mer')continue;landKeys.add(t.key);const p=tilePresentation(context,t),stale=art&&isCellStale(t),signature=JSON.stringify([p,t.type,t.x,t.y,art,stale]);let record=cells.get(t.key);
    if(!record){const el=make('g',{'data-board-key':t.key}),polygon=make('polygon',{class:'terrain-face'}),icon=make('use',{class:'terrain-icon',width:14,height:14,'aria-hidden':true});el.append(polygon,icon);lands.append(el);record={el,polygon,icon,signature:''};cells.set(t.key,record);diagnostics.createdCells++;}
    if(record.signature===signature)continue;record.signature=signature;diagnostics.changedCells++;
-   attrsTo(record.el,{class:p.className,'aria-label':p.label,'aria-pressed':p.pressed,'aria-disabled':p.canSelect?null:true,'data-move':p.canSelect?t.key:null,role:p.canSelect?'button':null,tabindex:p.canSelect?'0':null});
+   attrsTo(record.el,{class:art&&!stale?`${p.className} art-cell`:p.className,'aria-label':p.label,'aria-pressed':p.pressed,'aria-disabled':p.canSelect?null:true,'data-move':p.canSelect?t.key:null,role:p.canSelect?'button':null,tabindex:p.canSelect?'0':null});
    attrsTo(record.polygon,{points:polygonPoints(t)});attrsTo(record.icon,{href:`#tile-icon-${t.type}`,x:t.x-7,y:t.y-7});
   }
   diagnostics.removedCells=[...cells.keys()].filter(k=>!landKeys.has(k)).length;prune(cells,landKeys);
@@ -74,7 +80,9 @@ export function createSVGBoardRenderer(container){
  }
  return {
   update,onHexClick(fn){callback=fn;},setCamera,
-  getDiagnostics(){return {...diagnostics,landCells:cells.size};},
-  destroy(){if(destroyed)return;destroyed=true;svg.removeEventListener('click',click);svg.removeEventListener('keydown',keydown);svg.removeEventListener('pointermove',move);svg.removeEventListener('pointerleave',leave);picker.removeEventListener('submit',submit);svg.remove();picker.remove();cells.clear();cityNodes.clear();routeNodes.clear();playerNodes.clear();state=context=hit=callback=null;}
+  setArt(on){artWanted=Boolean(on);writeArtPreference(artWanted);if(state&&!destroyed)update(state);return artOn();},
+  isArtOn:artOn,artAvailable:()=>Boolean(artLayer),
+  getDiagnostics(){return {...diagnostics,landCells:cells.size,art:artOn()};},
+  destroy(){if(destroyed)return;destroyed=true;svg.removeEventListener('click',click);svg.removeEventListener('keydown',keydown);svg.removeEventListener('pointermove',move);svg.removeEventListener('pointerleave',leave);picker.removeEventListener('submit',submit);svg.remove();artLayer?.destroy();picker.remove();cells.clear();cityNodes.clear();routeNodes.clear();playerNodes.clear();state=context=hit=callback=null;}
  };
 }

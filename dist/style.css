@@ -616,3 +616,19 @@ body:has(.home),body:has(.journey-page){background:#f3efe4;background-image:radi
 .modal-confirm button{margin:3px 5px 3px 0}
 @media(max-width:900px){.home{grid-template-columns:1fr 1fr;gap:24px;padding:22px}.hero{height:500px;min-height:0}.journey-page{margin:14px;padding:18px}.mode-choices{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}}
 @media(max-width:680px){.home{grid-template-columns:1fr;gap:18px;padding:16px}.home h1{font-size:54px}.hero{grid-row:1;height:260px;border-radius:100px 100px 20px 20px}.hero>span.hero-rider{font-size:49px}.hero>span.hero-caption{right:12px;bottom:12px;left:12px;padding:10px;font-size:16px}.home-tools{grid-template-columns:1fr}.home-editor-entry{min-height:0}.home-editor-entry .editor-entry{width:100%}.journey-page{padding:15px 13px;border-radius:17px}.journey-heading{align-items:flex-start}.journey-heading h1{font-size:35px}.journey-heading>button{padding:9px;font-size:11px}.journey-steps{gap:5px;padding:8px 7px}.journey-steps span{gap:4px;font-size:10px}.journey-steps i{width:23px;height:23px}.journey-steps>b{min-width:4px}.mode-choices{grid-template-columns:1fr}.mode-card{grid-template-columns:105px minmax(0,1fr);min-height:160px}.mode-card>img{width:105px;min-height:158px}.mode-card-copy,.saved-map-card>div{padding:11px!important}.mode-card h3{font-size:19px}.mode-card p{font-size:11px}.mode-card-copy .eyebrow{font-size:8px}.setup-deck{align-items:flex-start;flex-wrap:wrap}.setup-deck>div:nth-child(2){min-width:calc(100% - 60px)}.setup-deck button{margin-left:55px}.setup-rules-note{gap:5px}.setup-rules-note strong{flex-basis:100%}.player-count-field{grid-template-columns:1fr}.equipment-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.equipment-choice{min-height:166px;padding:10px}.equipment-choice .equipment-head{align-items:flex-start;gap:7px}.equipment-choice .equipment-icon{width:35px;height:35px;font-size:20px}.equipment-choice strong{font-size:14px}.equipment-choice .equipment-meta,.equipment-choice small{margin-left:0}.equipment-choice .equipment-status{font-size:10px}.journey-actions button{flex:1}.gear-intro{align-items:flex-start}}
+
+/* ===== Étape 2 : fond de terrain illustré en une seule image (sous les hexagones SVG) ===== */
+.europe-world{position:relative;isolation:isolate}
+.europe-world>.terrain-art{position:absolute;z-index:0;left:0;top:0;width:100%;height:100%;display:block;pointer-events:none;user-select:none;-webkit-user-drag:none}
+.europe-world>.terrain-art[hidden]{display:none}
+.europe-world>.playable-europe{position:relative;z-index:1}
+.supplied-map.art-on .map-ocean{fill:transparent}
+.supplied-map.art-on .art-cell .terrain-face{fill:transparent;stroke:#ffffff52;stroke-width:.7;stroke-dasharray:none}
+.supplied-map.art-on .art-cell .terrain-icon{display:none}
+.supplied-map.art-on .art-cell[aria-disabled="true"] .terrain-face{fill:transparent;stroke:#ffffff40;stroke-width:.7}
+.supplied-map.art-on .art-cell.reachable .terrain-face{fill:#fff59a33;stroke:#fff59a;stroke-width:2;stroke-dasharray:3 3}
+.supplied-map.art-on .art-cell.queued .terrain-face{fill:#ef5e3833;stroke:#ef5e38;stroke-width:4;stroke-dasharray:none}
+.supplied-map.art-on .art-cell.next-step .terrain-face{fill:#f4dc5b66;stroke:#fff6a0;stroke-width:2.5;stroke-dasharray:none}
+.supplied-map.art-on .art-cell.here .terrain-face{fill:transparent;stroke:#174e7a;stroke-width:3;stroke-dasharray:none}
+.supplied-map.art-on .art-cell:hover .terrain-face,.supplied-map.art-on .art-cell:focus-visible .terrain-face{stroke:#fff;stroke-width:2.5;stroke-dasharray:none}
+.supplied-map.art-on .art-cell.here:hover .terrain-face{stroke:#174e7a}
