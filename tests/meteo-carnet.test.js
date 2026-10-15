@@ -85,3 +85,12 @@ test('rencontres : choisies selon l’endroit (ville, montagne, région) et sans
  for(const e of S.encounterOptions(m,p))assert(['partout','ville','ouest'].includes(e.where),e.id);
  const first=S.encounterOptions(m,p).length;p.encountersSeen=[S.encounterOptions(m,p)[0].id];assert.equal(S.encounterOptions(m,p).length,first-1);
 });
+
+test('sans cartes climatiques (météo annoncée ou Rencontres), pas de fenêtre d’intervention : le parcours part tout de suite',()=>{
+ for(const opt of ['forecast','encounters']){const r=clone(CLASSIC);if(opt==='forecast')r.weather.forecast=true;else r.encounters.enabled=true;
+  const m=S.createMatch(roster,'plateau',r,11);m.pendingAttack=null;m.phase='move';m.cardChoices=[];const p=S.player(m);p.energy=10;m.moved=0;
+  const t=neighbours(m,p.pos)[0],res=S.beginEventRoute(m,[t.key]);
+  assert(res.ok,opt);assert(!res.intervention,opt);assert.equal(m.phase,'move');assert.equal(p.pos,t.key);}
+ const m=S.createMatch(roster,'plateau',CLASSIC,11);m.pendingAttack=null;m.phase='move';const p=S.player(m);p.energy=10;m.moved=0;
+ assert(S.beginEventRoute(m,[neighbours(m,p.pos)[0].key]).intervention,'avec les cartes météo, la fenêtre reste');
+});

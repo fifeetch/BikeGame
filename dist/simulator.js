@@ -126,6 +126,8 @@ export function beginEventRoute(m,route){if(!C.isEventGame(m))return executeRout
  if(m.players.length===1){const effects=(p.pendingEffects||[]).filter(e=>e.kind==='solo_weather'),weathers=[];
   for(const effect of effects){const c=C.card(effect.cardId,m);if(C.climateEligible(m,c.id,route)){weathers.push(C.weatherFor(c));C.note(m,p,`${c.name} s’applique à ce parcours.`);}else C.note(m,p,`${c.name} : le parcours ne traverse pas le terrain concerné, aucun effet.`);C.discard(m,effect.cardId);}
   p.pendingEffects=p.pendingEffects.filter(e=>e.kind!=='solo_weather');m.cardWindow={route:[...route],responders:[],responderIndex:0,solo:true,weathers};finishEventRoute(m);return {ok:true};}
+ // Sans cartes climatiques dans la partie (météo annoncée ou Rencontres), personne ne peut intervenir : pas de fenêtre.
+ if(!m.eventCardIds.some(id=>C.card(id,m)?.category==='climatic')){m.cardWindow={route:[...route],responders:[],responderIndex:0,weathers:[]};finishEventRoute(m);return {ok:true};}
  C.beginRouteWindow(m,route);return {ok:true,intervention:true};}
 export function passEventIntervention(m){if(!C.passIntervention(m))return false;if(!C.currentResponder(m))finishEventRoute(m);return true;}
 export function finishEventRoute(m){const window=m.cardWindow;if(!window||m.pendingAttack)return false;const p=player(m),weather=routeWeather(m);window.resolving=true;m.phase='move';if(weather.some(w=>w.kind==='frost'))p.frostTurn=m.turn;
