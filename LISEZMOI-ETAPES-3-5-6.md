@@ -142,3 +142,12 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - On peut fermer le jeu : « Jouer en ligne » → « Reprendre la partie ». « Quitter cette partie en ligne » la laisse en ligne pour les autres.
 - Technique : `dist/online.js`. Base Firebase Realtime Database du projet « bikepacking-the-game » (Belgique). Le plateau (≈ 700 Ko) est envoyé une seule fois ; ensuite seul l'état léger (≈ 15 Ko) circule, avec un numéro de version pour éviter que deux coups s'écrasent.
 - Test sans Internet : ajouter `?reseau=local` à l'adresse ; deux onglets du même navigateur jouent ensemble. Tests : `tests/en-ligne.test.js`.
+
+## Cartes et points revus avec Fi (15 octobre 2026)
+- **Vent dans le dos** : les 2 cases offertes seulement en plaine, sur la côte, en moyenne montagne (ou en ville).
+- **Crevaison** et **Casse mécanique** : au début de son tour, le joueur ciblé répare avec son kit de réparation ; sans kit, retour à la dernière ville et journée perdue (Pneus renforcés / Outils multifonctions protègent toujours).
+- **Chute à vélo** : −2 énergie, puis au début de son tour il se soigne avec la trousse de secours ; sans trousse, retour à la dernière ville et journée perdue (plus de bonus à défausser).
+- **Erreur d'itinéraire** : pas de déplacement au prochain tour (GPS de randonnée protège).
+- **Neige au sommet** : jouable sur n'importe quel parcours ; au prochain tour de la cible, montagne et cols interdits.
+- **GPS de randonnée** (bonus) : en plus, quitter la route sans pénalité.
+- **Points d'aventure** : plus de points par case (plaine, côte, moyenne montagne, montagne, ville = 0) ; plus de « premier de cordée » ni de titre « Grimpeur » ; col mythique +2, et +3 une fois au 3e col franchi. Carnet de voyage ne donne plus de points (nouvel effet à choisir).

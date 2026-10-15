@@ -70,11 +70,12 @@ test('food capacity, solar panel and tent bonus stop immediately after replaceme
  i=give(m,'evt-37',p);assert(S.playCard(m,i,p.id));assert.equal(p.bonusCards[0],'evt-37');conserved(m);
 });
 
-test('snow intervention stops an unaffordable mountain crossing on the last safe cell',()=>{
+// Règle de Fi (15 octobre 2026) : Neige au sommet interdit montagne et cols au prochain tour, le parcours en cours continue.
+test('snow intervention forbids mountains on the target’s next turn, the current route goes on',()=>{
  const m=game(),p=m.players[0],other=m.players[1],key=m.board[p.pos].links.find(k=>m.board[k]?.type!=='mer');
- m.board[key].type='montagne';p.energy=3;const i=give(m,'evt-25',other),start=p.pos;
+ m.board[key].type='plaine';p.energy=3;const i=give(m,'evt-25',other);
  assert(S.beginEventRoute(m,[key]).intervention);assert(S.playEventClimate(m,other.id,i));assert(S.resolveEventAttack(m,{}));assert(S.finishEventRoute(m));
- assert.equal(p.pos,start);assert.equal(p.energy,3);assert(m.eventDiscard.includes('evt-25'));conserved(m);
+ assert.equal(p.pos,key);assert(p.pendingEffects.some(e=>e.kind==='no_mountain'&&e.cardId==='evt-25'));conserved(m);
 });
 
 test('negative target and once-per-turn limit are enforced',()=>{
@@ -111,7 +112,7 @@ test('permanent stove, travel journal and Warmshowers activate and stop at their
  assert(C.removeBonus(m,p,0));m.ate=0;p.energy=0;assert(S.eat(m));assert.equal(p.energy,2);nextTurn(m);
  i=give(m,'evt-39',p);assert(S.playCard(m,i,p.id));const points=p.points;
  C.onCityVisit(m,p,'city-A');C.onCityVisit(m,p,'city-B');C.onCityVisit(m,p,'city-C');C.onCityVisit(m,p,'city-A');
- assert.equal(p.points,points+2);assert.equal(p.journalCities.length,3);nextTurn(m);
+ assert.equal(p.points,points,'Carnet de voyage ne donne plus de points (choix de Fi)');assert.equal(p.journalCities.length,3);nextTurn(m);
  i=give(m,'evt-40',p);assert(S.playCard(m,i,p.id));p.energy=0;C.onCityVisit(m,p,'city-D');C.onCityVisit(m,p,'city-E');assert.equal(p.energy,1);
  m.turn++;C.onCityVisit(m,p,'city-F');assert.equal(p.energy,2);conserved(m);
 });

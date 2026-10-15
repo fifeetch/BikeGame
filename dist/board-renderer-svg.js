@@ -183,7 +183,7 @@ export function createSVGBoardRenderer(container,options={}){
   if(editMode){adventure.innerHTML='';return;}
   let out='';
   for(const t of cols){const who=climbed[t.key],color=colorOf(who),up=cols.some(o=>o!==t&&Math.hypot(o.x-t.x,o.y-t.y)<45&&(o.x>t.x||o.x===t.x&&o.y>t.y));
-   out+=`<g class="col-flag${who?' claimed':''}" transform="translate(${f1(t.x)} ${f1(t.y)})"><title>${esc(t.colName)}${who?' · premier de cordée : '+esc((g.players||[]).find(p=>p.id===who)?.name||''):' · premier à passer : +3 points'}</title><g class="col-flag-inner"><path class="col-pole" d="M-2 6V-12"/><path class="col-cloth" d="M-2 -12l11 3.4-11 3.4Z"${color?` style="fill:${esc(color)}"`:''}/></g><text class="col-name${up?' up':''}">${esc(t.colName)}</text></g>`;}
+   out+=`<g class="col-flag${who?' claimed':''}" transform="translate(${f1(t.x)} ${f1(t.y)})"><title>${esc(t.colName)}${who?' · premier passage : '+esc((g.players||[]).find(p=>p.id===who)?.name||''):' · col mythique : +2 points'}</title><g class="col-flag-inner"><path class="col-pole" d="M-2 6V-12"/><path class="col-cloth" d="M-2 -12l11 3.4-11 3.4Z"${color?` style="fill:${esc(color)}"`:''}/></g><text class="col-name${up?' up':''}">${esc(t.colName)}</text></g>`;}
   for(const [k,l]of marks){const t=g.board[k];if(!t)continue;
    out+=l.found?`<g class="landmark found" transform="translate(${f1(t.x)} ${f1(t.y)})"><title>${esc(l.name)} (+${l.value})</title><g class="landmark-inner"><circle r="5.5"/><text y="2.6">✦</text></g></g>`
     :`<g class="landmark" transform="translate(${f1(t.x)} ${f1(t.y)})"><title>Lieu remarquable caché</title><g class="landmark-inner"><circle r="7.5"/><text y="3.6">?</text></g></g>`;}

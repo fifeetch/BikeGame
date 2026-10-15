@@ -5,7 +5,7 @@ export const CLASSIC={
  name:'Classique',terrain:{plaine:1,moyenne_montagne:2,montagne:3,cote:1,ville:0,camping:1,auberge:1,col:3,decouverte:1},ferryPrice:3,
  distance:5,startEnergy:8,maxEnergy:10,startMoney:10,startFood:3,maxFood:6,salary:2,workDays:1,workCityOnly:true,workEnabled:false,
  budget:{startBonus:5,every:5,amount:5},
- adventure:{landmarks:24,landmarkOdds:{one:50,two:30,three:20},colFirstBonus:3,climberCols:3,climberBonus:5},
+ adventure:{landmarks:24,landmarkOdds:{one:50,two:30,three:20},colFirstBonus:0,climberCols:3,climberBonus:3},
  fatigue:{enabled:true,days:3,colExtra:1,maxEnergyPenalty:2},
  // Hors route (mode Plateau) : sans l'objet « item » dans les sacoches, quitter la route limite toute la journée à maxDistance cases.
  offroad:{enabled:true,item:'gps',maxDistance:{gravel:3,randonneur:2}},
@@ -20,7 +20,7 @@ export const CLASSIC={
  eventCards:{startingHand:3,handLimit:3,bonusLimit:2,drawPerTurn:2,shuffle:true,categories:{positive:true,negative:true,climatic:true,permanent:true}},
  equipment:{tente:{name:'Tente',price:2,space:2,energyBonus:0},rechaud:{name:'Réchaud',price:1,space:1,energyBonus:0},chambre:{name:'Chambre à air',price:1,space:1,energyBonus:0},kit:{name:'Kit de réparation',price:1,space:1,energyBonus:0},gps:{name:'GPS',price:3,space:1,energyBonus:0},duvet:{name:'Matelas et duvet',price:3,space:2,energyBonus:1},secours:{name:'Trousse de secours',price:2,space:1,energyBonus:0},sacoches:{name:'Sacoches',price:2,space:1,energyBonus:0,foodBonus:3}},
  probabilities:{negative:50,positive:30,challenge:20},eventAfterWork:false,eventAfterRest:false,
- points:{plaine:1,moyenne_montagne:2,montagne:3,cote:2,ville:2,camping:2,auberge:2,col:2,decouverte:4,objective:10},
+ points:{plaine:0,moyenne_montagne:0,montagne:0,cote:0,ville:0,camping:2,auberge:2,col:2,decouverte:4,objective:10},
  victory:{mode:'objectives',points:40,turns:20,allObjectives:false},
  events:legacyEvents.map(e=>({...e,id:'legacy-'+e.id,category:Object.values(e.effect).some(v=>v<0)?'negative':'positive',protect:e.id===16?'chambre':e.id===7?'tente':e.protect||'',consume:e.id===16,weight:1})).concat([
  {id:'blessure',title:'Petite chute',text:'Une blessure légère demande des soins.',terrain:'general',category:'negative',weight:1,protect:'secours',consume:false,effect:{energy:-2}},

@@ -34,11 +34,12 @@ test('le premier cycliste qui passe sur un lieu caché gagne ses points, le jeto
  const again=p.points;p.pos=from;m.moved=0;assert(S.move(m,t.key));assert.equal(p.points,again,'pas de deuxième récompense');
 });
 
-test('col nommé : 2 points, premier de cordée +3, titre Grimpeur +5 au 3e col',()=>{
+// Règle de Fi (15 octobre 2026) : plus de premier de cordée ni de titre Grimpeur ; +3 au 3e col.
+test('col nommé : 2 points, +3 au 3e col franchi',()=>{
  const m=match(),p=S.player(m),cols=Object.values(m.board).filter(t=>t.type==='col');
  assert.equal(m.rules.points.col,2);assert.equal(m.rules.terrain.col,3);
  for(const [i,c]of cols.slice(0,3).entries()){const from=c.links[0];p.pos=from;m.moved=0;p.energy=10;const before=p.points;assert(S.move(m,c.key),c.colName);
-  assert.equal(p.points-before,2+3+(i===2?5:0)+(m.landmarks[c.key]?.value||0),c.colName);}
+  assert.equal(p.points-before,2+(i===2?3:0)+(m.landmarks[c.key]?.value||0),c.colName);}
  assert(p.climber);
  const q=m.players[1],c=cols[0];m.activeIndex=1;q.pos=c.links[0];m.moved=0;q.energy=10;const before=q.points;assert(S.move(m,c.key));
  assert.equal(q.points-before,2,'le second au col ne gagne que les points du col');

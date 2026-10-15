@@ -15,7 +15,7 @@ export const VILLE_GENERIQUE=[
 export const LIEU_CACHE='Trouvé loin de la route, là où personne ne passe.';
 export const COL='Une longue montée, puis la descente qui fait tout oublier.';
 export const PREMIER_DE_CORDEE='Arrivé le premier au sommet : la photo est pour moi.';
-export const GRIMPEUR='Trois cols dans les jambes : le titre de Grimpeur est gagné.';
+export const GRIMPEUR='Trois cols dans les jambes : +3 points d’aventure.';
 
 // « Le mot du voyageur » : une pensée de route, choisie selon l'avancée du voyage.
 export const MOTS_DU_VOYAGEUR=[

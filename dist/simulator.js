@@ -14,7 +14,7 @@ export const player=m=>m.players[m.activeIndex];
 // Sans l'objet protecteur (le GPS), dès qu'un pas de la journée quitte la route, la journée entière est limitée
 // à rules.offroad.maxDistance[vélo] cases (toutes les cases de la journée comptent, y compris celles offertes par une carte).
 export const offroadEnabled=m=>Boolean(m.mode==='plateau'&&m.rules.offroad?.enabled);
-export const hasOffroadItem=(m,p=player(m))=>Boolean(m.rules.offroad?.item&&p.items.includes(m.rules.offroad.item));
+export const hasOffroadItem=(m,p=player(m))=>Boolean(m.rules.offroad?.item&&p.items.includes(m.rules.offroad.item)||C.isEventGame(m)&&C.hasBonusEffect(m,p,'gps_immunity'));
 export const offroadMax=(m,p=player(m))=>m.rules.offroad?.maxDistance?.[p.bike]??5;
 export const offroadToday=(m,p=player(m))=>p.offroadTurn===m.turn;
 // Le pas de la case from vers la case t suit-il une route ? (en mode Tuiles : toujours vrai, la règle ne s'applique pas)
@@ -84,21 +84,26 @@ function adventureStep(m,p,k,t,first){const a=m.rules.adventure;
  if(t.type==='col'){p.dayCols=(p.dayCols||0)+1;
   if(first){record(m,'col',`${t.colName||'Col'} franchi : +${m.rules.points.col} points d’aventure.`,{key:k});m.colsClimbed||={};
    if(!m.colsClimbed[k]){m.colsClimbed[k]=p.id;if(a.colFirstBonus){p.points+=a.colFirstBonus;record(m,'col-first',`Premier de cordée au ${t.colName||'col'} : +${a.colFirstBonus} points d’aventure.`,{key:k});}}
-   if(!p.climber&&a.climberBonus&&p.cols>=a.climberCols){p.climber=true;p.points+=a.climberBonus;record(m,'climber',`Titre Grimpeur : ${a.climberCols} cols franchis, +${a.climberBonus} points d’aventure.`);}}}
+   if(!p.climber&&a.climberBonus&&p.cols>=a.climberCols){p.climber=true;p.points+=a.climberBonus;record(m,'climber',`${a.climberCols} cols franchis : +${a.climberBonus} points d’aventure.`);}}}
  const l=m.landmarks?.[k];if(l&&!l.found){l.found=p.id;p.points+=l.value;record(m,'landmark',`Lieu remarquable découvert : ${l.name}, +${l.value} point${l.value>1?'s':''} d’aventure.`,{key:k,value:l.value});}
 }
 function record(m,kind,text,extra={}){const p=player(m);m.history.push({turn:m.turn,round:m.round,player:p.id,name:p.name,kind,text,...extra});p.log.unshift(text);p.log=p.log.slice(0,8);}
 export function updateRules(m,input){const r=validateRules(input);if(C.isEventGame(m)&&m.players.some(p=>p.bonusCards.length>r.eventCards.bonusLimit||p.cardHand.length>r.eventCards.handLimit+1))throw Error('La nouvelle limite est inférieure aux cartes déjà détenues. Choisis une limite suffisante ou applique ce profil à une nouvelle partie.');m.rules=r;record(m,'rules','Règles modifiées : application aux prochaines actions.');return true;}
 export function cost(m,t){if(C.isEventGame(m))return eventStepCost(m,t);const p=player(m),discount=['moyenne_montagne','montagne','col'].includes(t.type)?m.rules.bikes[p.bike].mountainDiscount:0;return Math.max(0,(m.rules.terrain[t.type]??0)-discount);}
 export function ferryOptions(m,from=player(m).pos){return m.mode==='plateau'&&!m.pendingAttack&&!m.done&&m.phase==='move'?m.edges.filter(e=>e.ferry&&(e.a===from||e.b===from)).map(e=>m.board[e.a===from?e.b:e.a]):[];}
-export function moves(m){if(m.pendingAttack||m.done||m.phase!=='move'||m.moved>=distance(m)||C.isEventGame(m)&&player(m).turnModifiers?.skipMove)return [];const out=E.moves(view(m));if(m.mode!=='plateau')return out;const p=player(m),off=offroadToday(m,p);return out.filter(t=>!m.edges.some(e=>e.ferry&&((e.a===p.pos&&e.b===t.key)||(e.b===p.pos&&e.a===t.key)))&&offroadAllows(m,p,p.pos,t,m.moved,off));}
+export function moves(m){if(m.pendingAttack||m.done||m.phase!=='move'||m.moved>=distance(m)||C.isEventGame(m)&&player(m).turnModifiers?.skipMove)return [];const out=E.moves(view(m));if(m.mode!=='plateau')return out;const p=player(m),off=offroadToday(m,p);return out.filter(t=>!m.edges.some(e=>e.ferry&&((e.a===p.pos&&e.b===t.key)||(e.b===p.pos&&e.a===t.key)))&&offroadAllows(m,p,p.pos,t,m.moved,off)&&!snowBlocked(m,p,t));}
 export function routeCheck(m,route){if(C.isEventGame(m))return eventRouteCheck(m,route);if(!Array.isArray(route)||!route.length||m.done||m.phase!=='move'||route.length>distance(m)-m.moved)return {ok:false,reason:'Limite de 5 cases ou journée indisponible.'};let pos=player(m).pos,energy=player(m).energy;const p=player(m),normalDistance=Math.max(0,Math.min(5,m.rules.distance+m.rules.bikes[p.bike].extraDistance)-(p.turnModifiers?.distancePenalty||0)-m.moved);let off=offroadToday(m,p);for(let i=0;i<route.length;i++){const key=route[i],t=m.board[key];if(!t||key===pos)return {ok:false,reason:'Les cases doivent se suivre.'};const near=m.mode==='plateau'?m.board[pos].links.includes(key)&&!m.edges.some(e=>e.ferry&&((e.a===pos&&e.b===key)||(e.b===pos&&e.a===key))):E.moves({...view(m),pos}).some(n=>E.key(n.x,n.y)===key);if(!near)return {ok:false,reason:'Choisis des cases voisines ; les bateaux se prennent séparément.'};if(!offroadAllows(m,p,pos,t,m.moved+i,off))return {ok:false,reason:offroadReason(m,p)};off=off||!roadStep(m,pos,t);energy-=cost(m,t)+(i>=normalDistance?(p.turnModifiers?.extraMoveEnergy||0):0)+weatherExtra(m,p,pos,t,m.moved+i);if(energy<0)return {ok:false,reason:'Énergie insuffisante pour ce parcours.'};pos=key;}return {ok:true,energyUsed:p.energy-energy};}
 function offroadReason(m,p){const s=offroadStatus(m,p);return `Hors route sans ${s.item} : ${s.max} case${s.max>1?'s':''} maximum aujourd’hui.`;}
 // « En suivant une route » : en mode Plateau, le côté traversé doit porter une route (routes-data.js).
 function roadLink(m,from,t){return m.mode==='plateau'?Boolean(m.board[from]?.links?.includes(t.key)&&isRoadStep(m.board[from],t)):!!(m.board[from]?.roads?.length&&t.roads?.length);}
 function terrainSurcharge(m,p,t){const discount=['moyenne_montagne','montagne','col'].includes(t.type)?m.rules.bikes[p.bike].mountainDiscount:0;return Math.max(0,(m.rules.terrain[t.type]??0)-discount)>m.rules.terrain.plaine;}
 const routeWeather=m=>m.cardWindow?.weathers||(m.cardWindow?.weather?[m.cardWindow.weather]:[]);
-function freeKind(m,from,t,general=player(m).freeGeneralSteps||0,road=player(m).freeRoadSteps||0){const p=player(m);if(p.frostTurn===m.turn||routeWeather(m).some(w=>w.kind==='frost'))return '';if(road>0&&roadLink(m,from,t))return 'road';return general>0?'general':'';}
+// Vent dans le dos : cases offertes seulement en plaine, sur la côte ou en moyenne montagne (et en ville).
+export const TAILWIND_TERRAINS=['plaine','cote','moyenne_montagne','ville'];
+function freeKind(m,from,t,general=player(m).freeGeneralSteps||0,road=player(m).freeRoadSteps||0,tail=player(m).freeTailwindSteps||0){const p=player(m);if(p.frostTurn===m.turn||routeWeather(m).some(w=>w.kind==='frost'))return '';if(road>0&&roadLink(m,from,t))return 'road';if(tail>0&&TAILWIND_TERRAINS.includes(t.type))return 'tailwind';return general>0?'general':'';}
+// Neige au sommet : montagne et cols interdits pendant ce tour.
+const snowBlocked=(m,p,t)=>Boolean(C.isEventGame(m)&&p.turnModifiers?.noMountain&&['montagne','col'].includes(t?.type));
+export const breakdownOf=p=>C.BREAKDOWNS[p.flatKind]||C.BREAKDOWNS.puncture;
 function eventStepCost(m,t,step=0,free=freeKind(m,player(m).pos,t),lightUsed=player(m).lightTurn===m.turn){const p=player(m),weather=routeWeather(m),frost=p.frostTurn===m.turn||weather.some(w=>w.kind==='frost');
  const discount=['moyenne_montagne','montagne','col'].includes(t.type)?m.rules.bikes[p.bike].mountainDiscount:0,base=Math.max(0,(m.rules.terrain[t.type]??0)-discount);
  let amount=free&&!frost?0:p.shortcutActive&&!frost?Math.min(base,m.rules.terrain.plaine):base;
@@ -108,16 +113,17 @@ function eventStepCost(m,t,step=0,free=freeKind(m,player(m).pos,t),lightUsed=pla
  return amount;
 }
 function eventRouteCheck(m,route){const p=player(m);if(m.pendingAttack||!Array.isArray(route)||!route.length||m.done||m.phase!=='move'||p.turnModifiers?.skipMove||route.length>distance(m)-m.moved)return {ok:false,reason:'Déplacement indisponible ou distance maximale atteinte.'};
- let pos=p.pos,energy=p.energy,general=p.freeGeneralSteps||0,road=p.freeRoadSteps||0,normalUsed=m.moved-(p.bonusDistanceUsed||0),lightUsed=p.lightTurn===m.turn,off=offroadToday(m,p);const normalMax=Math.max(0,Math.min(5,m.rules.distance+m.rules.bikes[p.bike].extraDistance)-(p.turnModifiers?.distancePenalty||0));for(let i=0;i<route.length;i++){
+ let pos=p.pos,energy=p.energy,general=p.freeGeneralSteps||0,road=p.freeRoadSteps||0,tail=p.freeTailwindSteps||0,normalUsed=m.moved-(p.bonusDistanceUsed||0),lightUsed=p.lightTurn===m.turn,off=offroadToday(m,p);const normalMax=Math.max(0,Math.min(5,m.rules.distance+m.rules.bikes[p.bike].extraDistance)-(p.turnModifiers?.distancePenalty||0));for(let i=0;i<route.length;i++){
   const key=route[i],t=m.board[key];if(!t||key===pos)return {ok:false,reason:'Les cases doivent se suivre.'};
   const near=m.mode==='plateau'?m.board[pos].links.includes(key)&&!m.edges.some(e=>e.ferry&&((e.a===pos&&e.b===key)||(e.b===pos&&e.a===key))):E.moves({...view(m),pos}).some(n=>E.key(n.x,n.y)===key);
   if(!near)return {ok:false,reason:'Choisis des cases voisines ; les bateaux se prennent séparément.'};
   if(p.blockedFirst===key&&i===0)return {ok:false,reason:'Route barrée : choisis une autre première case.'};
   if(!offroadAllows(m,p,pos,t,m.moved+i,off))return {ok:false,reason:offroadReason(m,p)};off=off||!roadStep(m,pos,t);
-  const free=freeKind(m,pos,t,general,road);if(!free&&normalUsed>=normalMax)return {ok:false,reason:'Ces cases supplémentaires exigent une route autorisée pour le covoiturage.'};
+  if(snowBlocked(m,p,t))return {ok:false,reason:'Neige au sommet : montagne et cols interdits aujourd’hui.'};
+  const free=freeKind(m,pos,t,general,road,tail);if(!free&&normalUsed>=normalMax)return {ok:false,reason:'Ces cases supplémentaires exigent une route autorisée pour le covoiturage.'};
   const spent=eventStepCost(m,t,i+(m.cardWindow?.resolving?(m.cardWindow.stepIndex||0):0),free,lightUsed)+weatherExtra(m,p,pos,t,m.moved+i);energy-=spent;if(energy<0)return {ok:false,reason:'Énergie insuffisante pour ce parcours.'};
   if(C.hasBonusEffect(m,p,'light_bike')&&!lightUsed&&!free&&!p.shortcutActive&&p.frostTurn!==m.turn&&!routeWeather(m).some(w=>w.kind==='frost')&&terrainSurcharge(m,p,t))lightUsed=true;
-  if(free==='road')road--;else if(free==='general')general--;else normalUsed++;pos=key;
+  if(free==='road')road--;else if(free==='tailwind')tail--;else if(free==='general')general--;else normalUsed++;pos=key;
  }return {ok:true,energyUsed:p.energy-energy};}
 export function executeRoute(m,route){if(C.isEventGame(m)){if(m.players.length===1&&!m.cardWindow&&(player(m).pendingEffects||[]).some(e=>e.kind==='solo_weather'))return beginEventRoute(m,route).ok;if(m.players.length>1&&!m.cardWindow?.resolving)return false;const check=routeCheck(m,route);if(!check.ok)return false;for(const key of route)if(!move(m,key))return false;return true;}
  const check=routeCheck(m,route);if(!check.ok)return false;for(const key of route)if(!move(m,key))throw Error('Parcours devenu invalide.');return true;}
@@ -144,12 +150,13 @@ export function move(m,k){const p=player(m),t=m.board[k];if(C.isEventGame(m)&&m.
  const eventGame=C.isEventGame(m),step=m.cardWindow?.resolving?(m.cardWindow.stepIndex||0):0,free=eventGame?freeKind(m,p.pos,t):'',normalMax=Math.max(0,Math.min(5,m.rules.distance+m.rules.bikes[p.bike].extraDistance)-(p.turnModifiers?.distancePenalty||0));
  if(eventGame&&!free&&m.moved-(p.bonusDistanceUsed||0)>=normalMax)return false;
  if(!offroadAllows(m,p,p.pos,t,m.moved,offroadToday(m,p)))return false;
+ if(snowBlocked(m,p,t))return false;
  const onRoad=roadStep(m,p.pos,t);
  const spent=(eventGame?eventStepCost(m,t,step,free):cost(m,t)+extra)+weatherExtra(m,p,p.pos,t,m.moved);
  if(p.energy<spent)return false;
   const usedFree=eventGame&&!!free,usedLight=eventGame&&C.hasBonusEffect(m,p,'light_bike')&&p.lightTurn!==m.turn&&!usedFree&&!p.shortcutActive&&terrainSurcharge(m,p,t);
  p.energy-=spent;m.stats.energySpent+=spent;p.stats.energySpent+=spent;if(m.moved===0)p.dayStart={turn:m.turn,pos:p.pos};if(m.mode==='plateau'&&!onRoad){p.offroadTurn=m.turn;p.stats.offroad=(p.stats.offroad||0)+1;}p.pos=k;if(t.type==='ville')p.lastCity=k;p.steps++;p.stats.steps++;m.moved++;m.stats.terrain[t.type]=(m.stats.terrain[t.type]||0)+1;
- if(usedFree){p.freeSteps--;if(free==='road')p.freeRoadSteps--;else p.freeGeneralSteps--;p.bonusDistanceUsed=(p.bonusDistanceUsed||0)+1;}if(usedLight)p.lightTurn=m.turn;
+ if(usedFree){p.freeSteps--;if(free==='road')p.freeRoadSteps--;else if(free==='tailwind')p.freeTailwindSteps--;else p.freeGeneralSteps--;p.bonusDistanceUsed=(p.bonusDistanceUsed||0)+1;}if(usedLight)p.lightTurn=m.turn;
  for(const weather of routeWeather(m))if(['mountain_snow','heavy_rain','coastal_storm'].includes(weather.kind)){
   if(weather.kind==='mountain_snow'&&['moyenne_montagne','montagne'].includes(t.type)||weather.kind==='heavy_rain'&&!hasRoad(t)||weather.kind==='coastal_storm'&&t.type==='cote')weather.used=true;
  }
@@ -182,7 +189,7 @@ export function endTurn(m){if(m.pendingAttack||m.done||!['move','place'].include
   if(!was&&isExhausted(m,rider)){rider.energy=Math.min(rider.energy,energyCap(m,rider));record(m,'fatigue',`${rider.name} est fourbu : énergie maximale −${fatigue.maxEnergyPenalty} jusqu’à une vraie nuit (camping ou hôtel).`);}}
  rider.dayCols=0;
  record(m,'end','Fin du tour sur '+(m.board[player(m).pos].name||E.terrains[m.board[player(m).pos].type].name)+'.',{distance:m.moved,action:m.turnKind});
- if(C.isEventGame(m)){const p=player(m);C.onTurnEnd(m,p);if(p.blockedFirst){for(const effect of (p.pendingEffects||[]).filter(e=>e.kind==='road_closed'))C.discard(m,effect.cardId);p.pendingEffects=(p.pendingEffects||[]).filter(e=>e.kind!=='road_closed');p.blockedFirst=null;}p.freeSteps=0;p.freeGeneralSteps=0;p.freeRoadSteps=0;p.bonusDistanceUsed=0;p.shortcutActive=false;if(m.encounters){beginEncounter(m);return true;}C.drawChoices(m);if(!m.cardChoices.length&&!m.pendingAttack)advance(m);return true;}
+ if(C.isEventGame(m)){const p=player(m);C.onTurnEnd(m,p);if(p.blockedFirst){for(const effect of (p.pendingEffects||[]).filter(e=>e.kind==='road_closed'))C.discard(m,effect.cardId);p.pendingEffects=(p.pendingEffects||[]).filter(e=>e.kind!=='road_closed');p.blockedFirst=null;}p.freeSteps=0;p.freeGeneralSteps=0;p.freeRoadSteps=0;p.freeTailwindSteps=0;p.bonusDistanceUsed=0;p.shortcutActive=false;if(m.encounters){beginEncounter(m);return true;}C.drawChoices(m);if(!m.cardChoices.length&&!m.pendingAttack)advance(m);return true;}
  m.cardChoices=[drawCard(m),drawCard(m)];m.phase='card-choice';record(m,'draw','Deux cartes de jeu piochées : en garder une.');return true;
 }
 export function chooseCard(m,index){if(C.isEventGame(m)){if(!C.keepChoice(m,index))return false;if(m.phase!=='card-discard')advance(m);return true;}
@@ -198,7 +205,7 @@ function settleSoloDraw(m){if(m.players.length===1&&!m.pendingAttack&&m.phase===
 export function defendEventAttack(m){if(!C.isEventGame(m)||!C.defend(m))return false;settleSoloDraw(m);return true;}
 export function resolveEventAttack(m,choice){if(!C.isEventGame(m)||!C.resolveAttack(m,choice))return false;settleSoloDraw(m);return true;}
 export function resolvePendingCard(m,choice='auto'){const p=player(m);if(m.phase!=='card-resolution'||!p.pendingCards?.length)return false;const id=p.pendingCards[0],card=cardById(id,m);if(!card)return false;const hasTube=p.items.includes('chambre'),hasKit=p.items.includes('kit');if(card.resolution==='tube'){if(choice==='tube'&&hasTube)p.items=p.items.filter(i=>i!=='chambre');else if(choice==='lose'||!hasTube)p.turnModifiers={...p.turnModifiers,distancePenalty:(p.turnModifiers?.distancePenalty||0)+1};else return false;}else if(card.resolution==='kit-energy'){if(choice==='kit'&&hasKit){}else if(choice==='energy'||!hasKit)p.energy=Math.max(0,p.energy-2);else return false;}else if(card.resolution==='rain')p.turnModifiers={...p.turnModifiers,distancePenalty:(p.turnModifiers?.distancePenalty||0)+1};else if(card.resolution==='hunger'){if(choice==='food'&&p.food>0)p.food--;else if(choice==='energy'||!p.food)p.energy=Math.max(0,p.energy-2);else return false;}else if(card.resolution==='bad-night')p.energy=Math.max(0,p.energy-1);else if(card.resolution==='detour')p.turnModifiers={...p.turnModifiers,bonusDistance:Math.min(1,(p.turnModifiers?.bonusDistance||0)+1),extraMoveEnergy:1};p.pendingCards.shift();record(m,'card-resolution',card.title+' résolue.');if(p.pendingCards.length)m.phase='card-resolution';else m.phase=p.flat?'puncture':m.mode==='tuiles'&&m.hand.length?'place':'move';return true;}
-export function repairPuncture(m){const p=player(m);if(m.phase!=='puncture'||!p.flat)return false;if(p.items.includes('kit')){p.flat=false;record(m,'repair','Crevaison réparée avec le kit : la journée peut continuer.');m.phase=m.mode==='tuiles'&&m.hand.length?'place':'move';return true;}p.flat=false;p.pos=p.lastCity&&m.board[p.lastCity]?p.lastCity:p.pos;record(m,'repair','Pas de kit : retour à la dernière ville et journée perdue.');m.phase='move';m.turnKind='repair';endTurn(m);return true;}
+export function repairPuncture(m){const p=player(m);if(m.phase!=='puncture'||!p.flat)return false;const b=breakdownOf(p),what=b.item==='secours'?'trousse de secours':'kit de réparation';p.flatKind=null;if(p.items.includes(b.item)){p.flat=false;record(m,'repair',`${b.title} : ${b.item==='secours'?'soigné':'réparé'} avec ${b.item==='secours'?'la':'le'} ${what}, la journée peut continuer.`);m.phase=m.mode==='tuiles'&&m.hand.length?'place':'move';return true;}p.flat=false;p.pos=p.lastCity&&m.board[p.lastCity]?p.lastCity:p.pos;record(m,'repair',`${b.title} sans ${what} : retour à la dernière ville et journée perdue.`);m.phase='move';m.turnKind='repair';endTurn(m);return true;}
 export function travelFerry(m,destination){const p=player(m),t=ferryOptions(m).find(t=>t.key===destination),fare=m.rules.ferryPrice;if(!t||p.money<fare)return false;p.money-=fare;m.stats.moneySpent+=fare;p.pos=t.key;if(t.type==='ville')p.lastCity=t.key;p.travel.push(t.key);const v=voyages.find(v=>v.id===p.voyage);p.travelHistory.push({key:t.key,boardKey:t.key,type:t.type,endpoint:t.name===v.from||t.name===v.to,day:m.round});if(!p.visited.includes(t.key)){p.visited.push(t.key);p.points+=m.rules.points[t.type];}if(!p.completed&&t.name===v.to&&progress(view(m)).ready){p.completed=true;p.voyageWon=true;p.points+=m.rules.points.objective;record(m,'objective','Objectif accompli : '+v.title);}m.turnKind='ferry';record(m,'ferry','Bateau vers '+(t.name||t.key)+' : −'+fare+' pièces, journée terminée.');endTurn(m);return true;}
 export function canChallenge(m){const p=player(m),e=m.event;if(!e||e.category!=='challenge')return false;if(e.protect&&p.items.includes(e.protect))return true;return Object.entries(e.cost||{}).every(([k,v])=>p[k]>=v);}
 export function resolve(m,choice='accept'){
@@ -240,11 +247,11 @@ function advance(m){player(m).turns++;m.stats.turns++;const r=m.rules.victory,bu
  if(r.mode==='turns'&&m.round>r.turns){m.done=true;m.phase='finished';record(m,'finish','Nombre de manches atteint.');return;}
  const nextPlayer=player(m);nextPlayer.turnModifiers={};
  if(C.isEventGame(m)){
-  nextPlayer.freeSteps=0;nextPlayer.freeGeneralSteps=0;nextPlayer.freeRoadSteps=0;nextPlayer.bonusDistanceUsed=0;nextPlayer.shortcutActive=false;nextPlayer.blockedFirst=null;
+  nextPlayer.freeSteps=0;nextPlayer.freeGeneralSteps=0;nextPlayer.freeRoadSteps=0;nextPlayer.freeTailwindSteps=0;nextPlayer.bonusDistanceUsed=0;nextPlayer.shortcutActive=false;nextPlayer.blockedFirst=null;
   // Rencontre de la veille : une case de plus (cases offertes) ou de moins aujourd'hui.
   const nd=nextPlayer.nextDay;if(nd){if(nd.tomorrow>0){nextPlayer.freeSteps+=nd.tomorrow;nextPlayer.freeGeneralSteps+=nd.tomorrow;}else if(nd.tomorrow<0)nextPlayer.turnModifiers.distancePenalty=-nd.tomorrow;nextPlayer.nextDay=null;}
-  for(const effect of [...(nextPlayer.pendingEffects||[])])if(['skip_move','short_move'].includes(effect.kind)){
-   if(effect.kind==='skip_move')nextPlayer.turnModifiers.skipMove=true;else nextPlayer.turnModifiers.distancePenalty=(nextPlayer.turnModifiers.distancePenalty||0)+effect.value;
+  for(const effect of [...(nextPlayer.pendingEffects||[])])if(['skip_move','short_move','no_mountain'].includes(effect.kind)){
+   if(effect.kind==='no_mountain')nextPlayer.turnModifiers.noMountain=true;else if(effect.kind==='skip_move')nextPlayer.turnModifiers.skipMove=true;else nextPlayer.turnModifiers.distancePenalty=(nextPlayer.turnModifiers.distancePenalty||0)+effect.value;
    C.discard(m,effect.cardId);nextPlayer.pendingEffects.splice(nextPlayer.pendingEffects.indexOf(effect),1);
   }
   m.phase=nextPlayer.flat?'puncture':m.mode==='tuiles'&&m.hand.length?'place':'move';

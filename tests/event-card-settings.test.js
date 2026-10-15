@@ -72,7 +72,7 @@ test('a solo storm stops movement for that day rather than disappearing on a ret
 
 test('forty-card solo games preserve every card through repeated draws, events and reshuffles',()=>{
  for(let seed=1;seed<=15;seed++){const m=S.createMatch(solo,'plateau',CLASSIC,seed);settle(m);conserved(m);
-  for(let turn=0;turn<25;turn++){assert(S.endTurn(m));conserved(m);settle(m);if(m.phase==='card-choice')assert(S.chooseCard(m,0));if(m.phase==='card-discard')assert(S.discardEventHand(m,0));conserved(m);}
+  for(let turn=0;turn<25;turn++){/* crevaison, casse, chute : réparer au début du tour (règle de Fi) */if(m.phase==='puncture')assert(S.repairPuncture(m));else assert(S.endTurn(m));conserved(m);settle(m);if(m.phase==='card-choice')assert(S.chooseCard(m,0));if(m.phase==='card-discard')assert(S.discardEventHand(m,0));conserved(m);}
  }
 });
 

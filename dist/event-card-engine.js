@@ -47,7 +47,7 @@ export function removeBonus(m,p,index){if(!Number.isInteger(index)||index<0||ind
  note(m,p,`${p.name} perd ${card(id,m)?.name||id}.`);return true;
 }
 export function climateEligible(m,id,route=m.cardWindow?.route){const c=card(id,m);if(!c||c.category!=='climatic')return false;
- if(!route?.length)return ['heatwave','freezing_cold'].includes(c.effectType);
+ if(['heatwave','freezing_cold','mountain_snow'].includes(c.effectType))return true;if(!route?.length)return false;
  if(c.terrainCondition==='cote')return route.some(k=>m.board[k]?.type==='cote');
  if(c.terrainCondition==='sans_route')return route.some(k=>!m.board[k]?.roads?.length);
  if(c.terrainCondition)return route.some(k=>c.terrainCondition.split('|').includes(m.board[k]?.type));
@@ -74,25 +74,30 @@ export function defend(m){const a=m.pendingAttack;if(!a)return false;const p=m.p
  const [id]=p.cardHand.splice(i,1);discard(m,id);discard(m,a.cardId);note(m,p,`${p.name} utilise ${card(id,m)?.name||'une défense'} : attaque annulée.`,'card-defense');m.pendingAttack=null;nextSoloEvent(m);return true;
 }
 function loseEnergy(p,n){p.energy=Math.max(0,p.energy-n);}
+// Crevaison, casse et chute : au début de son tour, le joueur répare (kit) ou se soigne (trousse) ; sinon retour à la dernière ville.
+export const BREAKDOWNS={puncture:{item:'kit',title:'Crevaison',fix:'Ton kit de réparation te permet de réparer et de reprendre ta journée.',none:'Sans kit de réparation, tu retournes à la dernière ville visitée et tu perds cette journée.',ok:'Réparer et continuer'},
+ mechanical:{item:'kit',title:'Casse mécanique',fix:'Ton kit de réparation te permet de réparer et de reprendre ta journée.',none:'Sans kit de réparation, tu retournes à la dernière ville visitée et tu perds cette journée.',ok:'Réparer et continuer'},
+ fall:{item:'secours',title:'Chute à vélo',fix:'Ta trousse de secours te permet de te soigner et de reprendre ta journée.',none:'Sans trousse de secours, tu retournes à la dernière ville visitée et tu perds cette journée.',ok:'Se soigner et continuer'}};
 export function resolveAttack(m,choice={}){const a=m.pendingAttack;if(!a)return false;const c=card(a.cardId,m),p=m.players.find(q=>q.id===a.targetId),actor=m.players.find(q=>q.id===a.actorId);if(!c||!p||!actor)return false;
- if(['fall','damage_bonus'].includes(c.effectType)&&p.bonusCards.length&&(!Number.isInteger(choice.bonusIndex)||choice.bonusIndex<0||choice.bonusIndex>=p.bonusCards.length))return false;
+ if(['damage_bonus'].includes(c.effectType)&&p.bonusCards.length&&(!Number.isInteger(choice.bonusIndex)||choice.bonusIndex<0||choice.bonusIndex>=p.bonusCards.length))return false;
  if(c.effectType==='freezing_cold'&&p.food>0&&!['food','energy'].includes(choice.resource))return false;
  let protectedBy='';if(c.effectType==='puncture')protectedBy=bonusForEffect(m,p,'puncture_immunity')?.name||'';
  if(c.effectType==='mechanical')protectedBy=bonusForEffect(m,p,'mechanical_immunity')?.name||'';
  if(['wrong_turn','road_closed'].includes(c.effectType))protectedBy=bonusForEffect(m,p,'gps_immunity')?.name||'';
  let deferred=false;if(!protectedBy){switch(c.effectType){
-  case 'puncture':case 'food_poisoning':case 'heatwave':loseEnergy(p,c.effectValue);break;
-  case 'mechanical':p.pendingEffects.push({cardId:c.id,kind:'skip_move'});deferred=true;break;
+  case 'puncture':case 'mechanical':p.flat=true;p.flatKind=c.effectType;break;
+  case 'food_poisoning':case 'heatwave':loseEnergy(p,c.effectValue);break;
   case 'headwind_next':p.pendingEffects.push({cardId:c.id,kind:'extra_energy',value:2});deferred=true;break;
   case 'storm_next':loseEnergy(p,1);p.pendingEffects.push({cardId:c.id,kind:'skip_move'});deferred=true;break;
-  case 'wrong_turn':p.pendingEffects.push({cardId:c.id,kind:'short_move',value:2});deferred=true;break;
+  case 'wrong_turn':p.pendingEffects.push({cardId:c.id,kind:'skip_move'});deferred=true;break;
   case 'road_closed':p.pendingEffects.push({cardId:c.id,kind:'road_closed'});deferred=true;break;
-  case 'fall':loseEnergy(p,2);if(p.bonusCards.length)removeBonus(m,p,choice.bonusIndex);break;
+  case 'fall':loseEnergy(p,2);p.flat=true;p.flatKind='fall';break;
+  case 'mountain_snow':p.pendingEffects.push({cardId:c.id,kind:'no_mountain'});deferred=true;break;
   case 'torn_bag':if(p.food)p.food--;else loseEnergy(p,1);break;
   case 'damage_bonus':if(p.bonusCards.length)removeBonus(m,p,choice.bonusIndex);else loseEnergy(p,1);break;
   case 'freezing_cold':if(choice.resource==='food'&&p.food)p.food--;else loseEnergy(p,2);break;
   case 'headwind_now':if(a.solo){p.pendingEffects.push({cardId:c.id,kind:'solo_weather'});deferred=true;}else m.cardWindow.weather={kind:'extra_energy',value:2};break;
-  case 'storm_now':case 'fog':case 'crosswind':case 'mountain_snow':case 'heavy_rain':case 'morning_frost':case 'coastal_storm':
+  case 'storm_now':case 'fog':case 'crosswind':case 'heavy_rain':case 'morning_frost':case 'coastal_storm':
    if(a.solo){p.pendingEffects.push({cardId:c.id,kind:'solo_weather'});deferred=true;}else m.cardWindow.weather=weatherFor(c);break;
  }}
  if(a.solo&&['move','place'].includes(m.phase))for(const effect of [...p.pendingEffects])if(['skip_move','short_move'].includes(effect.kind)){if(effect.kind==='skip_move')p.turnModifiers.skipMove=true;else p.turnModifiers.distancePenalty=(p.turnModifiers.distancePenalty||0)+effect.value;discard(m,effect.cardId);p.pendingEffects.splice(p.pendingEffects.indexOf(effect),1);}
@@ -109,7 +114,7 @@ export function playOwnCard(m,index,replaceIndex){const p=m.players[m.activeInde
  if(c.category==='permanent'){p.bonusCards.push(c.id);note(m,p,`${p.name} équipe ${c.name}.`,'card-bonus',{cardId:c.id});return true;}
  switch(c.effectType){
   case 'free_road_steps':p.freeSteps=(p.freeSteps||0)+c.effectValue;p.freeRoadSteps=(p.freeRoadSteps||0)+c.effectValue;break;
-  case 'free_steps':p.freeSteps=(p.freeSteps||0)+c.effectValue;p.freeGeneralSteps=(p.freeGeneralSteps||0)+c.effectValue;break;
+  case 'free_steps':p.freeSteps=(p.freeSteps||0)+c.effectValue;p.freeTailwindSteps=(p.freeTailwindSteps||0)+c.effectValue;break;
   case 'gain_food':p.food=Math.min(foodCapacity(m,p),p.food+c.effectValue);break;
   case 'gain_energy':if(/habitant/i.test(c.name||''))p.fatigue=0;p.energy=Math.min(energyCap(m,p),p.energy+c.effectValue);break;
   case 'gain_money':p.money+=c.effectValue;break;
@@ -120,6 +125,6 @@ export function playOwnCard(m,index,replaceIndex){const p=m.players[m.activeInde
  discard(m,c.id);note(m,p,`${p.name} joue ${c.name} : ${c.effectText}`,'card-play',{cardId:c.id});return true;
 }
 export function onCityVisit(m,p,cityKey){const warm=bonusForEffect(m,p,'warmshowers'),journal=bonusForEffect(m,p,'travel_journal');if(warm&&p.warmTurn!==m.turn){p.energy=Math.min(energyCap(m,p),p.energy+1);p.warmTurn=m.turn;note(m,p,`${p.name} récupère 1 énergie grâce à ${warm.name}.`);}
- if(journal&&!p.journalCities.includes(cityKey)){p.journalCities.push(cityKey);if(p.journalCities.length%3===0){p.points+=2;note(m,p,`${p.name} gagne 2 points grâce à ${journal.name}.`);}}
+ if(journal&&!p.journalCities.includes(cityKey)){p.journalCities.push(cityKey);/* plus de points (choix de Fi, 15 octobre 2026) : nouvel effet à définir */}
 }
 export function onTurnEnd(m,p){const solar=bonusForEffect(m,p,'solar');if(solar){const old=p.energy;p.energy=Math.min(energyCap(m,p),p.energy+1);if(p.energy>old)note(m,p,`${p.name} récupère 1 énergie grâce à ${solar.name}.`);}}
