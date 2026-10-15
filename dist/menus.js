@@ -124,7 +124,7 @@ export function playersScreen({btn,roster,colors,rules}){
 
 // ---------- 3. Garage : monture + chargement ----------
 function bikeFacts(rules,id){
- const b=rules.bikes[id],facts=[`${Math.min(5,rules.distance+(b.extraDistance||0))} cases/jour`,plural(b.capacity,'place','places')+' de sacoche'];
+ const b=rules.bikes[id],facts=[...(b.price?[`${b.price} pièces`]:[]),`${Math.min(5,rules.distance+(b.extraDistance||0))} cases/jour`,plural(b.capacity,'place','places')+' de sacoche'];
  if(b.mountainDiscount)facts.push(`montagne ${b.mountainDiscount>0?'−':'+'}${Math.abs(b.mountainDiscount)} énergie`);
  if(b.extraFood)facts.push(`+${b.extraFood} nourriture au départ`);
  return facts;
@@ -145,7 +145,7 @@ export function garageScreen({btn,player,index,total,rules,coinsLeft,description
   <div class="mc-garage-grid">
    <div class="mc-bikes" role="group" aria-label="Vélo">${bikeCards}</div>
    <section class="mc-load" aria-label="Le vélo chargé">
-    <div class="mc-hud"><div><span>Bourse</span><b>${coinsLeft} / ${rules.startMoney} pièces</b>${rules.budget?.startBonus?`<small>+${rules.budget.startBonus} au départ, puis +${rules.budget.amount} tous les ${rules.budget.every} tours</small>`:''}</div><div><span>Places</span><b>${used} / ${bike.capacity}</b></div><div class="mc-weight"><span>Poids chargé · ${String(kg).replace('.',',')} kg</span><i><em style="left:${pct}%"></em></i><small>${feel}</small></div></div>
+    <div class="mc-hud"><div><span>Bourse · vélo compris</span><b>${coinsLeft} / ${rules.startMoney} pièces</b>${rules.budget?.startBonus?`<small>+${rules.budget.startBonus} au départ, puis +${rules.budget.amount} tous les ${rules.budget.every} tours</small>`:''}</div><div><span>Places</span><b>${used} / ${bike.capacity}</b></div><div class="mc-weight"><span>Poids chargé · ${String(kg).replace('.',',')} kg</span><i><em style="left:${pct}%"></em></i><small>${feel}</small></div></div>
     <div class="mc-stage">${bikeSvg(current,content)}${chips}</div>
    </section>
    <section class="mc-shop" aria-label="Matériel"><h2>L’étal du marchand</h2>${shop}<p>Clique un objet : il va dans la première sacoche où il tient. Tu pourras racheter du matériel dans les villes.</p></section>

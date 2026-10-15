@@ -61,3 +61,8 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - **Budget du voyage** : l'action « Travailler » est retirée. Chaque cycliste reçoit 5 pièces après l'achat de son matériel, puis 5 pièces tous les 5 tours.
 - Tous les chiffres se règlent dans **Règles** (groupes « Budget du voyage », « Lieux cachés et cols », « Fatigue »).
 - Tests : `tests/aventure-mecaniques.test.js` (6 tests). `npm test` : 128 tests, 105 réussis, 23 échecs (les mêmes 23 qu'avant, aucun nouvel échec). Les tests qui vérifiaient l'argent ou le bouton « Travailler » ont été mis à jour.
+
+## Départ, Est de l'Europe et jetons (carte n° 13)
+- **Départ** : 10 pièces par cycliste, vélo compris (Gravel 5, Randonneuse 3), puis le matériel. Ensuite, +5 pièces de budget et +5 tous les 5 tours. Prix des vélos réglables dans Règles.
+- **28 vraies villes ajoutées à l'Est**, en Finlande, au Caucase et en Anatolie : Helsinki, Petrozavodsk, Arkhangelsk, Novgorod, Iaroslavl, Perm, Ekaterinbourg, Nijni Novgorod, Kazan, Oufa, Smolensk, Minsk, Samara, Orenburg, Voronej, Lviv, Kharkiv, Volgograd, Chișinău, Odessa, Rostov-sur-le-Don, Astrakhan, Krasnodar, Constanța, Tbilissi, Trabzon, Ankara, Bakou. La carte est repeinte avec leurs maisons.
+- **Jetons « ? »** : ils sont placés à 2 cases au plus du chemin le plus court de chaque voyage, là où les cyclistes passent vraiment.

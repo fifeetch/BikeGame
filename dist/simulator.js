@@ -28,8 +28,8 @@ export function createMatch(roster,mode='plateau',rules=CLASSIC,seed=randomSeed(
   else{pos=Object.entries(m.board).find(([,t])=>t.name===v.from)?.[0];if(!pos){pos=E.key(i*3,0);m.board[pos]={id:-10-i,key:pos,x:i*3,y:0,name:v.from,type:'ville',roads:[0,1,2,3],rotation:0};let remove=m.deck.findIndex(t=>t.type==='ville'&&!t.name);if(remove<0)remove=m.deck.findIndex(t=>!t.name);if(remove>=0)m.deck.splice(remove,1);}let arrival=[...Object.values(m.board),...m.hand,...m.deck].find(t=>t.name===v.to);if(!arrival){arrival=[...m.deck,...m.hand].find(t=>t.type==='ville'&&!t.name)||[...m.deck,...m.hand].find(t=>!t.name);if(!arrival)throw Error('Pas assez de villes d’arrivée.');arrival.name=v.to;arrival.type='ville';}}
   const items=Array.isArray(entry.items)?[...new Set(entry.items)]:[];if(items.some(id=>!r.equipment[id]))throw Error('Équipement inconnu.');
   const space=items.reduce((n,id)=>n+r.equipment[id].space,0),price=items.reduce((n,id)=>n+r.equipment[id].price,0);
-  if(space>r.bikes[entry.bike].capacity||price>r.startMoney)throw Error('Le matériel de départ dépasse le budget ou les emplacements.');
-  m.players.push({id:'p'+(i+1),name:String(entry.name||'Joueur '+(i+1)).slice(0,40),color:COLORS[i],bike:entry.bike,voyage:entry.voyage,pos,energy:r.startEnergy,food:r.startFood+r.bikes[entry.bike].extraFood+items.reduce((n,id)=>n+(r.equipment[id].foodBonus||0),0),money:r.startMoney-price+r.budget.startBonus,points:0,fatigue:0,dayCols:0,items,cardHand:[],pendingCards:[],turnModifiers:{},flat:false,lastCity:pos,visited:[pos],travel:[],travelHistory:[],steps:0,cols:0,cities:1,discoveries:0,completed:false,voyageWon:false,turns:0,availableDay:1,log:[],stats:{steps:0,energySpent:0,work:0,rest:0,events:0}});
+  const bikePrice=r.bikes[entry.bike].price||0;if(space>r.bikes[entry.bike].capacity||price+bikePrice>r.startMoney)throw Error('Le vélo et le matériel de départ dépassent le budget ou les emplacements.');
+  m.players.push({id:'p'+(i+1),name:String(entry.name||'Joueur '+(i+1)).slice(0,40),color:COLORS[i],bike:entry.bike,voyage:entry.voyage,pos,energy:r.startEnergy,food:r.startFood+r.bikes[entry.bike].extraFood+items.reduce((n,id)=>n+(r.equipment[id].foodBonus||0),0),money:r.startMoney-bikePrice-price+r.budget.startBonus,points:0,fatigue:0,dayCols:0,items,cardHand:[],pendingCards:[],turnModifiers:{},flat:false,lastCity:pos,visited:[pos],travel:[],travelHistory:[],steps:0,cols:0,cities:1,discoveries:0,completed:false,voyageWon:false,turns:0,availableDay:1,log:[],stats:{steps:0,energySpent:0,work:0,rest:0,events:0}});
  });placeLandmarks(m);C.setup(m);record(m,'setup','Partie créée : '+roster.length+' joueur(s), '+r.eventCards.startingHand+' cartes piochées chacun parmi '+m.eventCardIds.length+'.');return m;
 }
 // Lieux remarquables cachés : jetons « ? » posés au hasard (graine de la partie) sur des cases de campagne,
@@ -39,7 +39,11 @@ export function placeLandmarks(m){
  const a=m.rules.adventure,n=a.landmarks;m.landmarks={};if(!n||m.mode!=='plateau')return m.landmarks;
  let s=(m.seed^0x9e3779b9)>>>0;const rnd=()=>{s=(Math.imul(s,1664525)+1013904223)>>>0;return s/4294967296;};
  const shuffle=list=>{for(let i=list.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[list[i],list[j]]=[list[j],list[i]];}return list;};
- const pool=shuffle(Object.values(m.board).filter(t=>['plaine','moyenne_montagne','montagne','cote'].includes(t.type)&&!t.name&&!t.colName)),chosen=[];
+ // Les jetons suivent les routes des voyages (chemin le plus court de chaque voyage, à 2 cases près) :
+ // ils sont là où les cyclistes passent, pas au fond de la Russie.
+ const near=new Map(),bfs=(start,goal)=>{const prev=new Map([[start,null]]),queue=[start];while(queue.length){const k=queue.shift();if(k===goal)break;for(const n of m.board[k]?.links||[])if(!prev.has(n)&&m.board[n].type!=='mer'){prev.set(n,k);queue.push(n);}}if(!prev.has(goal))return [];const out=[];for(let k=goal;k;k=prev.get(k))out.push(k);return out;};
+ for(const v of voyages)for(const k of bfs('city-'+v.from,'city-'+v.to)){const c=m.board[k];for(const t of Object.values(m.board))if(t.type!=='mer'&&axialDistance(c,t)<=2)near.set(t.key,t);}
+ const pool=shuffle([...near.values()].filter(t=>['plaine','moyenne_montagne','montagne','cote'].includes(t.type)&&!t.name&&!t.colName)),chosen=[];
  for(const t of pool){if(chosen.length>=n)break;if(chosen.every(c=>axialDistance(c,t)>=3))chosen.push(t);}
  const o=a.landmarkOdds,c1=Math.round(chosen.length*o.one/100),c2=Math.round(chosen.length*o.two/100),c3=Math.max(0,chosen.length-c1-c2);
  const values=shuffle([...Array(c1).fill(1),...Array(c2).fill(2),...Array(c3).fill(3)]);

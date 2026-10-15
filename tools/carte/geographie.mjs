@@ -24,7 +24,15 @@ export const CITIES=[
  {name:'Helsingør',lon:12.59,lat:56.03,port:true,cell:[6,18]},{name:'Helsingborg',lon:12.69,lat:56.05,port:true,cell:[7,17]},
  {name:'Hirtshals',lon:9.96,lat:57.59,port:true,with:'Berlin'},{name:'Kristiansand',lon:7.99,lat:58.15,port:true,with:'Oslo'},
  {name:'Ancona',lon:13.52,lat:43.62,port:true,with:'Rome'},{name:'Split',lon:16.44,lat:43.51,port:true,with:'Zagreb'},
- {name:'Izmir',lon:27.14,lat:38.42,port:true,with:'Istanbul'}
+ {name:'Izmir',lon:27.14,lat:38.42,port:true,with:'Istanbul'},
+ // Est de l'Europe, Caucase et Anatolie : vraies villes, vraies coordonnées
+ {name:'Helsinki',lon:24.94,lat:60.17,port:true},{name:'Minsk',lon:27.56,lat:53.90},{name:'Lviv',lon:24.03,lat:49.84},{name:'Odessa',lon:30.73,lat:46.48,port:true},
+ {name:'Chișinău',lon:28.86,lat:47.01},{name:'Kharkiv',lon:36.23,lat:49.99},{name:'Smolensk',lon:32.05,lat:54.78},{name:'Novgorod',lon:31.27,lat:58.52},
+ {name:'Iaroslavl',lon:39.89,lat:57.63},{name:'Voronej',lon:39.20,lat:51.67},{name:'Rostov-sur-le-Don',lon:39.72,lat:47.22},{name:'Volgograd',lon:44.51,lat:48.71},
+ {name:'Nijni Novgorod',lon:44.00,lat:56.33},{name:'Kazan',lon:49.11,lat:55.80},{name:'Samara',lon:50.10,lat:53.20},{name:'Tbilissi',lon:44.79,lat:41.72},
+ {name:'Ankara',lon:32.85,lat:39.93},{name:'Trabzon',lon:39.72,lat:41.00,port:true},{name:'Arkhangelsk',lon:40.54,lat:64.54,port:true},{name:'Petrozavodsk',lon:34.35,lat:61.79},
+ {name:'Constanța',lon:28.65,lat:44.17,port:true},{name:'Bakou',lon:49.87,lat:40.41,port:true},{name:'Perm',lon:56.25,lat:58.01},{name:'Oufa',lon:55.96,lat:54.74},
+ {name:'Orenburg',lon:55.10,lat:51.77},{name:'Ekaterinbourg',lon:60.60,lat:56.84},{name:'Astrakhan',lon:48.03,lat:46.35},{name:'Krasnodar',lon:38.98,lat:45.04}
 ];
 export const FERRIES=[['Calais','Douvres'],['Helsingør','Helsingborg'],['Hirtshals','Kristiansand'],['Ancona','Split'],['Thessalonique','Izmir'],['Dublin','Holyhead']];
 

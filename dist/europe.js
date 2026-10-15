@@ -1,6 +1,6 @@
 import {MAP_CELLS} from './assets/europe/board-data.js';
 
-export const MAP_VERSION=12;
+export const MAP_VERSION=13;
 // Ferries : de port à port, comme les liaisons réelles les plus utilisées.
 export const FERRY_ROUTES=[['Calais','Douvres'],['Dublin','Holyhead'],['Helsingør','Helsingborg'],['Hirtshals','Kristiansand'],['Ancona','Split'],['Thessalonique','Izmir']];
 // Cols mythiques nommés, placés à leur vraie position (case la plus proche, en montagne).

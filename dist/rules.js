@@ -3,11 +3,11 @@ import {events as legacyEvents} from './engine.js';
 export const COLORS=['#b74732','#267b91','#6d5699','#a77d1e','#427a4b','#b05181'];
 export const CLASSIC={
  name:'Classique',terrain:{plaine:1,moyenne_montagne:2,montagne:3,cote:1,ville:0,camping:1,auberge:1,col:3,decouverte:1},ferryPrice:3,
- distance:5,startEnergy:8,maxEnergy:10,startMoney:5,startFood:3,maxFood:6,salary:2,workDays:1,workCityOnly:true,workEnabled:false,
+ distance:5,startEnergy:8,maxEnergy:10,startMoney:10,startFood:3,maxFood:6,salary:2,workDays:1,workCityOnly:true,workEnabled:false,
  budget:{startBonus:5,every:5,amount:5},
  adventure:{landmarks:24,landmarkOdds:{one:50,two:30,three:20},colFirstBonus:3,climberCols:3,climberBonus:5},
  fatigue:{enabled:true,days:3,colExtra:1,maxEnergyPenalty:2},
- bikes:{gravel:{name:'Gravel',capacity:4,mountainDiscount:0,extraDistance:0,extraFood:0},randonneur:{name:'Randonnée',capacity:8,mountainDiscount:0,extraDistance:0,extraFood:0}},
+ bikes:{gravel:{name:'Gravel',price:5,capacity:4,mountainDiscount:0,extraDistance:0,extraFood:0},randonneur:{name:'Randonnée',price:3,capacity:8,mountainDiscount:0,extraDistance:0,extraFood:0}},
  rest:{bivouac:{name:'Bivouac',price:0,energy:3,days:1,tent:true,cityOnly:false},camping:{name:'Camping',price:1,energy:5,days:1,tent:false,cityOnly:false},hotel:{name:'Hôtel',price:3,energy:10,days:1,tent:false,cityOnly:true}},
  food:{energy:3,stoveBonus:2,price:1,quantity:2,maxPerTurn:1,cityOnly:true,restaurantPrice:1,restaurantEnergy:4},
  cardBalance:{foodEnergy:2,bivouacEnergy:1},

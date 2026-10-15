@@ -57,7 +57,14 @@ test('fatigue : +1 par jour de route, +1 avec un col, fourbu à 3 (énergie max 
 test('budget : 5 pièces après le matériel, puis 5 pièces tous les 5 tours ; plus de travail',()=>{
  const r=clone(CLASSIC),m=S.createMatch([{name:'A',bike:'randonneur',voyage:VOY,items:['tente']}],'plateau',r,7),p=S.player(m);
  m.cardVersion=2;p.cardHand=[];m.pendingAttack=null;
- assert.equal(p.money,r.startMoney-r.equipment.tente.price+5);assert(!S.work(m),'le travail est retiré');
+ assert.equal(p.money,r.startMoney-r.bikes.randonneur.price-r.equipment.tente.price+5);assert.equal(r.bikes.gravel.price,5);assert.equal(r.bikes.randonneur.price,3);assert.equal(r.startMoney,10);assert(!S.work(m),'le travail est retiré');
  const start=p.money;let pays=0;for(let i=0;i<10;i++){S.endTurn(m);if(m.phase==='card-choice')S.chooseCard(m,0);if(m.phase==='event')S.resolve(m,'decline');}
  pays=m.history.filter(h=>h.kind==='budget').length;assert.equal(pays,2);assert.equal(p.money,start+10);
+});
+
+test('l’Est a de vraies villes, et les jetons cachés restent près des routes des voyages',()=>{
+ const {board}=europeBoard('Paris','Istanbul');
+ for(const n of ['Minsk','Kharkiv','Odessa','Kazan','Volgograd','Tbilissi','Ankara','Helsinki'])assert(board['city-'+n]?.type==='ville',n);
+ const m=match(),ends=voyages.map(v=>[m.board['city-'+v.from],m.board['city-'+v.to]]);
+ const far=Object.keys(m.landmarks).map(k=>m.board[k]).filter(t=>t.x>1000);assert.equal(far.length,0,'pas de jeton au fond de la Russie');
 });
