@@ -1368,3 +1368,9 @@ body .player-mat.fiche .fiche-shop em{color:var(--f-ink)}
 body .modal.encounter-modal .encounter-body h2{color:#1b3b38}
 body .modal.encounter-modal .encounter-body .encounter-quote{color:#5a4a2c}
 body .modal.encounter-modal .encounter-body .eyebrow{color:#8a5a14}
+/* Météo sur la carte : petite pastille ronde, même taille à l'écran quel que soit le zoom, ne bloque pas les clics */
+.weather-badge{pointer-events:none;opacity:.92}
+.weather-badge-inner{transform:scale(calc(var(--sym,1)*1.2))}
+.weather-badge circle{fill:rgba(16,34,38,.85);stroke:#f2a541;stroke-width:1.6}
+.weather-badge.w-vent circle{stroke:#c9d6dc}.weather-badge.w-pluie circle{stroke:#7fc0e8}.weather-badge.w-orage circle{stroke:#ff8a6e}.weather-badge.w-neige circle{stroke:#fff}
+.weather-badge .weather-icon{font-size:9.5px;text-anchor:middle}

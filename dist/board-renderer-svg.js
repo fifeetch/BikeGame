@@ -188,8 +188,8 @@ export function createSVGBoardRenderer(container,options={}){
    out+=l.found?`<g class="landmark found" transform="translate(${f1(t.x)} ${f1(t.y)})"><title>${esc(l.name)} (+${l.value})</title><g class="landmark-inner"><circle r="5.5"/><text y="2.6">✦</text></g></g>`
     :`<g class="landmark" transform="translate(${f1(t.x)} ${f1(t.y)})"><title>Lieu remarquable caché</title><g class="landmark-inner"><circle r="7.5"/><text y="3.6">?</text></g></g>`;}
   // Météo annoncée : temps du jour posé au centre de chaque région.
-  if(sky)for(const [id,w]of Object.entries(sky)){const c=REGION_CENTRES[id],label=`${REGIONS[id].name} · ${WEATHER[w].name}`,wide=label.length*4.3+26;
-   out+=`<g class="weather-badge w-${w}" transform="translate(${f1(c.x)} ${f1(c.y)})"><title>${esc(label)} : ${esc(WEATHER[w].effect)}</title><rect x="${f1(-wide/2)}" y="-9" width="${f1(wide)}" height="18" rx="9"/><text class="weather-icon" x="${f1(-wide/2+11)}" y="4">${WEATHER[w].icon}</text><text class="weather-label" x="${f1(-wide/2+21)}" y="3.4">${esc(label)}</text></g>`;}
+  if(sky)for(const [id,w]of Object.entries(sky)){const c=REGION_CENTRES[id],label=`${REGIONS[id].name} · ${WEATHER[w].name}`;
+   out+=`<g class="weather-badge w-${w}" transform="translate(${f1(c.x)} ${f1(c.y)})" aria-label="${esc(label)} : ${esc(WEATHER[w].effect)}"><g class="weather-badge-inner"><circle r="8"/><text class="weather-icon" y="3.4">${WEATHER[w].icon}</text></g></g>`;}
   adventure.innerHTML=out;
  }
 

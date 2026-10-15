@@ -128,3 +128,4 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - Chaque rencontre vécue entre dans le **carnet de voyage** avec son jour.
 - Sauvegarde possible en pleine rencontre. Tests : 3 tests dans `tests/meteo-carnet.test.js` ; robots : 1 000 rencontres jouées, aucune erreur (`RENCONTRES=1 node tools/simulation/parties-auto.mjs`).
 - Correction : la note de la **fenêtre d'intervention** (et les cadres clairs des fenêtres sombres) est maintenant lisible.
+- Météo sur la carte : les étiquettes « Région · Temps » cachaient la carte quand on zoomait. Elles sont remplacées par de **petites pastilles rondes** (icône du temps) qui gardent la même petite taille à l'écran et ne bloquent plus les clics. Le détail reste dans la fiche Journée et le bulletin.
