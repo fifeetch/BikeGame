@@ -90,3 +90,7 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - **Affichage** : routes jouables en trait crème bordé ; planificateur avec « route » ou « hors route » pour chaque case et le message « Hors route sans GPS : 3 cases maximum aujourd'hui » ; fiche Journée « 1 / 3 cases · hors route sans GPS » ; GPS décrit « Quitter la route sans pénalité » au garage et dans les Sacoches.
 - Les anciennes sauvegardes retrouvent les routes au chargement.
 - Tests : `tests/routes-gps.test.js` (9 tests). Les 23 anciens échecs restent les mêmes, aucun nouveau.
+
+## Lieux cachés loin des routes
+- Les 24 jetons « ? » sont maintenant tous placés **à au moins 2 cases de toute route** (jamais sur une route, jamais sur une case qui touche une route), toujours dans la zone des voyages (3 cases autour du chemin le plus court de chaque voyage). Pour les trouver, il faut quitter la route : le GPS devient utile.
+- Valeurs (1, 2 ou 3 points, 50/30/20 %) et écart de 3 cases entre jetons inchangés. Les parties déjà commencées gardent leurs jetons.

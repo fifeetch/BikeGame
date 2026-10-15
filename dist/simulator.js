@@ -54,12 +54,14 @@ export function placeLandmarks(m){
  const a=m.rules.adventure,n=a.landmarks;m.landmarks={};if(!n||m.mode!=='plateau')return m.landmarks;
  let s=(m.seed^0x9e3779b9)>>>0;const rnd=()=>{s=(Math.imul(s,1664525)+1013904223)>>>0;return s/4294967296;};
  const shuffle=list=>{for(let i=list.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[list[i],list[j]]=[list[j],list[i]];}return list;};
- // Les jetons suivent les routes des voyages (chemin le plus court de chaque voyage, à 2 cases près) :
- // ils sont là où les cyclistes passent, pas au fond de la Russie.
+ // Les jetons restent dans la zone des voyages (chemin le plus court de chaque voyage, à 3 cases près),
+ // mais toujours LOIN DES ROUTES (au moins 2 cases de toute route) : il faut quitter la route pour les trouver.
  const near=new Map(),bfs=(start,goal)=>{const prev=new Map([[start,null]]),queue=[start];while(queue.length){const k=queue.shift();if(k===goal)break;for(const n of m.board[k]?.links||[])if(!prev.has(n)&&m.board[n].type!=='mer'){prev.set(n,k);queue.push(n);}}if(!prev.has(goal))return [];const out=[];for(let k=goal;k;k=prev.get(k))out.push(k);return out;};
- for(const v of voyages)for(const k of bfs('city-'+v.from,'city-'+v.to)){const c=m.board[k];for(const t of Object.values(m.board))if(t.type!=='mer'&&axialDistance(c,t)<=2)near.set(t.key,t);}
+ for(const v of voyages)for(const k of bfs('city-'+v.from,'city-'+v.to)){const c=m.board[k];for(const t of Object.values(m.board))if(t.type!=='mer'&&axialDistance(c,t)<=3)near.set(t.key,t);}
+ const roadDist=new Map(),queue=Object.values(m.board).filter(t=>t.type!=='mer'&&t.roads?.length).map(t=>t.key);for(const k of queue)roadDist.set(k,0);
+ for(let i=0;i<queue.length;i++){const k=queue[i];for(const n of m.board[k].links)if(!roadDist.has(n)&&m.board[n].type!=='mer'){roadDist.set(n,roadDist.get(k)+1);queue.push(n);}}
  const pool=shuffle([...near.values()].filter(t=>['plaine','moyenne_montagne','montagne','cote'].includes(t.type)&&!t.name&&!t.colName)),chosen=[];
- for(const t of pool){if(chosen.length>=n)break;if(chosen.every(c=>axialDistance(c,t)>=3))chosen.push(t);}
+ for(const far of [2,1])for(const t of pool){if(chosen.length>=n)break;if((roadDist.get(t.key)??99)>=far&&!chosen.includes(t)&&chosen.every(c=>axialDistance(c,t)>=3))chosen.push(t);}
  const o=a.landmarkOdds,c1=Math.round(chosen.length*o.one/100),c2=Math.round(chosen.length*o.two/100),c3=Math.max(0,chosen.length-c1-c2);
  const values=shuffle([...Array(c1).fill(1),...Array(c2).fill(2),...Array(c3).fill(3)]);
  chosen.forEach((t,i)=>{const v=values[i]||1,names=LANDMARK_NAMES[v];m.landmarks[t.key]={value:v,name:names[Math.floor(rnd()*names.length)],found:''};});

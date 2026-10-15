@@ -106,3 +106,9 @@ test('« Pluie torrentielle » : seulement sur une case sans route',()=>{
  assert.equal(S.routeCheck(m,road).energyUsed,roadBase,'case avec route : pas de perte');
  assert.equal(S.routeCheck(m,off).energyUsed,base+card.effectValue,'case sans route : −2 énergie');
 });
+
+test('lieux cachés : tous les jetons sont loin des routes (au moins 2 cases)',()=>{
+ for(const seed of [1,7,42,99,2026]){const m=S.createMatch(roster('gravel'),'plateau',CLASSIC,seed),B=m.board,keys=Object.keys(m.landmarks);
+  assert.equal(keys.length,24);
+  for(const k of keys){assert(!B[k].roads.length,`${k} est sur une route`);assert(!B[k].links.some(n=>B[n].roads.length),`${k} touche une route`);}}
+});
