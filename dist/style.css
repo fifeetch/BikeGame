@@ -1139,3 +1139,65 @@ body.en-partie .sheet-drawer-close{background:#0b1a1d;color:var(--c-cream);borde
 .route-planner>div:first-child{flex:1 1 auto}
 .route-planner .route-buttons{flex:0 0 auto}
 .game.game-split .route-planner .offroad-note{flex-basis:100%;margin-top:0}
+
+/* ---------- Choix de la météo (écran des cyclistes) ---------- */
+.mc-weather{display:grid;grid-template-columns:minmax(200px,1fr) 2fr;gap:18px;align-items:center;margin:22px 0 6px;padding:18px 22px;border-radius:18px;background:var(--mc-panel);border:2px dashed rgba(246,231,193,.3)}
+.mc-weather p{margin:0}
+.mc-weather-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.mc-weather-choices button{display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-height:84px;padding:12px 16px;border-radius:14px;border:2px solid rgba(246,231,193,.35);background:transparent;color:#f6e7c1;text-align:left;cursor:pointer;font-family:'Barlow Condensed',system-ui,sans-serif}
+.mc-weather-choices button b{font-family:'Fraunces',Georgia,serif;font-size:22px}
+.mc-weather-choices button small{font-size:16px;line-height:1.25;opacity:.85}
+.mc-weather-choices button.on{border-color:#f2a541;background:rgba(242,165,65,.14);box-shadow:0 0 0 3px rgba(242,165,65,.25)}
+@media(max-width:760px){.mc-weather{grid-template-columns:1fr}.mc-weather-choices{grid-template-columns:1fr}}
+
+/* ---------- Météo annoncée : badges des régions sur la carte ---------- */
+.weather-badge{pointer-events:auto}
+.weather-badge rect{fill:rgba(16,34,38,.9);stroke:#f2a541;stroke-width:1.4}
+.weather-badge.w-vent rect{stroke:#c9d6dc}.weather-badge.w-pluie rect{stroke:#7fc0e8}.weather-badge.w-orage rect{stroke:#ff8a6e}.weather-badge.w-neige rect{stroke:#ffffff}
+.weather-badge .weather-icon{font-size:10px;text-anchor:middle}
+.weather-badge .weather-label{font:700 8.6px 'Barlow Condensed',system-ui,sans-serif;fill:#fff3cf;letter-spacing:.02em}
+
+/* ---------- Météo annoncée : fiche Journée, bulletin, planificateur ---------- */
+.fiche-meteo{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px 12px;margin:8px 0 4px;padding:10px 14px;border-radius:12px;background:rgba(246,231,193,.06);border:2px solid #f2a541;font-family:'Barlow Condensed',system-ui,sans-serif}
+.fiche-meteo>span{font-size:28px}
+.fiche-meteo b{display:block;font-size:19px;color:#fff3cf}
+.fiche-meteo small{font-size:16px;color:#e8dcbc}
+.fiche-meteo.w-vent{border-color:#c9d6dc}.fiche-meteo.w-pluie{border-color:#7fc0e8}.fiche-meteo.w-orage{border-color:#ff8a6e}.fiche-meteo.w-neige{border-color:#fff}
+.fiche-meteo .meteo-open{min-height:44px;white-space:nowrap}
+@media(max-width:760px){.fiche-meteo{grid-template-columns:auto 1fr}.fiche-meteo .meteo-open{grid-column:1/-1}}
+.meteo-list{list-style:none;margin:12px 0;padding:0;display:flex;flex-direction:column;gap:8px}
+.meteo-list li{display:grid;grid-template-columns:34px 1fr;column-gap:10px;align-items:center;padding:10px 14px;border-radius:12px;background:rgba(246,231,193,.06);border:2px solid transparent}
+.meteo-list li span{grid-row:span 2;font-size:24px}
+.meteo-list li b{font-size:19px}
+.meteo-list li small{font-size:16px;opacity:.85}
+.meteo-list li.mine{border-color:#f2a541;background:rgba(242,165,65,.12)}
+.meteo-today summary{cursor:pointer;margin:6px 0;font-weight:700}
+.route-planner .meteo-note{color:#bfe3ef}
+
+/* ---------- Carnet de voyage (5e onglet de la fiche) ---------- */
+.fiche-tabs{grid-template-columns:repeat(5,minmax(0,1fr))}
+.fiche-tabs button{font-size:16px;letter-spacing:.03em}
+@media(max-width:760px){.fiche-tabs{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.carnet{display:flex;flex-direction:column;gap:12px;padding:16px;border-radius:14px;background:#f6e7c1;color:#1b1406;font-family:'Barlow Condensed',system-ui,sans-serif}
+.carnet-kicker,.carnet-label{margin:0;font-size:15px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#8a5a14}
+.carnet-map{width:100%;max-height:220px;border-radius:10px;background:#e9d7ab}
+.carnet-map .carnet-line{fill:none;stroke:#b74732;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:1 6;vector-effect:non-scaling-stroke}
+.carnet-map circle{stroke:#1b1406;stroke-width:1;vector-effect:non-scaling-stroke}
+.carnet-map .carnet-start,.carnet-map .carnet-goal{fill:#1b3b38}.carnet-map .carnet-goal{fill:#f6e7c1}
+.carnet-map .carnet-lieu{fill:#f2a541}.carnet-map .carnet-col{fill:#5f7f84}
+.carnet-map text{font:700 var(--fs,9px) 'Barlow Condensed',system-ui,sans-serif;fill:#1b1406;text-anchor:middle}
+.carnet-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.carnet-stats div{display:flex;flex-direction:column;padding:8px 10px;border-radius:10px;background:#efdcb0}
+.carnet-stats b{font-size:26px;color:#1b3b38;line-height:1}
+.carnet-stats small{font-size:15px;color:#5a4a2c}
+.carnet-souvenirs{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.carnet-souvenirs li{display:flex;flex-direction:column;gap:1px;padding:10px 12px;border-radius:10px;background:#f9edcf;border:1px solid #d9c79c}
+.carnet-souvenirs li span{font-size:14px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#8a5a14}
+.carnet-souvenirs li b{font-family:'Fraunces',Georgia,serif;font-size:21px;color:#1b3b38}
+.carnet-souvenirs li small{font-size:16px;color:#5a4a2c}
+.carnet-souvenirs li.carnet-lieu{border-color:#f2a541}
+.carnet-empty{margin:0;font-style:italic;color:#5a4a2c}
+.carnet-mot{margin:0;padding:12px 16px;border-radius:12px;background:#1b3b38;color:#f6e7c1}
+.carnet-mot span{font-size:14px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#f2a541}
+.carnet-mot p{margin:4px 0 0;font-family:'Fraunces',Georgia,serif;font-style:italic;font-size:19px;line-height:1.35}
+@media(max-width:760px){.carnet-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}

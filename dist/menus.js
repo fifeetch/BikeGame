@@ -118,6 +118,11 @@ export function playersScreen({btn,roster,colors,rules}){
   <header class="mc-head"><div><p class="mc-kicker">Autour de la table</p><h1>Qui part à l’aventure ?</h1></div>
    <label class="mc-count">Nombre de cyclistes <select id="player-count">${Array.from({length:6},(_,i)=>`<option value="${i+1}" ${roster.length===i+1?'selected':''}>${i+1}</option>`).join('')}</select></label></header>
   <div class="mc-players">${cards}</div>
+  <section class="mc-weather" aria-label="Météo de la partie"><div><p class="mc-kicker">Météo de la partie</p><p>Choisis une seule des deux façons de jouer la météo.</p></div>
+   <div class="mc-weather-choices" role="group" aria-label="Choix de la météo">
+    <button type="button" data-action="weather-cards" aria-pressed="${!rules.weather?.forecast}" class="${!rules.weather?.forecast?'on':''}"><b>Cartes météo</b><small>Les cartes Événement climatiques (pluie, neige, vent…) se jouent entre cyclistes.</small></button>
+    <button type="button" data-action="weather-forecast" aria-pressed="${!!rules.weather?.forecast}" class="${rules.weather?.forecast?'on':''}"><b>Météo annoncée</b><small>Chaque soir, le bulletin du lendemain pour 5 régions. Les cartes climatiques sont retirées.</small></button>
+   </div></section>
   <footer class="mc-foot">${btn('← Plateau','modes','mc-ghost')}<span>Règles : ${esc(rules.name)} · ${rules.distance} cases/jour · ${rules.startEnergy} énergie · ${rules.startMoney} pièces · ${btn('Modifier','rules','mc-link')}</span>${btn('Au garage →','start','mc-go')}</footer>
  </main>`;
 }

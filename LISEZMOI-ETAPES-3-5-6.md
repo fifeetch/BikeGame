@@ -94,3 +94,21 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 ## Lieux cachés loin des routes
 - Les 24 jetons « ? » sont maintenant tous placés **à au moins 2 cases de toute route** (jamais sur une route, jamais sur une case qui touche une route), toujours dans la zone des voyages (3 cases autour du chemin le plus court de chaque voyage). Pour les trouver, il faut quitter la route : le GPS devient utile.
 - Valeurs (1, 2 ou 3 points, 50/30/20 %) et écart de 3 cases entre jetons inchangés. Les parties déjà commencées gardent leurs jetons.
+
+## Météo annoncée (option de début de partie)
+- Sur l'écran des cyclistes, bloc **« Météo de la partie »** : **Cartes météo** (comme avant, par défaut) ou **Météo annoncée**. Avec la météo annoncée, les 10 cartes Événement climatiques sont retirées de la pioche (et le bouton « Intervention météo » disparaît). Le choix est gardé pour toute la partie.
+- **5 régions** (`dist/weather.js`) : Ouest, Alpes, Nord, Est, Balkans. Chaque case appartient à la région de la ville repère la plus proche.
+- **5 temps** tirés chaque jour à partir de la graine de la partie (le même jour donne toujours le même temps, donc on connaît demain dès ce soir) :
+  - Beau temps : aucun effet ;
+  - Vent de face : la 1re case de la journée coûte +1 énergie ;
+  - Pluie : chaque case hors route coûte +1 énergie ;
+  - Orage : 3 cases maximum si la journée commence dans la région ;
+  - Neige : montagne et col +1 énergie.
+- Chances par région (CLIMATE dans `weather.js`, réglables) : plus de neige au Nord et dans les Alpes, plus d'orages dans les Balkans, pas de neige à l'Ouest.
+- **Affichage** : le temps du jour posé sur chaque région de la carte ; dans la fiche Journée, le temps du jour à ta position et un bouton **« Demain → »** qui ouvre le **bulletin du soir** (les 5 régions de demain, ta région en orange, et la météo du jour en dépliant) ; le planificateur rappelle le temps des régions traversées et compte l'énergie en plus.
+
+## Carnet de voyage (5e onglet de la fiche)
+- Onglet **Carnet** : le trajet dessiné (départ, position, arrivée, lieux trouvés, cols), 4 chiffres (cases roulées, hors route, cols mythiques, points d'aventure), les **souvenirs datés** (villes traversées, lieux cachés, cols, premier de cordée, titre Grimpeur) et **« Le mot du voyageur »**.
+- Les textes sont dans `dist/carnet-data.js` : phrases génériques pour l'instant. Fi peut y écrire ses vraies anecdotes, ville par ville (liste VILLES) et pour « Le mot du voyageur ».
+- Chaque case parcourue garde son jour, et les cases hors route sont comptées (anciennes parties : comptage à partir de maintenant).
+- Tests : `tests/meteo-carnet.test.js` (7 tests) + un test des jetons loin des routes. 60 parties de robots (30 avec météo annoncée, 30 avec cartes météo) : aucune erreur.

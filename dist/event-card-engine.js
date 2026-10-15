@@ -7,7 +7,8 @@ export const BONUS_LIMIT=2;
 export const handLimit=m=>m.rules.eventCards?.handLimit??HAND_LIMIT;
 export const bonusLimit=m=>m.rules.eventCards?.bonusLimit??BONUS_LIMIT;
 export const drawPerTurn=m=>m.rules.eventCards?.drawPerTurn??2;
-export const enabledCardIds=rules=>EVENT_CARDS.filter(c=>rules.eventCards?.categories?.[c.category]!==false).map(c=>c.id);
+// Avec la météo annoncée, les cartes climatiques sont retirées de la pioche.
+export const enabledCardIds=rules=>EVENT_CARDS.filter(c=>rules.eventCards?.categories?.[c.category]!==false&&!(rules.weather?.forecast&&c.category==='climatic')).map(c=>c.id);
 export const isEventGame=m=>m?.cardVersion===3;
 export const card=(id,m)=>eventCardById(id,m);
 export const hasBonus=(p,id)=>p.bonusCards?.includes(id)||false;

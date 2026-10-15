@@ -9,6 +9,8 @@ import {CLASSIC,energyCap} from '../../dist/rules.js';
 import {voyages,progress} from '../../dist/voyages.js';
 
 const GAMES=Number(process.argv[2]||20),MAX_ROUNDS=150;
+// Options : FORECAST=1 (météo annoncée au lieu des cartes météo) ; SAVE=fichier.json STOP_ROUND=8 (arrête la 1re partie au jour 8 et l'enregistre, pour la tester dans le navigateur).
+const RULES=(()=>{const r=JSON.parse(JSON.stringify(CLASSIC));if(process.env.FORECAST==='1')r.weather.forecast=true;return r;})();
 const LOADOUTS=[
  {bike:'gravel',items:['tente','gps']},          // 5+2+3 = 10 pièces
  {bike:'randonneur',items:['tente','kit','rechaud']},// sans GPS
@@ -94,11 +96,12 @@ function playGame(n,seed,rulesTweak){
  const rand=rng(seed),roster=Array.from({length:n},(_,i)=>{const l=LOADOUTS[(i+seed)%LOADOUTS.length];return {name:'Robot '+(i+1),...l,voyage:voyages[(seed+i*3)%voyages.length].id};});
  const ctx={players:n,seed,roster:roster.map(r=>`${r.bike}/${r.voyage}${r.items.includes('gps')?'/GPS':''}`).join(' ; ')};
  const stat={players:n,seed,rounds:0,done:false,winner:'',steps:0,offSteps:0,limitedDays:0,ferries:0,cards:0,rests:{},finished:[]};
- let m;try{m=S.createMatch(roster,'plateau',rulesTweak||CLASSIC,seed);}catch(e){problem('création de partie impossible',e.message,ctx);return stat;}
+ let m;try{m=S.createMatch(roster,'plateau',rulesTweak||RULES,seed);}catch(e){problem('création de partie impossible',e.message,ctx);return stat;}
  check(m,'création',ctx);let lastProgress=0,lastKey='',stall=0;
  for(let guard=0;guard<MAX_ROUNDS*n*3&&!m.done&&m.round<=MAX_ROUNDS;guard++){
   ctx.round=m.round;ctx.active=S.player(m).name;
   if(!handlePhases(m,rand,ctx))break;
+  if(process.env.SAVE&&m.round>=Number(process.env.STOP_ROUND||8)&&['move','place'].includes(m.phase)&&!m.pendingAttack){writeFileSync(process.env.SAVE,S.serialize(m));console.error('Partie enregistrée au jour '+m.round);process.exit(0);}
   try{playTurn(m,rand,ctx,stat);}catch(e){problem('erreur pendant un tour',e.stack.split('\n').slice(0,2).join(' '),ctx);break;}
   if(m.done)break;if(!handlePhases(m,rand,ctx))break;
   const p=S.player(m);stat.hist=stat.hist||{};const why=m.moved?'m'+m.moved:(p.turnModifiers?.skipMove?'skip':m.turnKind!=='travel'?m.turnKind:(S.distance(m)===0?'dist0':'other'));stat.hist[why]=(stat.hist[why]||0)+1;if(why==='other'&&!stat.sample){const g=goal(m,p),path=pathTo(m,p,g.key);stat.sample={phase:m.phase,energy:p.energy,goal:g,path:path.slice(0,4),check:S.routeCheck(m,path.slice(0,1)),moves:S.moves(m).length,pending:p.pendingEffects};}

@@ -5,6 +5,7 @@ import {createTerrainLayer,isCellStale,readArtPreference,writeArtPreference,TERR
 import {createCamera} from './board-camera.js';
 import {roadNetwork,chains,sinuousPath,smooth,ferryArc} from './board-roads.js';
 import {roadEdges} from './routes.js';
+import {forecast,REGIONS,WEATHER,REGION_CENTRES} from './weather.js';
 import {DECOR} from './assets/europe/decor-data.js';
 import {readDisplayPrefs,writeDisplayPref} from './display-prefs.js';
 
@@ -176,7 +177,8 @@ export function createSVGBoardRenderer(container,options={}){
  const esc=v=>String(v).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
  function drawAdventure(g,editMode){
   const cols=Object.values(g.board).filter(t=>t.type==='col'&&t.colName),marks=Object.entries(g.landmarks||{}),climbed=g.colsClimbed||{},colorOf=id=>(g.players||[]).find(p=>p.id===id)?.color||'';
-  const sig=editMode+'|'+cols.map(t=>t.key+(climbed[t.key]||'')).join(',')+'|'+marks.map(([k,l])=>k+(l.found?'1':'0')).join(',');
+  const sky=g.forecast&&g.mode==='plateau'&&!editMode?forecast(g.seed,g.round):null;
+  const sig=JSON.stringify(sky)+editMode+'|'+cols.map(t=>t.key+(climbed[t.key]||'')).join(',')+'|'+marks.map(([k,l])=>k+(l.found?'1':'0')).join(',');
   if(sig===adventureSig)return;adventureSig=sig;
   if(editMode){adventure.innerHTML='';return;}
   let out='';
@@ -185,6 +187,9 @@ export function createSVGBoardRenderer(container,options={}){
   for(const [k,l]of marks){const t=g.board[k];if(!t)continue;
    out+=l.found?`<g class="landmark found" transform="translate(${f1(t.x)} ${f1(t.y)})"><title>${esc(l.name)} (+${l.value})</title><g class="landmark-inner"><circle r="5.5"/><text y="2.6">✦</text></g></g>`
     :`<g class="landmark" transform="translate(${f1(t.x)} ${f1(t.y)})"><title>Lieu remarquable caché</title><g class="landmark-inner"><circle r="7.5"/><text y="3.6">?</text></g></g>`;}
+  // Météo annoncée : temps du jour posé au centre de chaque région.
+  if(sky)for(const [id,w]of Object.entries(sky)){const c=REGION_CENTRES[id],label=`${REGIONS[id].name} · ${WEATHER[w].name}`,wide=label.length*4.3+26;
+   out+=`<g class="weather-badge w-${w}" transform="translate(${f1(c.x)} ${f1(c.y)})"><title>${esc(label)} : ${esc(WEATHER[w].effect)}</title><rect x="${f1(-wide/2)}" y="-9" width="${f1(wide)}" height="18" rx="9"/><text class="weather-icon" x="${f1(-wide/2+11)}" y="4">${WEATHER[w].icon}</text><text class="weather-label" x="${f1(-wide/2+21)}" y="3.4">${esc(label)}</text></g>`;}
   adventure.innerHTML=out;
  }
 
