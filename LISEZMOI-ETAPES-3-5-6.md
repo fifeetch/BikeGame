@@ -194,3 +194,8 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - Écran titre « Reprendre » → **Mes parties** : cartes avec petite carte du trajet, étiquettes (Solo, joueurs, En ligne, Rencontres, Météo annoncée, Terminée), cyclistes et points, jour, date ; Reprendre / Renommer / ⬇️ Fichier / 🗑 ; filtres Toutes, En cours, Terminées ; « Importer une partie ». Avec une seule partie, « Reprendre » la relance directement.
 - « Nouveau voyage » ne remplace plus la partie en cours : elle reste dans la liste.
 - Les parties en ligne apparaissent aussi et se reprennent avec leur code.
+
+## Bulletin météo avec la carte des zones + correction de la synchro en ligne (15 octobre 2026)
+- Bouton « Bulletin » : « Tu es dans la zone X », carte des 5 zones (vraie carte du jeu coloriée) avec le temps de chaque zone et « 📍 toi », onglets Aujourd'hui / Demain, « Aujourd'hui ici » et « Demain ici », villes de la zone. Le bandeau dit « Aujourd'hui · zone Est ».
+- Partie en ligne : un appareil n'envoie plus que les actions de son joueur (un simple affichage n'envoie rien) ; en cas de conflit, la partie est rechargée depuis le serveur (jamais d'état plus ancien) ; nouvel essai automatique si la connexion coupe ; bouton « 🔄 Ça semble bloqué ? Recharger la partie » pendant l'attente. (Bug signalé par Fi : chacun voyait l'autre jouer.)
+- Test local à deux onglets : la valeur voyage avec le message (plus de lecture d'un ancien état).

@@ -1593,3 +1593,25 @@ body .dock-v1 .dock-center .dock-hint,body .dock-v1 .dock-center .dock-main{flex
 .mc-parties .pt-import{display:block;padding:12px;border-radius:12px;border:2px solid rgba(246,231,193,.4);text-align:center;font-weight:700;color:#f6e7c1;cursor:pointer}
 .mc-parties .pt-import input{display:block;margin:8px auto 0;color:#e8dcbc;font-size:13px}
 @media(max-width:900px){.mc-parties .pt-layout{grid-template-columns:1fr}.mc-parties .pt-card{flex-wrap:wrap}.mc-parties .pt-side{width:100%;text-align:left}}
+/* Bulletin météo : carte des zones */
+.modal.meteo-modal{width:min(1040px,95vw);max-width:none}
+.meteo-grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:18px;align-items:start;margin-top:8px}
+.meteo-map{display:flex;flex-direction:column;gap:8px}
+.meteo-tabs{display:flex;gap:6px}
+.meteo-tabs button{padding:7px 16px;border-radius:999px;border:2px solid rgba(246,231,193,.45);background:transparent;color:#f6e7c1;font-weight:700;cursor:pointer;min-height:0}
+.meteo-tabs button.on{background:#f2a541;border-color:#f2a541;color:#1b1406}
+.zone-map{width:100%;height:auto;border-radius:14px;border:3px solid #f6e7c1;display:block}
+.zone-map .zm-name{font:700 38px 'Barlow',sans-serif;fill:#1b1406;stroke:#f6e7c1;stroke-width:10px;paint-order:stroke}
+.zone-map .zm-me{font:700 40px 'Barlow',sans-serif;fill:#fff3cf;stroke:#b74732;stroke-width:10px;paint-order:stroke}
+.meteo-info{display:flex;flex-direction:column;gap:10px}
+.meteo-now{display:flex;gap:12px;align-items:center;padding:12px 14px;border-radius:14px;background:#f6e7c1;color:#1b1406}
+.meteo-now span{font-size:34px}
+.meteo-now small{font:700 12px 'Barlow',sans-serif;letter-spacing:.12em;color:#8a5a14}
+.meteo-now b{display:block;font:900 21px 'Fraunces',Georgia,serif;color:#1b3b38}
+.meteo-now p{margin:2px 0 0;color:#3a2f1a!important;font-size:15px}
+.meteo-now.next{background:#fff7df}
+.meteo-zone{margin:0;font-size:14px;opacity:.85}
+.meteo-info .meteo-list{margin:0}
+.meteo-info .meteo-list li{padding:7px 12px}
+.meteo-info .meteo-list li b{font-size:16px}.meteo-info .meteo-list li small{font-size:14px}
+@media(max-width:800px){.meteo-grid{grid-template-columns:1fr}}

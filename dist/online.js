@@ -32,8 +32,9 @@ export function joinGame(lightText,boardText){const light=JSON.parse(lightText),
 function localBackend(){
  const key=code=>'velo-net-'+code,chan=typeof BroadcastChannel!=='undefined'?new BroadcastChannel('velo-net'):null,listeners=new Map();
  const read=code=>{try{return JSON.parse(localStorage.getItem(key(code))||'null');}catch{return null;}};
- const write=(code,v)=>{localStorage.setItem(key(code),JSON.stringify(v));chan?.postMessage(code);for(const cb of listeners.get(code)||[])cb(v);};
- chan&&(chan.onmessage=e=>{for(const cb of listeners.get(e.data)||[])cb(read(e.data));});
+ // La valeur voyage avec le message : un autre onglet peut encore lire l'ancienne valeur dans localStorage.
+ const write=(code,v)=>{localStorage.setItem(key(code),JSON.stringify(v));chan?.postMessage({code,value:v});for(const cb of listeners.get(code)||[])cb(v);};
+ chan&&(chan.onmessage=e=>{const {code,value}=e.data||{};for(const cb of listeners.get(code)||[])cb(value);});
  return {
   async get(code){return read(code);},
   async create(code,value){if(read(code))return false;write(code,value);return true;},

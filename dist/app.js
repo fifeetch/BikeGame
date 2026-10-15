@@ -269,7 +269,8 @@ function act(a){
  else if(a==='finish-voyage-early'){if(!S.finishVoyageEarly(m))message='Impossible de terminer le voyage ici.';else message='Voyage terminé (−40 %). Au début de ton prochain tour, tu choisiras un nouveau voyage.';}
  else if(a.startsWith('newvoyage-')){if(!S.chooseNewVoyage(m,a.slice(10)))message='Choix du voyage impossible.';else{mapSelection='';route=[];}}
  else if(a==='cards')modal='cards';
- else if(a==='meteo')modal='meteo';
+ else if(a==='meteo'){modal='meteo';meteoDay='today';}
+ else if(a.startsWith('meteo-day-')){modal='meteo';meteoDay=a.slice(10);}
  else if(a==='player-sheet'){sheetTab='velo';modal='player-sheet';}
  else if(a.startsWith('sheet-tab-'))sheetTab=a.slice(10);
  else if(a.startsWith('choose-')){const full=m.cardVersion!==3&&S.player(m).cardHand.length>=5,prior=S.player(m).id;S.chooseCard(m,Number(a.slice(7)));if(m.cardVersion===3&&m.players.length>1&&S.player(m).id!==prior&&!m.done)privacyCover=true;modal='';route=[];if(full)message='Main limitée à 5 cartes : la plus ancienne a été défaussée.';}
@@ -507,12 +508,29 @@ function encounterModal(){const e=S.currentEncounter(m),p=S.player(m);if(!e)retu
 // ---------- Météo annoncée : bloc de la fiche Journée et bulletin du lendemain ----------
 const regionPhrase=name=>({Ouest:'l’Ouest',Est:'l’Est',Nord:'le Nord'}[name]||'les '+name);
 function meteoHere(p){if(!S.forecastOn(m))return '';const w=S.weatherToday(m,p.pos),info=WEATHER[w],id=S.regionAt(m,p.pos),region=REGIONS[id].name,next=WEATHER[S.weatherBulletin(m,m.round+1).find(b=>b.region===id)?.weather||'beau'];
- return `<div class="fiche-meteo w-${w}"><span class="fiche-meteo-icon">${svgI(WEATHER_SVG[w],46)}</span><div><span class="fiche-kicker">Aujourd’hui · ${esc(region)}</span><b>${esc(info.name)}${w==='beau'?'':' : '+esc(info.effect)}</b><small>Demain : ${esc(next.name.toLowerCase())}</small></div>${btn('Bulletin','meteo','fiche-meteo-btn')}</div>`;}
-function meteoModal(){const p=S.player(m),mine=S.regionAt(m,p.pos),today=S.weatherBulletin(m,m.round),tomorrow=S.weatherBulletin(m,m.round+1),here=tomorrow.find(b=>b.region===mine);
+ return `<div class="fiche-meteo w-${w}"><span class="fiche-meteo-icon">${svgI(WEATHER_SVG[w],46)}</span><div><span class="fiche-kicker">Aujourd’hui · zone ${esc(region)}</span><b>${esc(info.name)}${w==='beau'?'':' : '+esc(info.effect)}</b><small>Demain : ${esc(next.name.toLowerCase())}</small></div>${btn('Bulletin','meteo','fiche-meteo-btn')}</div>`;}
+// Bulletin météo : la carte des 5 zones (le temps de chaque zone, et toi) + les informations du jour et du lendemain.
+const ZONE_COLORS={ouest:'#e7c27a',alpes:'#b9d1e6',nord:'#cfe0c6',est:'#e5b9a8',balkans:'#d9c3e3'};
+let meteoDay='today',zoneMapCache=null;
+function zoneMapBase(){const key=m.seed+':'+(m.mapChoice||'');if(zoneMapCache?.key===key)return zoneMapCache;
+ const land=Object.values(m.board).filter(t=>t.type!=='mer'),xs=land.map(t=>t.x),ys=land.map(t=>t.y),x0=Math.min(...xs)-14,y0=Math.min(...ys)-14,w=Math.max(...xs)-x0+14,h=Math.max(...ys)-y0+14;
+ const sums={};let dots='';for(const t of land){const r=S.regionAt(m,t.key);(sums[r]||=[0,0,0]);sums[r][0]+=t.x;sums[r][1]+=t.y;sums[r][2]++;dots+=`<circle cx="${t.x.toFixed(0)}" cy="${t.y.toFixed(0)}" r="11.5" fill="${ZONE_COLORS[r]||'#ddd'}"/>`;}
+ const centres=Object.fromEntries(Object.entries(sums).map(([r,[x,y,n]])=>[r,{x:x/n,y:y/n}]));
+ return zoneMapCache={key,box:[x0,y0,w,h],dots,centres};}
+function zoneMap(list,mine,pos){const z=zoneMapBase(),[x0,y0,w,h]=z.box,me=m.board[pos];
+ const icons=list.map(b=>{const c=z.centres[b.region];if(!c)return '';return `<g transform="translate(${c.x.toFixed(0)} ${c.y.toFixed(0)})"><circle r="44" fill="#f6e7c1" stroke="${b.region===mine?'#f2a541':'#1b3b38'}" stroke-width="${b.region===mine?10:6}"/><text y="16" text-anchor="middle" font-size="44">${b.icon}</text><text y="86" text-anchor="middle" class="zm-name">${esc(b.regionName)}</text></g>`;}).join('');
+ const meMark=me?`<g transform="translate(${me.x.toFixed(0)} ${me.y.toFixed(0)})"><circle r="26" fill="#b74732" stroke="#fff3cf" stroke-width="8"/><text y="-40" text-anchor="middle" class="zm-me">📍 toi</text></g>`:'';
+ return `<svg class="zone-map" viewBox="${x0.toFixed(0)} ${y0.toFixed(0)} ${w.toFixed(0)} ${h.toFixed(0)}" role="img" aria-label="Carte des zones météo"><rect x="${x0-40}" y="${y0-40}" width="${w+80}" height="${h+80}" fill="#2c6f86"/>${z.dots}${icons}${meMark}</svg>`;}
+function meteoModal(){const p=S.player(m),mine=S.regionAt(m,p.pos),today=S.weatherBulletin(m,m.round),tomorrow=S.weatherBulletin(m,m.round+1),list=meteoDay==='tomorrow'?tomorrow:today;
+ const hereToday=today.find(b=>b.region===mine),hereTomorrow=tomorrow.find(b=>b.region===mine),zone=REGIONS[mine];
  const row=b=>`<li class="w-${b.weather}${b.region===mine?' mine':''}"><span aria-hidden="true">${b.icon}</span><b>${esc(b.regionName)} · ${esc(b.name)}</b><small>${esc(b.effect)}</small></li>`;
- return `<span class="eyebrow">BULLETIN DU SOIR · JOUR ${m.round+1}</span><h2>Demain : ${esc(here.name.toLowerCase())} sur ${esc(regionPhrase(here.regionName))}</h2>
- <p>Ta position : ${esc(here.regionName)}. Demain, ${esc(here.effect)}. Tu peux rester au camping, contourner, ou foncer avant le mauvais temps.</p>
- <ul class="meteo-list">${tomorrow.map(row).join('')}</ul><details class="meteo-today"><summary>Météo d’aujourd’hui</summary><ul class="meteo-list">${today.map(row).join('')}</ul></details>${btn('Fermer','close','light')}`;}
+ const tab=(id,label)=>`<button type="button" data-action="meteo-day-${id}" class="${meteoDay===id?'on':''}" aria-pressed="${meteoDay===id}">${label}</button>`;
+ return `<span class="eyebrow">BULLETIN MÉTÉO · JOUR ${m.round}</span><h2>Tu es dans la zone ${esc(zone.name)}</h2>
+ <div class="meteo-grid"><div class="meteo-map"><div class="meteo-tabs">${tab('today','Aujourd’hui')}${tab('tomorrow','Demain')}</div>${zoneMap(list,mine,p.pos)}</div>
+ <div class="meteo-info"><div class="meteo-now"><span aria-hidden="true">${hereToday.icon}</span><div><small>AUJOURD’HUI ICI</small><b>${esc(hereToday.name)}</b><p>${esc(hereToday.effect)}</p></div></div>
+ <div class="meteo-now next"><span aria-hidden="true">${hereTomorrow.icon}</span><div><small>DEMAIN ICI</small><b>${esc(hereTomorrow.name)}</b><p>${esc(hereTomorrow.effect)}</p></div></div>
+ <p class="meteo-zone">Zone ${esc(zone.name)} : ${esc(zone.cities.slice(0,6).join(', '))}…</p>
+ <ul class="meteo-list">${list.map(row).join('')}</ul></div></div>${btn('Fermer','close','light')}`;}
 // ---------- Règle hors route : textes communs (fiche Journée, planificateur) ----------
 function routeTags(){let pos=S.player(m).pos;return route.map(k=>{const on=S.roadStep(m,pos,m.board[k]);pos=k;return on;});}
 function offroadTag(){const s=S.offroadStatus(m);return !s.enabled||!s.off?'':s.gps?' · hors route avec '+esc(s.item):' · hors route sans '+esc(s.item);}
@@ -587,7 +605,7 @@ render();if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.j
 const netStore=()=>NET.isLocalTest()?sessionStorage:localStorage;
 let lobby=(()=>{try{return JSON.parse(netStore().getItem('velo-lobby')||'null');}catch{return null;}})(),lobbyUnlisten=null,lobbyPrep=false,lobbyRulesBackup=null;
 let online=(()=>{try{return JSON.parse(netStore().getItem('velo-online')||'null');}catch{return null;}})();
-let net={view:'home'},netUnlisten=null,netLight='',netPushing=false,netAgain=false,netDeferred=null,netWasMyTurn=null;
+let netDirty=false,net={view:'home'},netUnlisten=null,netLight='',netPushing=false,netAgain=false,netDeferred=null,netWasMyTurn=null;
 const saveOnline=()=>{try{online?netStore().setItem('velo-online',JSON.stringify(online)):netStore().removeItem('velo-online');}catch{}};
 const lightOf=g=>{if(!g)return '';const {board,edges,...l}=g;return JSON.stringify(l);};
 const onlineGame=()=>Boolean(online&&m&&m.mode==='plateau');
@@ -596,7 +614,8 @@ const seatName=id=>m?.players.find(p=>p.id===id)?.name||'un cycliste';
 function onlineView(){
  const local=m&&m.mode==='plateau'&&!m.done&&!online?{title:`Jour ${m.round} · ${m.players.length} cycliste${m.players.length>1?'s':''}`,players:m.players.map(p=>({id:p.id,name:p.name,detail:`${m.rules.bikes[p.bike]?.name||p.bike} · ${voyages.find(v=>v.id===p.voyage)?.title||''}`}))}:null;
  return onlineScreen({btn,net,local,current:online&&m?{code:online.code,name:seatName(online.seat)}:null,message,rules:setupRules,lobbyBack:lobby&&net.view!=='lobby'?lobby.code:null});}
-function applyRemote(text,rev){
+function applyRemote(text,rev,force=false){
+ if(online&&rev<online.rev)return;// jamais revenir à un état plus ancien (réponse lente du serveur)
  let next;try{next=S.load(text);}catch(e){message='Partie en ligne illisible : '+e.message;return;}
  m=next;online.rev=rev;saveOnline();netLight=lightOf(m);mapSelection='';route=[];
  if(net.joining){net={view:'home'};screen='game';modal='';message='La partie commence !';}
@@ -611,12 +630,14 @@ async function startListening(){
   applyRemote(text,rev);});}
  catch(e){message='Connexion impossible à la partie en ligne : '+e.message;render();}
 }
+// Recharge l'état exact de la partie en ligne (après un conflit, ou à la demande du joueur).
+async function resyncOnline(note=''){if(!online)return;try{const g=await NET.getGame(online.code);if(g?.state&&g?.board){netDeferred=null;applyRemote(NET.joinGame(g.state,g.board),g.rev,true);if(note)message=note;render();}}catch(e){message='Connexion impossible : '+e.message;render();}}
 async function pushNow(){
  if(!onlineGame())return;if(netPushing){netAgain=true;return;}
  netPushing=true;const sent=lightOf(m);
  try{const rev=await NET.pushState(online.code,m,online.rev);
-  if(rev){online.rev=rev;saveOnline();}else message='Un autre joueur a joué en même temps : la partie est rechargée.';}
- catch(e){message='Envoi impossible (connexion ?) : '+e.message;}
+  if(rev){online.rev=rev;saveOnline();if(lightOf(m)===sent)netDirty=false;}else{netPushing=false;netDirty=false;await resyncOnline('La partie a été resynchronisée avec l’autre joueur.');return;}}
+ catch(e){message='Envoi impossible (connexion ?) : nouvel essai dans 4 secondes.';netPushing=false;setTimeout(()=>{if(onlineGame()&&netDirty)pushNow();},4000);render();return;}
  netPushing=false;
  if(netAgain&&lightOf(m)!==sent){netAgain=false;netLight=lightOf(m);pushNow();return;}netAgain=false;
  if(netDeferred){const d=netDeferred;netDeferred=null;if(d.rev>online.rev)applyRemote(d.text,d.rev);}
@@ -646,6 +667,8 @@ async function netAction(a){
  if(a==='net-play'){if(online&&m){screen='game';modal='';net={view:'home'};render();center?.();}return;}
  if(a==='net-leave'){leaveOnline();message='Tu as quitté la partie en ligne sur cet appareil (elle reste en ligne pour les autres).';render();return;}
  if(a.startsWith('net-'))return netAction(a);
+ if(a==='net-resync'){resyncOnline('Partie rechargée depuis le serveur.');return;}
+ if(onlineGame()&&screen==='game'&&!['zoomin','zoomout','center','art','sheet-toggle','split-view','meteo','close','help','stats','settings'].includes(a)&&!/^(help-tab-|meteo-day-|intro-close)/.test(a))netDirty=true;
  if(onlineGame()&&a==='new'){leaveOnline();}
  if(onlineGame()&&(a==='mapedit'||a==='rules')&&screen==='game'){message=a==='mapedit'?'Pas de modification de carte pendant une partie en ligne.':'Les règles ne se changent pas pendant une partie en ligne.';render();return;}
  return priorAct(a);};}
@@ -660,21 +683,21 @@ async function netAction(a){
  if(netWasMyTurn===false&&mine)message='À toi de jouer !';netWasMyTurn=mine;
  try{document.title=(mine?'● À toi — ':'')+'L’Aventure à Vélo';}catch{}
  // Toute différence vient d'une action faite ici (hors de son tour, les actions sont bloquées) : on l'envoie.
- const light=lightOf(m);if(light!==netLight){netLight=light;pushNow();}
+ const light=lightOf(m);if(light!==netLight&&netDirty){netLight=light;pushNow();}else if(light!==netLight&&!netDirty&&!netPushing){/* changement fait par l'affichage seul : on attend l'état en ligne */}
 };}
 {const priorSheet=playerSheet;playerSheet=(inline=false)=>{
  if(!onlineGame()||myTurn())return priorSheet(inline);
  const me=m.players.find(p=>p.id===online.seat)||S.player(m),actor=m.players.find(p=>p.id===NET.actorId(m));
  const body=`<div class="player-sheet-head fiche-head"><span class="fiche-num" style="background:${me.color}" aria-hidden="true">${esc(me.id.slice(1))}</span><div><h2>${esc(me.name)}</h2><small>Partie en ligne ${esc(online.code)}</small></div><span class="mat-day">Jour ${m.round}</span></div>
- ${ficheGauges(me)}<section class="net-wait"><span class="fiche-kicker">En attente</span><b>${esc(actor?.name||'Un cycliste')} ${m.pendingAttack?'répond à une carte…':m.phase==='card-intervention'?'peut jouer une carte météo…':'roule…'}</b><p>Tu vois son cycliste avancer sur la carte. Tes boutons se réveillent dès que c’est ton tour.${me.cardHand?.length?` Tu as ${me.cardHand.length} carte${me.cardHand.length>1?'s':''} en main, cachée${me.cardHand.length>1?'s':''} jusqu’à ton tour.`:''}</p></section>`;
+ ${ficheGauges(me)}<section class="net-wait"><span class="fiche-kicker">En attente</span><b>${esc(actor?.name||'Un cycliste')} ${m.pendingAttack?'répond à une carte…':m.phase==='card-intervention'?'peut jouer une carte météo…':'roule…'}</b><p>Tu vois son cycliste avancer sur la carte. Tes boutons se réveillent dès que c’est ton tour. <button type="button" class="net-resync" data-action="net-resync">🔄 Ça semble bloqué ? Recharger la partie</button>${me.cardHand?.length?` Tu as ${me.cardHand.length} carte${me.cardHand.length>1?'s':''} en main, cachée${me.cardHand.length>1?'s':''} jusqu’à ton tour.`:''}</p></section>`;
  return inline?`<section class="player-sheet-inline player-mat fiche">${body}</section>`:`<div class="player-mat fiche">${body}</div>`;};}
 {const priorOverlay=overlay;overlay=()=>{if(onlineGame()&&screen==='game'&&!myTurn()&&!['meteo','stats'].includes(modal))return '';return priorOverlay();};}
 // Hors de son tour : seuls les boutons « pour regarder » marchent.
-const NET_VIEW_ACTIONS=new Set(['zoomin','zoomout','center','art','sheet-toggle','split-view','meteo','close','home','settings','stats','online','net-play','net-leave','reveal-close']);
+const NET_VIEW_ACTIONS=new Set(['net-resync','zoomin','zoomout','center','art','sheet-toggle','split-view','meteo','close','home','settings','stats','online','net-play','net-leave','reveal-close']);
 globalThis.document?.addEventListener?.('click',e=>{
  if(!onlineGame()||screen!=='game'||myTurn())return;
  const el=e.target.closest?.('[data-action],[data-sheet-tab],button,a,input,select,[data-board-key],svg,.map-wrap');if(!el)return;
- if(el.closest('[data-sheet-tab]')||NET_VIEW_ACTIONS.has(el.dataset?.action)||/^(help|intro-close|help-tab-)/.test(el.dataset?.action||'')||el.closest('.maptools')||el.closest('header')||el.closest('.split-size'))return;
+ if(el.closest('[data-sheet-tab]')||NET_VIEW_ACTIONS.has(el.dataset?.action)||/^(help|intro-close|help-tab-|meteo-day-)/.test(el.dataset?.action||'')||el.closest('.maptools')||el.closest('header')||el.closest('.split-size'))return;
  e.stopPropagation();e.preventDefault();message=`C’est au tour de ${seatName(NET.actorId(m))}.`;const toast=document.querySelector('.toast');if(toast)toast.textContent=message;
 },true);
 // Au démarrage : reprendre l'écoute de la partie en ligne, ou ouvrir l'écran « Rejoindre » si le lien contient un code.
