@@ -170,3 +170,4 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 ## Vélos (15 octobre 2026)
 - Le vélo s'appelle **Randonneuse** (et non « Randonnée »).
 - **Gravel : 5 cases par jour ; Randonneuse : 4 cases par jour** (elle garde ses 8 places de sacoche). Les règles enregistrées sur l'appareil sont mises à jour automatiquement.
+- **Cases par jour de chaque vélo réglables** : fenêtre « ⚙️ Règles » → « Vélos et inventaires » → « Cases par jour (1 à 5) » pour le Gravel et la Randonneuse (au lieu de l'ancien « bonus distance »). L'écran des cyclistes affiche « Gravel 5 / Randonneuse 4 cases/jour ».
