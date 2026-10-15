@@ -1,4 +1,6 @@
-// Routes et ferries dessinés (étape 5). PUREMENT VISUEL.
+// Routes et ferries dessinés (étape 5).
+// Depuis l'étape « routes qui comptent », les grandes routes JOUABLES sont figées dans assets/europe/routes-data.js
+// (voir routes.js) : roadNetwork ne sert plus qu'à les générer (tools/routes) et à tracer les petits chemins du décor.
 // Les routes suivent uniquement les liaisons qui existent déjà entre cases voisines : elles illustrent
 // le voisinage actuel et ne créent aucun chemin. Le joueur reste libre de passer par n'importe quelle case.
 //  - grandes routes : entre villes proches, par le passage le plus facile (on évite collines et montagnes) ;
@@ -26,9 +28,9 @@ const trace=(prev,from,to)=>{const out=[to];while(out[0]!==from){const p=prev.ge
 const edgeKey=(a,b)=>a<b?a+'|'+b:b+'|'+a;
 
 // Réseau : ensembles d'arêtes (paires de cases voisines) pour les grandes routes et les chemins.
-export function roadNetwork(board,{villages=[]}={}){
+export function roadNetwork(board,{villages=[],main:fixed=null}={}){
  const {nodes,adj}=landGraph(board),byAxial=new Map(nodes.map(t=>[`${t.q},${t.r}`,t]));
- const cities=nodes.filter(t=>t.name&&t.type==='ville'),main=new Set(),minor=new Set();
+ const cities=fixed?[]:nodes.filter(t=>t.name&&t.type==='ville'),main=new Set(fixed||[]),minor=new Set();// main fourni : réseau figé
  // Paires de villes : chaque ville vers ses 3 voisines les plus proches (à vol d'oiseau, pas trop loin).
  const pairs=new Set();
  for(const a of cities){const near=cities.filter(b=>b!==a).map(b=>[b,Math.hypot(b.x-a.x,b.y-a.y)]).sort((u,v)=>u[1]-v[1]);

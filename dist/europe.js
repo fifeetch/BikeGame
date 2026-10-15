@@ -1,4 +1,5 @@
 import {MAP_CELLS} from './assets/europe/board-data.js';
+import {applyRoads} from './routes.js';
 
 export const MAP_VERSION=13;
 // Ferries : de port à port, comme les liaisons réelles les plus utilisées.
@@ -27,6 +28,8 @@ export function europeBoard(from,to){
  for(const a of nodes){if(a.type==='mer')continue;for(const [dq,dr] of HEX_DIRECTIONS){const b=byAxial.get(`${a.q+dq},${a.r+dr}`);if(b&&b.type!=='mer')link(a,b);}}
  // Port-to-port crossings are separate actions, never ordinary land steps.
  for(const [a,b] of FERRY_ROUTES)link(byName[a],byName[b],true);
+ // Routes jouables : chaque case reçoit les côtés qui portent une route (assets/europe/routes-data.js).
+ applyRoads(board);
  const start=byName[from],arrival=byName[to];if(!start||!arrival)throw Error('Ville du voyage absente du plateau');start.id=0;
  return {board,edges,start:start.key,arrivalId:arrival.id};
 }

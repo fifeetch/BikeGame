@@ -79,3 +79,14 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
   - le gros bouton « Terminer ma journée » ;
   - en bas, des liens Sauvegarder, Journal de route et Fin de partie.
 - **Page de jeu** : en-tête, barre d'actions et planificateur passent en sombre.
+
+## Des routes qui comptent, et un GPS qui sert
+- **Routes figées** dans un nouveau fichier `dist/assets/europe/routes-data.js`, séparé de `board-data.js`. Chaque case connaît les côtés (0 à 5) qui portent une route, dans l'ordre des directions de la grille `[[1,0],[1,1],[0,1],[-1,0],[-1,-1],[0,-1]]`. Un pas est « sur la route » quand le côté traversé porte une route des deux côtés (`dist/routes.js`).
+- **Contenu** : les grandes routes déjà dessinées entre les villes (436 tronçons) + 10 routes ajoutées, tracées le long des vraies routes par des villes repères : Amsterdam → Berlin → Varsovie (par Osnabrück, Hanovre, Poznań), Paris → Prague → Lviv (Reims, Metz, Nuremberg, Brno, Cracovie), Vienne → Chișinău (Budapest, Debrecen, Cluj, Suceava, Iași), Paris → Bordeaux (Orléans, Tours, Poitiers), Paris → Lyon (Auxerre, Beaune, Mâcon), Milan → Ancona (Parme, Bologne, Rimini), Madrid → Barcelone (Saragosse, Lleida), Oslo → Stockholm (Karlstad, Örebro), Stockholm → Narvik (Gävle, Umeå, Luleå, Kiruna), Cap Nord → Petrozavodsk (Laponie finlandaise, Kuusamo, Carélie).
+- Les **petits chemins vers les hameaux** restent un simple décor : ils ne comptent pas comme routes.
+- Pour modifier les routes : éditer `tools/routes/construire-routes.mjs`, puis `node tools/routes/construire-routes.mjs` depuis la racine du dépôt.
+- **Règle « hors route »** (option A, réglable dans Règles → Hors route) : sur la route, déplacement normal. Hors route avec le GPS, déplacement normal. Hors route sans GPS : dès qu'un pas de la journée quitte la route, toute la journée est limitée à **3 cases (Gravel)** ou **2 cases (Randonneuse)**. Toutes les cases de la journée comptent, y compris celles offertes par une carte. La règle ne concerne que le mode Plateau.
+- **Cartes Événement corrigées** : « Covoiturage improvisé » n'avance plus que sur une vraie route ; « Pluie torrentielle » ne touche plus que les cases sans route.
+- **Affichage** : routes jouables en trait crème bordé ; planificateur avec « route » ou « hors route » pour chaque case et le message « Hors route sans GPS : 3 cases maximum aujourd'hui » ; fiche Journée « 1 / 3 cases · hors route sans GPS » ; GPS décrit « Quitter la route sans pénalité » au garage et dans les Sacoches.
+- Les anciennes sauvegardes retrouvent les routes au chargement.
+- Tests : `tests/routes-gps.test.js` (9 tests). Les 23 anciens échecs restent les mêmes, aucun nouveau.

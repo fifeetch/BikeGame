@@ -728,11 +728,11 @@ html.reduce-motion .game .player-sheet-mount{transition:none}
 /* ===== Étape 5 : routes (décoratives), ferries (élément de jeu) et calque de décor ===== */
 .board-roads,.board-decor,.route-trail,.board-halos{pointer-events:none}
 .board-roads path{fill:none;stroke-linecap:round;stroke-linejoin:round}
-.road-main-case{stroke:#5f4325;stroke-opacity:.55;stroke-width:3.2}
-.road-main{stroke:#f6e7bf;stroke-opacity:.92;stroke-width:1.7}
+.road-main-case{stroke:#3a2812;stroke-opacity:.82;stroke-width:3.9}/* routes jouables : trait crème bordé */
+.road-main{stroke:#f6e7c1;stroke-opacity:1;stroke-width:2.1}
 .road-minor{stroke:#7b5a33;stroke-opacity:.6;stroke-width:.9;stroke-dasharray:2 1.7;opacity:0;transition:opacity .35s}
 .board-roads[data-detail="true"] .road-minor{opacity:1}
-.supplied-map:not(.art-on) .road-main-case{stroke-opacity:.35}
+.supplied-map:not(.art-on) .road-main-case{stroke-opacity:.6}
 .board-decor{opacity:0;transition:opacity .4s}
 .board-decor[data-visible="true"]{opacity:.9}
 .supplied-map:not(.art-on) .board-decor{display:none}
@@ -1129,3 +1129,13 @@ body.en-partie .sheet-drawer-close{background:#0b1a1d;color:var(--c-cream);borde
 .modal .event-face button{min-height:40px;font-size:17px;padding:6px 10px}
 .event-handoff{background:var(--c-ink)}.event-handoff h2{font-family:'Fraunces',Georgia,serif;color:var(--c-light)}.event-handoff button{background:var(--c-orange);color:#1b1406;font:700 20px 'Barlow Condensed',system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase}
 .modal .sticky-actions{background:var(--c-panel);border-top-color:var(--c-line)}
+
+/* ---------- Routes qui comptent : messages hors route (planificateur, fiche Journée) ---------- */
+.route-planner .offroad-note{display:block;margin-top:.2rem;font-family:'Barlow Condensed',system-ui,sans-serif;font-size:.95rem;letter-spacing:.01em}
+.route-planner .offroad-note.warn{color:#f2a541;font-weight:700}
+.route-planner .offroad-note.gps{color:#f6e7c1}
+.route-planner .offroad-note.muted{opacity:.75}
+.fiche-note.offroad-hint{opacity:.8}
+.route-planner>div:first-child{flex:1 1 auto}
+.route-planner .route-buttons{flex:0 0 auto}
+.game.game-split .route-planner .offroad-note{flex-basis:100%;margin-top:0}

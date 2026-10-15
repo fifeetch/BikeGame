@@ -7,6 +7,8 @@ export const CLASSIC={
  budget:{startBonus:5,every:5,amount:5},
  adventure:{landmarks:24,landmarkOdds:{one:50,two:30,three:20},colFirstBonus:3,climberCols:3,climberBonus:5},
  fatigue:{enabled:true,days:3,colExtra:1,maxEnergyPenalty:2},
+ // Hors route (mode Plateau) : sans l'objet « item » dans les sacoches, quitter la route limite toute la journée à maxDistance cases.
+ offroad:{enabled:true,item:'gps',maxDistance:{gravel:3,randonneur:2}},
  bikes:{gravel:{name:'Gravel',price:5,capacity:4,mountainDiscount:0,extraDistance:0,extraFood:0},randonneur:{name:'Randonnée',price:3,capacity:8,mountainDiscount:0,extraDistance:0,extraFood:0}},
  rest:{bivouac:{name:'Bivouac',price:0,energy:3,days:1,tent:true,cityOnly:false},camping:{name:'Camping',price:1,energy:5,days:1,tent:false,cityOnly:false},hotel:{name:'Hôtel',price:3,energy:10,days:1,tent:false,cityOnly:true}},
  food:{energy:3,stoveBonus:2,price:1,quantity:2,maxPerTurn:1,cityOnly:true,restaurantPrice:1,restaurantEnergy:4},
@@ -37,6 +39,7 @@ export function validateRules(input){
  if(![r.startFood,r.maxFood,r.food.quantity,r.food.maxPerTurn,...Object.values(r.bikes).flatMap(b=>[b.capacity,b.extraDistance,b.extraFood]),...Object.values(r.equipment).map(e=>e.space)].every(Number.isInteger)||r.maxFood<r.startFood)throw Error('Quantités, capacités et distances : nombres entiers ; capacité nourriture ≥ départ.');
  if(Object.values(r.adventure.landmarkOdds).reduce((a,b)=>a+b,0)!==100||!Number.isInteger(r.adventure.landmarks)||r.adventure.landmarks>60)throw Error('Lieux cachés : de 0 à 60 jetons, chances totalisant 100 %.');
  if(!Number.isInteger(r.budget.every)||r.budget.every<1||!Number.isInteger(r.fatigue.days)||r.fatigue.days<1||r.fatigue.maxEnergyPenalty>=r.maxEnergy)throw Error('Budget : versement tous les 1 jour ou plus ; fatigue : au moins 1 jour, pénalité inférieure à l’énergie maximale.');
+ if((r.offroad.item&&!r.equipment[r.offroad.item])||!Object.values(r.offroad.maxDistance).every(n=>Number.isInteger(n)&&n>=1&&n<=5))throw Error('Hors route : objet protecteur connu, et distance maximale hors route entière de 1 à 5 cases.');
  if(Object.values(r.probabilities).reduce((a,b)=>a+b,0)!==100)throw Error('Les probabilités doivent totaliser 100 %.');
  if(!['objectives','points','turns'].includes(r.victory.mode)||r.victory.points<1||!Number.isInteger(r.victory.turns)||r.victory.turns<1)throw Error('Condition de victoire incorrecte.');
  const ids=new Set();for(const e of r.events){if(!e||typeof e.id!=='string'||ids.has(e.id)||typeof e.title!=='string'||typeof e.text!=='string'||!['negative','positive','challenge'].includes(e.category)||!['general',...Object.keys(r.terrain)].includes(e.terrain)||!Number.isFinite(e.weight)||e.weight<0||typeof e.consume!=='boolean'||typeof e.protect!=='string'||(e.protect&&!r.equipment[e.protect])||!e.effect||typeof e.effect!=='object'||Array.isArray(e.effect)||e.cost&&(typeof e.cost!=='object'||Array.isArray(e.cost)))throw Error('Événement invalide.');ids.add(e.id);for(const effects of [e.effect,e.cost||{}])for(const [k,v]of Object.entries(effects))if(!['energy','food','money','points'].includes(k)||typeof v!=='number'||!Number.isFinite(v)||Math.abs(v)>100000)throw Error('Effet d’événement invalide.');if(Object.values(e.cost||{}).some(v=>v<0))throw Error('Un coût de défi doit être positif.');}

@@ -4,6 +4,7 @@ import {createHexHitIndex} from './board-hit-test.js';
 import {createTerrainLayer,isCellStale,readArtPreference,writeArtPreference,TERRAIN_ART_SRC} from './terrain-art.js';
 import {createCamera} from './board-camera.js';
 import {roadNetwork,chains,sinuousPath,smooth,ferryArc} from './board-roads.js';
+import {roadEdges} from './routes.js';
 import {DECOR} from './assets/europe/decor-data.js';
 import {readDisplayPrefs,writeDisplayPref} from './display-prefs.js';
 
@@ -103,7 +104,7 @@ export function createSVGBoardRenderer(container,options={}){
 
  // ---------- Décor et routes (étape 5) : calculés une fois par carte, après l'affichage ----------
  function sceneryFor(g){
-  const nodes=Object.values(g.board),key=nodes.length+':'+nodes.map(t=>t.type[0]+t.type.length).join('');
+  const nodes=Object.values(g.board),key=nodes.length+':'+nodes.map(t=>t.type[0]+t.type.length+(t.roads?.length||'')).join('');
   if(key===sceneryKey)return;sceneryKey=key;
   if(!browser())return;// tests sans navigateur : pas de dessin coûteux
   clearTimeout(sceneryTimer);
@@ -120,8 +121,8 @@ export function createSVGBoardRenderer(container,options={}){
   for(const [x,y,rx,ry,rot,q,r]of DECOR.lakes)if(land(q,r))lakes+=`<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" transform="rotate(${rot} ${x} ${y})"/>`;
   for(const [x,y,n,q,r]of DECOR.villages){if(!land(q,r))continue;for(let i=0;i<n;i++){const hx=f1(x+(i-(n-1)/2)*3.1),hy=f1(y+(i%2)*1.4);walls+=`M${f1(hx-1.2)} ${hy}h2.4v1.9h-2.4Z`;roofs+=`M${f1(hx-1.6)} ${hy}L${hx} ${f1(hy-1.6)}L${f1(hx+1.6)} ${hy}Z`;}}
   decor.innerHTML=`<path class="decor-river" d="${river}"/><g class="decor-lakes">${lakes}</g><path class="decor-conifers" d="${conifers}"/><path class="decor-leafy" d="${leafy}"/><path class="decor-walls" d="${walls}"/><path class="decor-roofs" d="${roofs}"/>`;
-  // Routes : uniquement sur les liaisons existantes entre cases voisines.
-  const t0=clock(),net=roadNetwork(board,{villages:DECOR.villages.filter(v=>land(v[3],v[4])).map(v=>[v[3],v[4]])});
+  // Routes jouables (figées dans routes-data.js) + petits chemins du décor vers les hameaux (ne comptent pas).
+  const t0=clock(),net=roadNetwork(board,{main:roadEdges(board),villages:DECOR.villages.filter(v=>land(v[3],v[4])).map(v=>[v[3],v[4]])});
   const main=chains(net.main).map(c=>sinuousPath(board,c)).join(''),minor=chains(net.minor).map(c=>sinuousPath(board,c,{wobble:3})).join('');
   roads.innerHTML=`<path class="road-minor" d="${minor}"/><path class="road-main-case" d="${main}"/><path class="road-main" d="${main}"/>`;
   diagnostics.roadsMs=Math.round(clock()-t0);
