@@ -88,3 +88,12 @@ test('arrivé sans tous les objectifs : on peut terminer le voyage avec 40 % de 
  assert(S.finishVoyageEarly(m));assert.equal(p.points-before,Math.round(full*.6));assert(p.completed);assert.equal(p.voyageChoices.length,3);assert(p.voyagesDone.at(-1).partial);
  assert(!S.canFinishVoyageEarly(m),'une seule fois');
 });
+
+test('voyage rapide : train jusqu’à la ville de départ de la nouvelle carte, prix selon la distance, journée passée',()=>{
+ const m=game(),p=S.player(m);p.voyagesDone=[{id:p.voyage,day:1,points:9}];p.completed=true;p.voyageChoices=S.newVoyageChoices(m,p);m.phase='voyage-choice';
+ const id=p.voyageChoices.find(v=>S.fastTravelInfo(m,v,p)),info=S.fastTravelInfo(m,id,p);assert(info);
+ assert.equal(info.price,info.cases<10?2:info.cases<20?3:4);p.money=10;
+ assert(S.fastTravel(m,id));assert.equal(p.pos,info.to);assert.equal(p.money,10-info.price);assert.equal(p.voyage,id);assert.equal(S.view(m,p).travelHistory.length,0);
+ assert(m.phase!=='move'||S.player(m).id!==p.id,'la journée est passée');
+ assert.equal(S.load(S.serialize(m)).players[0].pos,info.to);
+});

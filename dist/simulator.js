@@ -54,6 +54,16 @@ export function chooseNewVoyage(m,id){const p=player(m);if(m.phase!=='voyage-cho
  p.voyage=id;p.voyageFrom=p.travelHistory.length;p.completed=false;p.voyageChoices=[];const v=voyages.find(v=>v.id===id);
  record(m,'voyage',`${p.name} prend un nouveau voyage : ${v.title} (${v.from} → ${v.to}). Les objectifs se comptent à partir d’ici.`);
  m.phase=p.flat?'puncture':m.mode==='tuiles'&&m.hand.length?'place':'move';return true;}
+// Voyage rapide (idée de Fi) : après un voyage réussi, rejoindre en train/car la ville de départ de la nouvelle carte.
+// Prix selon la distance : moins de 10 cases 2 pièces, de 10 à 19 cases 3, 20 cases et plus 4. Prend la journée.
+export const FAST_TRAVEL_PRICES=[{max:9,price:2},{max:19,price:3},{max:Infinity,price:4}];
+export function fastTravelInfo(m,id,p=player(m)){const v=voyages.find(v=>v.id===id),to=v&&Object.values(m.board).find(t=>t.type==='ville'&&t.name===v.from);if(!to||to.key===p.pos)return null;
+ const dist=new Map([[p.pos,0]]),q=[p.pos];while(q.length){const k=q.shift();if(k===to.key)break;for(const n of m.board[k].links){if(dist.has(n)||m.board[n].type==='mer')continue;dist.set(n,dist.get(k)+1);q.push(n);}}
+ const cases=dist.get(to.key);if(cases===undefined)return null;const price=FAST_TRAVEL_PRICES.find(t=>cases<=t.max).price;return {to:to.key,name:v.from,cases,price,affordable:p.money>=price};}
+export function fastTravel(m,id){const p=player(m);if(m.phase!=='voyage-choice'||!p.voyageChoices?.includes(id)||p.flat)return false;const info=fastTravelInfo(m,id,p);if(!info||!info.affordable)return false;
+ if(!chooseNewVoyage(m,id))return false;p.money-=info.price;m.stats.moneySpent+=info.price;p.pos=info.to;p.lastCity=info.to;p.voyageFrom=p.travelHistory.length;
+ if(!p.visited.includes(info.to)){p.visited.push(info.to);p.cities++;}
+ record(m,'fast-travel',`${p.name} prend le train jusqu’à ${info.name} (${info.cases} cases, −${info.price} pièces) : la journée est passée dans le train.`);m.turnKind='train';endTurn(m);return true;}
 function checkMultiVictory(m){if(!multiVictory(m)||m.done)return false;const r=m.rules.victory;let w=null,why='';
  const byPoints=r.points?[...m.players].filter(p=>p.points>=r.points).sort((a,b)=>b.points-a.points)[0]:null;
  const byVoyages=r.voyages?m.players.find(p=>(p.voyagesDone||[]).length>=r.voyages):null;

@@ -199,3 +199,7 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - Bouton « Bulletin » : « Tu es dans la zone X », carte des 5 zones (vraie carte du jeu coloriée) avec le temps de chaque zone et « 📍 toi », onglets Aujourd'hui / Demain, « Aujourd'hui ici » et « Demain ici », villes de la zone. Le bandeau dit « Aujourd'hui · zone Est ».
 - Partie en ligne : un appareil n'envoie plus que les actions de son joueur (un simple affichage n'envoie rien) ; en cas de conflit, la partie est rechargée depuis le serveur (jamais d'état plus ancien) ; nouvel essai automatique si la connexion coupe ; bouton « 🔄 Ça semble bloqué ? Recharger la partie » pendant l'attente. (Bug signalé par Fi : chacun voyait l'autre jouer.)
 - Test local à deux onglets : la valeur voyage avec le message (plus de lecture d'un ancien état).
+
+## Cartes reçues et voyage rapide (15 octobre 2026, idées de Fi)
+- **Cartes négatives reçues** : au début de son tour, une fenêtre montre les cartes jouées contre soi (qui, quel jour, la carte en image) ; pastilles rouges sur la barre tant que la pénalité dure (pas de déplacement, cases en moins, montagne interdite, vent au prochain déplacement). Si le déplacement est interdit, le gros bouton propose « Finir ma journée ».
+- **Voyage rapide** : dans la fenêtre « Choisis ton prochain voyage », bouton « 🚆 Train jusqu'à [ville de départ] » : moins de 10 cases 2 pièces, 10 à 19 cases 3, 20 et plus 4. Prend la journée ; les objectifs se comptent depuis la ville de départ.

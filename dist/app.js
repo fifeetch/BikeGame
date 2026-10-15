@@ -267,6 +267,7 @@ function act(a){
  else if(a==='ferry-cancel')modal='';
  else if(a==='repair'){if(!S.repairPuncture(m))message='Réparation indisponible.';}
  else if(a==='finish-voyage-early'){if(!S.finishVoyageEarly(m))message='Impossible de terminer le voyage ici.';else message='Voyage terminé (−40 %). Au début de ton prochain tour, tu choisiras un nouveau voyage.';}
+ else if(a.startsWith('fasttravel-')){if(!S.fastTravel(m,a.slice(11)))message='Voyage rapide impossible.';else{mapSelection='';route=[];message='En train jusqu’au départ du nouveau voyage : ta journée est passée.';}}
  else if(a.startsWith('newvoyage-')){if(!S.chooseNewVoyage(m,a.slice(10)))message='Choix du voyage impossible.';else{mapSelection='';route=[];}}
  else if(a==='cards')modal='cards';
  else if(a==='meteo'){modal='meteo';meteoDay='today';}
@@ -376,6 +377,7 @@ function dayAction(blocked){const p=S.player(m),left=Math.max(0,S.distance(m)-m.
  else if(route.length){const c=S.routeCheck(m,route),n=route.length;step=1;
   center=dayMain('🚴',c.ok?`Rouler ${n} case${n>1?'s':''}`:'Parcours impossible',c.ok?`−${c.energyUsed} ⚡`:'','route-go',!c.ok)+(c.ok?'':`<p class="dock-why">${esc(c.reason||'')}</p>`);
   icons=dockIcon('✕','Effacer','route-clear')+cards;}
+ else if(!m.moved&&p.turnModifiers?.skipMove){step=2;center=dayMain('⏭','Finir ma journée','pas de déplacement aujourd’hui','endturn');icons=dockIcon('🌙','Me reposer','rest-open')+cards;}
  else if(!m.moved){step=0;center=`<div class="dock-hint"><span aria-hidden="true">🗺️</span><span><b>Trace ton étape</b><br>Clique les cases entourées sur la carte · ${left} case${left>1?'s':''} · ${p.energy} ⚡</span></div>`;
   icons=dockIcon('🌙','Me reposer','rest-open')+dockIcon('⏭','Passer','endturn-ask','','dim')+cards;}
  else{step=2;center=dayMain('🌙','Finir ma journée',left&&S.moves(m).length?`${left} case${left>1?'s':''} restante${left>1?'s':''}`:'','endturn-ask');
@@ -401,7 +403,7 @@ overlay=()=>{let content='';if(!modal&&m&&screen==='game'&&m.phase==='card-choic
  else if(!modal&&m&&screen==='game'&&m.phase==='encounter')content=encounterModal();
  else if(!modal&&m&&screen==='game'&&m.phase==='voyage-choice'){const p=S.player(m),done=(p.voyagesDone||[]).length,r=m.rules.victory;
   content=`<span class="eyebrow">VOYAGE ACCOMPLI · ${esc(p.name)}</span><h2>🎉 Choisis ton prochain voyage</h2><p>${done} voyage${done>1?'s':''} réussi${done>1?'s':''}${r?.voyages?` sur ${r.voyages}`:''} · ${p.points} points d’aventure. </p><p>Choisis ta prochaine carte. Tu pars de la ville où tu es : seules les cases que tu parcours <b>à partir de maintenant</b> comptent pour les objectifs de la nouvelle carte. Ensuite, rejoins sa ville d’arrivée.</p><p class="muted">Si tu arrives sans avoir rempli tous les objectifs, tu peux quand même terminer le voyage, mais il rapporte 40 % de points en moins.</p>
-  <div class="newvoyage-grid">${(p.voyageChoices||[]).map(id=>{const v=voyages.find(x=>x.id===id),t=voyageTier(v),rows=progress({voyage:id,travelHistory:[],mode:'plateau'}).rows;return `<article class="newvoyage" style="--voyage-color:${v.color}"><div class="newvoyage-art"><div class="voyage-art voyage-art-map">${voyageMiniMap(v)}</div></div><div class="newvoyage-copy"><small>${esc(v.from)} → ${esc(v.to)}</small><h3>${esc(v.title)}</h3><ul>${rows.map(r=>`<li>${r.target} ${esc(r.label.toLowerCase())}</li>`).join('')}</ul><b class="mc-tier">${esc(t.name)} · +${t.points} points</b>${btn('Prendre ce voyage','newvoyage-'+id)}</div></article>`;}).join('')}</div>`;}
+  <div class="newvoyage-grid">${(p.voyageChoices||[]).map(id=>{const v=voyages.find(x=>x.id===id),t=voyageTier(v),rows=progress({voyage:id,travelHistory:[],mode:'plateau'}).rows;return `<article class="newvoyage" style="--voyage-color:${v.color}"><div class="newvoyage-art"><div class="voyage-art voyage-art-map">${voyageMiniMap(v)}</div></div><div class="newvoyage-copy"><small>${esc(v.from)} → ${esc(v.to)}</small><h3>${esc(v.title)}</h3><ul>${rows.map(r=>`<li>${r.target} ${esc(r.label.toLowerCase())}</li>`).join('')}</ul><b class="mc-tier">${esc(t.name)} · +${t.points} points</b>${btn('Prendre ce voyage','newvoyage-'+id)}${(()=>{const f=S.fastTravelInfo(m,id,p);return f?btn(`🚆 Train jusqu’à ${esc(f.name)} · ${f.price} pièces`,'fasttravel-'+id,'light nv-train',!f.affordable||p.flat)+`<small class="nv-train-note">${f.cases} cases · prend la journée${f.affordable?'':' · pas assez de pièces'}</small>`:'';})()}</div></article>`;}).join('')}</div>`;}
  else if(!modal&&m&&screen==='game'&&m.phase==='puncture'){const b=S.breakdownOf(S.player(m)),has=S.player(m).items.includes(b.item);content=`<h2>${b.item==='secours'?'🩹':'🚲'} ${esc(b.title)}</h2><p>${has?b.fix:b.none}</p>${btn(has?b.ok:'Retourner à la ville','repair')}`;}
  else if(modal==='cards'){const p=S.player(m);content=`<h2>🃏 Cartes de jeu de ${esc(p.name)}</h2><p>Les positives se jouent pendant ton tour. Une carte négative se donne à un adversaire et sera résolue au début de son prochain tour.</p><div class="card-choice-list">${p.cardHand.map((id,i)=>{const c=cardById(id);return `<article class="game-card ${c.type||'positive'}"><div class="card-title"><span>${c.icon||'🃏'}</span><div><small>${c.type==='negative'?'Négative · à donner':'Positive · pour toi'}</small><h3>${esc(c.title)}</h3></div></div><p>${esc(c.text)}</p>${btn(c.target==='other'?'Donner à un adversaire':'Jouer','card-'+i,'',c.target==='other'&&m.players.length<2||!S.canPlayCard(m,i))}</article>`;}).join('')||'<p>Aucune carte en main.</p>'}</div>${btn('Fermer','close','light')}`;}
  else if(modal==='card-effect-choice'){const c=cardById(S.player(m).cardHand[cardIndex]);content=`<h2>${c?.icon||'🍎'} ${esc(c?.title||'Bon ravito')}</h2><p>Choisis ton ravitaillement.</p>${btn('+1 nourriture','ravito-food')}${btn('+1 énergie','ravito-energy','',S.player(m).energy>=m.rules.maxEnergy)}${btn('Annuler','cards','light')}`;}
@@ -840,3 +842,23 @@ globalThis.document?.addEventListener?.('change',async e=>{if(e.target?.id!=='im
   await SAVES.putSave({id,name:SAVES.autoName(summary)+' (importée)',customName:false,createdAt:Date.now(),updatedAt:Date.now(),summary,data:text});message='Partie importée : elle est dans la liste.';}
  catch(err){message='Fichier illisible : '+err.message;}refreshParties();});
 refreshParties();
+
+// ==========================================================================
+// Cartes négatives reçues : rappel au début de son tour + pastilles des pénalités en cours sur la barre.
+// ==========================================================================
+function penaltyPills(p){const t=p.turnModifiers||{},out=[];
+ if(t.skipMove)out.push('🚫 Pas de déplacement aujourd’hui');
+ if(t.distancePenalty)out.push(`➖ ${t.distancePenalty} case${t.distancePenalty>1?'s':''} de moins aujourd’hui`);
+ if(t.noMountain)out.push('❄️ Montagne et cols interdits aujourd’hui');
+ const extra=(p.pendingEffects||[]).filter(e=>e.kind==='extra_energy').reduce((n,e)=>n+(e.value||0),0);if(extra)out.push(`💨 +${extra} ⚡ au prochain déplacement`);
+ return out;}
+{const priorSidebar=sidebar;sidebar=()=>{const html=priorSidebar();if(!m||m.done)return html;const pills=penaltyPills(S.player(m));
+ return pills.length?html.replace('<div class="dock-day">',`<div class="dock-penalties" role="status">${pills.map(t=>`<span>${esc(t)}</span>`).join('')}</div><div class="dock-day">`):html;};}
+const receivedFor=()=>{if(!m||m.done||screen!=='game'||m.pendingAttack)return null;const p=S.player(m);if(typeof onlineGame==='function'&&onlineGame()&&!myTurn())return null;return p.receivedCards?.length?p:null;};
+{const priorOverlay=overlay;overlay=()=>{const p=receivedFor();
+ if(p&&(!modal||modal==='received')&&['move','place','puncture'].includes(m.phase)){const list=p.receivedCards;
+  const faces=list.map(r=>{const c=eventCardById(r.cardId,m),who=r.from?m.players.find(q=>q.id===r.from)?.name:'';return `<div class="recv-card"><small>${who?esc(who)+' t’a joué':'La route t’a réservé'} · jour ${r.round}</small>${c?eventFace(c,'',true):''}</div>`;}).join('');
+  const pills=penaltyPills(p);
+  return `<div class="modal-back"><section class="modal wide recv-modal" role="dialog" aria-modal="true"><span class="eyebrow">AU DÉBUT DE TON TOUR · ${esc(p.name)}</span><h2>${list.length>1?'Des cartes ont été jouées contre toi':'Une carte a été jouée contre toi'}</h2><div class="recv-faces">${faces}</div>${pills.length?`<p class="recv-now"><b>En ce moment :</b> ${pills.map(esc).join(' · ')}</p>`:''}${p.flat?'<p class="recv-now">Il faut d’abord réparer (ou te soigner) : la fenêtre suivante te le propose.</p>':''}${btn('J’ai compris','received-ok')}</section></div>`;}
+ return priorOverlay();};}
+{const priorAct=act;act=a=>{if(a==='received-ok'){const p=S.player(m);if(p)p.receivedCards=[];modal='';render();return;}return priorAct(a);};}
