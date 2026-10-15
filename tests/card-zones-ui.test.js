@@ -51,7 +51,7 @@ test('the player sheet separates playable hand cards from placed cards',async()=
  assert(placed.includes('Bonne affaire'));
  assert(placed.includes('Pluie battante'));
  assert(!placed.includes('data-action="card-'));
- assert(app.innerHTML.includes('🃏 En main · 1'));
+ assert(app.innerHTML.includes('<small>Cartes 1</small>'),'bouton rond « Cartes » de la barre road-book');
  elements.get('data-action').find(el=>el.dataset.action==='cards').onclick();
  assert(app.innerHTML.includes('card-hand-modal'));
  assert(app.innerHTML.includes('Vent favorable'));

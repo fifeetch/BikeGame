@@ -1547,3 +1547,14 @@ body .dock-v1 .dock-ico.dim span{opacity:.7}
 body .dock-v1 .dock-finish-row{margin-bottom:8px}
 body .dock-v1 .dock-finish{width:100%;min-height:50px;border-radius:14px;border:2px solid #1b3b38;background:#fff7df;color:#1b3b38;font-weight:700}
 @media(max-width:900px){body .dock-v1 .dock-day{flex-wrap:wrap}body .dock-v1 .dock-steps{display:none}body .dock-v1 .dock-center{flex-basis:100%}body .dock-v1 .dock-icons{width:100%;justify-content:space-around}}
+body .player-sheet-dock.dock-v1{container-type:inline-size;container-name:dock}
+body .dock-v1 .dock-hint span,body .dock-v1 .dock-hint span *{color:#3a2f1a}
+body .dock-v1 .dock-hint b{color:#1b3b38!important}
+body .dock-v1 .dock-main b{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@container dock (max-width: 900px){
+ body .dock-v1 .dock-day{flex-wrap:wrap;row-gap:12px}
+ body .dock-v1 .dock-steps{order:1}
+ body .dock-v1 .dock-icons{order:2;margin-left:auto}
+ body .dock-v1 .dock-center{order:3;flex:1 1 100%}
+}
+body .dock-v1 .dock-center .dock-hint,body .dock-v1 .dock-center .dock-main{flex:none}

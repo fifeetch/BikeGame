@@ -184,3 +184,7 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - **Bouton « 📖 Règles »** en haut, à tout moment (même quand ce n'est pas ton tour) : règles détaillées en 6 onglets (Se déplacer, Manger & dormir, Voyages & points, Cartes ou Rencontres, Météo, Fin de partie). Les nombres suivent les réglages de la partie. Fichier `dist/rules-help.js`.
 - L'ancien bouton « ⚙️ Règles » (réglage des valeurs) s'appelle maintenant **« ⚙️ Réglages »**.
 - Correction : la fiche affiche maintenant la vraie énergie d'un repas (+2 avec les cartes Événement, +3 sinon ; + réchaud).
+
+## Barre de la journée « road-book » (15 octobre 2026, visuel 1 choisi par Fi)
+- Bande crème : à gauche les 3 étapes **Tracer → Rouler → Finir** sur un chemin pointillé ; au centre le gros bouton orange arrondi (pastille 🚴 / 🌙, coût ou cases restantes à droite) ou la consigne « Trace ton étape » ; à droite des boutons ronds (Me reposer, Passer, Effacer, Manger, Cartes, Météo).
+- Quand la place manque (vue côte à côte), le gros bouton passe sur une 2e ligne.
