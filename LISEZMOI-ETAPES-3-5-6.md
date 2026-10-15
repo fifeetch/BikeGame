@@ -166,3 +166,7 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - **Arrivé sans tous les objectifs** : bouton « 🏁 Terminer le voyage ici » ; le voyage compte, mais rapporte 40 % de points en moins.
 - **Cartes revues** : 18 Route barrée = 2 cases de moins au prochain tour (GPS protège) ; 24 Brouillard = −1 énergie et pas de sortie de route pendant ce trajet ; 39 Carnet de voyage = +1 pièce par nouvelle ville.
 - Les règles enregistrées sur l'appareil avant ces changements sont mises à jour automatiquement (points et fin de partie).
+
+## Vélos (15 octobre 2026)
+- Le vélo s'appelle **Randonneuse** (et non « Randonnée »).
+- **Gravel : 5 cases par jour ; Randonneuse : 4 cases par jour** (elle garde ses 8 places de sacoche). Les règles enregistrées sur l'appareil sont mises à jour automatiquement.

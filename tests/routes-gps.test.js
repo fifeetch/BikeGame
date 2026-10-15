@@ -42,16 +42,17 @@ test('les 10 routes ajoutées relient bien leurs villes, case par case',()=>{
   for(let i=1;i<cells.length;i++)assert(isRoadStep(cells[i-1],cells[i]),`${route.name} : pas ${i} sans route`);}
 });
 
-test('sur la route : déplacement normal de 5 cases, même sans GPS',()=>{
- for(const bike of ['gravel','randonneur']){const m=classic(bike),route=roadPath(m,'city-Paris',5);assert.equal(route.length,5);
-  assert.equal(S.distance(m),5);assert(S.routeCheck(m,route).ok,bike);assert(S.executeRoute(m,route));assert.equal(m.moved,5);
+// Règle de Fi (15 octobre 2026) : Gravel 5 cases par jour, Randonneuse 4.
+test('sur la route : déplacement normal (Gravel 5 cases, Randonneuse 4), même sans GPS',()=>{
+ for(const [bike,d] of [['gravel',5],['randonneur',4]]){const m=classic(bike),route=roadPath(m,'city-Paris',d);assert.equal(route.length,d);
+  assert.equal(S.distance(m),d);assert(S.routeCheck(m,route).ok,bike);assert(!S.routeCheck(m,roadPath(m,'city-Paris',d+1)).ok,bike+' pas une case de plus');assert(S.executeRoute(m,route));assert.equal(m.moved,d);
   assert.equal(S.offroadStatus(m).off,false);}
 });
 
 test('hors route avec GPS : déplacement normal',()=>{
- const m=classic('randonneur',{gps:true}),route=offPath(m,'city-Paris',5);
+ const m=classic('randonneur',{gps:true}),route=offPath(m,'city-Paris',4);
  assert(!isRoadStep(m.board['city-Paris'],m.board[route[0]]));
- assert(S.routeCheck(m,route).ok);assert(S.executeRoute(m,route));assert.equal(m.moved,5);
+ assert(S.routeCheck(m,route).ok);assert(S.executeRoute(m,route));assert.equal(m.moved,4);
  const s=S.offroadStatus(m);assert(s.off&&s.gps&&!s.limited);
 });
 
@@ -64,8 +65,8 @@ test('hors route sans GPS : Gravel limitée à 3 cases, Randonneuse à 2, pour t
   assert(S.offroadStatus(m).limited);
   // Revenir sur la route ne lève pas la limite du jour.
   m=classic(bike);assert(S.move(m,route[0]));assert(S.move(m,'city-Paris'));assert.equal(S.distance(m),max);
-  // Après 4 cases de route, on ne peut plus quitter la route ce jour-là ; rester sur la route reste possible.
-  m=classic(bike);const road=roadPath(m,'city-Paris',4);assert(S.executeRoute(m,road));
+  // Après (distance − 1) cases de route, on ne peut plus quitter la route ce jour-là ; rester sur la route reste possible.
+  m=classic(bike);const road=roadPath(m,'city-Paris',S.distance(m)-1);assert(S.executeRoute(m,road));
   const exits=steps(m,S.player(m).pos).filter(t=>!isRoadStep(m.board[S.player(m).pos],t));assert(exits.length);
   for(const t of exits){assert(!S.move(m,t.key));assert(!S.moves(m).some(n=>n.key===t.key));}
   assert(S.moves(m).some(t=>isRoadStep(m.board[S.player(m).pos],t)));
@@ -77,7 +78,7 @@ test('la règle hors route est réglable dans Règles et peut être désactivée
  let p=S.player(m);p.items=[];p.pos='city-Paris';p.energy=99;m.phase='move';m.moved=0;const route=offPath(m,'city-Paris',5);
  assert(S.routeCheck(m,route.slice(0,4)).ok);assert(!S.routeCheck(m,route).ok);
  r.offroad.enabled=false;m=S.createMatch(roster('randonneur'),'plateau',r,7);m.cardVersion=2;m.pendingAttack=null;p=S.player(m);p.items=[];p.pos='city-Paris';p.energy=99;m.phase='move';m.moved=0;
- assert(S.routeCheck(m,route).ok);
+ assert(S.routeCheck(m,route.slice(0,4)).ok,'sans la règle : la journée normale de la Randonneuse (4 cases)');
  assert.throws(()=>validateRules({offroad:{item:'inconnu'}}));assert.throws(()=>validateRules({offroad:{maxDistance:{gravel:0}}}));
 });
 

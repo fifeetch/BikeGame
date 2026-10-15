@@ -1,7 +1,7 @@
 import {events as legacyEvents} from './engine.js';
 
 export const COLORS=['#b74732','#267b91','#6d5699','#a77d1e','#427a4b','#b05181'];
-export const CLASSIC={rulesVersion:2,
+export const CLASSIC={rulesVersion:3,
  name:'Classique',terrain:{plaine:1,moyenne_montagne:2,montagne:3,cote:1,ville:0,camping:1,auberge:1,col:3,decouverte:1},ferryPrice:3,
  distance:5,startEnergy:8,maxEnergy:10,startMoney:10,startFood:3,maxFood:6,salary:2,workDays:1,workCityOnly:true,workEnabled:false,
  budget:{startBonus:5,every:5,amount:5},
@@ -13,7 +13,7 @@ export const CLASSIC={rulesVersion:2,
  weather:{forecast:false},
  // Rencontres : enabled=true → plus de cartes Événement ; chaque soir, une rencontre propose un choix (encounters.js).
  encounters:{enabled:false},
- bikes:{gravel:{name:'Gravel',price:5,capacity:4,mountainDiscount:0,extraDistance:0,extraFood:0},randonneur:{name:'Randonnée',price:3,capacity:8,mountainDiscount:0,extraDistance:0,extraFood:0}},
+ bikes:{gravel:{name:'Gravel',price:5,capacity:4,mountainDiscount:0,extraDistance:0,extraFood:0},randonneur:{name:'Randonneuse',price:3,capacity:8,mountainDiscount:0,extraDistance:-1,extraFood:0}},
  rest:{bivouac:{name:'Bivouac',price:0,energy:3,days:1,tent:true,cityOnly:false},camping:{name:'Camping',price:1,energy:5,days:1,tent:false,cityOnly:false},hotel:{name:'Hôtel',price:3,energy:10,days:1,tent:false,cityOnly:true}},
  food:{energy:3,stoveBonus:2,price:1,quantity:2,maxPerTurn:1,cityOnly:true,restaurantPrice:1,restaurantEnergy:4},
  cardBalance:{foodEnergy:2,bivouacEnergy:1},
@@ -33,11 +33,12 @@ export const clone=value=>JSON.parse(JSON.stringify(value));
 function merge(base,value){if(Array.isArray(base))return value===undefined?clone(base):clone(value);if(base&&typeof base==='object'){const out={};for(const k of Object.keys(base))out[k]=merge(base[k],value?.[k]);return out;}return value===undefined?base:value;}
 // Règles enregistrées sur l'appareil avant le 15 octobre 2026 : on remet à jour les points et la fin de partie décidés par Fi
 // (le reste — météo, rencontres, réglages personnels — est gardé).
-export const RULES_VERSION=2;
-export function upgradeStoredRules(raw){if(!raw||typeof raw!=='object')return raw;if((raw.rulesVersion||1)<RULES_VERSION){const out={...raw};delete out.points;delete out.adventure;delete out.victory;out.rulesVersion=RULES_VERSION;return out;}return raw;}
+export const RULES_VERSION=3;
+export function upgradeStoredRules(raw){if(!raw||typeof raw!=='object')return raw;if((raw.rulesVersion||1)<RULES_VERSION){const out={...raw},v=raw.rulesVersion||1;if(v<2){delete out.points;delete out.adventure;delete out.victory;}if(v<3)delete out.bikes;out.rulesVersion=RULES_VERSION;return out;}return raw;}
 export function validateRules(input){
  const r=merge(CLASSIC,input);
- const walk=(v,path='')=>{for(const [k,n]of Object.entries(v)){const p=path+'.'+k;if(n&&typeof n==='object')walk(n,p);else if(typeof n==='number'&&(!Number.isFinite(n)||Math.abs(n)>100000||(!p.includes('.events.')&&n<0)))throw Error('Valeur incorrecte : '+p);else if(typeof n!=='number'&&typeof n!=='boolean'&&typeof n!=='string')throw Error('Valeur incorrecte : '+p);}};walk(r);
+ if(r.bikes?.randonneur?.name==='Randonnée')r.bikes.randonneur.name='Randonneuse';// ancien nom enregistré sur l'appareil
+ const walk=(v,path='')=>{for(const [k,n]of Object.entries(v)){const p=path+'.'+k;if(n&&typeof n==='object')walk(n,p);else if(typeof n==='number'&&(!Number.isFinite(n)||Math.abs(n)>100000||(!p.includes('.events.')&&!/\.bikes\.[a-z]+\.extraDistance$/.test(p)&&n<0)))throw Error('Valeur incorrecte : '+p);else if(typeof n!=='number'&&typeof n!=='boolean'&&typeof n!=='string')throw Error('Valeur incorrecte : '+p);}};walk(r);
  const types=(base,v)=>{if(Array.isArray(base)){if(!Array.isArray(v))throw Error('Liste d’événements invalide');return;}for(const k of Object.keys(base)){if(base[k]&&typeof base[k]==='object')types(base[k],v[k]);else if(typeof base[k]!==typeof v[k])throw Error('Type invalide : '+k);}};types(CLASSIC,r);
  if(!Number.isInteger(r.distance)||r.distance<1||r.distance>5||r.startEnergy>r.maxEnergy||r.maxEnergy<1)throw Error('Distance : entier de 1 à 5 ; énergie de départ ≤ maximum.');
  const cards=r.eventCards;
