@@ -151,3 +151,11 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - **Neige au sommet** : jouable sur n'importe quel parcours ; au prochain tour de la cible, montagne et cols interdits.
 - **GPS de randonnée** (bonus) : en plus, quitter la route sans pénalité.
 - **Points d'aventure** : plus de points par case (plaine, côte, moyenne montagne, montagne, ville = 0) ; plus de « premier de cordée » ni de titre « Grimpeur » ; col mythique +2, et +3 une fois au 3e col franchi. Carnet de voyage ne donne plus de points (nouvel effet à choisir).
+
+## 20 cartes Voyage (15 octobre 2026)
+- 12 nouveaux voyages de ville à ville : Lisbonne → Barcelone, Londres → Bordeaux, Dublin → Paris, Amsterdam → Milan, Vienne → Constanța, Venise → Skopje, Sofia → Athènes, Izmir → Trabzon, Bergen → Narvik, Varsovie → Saint-Pétersbourg, Marseille → Venise, Budapest → Odessa.
+- Chaque voyage a des objectifs de cases (villes, plaine, côte, montagne, moyenne montagne, cols mythiques, suites de cases).
+- **Points du voyage selon sa longueur** (trajet le plus court) : Courte (≤ 8 cases) +6, Moyenne (9–13) +9, Longue (14–20) +12, Très longue (21 et plus) +15. Remplace les +10 fixes.
+- Toujours 3 cartes tirées au hasard, on en garde une. Les nouveaux voyages sans illustration montrent une petite carte du trajet.
+- Les jetons « ? » restent dans la zone des 8 voyages d'origine, plus la zone des voyages choisis dans la partie.
+- Robots : `VOYAGE=<id> JOUEURS=1 node tools/simulation/parties-auto.mjs 3` pour tester un voyage.

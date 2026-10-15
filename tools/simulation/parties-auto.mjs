@@ -94,7 +94,7 @@ function playTurn(m,rand,ctx,stat){
 }
 
 function playGame(n,seed,rulesTweak){
- const rand=rng(seed),roster=Array.from({length:n},(_,i)=>{const l=LOADOUTS[(i+seed)%LOADOUTS.length];return {name:'Robot '+(i+1),...l,voyage:voyages[(seed+i*3)%voyages.length].id};});
+ const rand=rng(seed),roster=Array.from({length:n},(_,i)=>{const l=LOADOUTS[(i+seed)%LOADOUTS.length];return {name:'Robot '+(i+1),...l,voyage:process.env.VOYAGE||voyages[(seed+i*3)%voyages.length].id};});
  const ctx={players:n,seed,roster:roster.map(r=>`${r.bike}/${r.voyage}${r.items.includes('gps')?'/GPS':''}`).join(' ; ')};
  const stat={players:n,seed,rounds:0,done:false,winner:'',steps:0,offSteps:0,limitedDays:0,ferries:0,cards:0,rests:{},finished:[]};
  let m;try{m=S.createMatch(roster,'plateau',rulesTweak||RULES,seed);}catch(e){problem('création de partie impossible',e.message,ctx);return stat;}
@@ -121,7 +121,7 @@ function playGame(n,seed,rulesTweak){
 
 const results=[];
 const ONLY=process.env.SEED?Number(process.env.SEED):null;
-for(const n of [1,2,3])for(let g=0;g<GAMES;g++){if(ONLY!==null&&1000*n+g!==ONLY)continue;results.push(playGame(n,1000*n+g));}
+for(const n of (process.env.JOUEURS?[Number(process.env.JOUEURS)]:[1,2,3]))for(let g=0;g<GAMES;g++){if(ONLY!==null&&1000*n+g!==ONLY)continue;results.push(playGame(n,1000*n+g));}
 // Statistiques
 const by=n=>results.filter(r=>r.players===n),avg=(a,f)=>a.length?Math.round(a.reduce((s,x)=>s+f(x),0)/a.length*10)/10:0;
 const summary=[1,2,3].map(n=>{const r=by(n),pl=r.flatMap(x=>x.players_detail||[]);return {joueurs:n,parties:r.length,terminees:r.filter(x=>x.done).length,jours_moyens:avg(r,x=>x.rounds),

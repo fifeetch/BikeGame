@@ -1426,3 +1426,9 @@ body.net-waiting .player-sheet-dock,body.net-waiting .route-planner{opacity:.45;
 .mc-online .mc-online-card .mc-online-opts button small{color:#5a4a2c;font-size:13px}
 .mc-online .mc-online-card .mc-online-opts button.on{background:#1b3b38;border-color:#f2a541;box-shadow:0 0 0 2px #f2a541}
 .mc-online .mc-online-card .mc-online-opts button.on b{color:#f2a541}.mc-online .mc-online-card .mc-online-opts button.on small{color:#f6e7c1}
+/* Voyages sans illustration : petite carte du trajet */
+.voyage-art.voyage-art-map{background:#2c6f86;position:relative;overflow:hidden}
+.voyage-art.voyage-art-map svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.mc-voyage-art .voyage-art.voyage-art-map{height:100%}
+.mc-tier{display:inline-block;padding:3px 10px;border-radius:999px;background:#f2a541;color:#1b1406;font-weight:700;margin-right:6px}
+.mc-len-cases{display:block;margin-top:4px}

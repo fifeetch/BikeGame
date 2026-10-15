@@ -173,7 +173,7 @@ export function voyagesScreen({player,index,total,drawn,lengths,artwork,message=
    <div class="mc-voyage-art">${artwork(v)}</div>
    <div class="mc-voyage-copy"><p class="mc-route-line">${esc(v.from)} → ${esc(v.to)}</p><h2>${esc(v.title)}</h2>
     <ul>${v.rows.map(r=>`<li>${r.target} ${esc(r.label.toLowerCase())}</li>`).join('')}</ul>
-    <p class="mc-len">${lengths[v.id]?`${lengths[v.id]} cases de route`:''}</p>
+    <p class="mc-len">${v.tier?`<b class="mc-tier">${esc(v.tier.name)} · +${v.tier.points} points d’aventure</b>`:''}${lengths[v.id]?`<span class="mc-len-cases">${lengths[v.id]} cases de route</span>`:''}</p>
     <button data-voyage="${v.id}">Prendre ce voyage →</button></div>
   </article>`).join('')}</div>
   <p class="toast" role="alert">${esc(message)}</p>
