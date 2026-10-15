@@ -46,6 +46,7 @@ test('menu editor saves and exports a col map, choice starts on it, and later ed
   assert(!app.innerHTML.includes('dock-resources'));
   for(const action of ['eat','food','save','finish'])assert(lastSheet.includes(`data-action="${action}"`));
   assert(!lastSheet.includes('data-action="work"'),'le travail ne fait plus partie des actions');
+  for(const tab of ['journee','sacoches','voyage','cartes'])assert(lastSheet.includes(`data-sheet-tab="${tab}"`),'onglet '+tab);
   let game=JSON.parse(storage.get('velo-save'));assert.equal(game.mapChoice,saved[0].id);assert.equal(game.rules.terrain.col,5);assert.equal(game.board[original.key].type,'col');assert.equal(S.cost(game,game.board[original.key]),5);
   click('data-action','home');controls.type='plaine';click('data-edit-map',saved[0].id);click('data-move',original.key);click('data-action','map-save');click('data-action','map-save-project');click('data-action','home');click('data-action','continue');
   game=JSON.parse(storage.get('velo-save'));assert.equal(game.board[original.key].type,'col');

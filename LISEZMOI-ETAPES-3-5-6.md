@@ -66,3 +66,16 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - **Départ** : 10 pièces par cycliste, vélo compris (Gravel 5, Randonneuse 3), puis le matériel. Ensuite, +5 pièces de budget et +5 tous les 5 tours. Prix des vélos réglables dans Règles.
 - **28 vraies villes ajoutées à l'Est**, en Finlande, au Caucase et en Anatolie : Helsinki, Petrozavodsk, Arkhangelsk, Novgorod, Iaroslavl, Perm, Ekaterinbourg, Nijni Novgorod, Kazan, Oufa, Smolensk, Minsk, Samara, Orenburg, Voronej, Lviv, Kharkiv, Volgograd, Chișinău, Odessa, Rostov-sur-le-Don, Astrakhan, Krasnodar, Constanța, Tbilissi, Trabzon, Ankara, Bakou. La carte est repeinte avec leurs maisons.
 - **Jetons « ? »** : ils sont placés à 2 cases au plus du chemin le plus court de chaque voyage, là où les cyclistes passent vraiment.
+
+## En partie, style « carte d'aventure » (maquettes validées)
+- **Fenêtres** : panneau sombre à liseré pointillé, titres Fraunces, bouton principal orange, boutons secondaires en contour. « Nouvelle partie ? » montre la partie en cours, un gros bouton « Choisir le plateau », Exporter et Règles côte à côte, et Annuler en lien. Les cartes Événement gardent leurs couleurs.
+- **Lieu caché révélé** : une carte illustrée s'ouvre (nom, petite phrase, étoiles, points, découvreur). « Continuer la route » la ferme.
+- **Messages de route** : col franchi, premier de cordée, Grimpeur, fatigue et budget s'affichent en haut à droite de la carte, puis s'effacent seuls au bout de 7 secondes.
+- **Fiche du cycliste** :
+  - en-tête (couleur, nom, vélo, voyage, jour) ;
+  - jauges : énergie en cases (les cases perdues quand on est fourbu sont hachurées), fatigue, nourriture, pièces, aventure ;
+  - 4 onglets : Journée, Sacoches, Voyage, Cartes. Sur téléphone ils passent en 2 × 2 ;
+  - actions en tuiles avec leur prix ou la raison de leur blocage (« en ville seulement », « tente nécessaire »…). Camping et hôtel sont mis en avant quand on est presque fourbu ;
+  - le gros bouton « Terminer ma journée » ;
+  - en bas, des liens Sauvegarder, Journal de route et Fin de partie.
+- **Page de jeu** : en-tête, barre d'actions et planificateur passent en sombre.
