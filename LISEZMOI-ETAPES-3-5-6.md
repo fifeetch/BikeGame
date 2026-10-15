@@ -178,3 +178,9 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
   2. étape tracée : « 🚴 Rouler N cases · −X ⚡ » + « ✕ Effacer » (la raison s'affiche si le parcours est impossible) ;
   3. après avoir roulé : « ⏭ Finir ma journée » ; s'il reste des cases, une fenêtre demande confirmation.
 - Les anciens boutons « Terminer le tour », « Effectuer le parcours » et « Terminer ma journée » (fiche) sont remplacés.
+
+## Règles du jeu (15 octobre 2026, maquette RegleC validée)
+- **« Comment on joue »** : résumé en 6 cases affiché une fois au jour 1 de chaque partie (en ligne : sur chaque appareil). Case « Ne plus afficher ce résumé au départ ».
+- **Bouton « 📖 Règles »** en haut, à tout moment (même quand ce n'est pas ton tour) : règles détaillées en 6 onglets (Se déplacer, Manger & dormir, Voyages & points, Cartes ou Rencontres, Météo, Fin de partie). Les nombres suivent les réglages de la partie. Fichier `dist/rules-help.js`.
+- L'ancien bouton « ⚙️ Règles » (réglage des valeurs) s'appelle maintenant **« ⚙️ Réglages »**.
+- Correction : la fiche affiche maintenant la vraie énergie d'un repas (+2 avec les cartes Événement, +3 sinon ; + réchaud).

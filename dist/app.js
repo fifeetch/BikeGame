@@ -10,6 +10,7 @@ import {renderCardEditor} from './card-editor.js';
 import {readArtPreference} from './terrain-art.js';
 import {readDisplayPrefs,writeDisplayPref} from './display-prefs.js';
 import {titleScreen,plateauScreen,playersScreen,garageScreen,voyagesScreen,onlineScreen} from './menus.js';
+import {rulesIntro,rulesHelp,HELP_TABS} from './rules-help.js';
 import * as NET from './online.js';
 import {europeBoard} from './europe.js';
 import {EVENT_CARDS,eventCardById as resolveEventCard,normalizeEventEdits} from './event-cards.js';
@@ -98,7 +99,7 @@ function render(){
  let page=screen==='card-editor'?renderCardEditor(customCards,cardDraft,message,eventEdits,eventDraft):screen==='map-editor'?editorScreen():screen==='game'&&m?game():screen==='voyages'?choices():screen==='equipment'?equipmentSetup():screen==='setup'?setup():screen==='modes'?modes():screen==='online'?onlineView():home();
  if(screen==='game'&&splitView)page=page.replace('<main class="game">',`<main class="game game-split" style="--sheet-width:${splitWidth}%">`);
  const splitControls=screen==='game'&&m?`<button type="button" class="light split-toggle" data-action="split-view" aria-pressed="${splitView}">${splitView?'▤ Vue verticale':'◧ Vue côte à côte'}</button>${splitView?`<label class="split-size" for="split-width">Fiche <output id="split-width-value">${splitWidth}%</output><input id="split-width" type="range" min="30" max="50" step="5" value="${splitWidth}" aria-label="Largeur de la fiche joueur"/></label>`:''}`:'';
-  app.innerHTML=`<header class="${screen==='game'?'in-game':''}"><div class="brand"><b>🚲 L’Aventure à Vélo</b>${screen==='game'&&m?`<span class="active-player" style="--player-color:${S.player(m).color}"><i aria-hidden="true"></i>${esc(S.player(m).name)}</span>`:''}</div>${screen==='game'&&m?.cardVersion===3?eventPiles():''}<nav>${splitControls}${btn('⚙️ Règles','rules','light')}${btn('Paramètres','settings','light')}${['game','map-editor','card-editor'].includes(screen)?btn('Accueil','home','light'):''}</nav></header>`+page+overlay();
+  app.innerHTML=`<header class="${screen==='game'?'in-game':''}"><div class="brand"><b>🚲 L’Aventure à Vélo</b>${screen==='game'&&m?`<span class="active-player" style="--player-color:${S.player(m).color}"><i aria-hidden="true"></i>${esc(S.player(m).name)}</span>`:''}</div>${screen==='game'&&m?.cardVersion===3?eventPiles():''}<nav>${splitControls}${btn('📖 Règles','help','light help-btn')+btn('⚙️ Réglages','rules','light')}${btn('Paramètres','settings','light')}${['game','map-editor','card-editor'].includes(screen)?btn('Accueil','home','light'):''}</nav></header>`+page+overlay();
  mountBoard();bind();if(scroll){const map=document.querySelector('.map');if(map){map.scrollLeft=sx;map.scrollTop=sy;}}
  if(boardFocusKey&&boardElement){const target=[...boardElement.querySelectorAll('[data-board-key][tabindex]')].find(el=>el.getAttribute('data-board-key')===boardFocusKey);target?.focus({preventScroll:true});}
  const sheet=document.querySelector('.player-sheet-mount');if(sheet)sheet.scrollTop=sheetScroll||0;
@@ -510,7 +511,7 @@ function offroadPlannerLine(tags=[]){const s=S.offroadStatus(m);if(!s.enabled)re
  if(!off)return s.gps?'':`<small class="offroad-note muted">Sans ${esc(s.item)} : quitter la route limite la journée à ${s.max} case${s.max>1?'s':''}.</small>`;
  return s.gps?`<small class="offroad-note gps">Hors route · ${esc(s.item)} à bord : déplacement normal.</small>`:`<small class="offroad-note warn">Hors route sans ${esc(s.item)} : ${s.max} case${s.max>1?'s':''} maximum aujourd’hui.</small>`;}
 function ficheJournee(p){const r=m.rules,here=m.board[p.pos],atCity=here?.type==='ville',canEat=p.items.includes('rechaud')||atCity||here?.type==='auberge',blocked=m.done||!['move','place'].includes(m.phase),rode=m.moved>0||m.placed,cap=energyCap(m,p),tired=r.fatigue.enabled&&(p.fatigue||0)>=r.fatigue.days-1;
- const eatGain=r.food.energy+(p.items.includes('rechaud')?r.food.stoveBonus:0),dist=S.distance(m);
+ const eatGain=S.eatGain(m,p),dist=S.distance(m);
  const why=(...checks)=>checks.find(([bad])=>bad)?.[1]||'';
  const eatWhy=why([!p.food,'plus de nourriture'],[!canEat,'réchaud, ville ou auberge'],[p.energy>=cap,'énergie pleine'],[m.ate>=r.food.maxPerTurn,'déjà mangé']);
  const foodWhy=why([r.food.cityOnly&&!atCity,'en ville seulement'],[p.money<r.food.price,'pas assez de pièces']);
@@ -662,7 +663,7 @@ const NET_VIEW_ACTIONS=new Set(['zoomin','zoomout','center','art','sheet-toggle'
 globalThis.document?.addEventListener?.('click',e=>{
  if(!onlineGame()||screen!=='game'||myTurn())return;
  const el=e.target.closest?.('[data-action],[data-sheet-tab],button,a,input,select,[data-board-key],svg,.map-wrap');if(!el)return;
- if(el.closest('[data-sheet-tab]')||NET_VIEW_ACTIONS.has(el.dataset?.action)||el.closest('.maptools')||el.closest('header')||el.closest('.split-size'))return;
+ if(el.closest('[data-sheet-tab]')||NET_VIEW_ACTIONS.has(el.dataset?.action)||/^(help|intro-close|help-tab-)/.test(el.dataset?.action||'')||el.closest('.maptools')||el.closest('header')||el.closest('.split-size'))return;
  e.stopPropagation();e.preventDefault();message=`C’est au tour de ${seatName(NET.actorId(m))}.`;const toast=document.querySelector('.toast');if(toast)toast.textContent=message;
 },true);
 // Au démarrage : reprendre l'écoute de la partie en ligne, ou ouvrir l'écran « Rejoindre » si le lien contient un code.
@@ -740,3 +741,23 @@ globalThis.document?.addEventListener?.('click',async e=>{
 // Au démarrage : revenir dans la salle d'attente si on l'avait quittée en fermant le jeu.
 if(lobby&&!online){enterLobby(lobby.code,lobby.seat).catch(()=>{});}
 if(NET.isLocalTest())Object.defineProperty(globalThis.__velo,'lobby',{get:()=>({lobby,prep:lobbyPrep,net})});
+
+// ==========================================================================
+// Règles : résumé « Comment on joue » avant le jour 1, et règles détaillées (bouton « 📖 Règles »).
+// ==========================================================================
+let helpTab='route';
+const helpRules=()=>m&&screen==='game'?m.rules:setupRules,helpEvent=()=>m&&screen==='game'?m.cardVersion===3:true;
+{const priorAct=act;act=a=>{
+ if(a==='help'){modal='help';render();return;}
+ if(a.startsWith('help-tab-')){helpTab=a.slice(9);modal='help';render();return;}
+ if(a==='intro-close'){try{if(document.querySelector('#intro-hide')?.checked)localStorage.setItem('velo-hide-intro','1');}catch{}modal='';render();return;}
+ return priorAct(a);};}
+{const priorOverlay=overlay;overlay=()=>{
+ if(modal==='help')return `<div class="modal-back"><section class="modal wide help-modal" role="dialog" aria-modal="true" aria-label="Règles détaillées">${rulesHelp(helpRules(),helpTab,{btn,eventGame:helpEvent()})}</section></div>`;
+ if(modal==='rules-intro')return `<div class="modal-back"><section class="modal wide help-modal" role="dialog" aria-modal="true" aria-label="Comment on joue">${rulesIntro(helpRules(),{btn,eventGame:helpEvent()})}</section></div>`;
+ return priorOverlay();};}
+// Le résumé s'affiche une fois par partie, au premier jour (en ligne : sur chaque appareil).
+{const priorRender=render;render=()=>{
+ try{if(screen==='game'&&m&&!m.done&&!modal&&m.round===1&&localStorage.getItem('velo-hide-intro')!=='1'){const seen=JSON.parse(localStorage.getItem('velo-intro-seen')||'[]'),id=String(m.seed);
+  if(!seen.includes(id)){localStorage.setItem('velo-intro-seen',JSON.stringify([...seen.slice(-20),id]));modal='rules-intro';}}}catch{}
+ priorRender();};}

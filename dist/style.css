@@ -1487,3 +1487,31 @@ body.net-waiting .player-sheet-dock,body.net-waiting .route-planner{opacity:.45;
 .player-sheet-dock .dock-day{grid-column:1/-1}
 body .player-sheet-dock .dock-day .dock-small{flex:0 0 auto;width:auto}
 body .player-sheet-dock .dock-day .dock-main{width:auto}
+/* Règles : résumé au départ et règles détaillées */
+.help-modal{width:min(980px,94vw);max-width:none;background:#f6e7c1;color:#1b1406}
+body .help-modal h2,body .help-modal h3{color:#1b3b38;font-family:'Fraunces',Georgia,serif}
+body .help-modal .eyebrow{color:#8a5a14}
+body .help-modal p,body .help-modal li{color:#2e2513}
+.help-modal .muted{color:#5a4a2c}
+.rules-intro h2{margin:4px 0 14px;font-size:34px}
+.ri-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.ri-box{background:#fff7df;border:2px solid #e2cf9f;border-radius:16px;padding:12px 14px}
+.ri-box b{font:900 19px 'Fraunces',Georgia,serif;color:#1b3b38}
+.ri-box p{margin:6px 0 0;font-size:15px;line-height:1.4}
+.ri-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+.ri-actions button:first-child{flex:1 1 260px;min-height:58px;font-size:20px}
+.ri-hide{display:flex;gap:8px;align-items:center;margin-top:10px;font-size:15px;color:#5a4a2c}
+.rh-tabs{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 6px}
+body .rh-tabs button{padding:7px 14px;border-radius:999px;border:2px solid #c9b88d;background:#fff7df;color:#1b1406;font-weight:700;font-size:14px;min-height:0;box-shadow:none}
+body .rh-tabs button.on{background:#1b3b38;color:#f6e7c1;border-color:#1b3b38}
+.rh-body ul{padding-left:22px;font-size:16px;line-height:1.55}
+.rh-body li{margin-bottom:4px}
+body .help-modal button.light{color:#1b3b38;border-color:#1b3b38;background:transparent}
+@media(max-width:700px){.ri-grid{grid-template-columns:1fr}}
+.modal-back .modal.help-modal h2,.modal-back .modal.help-modal h3,.modal-back .modal.help-modal .ri-box b{color:#1b3b38!important}
+.modal-back .modal.help-modal p,.modal-back .modal.help-modal li,.modal-back .modal.help-modal label{color:#2e2513!important}
+.modal-back .modal.help-modal .muted,.modal-back .modal.help-modal .ri-hide{color:#5a4a2c!important}
+.modal-back .modal.help-modal .eyebrow{color:#8a5a14!important}
+.modal-back .modal.help-modal .ri-hide{display:flex!important;flex-direction:row!important;align-items:center;gap:10px;justify-content:center}
+.modal-back .modal.help-modal .ri-hide input{width:20px;height:20px;margin:0}
+.modal-back .modal.help-modal p b,.modal-back .modal.help-modal li b{color:#1b1406!important}
