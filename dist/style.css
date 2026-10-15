@@ -1625,3 +1625,30 @@ body .dock-v1 .dock-penalties span{padding:6px 12px;border-radius:999px;backgrou
 .recv-now{margin:6px 0;font-size:16px}
 .newvoyage .nv-train{margin-top:6px;border:2px solid #1b3b38!important;color:#1b3b38!important;background:#fff7df!important;font-size:14px}
 .newvoyage .nv-train-note{color:#5a4a2c!important;font-size:12px;text-align:center}
+/* Pendant le tour de l'autre (en ligne) */
+.net-banner{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:12px;padding:10px 22px;background:#f2a541;color:#1b1406;box-shadow:0 6px 18px rgba(0,0,0,.35);font:600 16px 'Barlow',sans-serif}
+.net-banner b{font:900 22px 'Fraunces',Georgia,serif}
+.net-banner .nb-dot{width:26px;height:26px;border-radius:50%;border:3px solid #fff3cf;flex:none}
+.net-banner .nb-btn{margin-left:auto;padding:7px 14px;border-radius:999px;border:2px solid #1b3b38;background:transparent;color:#1b3b38;font-weight:700;cursor:pointer;min-height:0}
+body .dock-v1 .dock-wait{display:flex;align-items:center;gap:12px;min-height:64px;padding:6px 16px;border-radius:18px;background:#1b3b38;color:#f6e7c1;font:600 15px/1.35 'Barlow',sans-serif}
+body .dock-v1 .dock-wait>span:first-child{font-size:26px}
+body .dock-v1 .dock-wait b{font:900 19px 'Fraunces',Georgia,serif;color:#f6e7c1}
+body.net-waiting .net-mine-sheet button[data-action]:not([data-action=meteo]):not([data-action=help]):not([data-action=net-resync]){opacity:.45;cursor:not-allowed;filter:grayscale(.4)}
+/* Petits messages */
+.chat-btn{position:relative}
+.chat-badge{display:inline-block;min-width:20px;padding:1px 7px;border-radius:999px;background:#b74732;color:#fff3cf;font-weight:700;margin-left:4px}
+.chat-drawer{position:fixed;right:18px;top:78px;z-index:60;width:min(380px,92vw);max-height:70vh;display:flex;flex-direction:column;gap:10px;padding:14px;border-radius:18px;background:#102226;border:2px solid #f2a541;box-shadow:0 20px 50px rgba(0,0,0,.6);color:#f6e7c1;font-family:'Barlow',sans-serif}
+.chat-drawer .cd-head{display:flex;align-items:center}.chat-drawer .cd-head b{font:900 20px 'Fraunces',Georgia,serif}
+.chat-drawer .cd-head button{margin-left:auto;background:transparent;border:0;color:#f6e7c1;font-size:18px;cursor:pointer;min-height:0;padding:4px 8px}
+.chat-drawer .cd-list{display:flex;flex-direction:column;gap:6px;overflow:auto;max-height:40vh;padding-right:4px}
+.chat-drawer .cd-list p{margin:0;align-self:flex-start;max-width:85%;padding:7px 12px;border-radius:14px 14px 14px 4px;background:#267b91;font-size:15px;line-height:1.35}
+.chat-drawer .cd-list p.me{align-self:flex-end;border-radius:14px 14px 4px 14px;background:#b74732}
+.chat-drawer .cd-list p small{display:block;font-size:11px;font-weight:700;opacity:.8}
+.chat-drawer .cd-list .cd-empty{background:transparent;opacity:.7}
+.chat-drawer .cd-quick{display:flex;flex-wrap:wrap;gap:6px}
+.chat-drawer .cd-quick button{padding:5px 10px;border-radius:999px;border:2px solid rgba(246,231,193,.4);background:transparent;color:#f6e7c1;font-size:13px;cursor:pointer;min-height:0}
+.chat-drawer .cd-send{display:flex;gap:6px}
+.chat-drawer .cd-send input{flex:1;min-height:42px;border-radius:10px;border:0;padding:0 10px;background:#fff7df;color:#1b1406;font-size:15px}
+.chat-drawer .cd-send button{padding:0 14px;border-radius:10px;border:0;background:#f2a541;color:#1b1406;font-weight:700;cursor:pointer}
+.chat-toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:70;max-width:min(560px,92vw);padding:12px 18px;border-radius:14px;border:2px solid #f2a541;background:#102226;color:#f6e7c1;font-size:16px;box-shadow:0 12px 30px rgba(0,0,0,.5);cursor:pointer;text-align:left}
+header .brand .chat-btn{margin-left:8px;padding:6px 14px;border-radius:999px;border:2px solid #f2a541;background:#1b3b38;color:#f6e7c1;font:700 14px 'Barlow',sans-serif;cursor:pointer;min-height:0;white-space:nowrap}

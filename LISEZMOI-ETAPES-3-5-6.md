@@ -203,3 +203,7 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 ## Cartes reçues et voyage rapide (15 octobre 2026, idées de Fi)
 - **Cartes négatives reçues** : au début de son tour, une fenêtre montre les cartes jouées contre soi (qui, quel jour, la carte en image) ; pastilles rouges sur la barre tant que la pénalité dure (pas de déplacement, cases en moins, montagne interdite, vent au prochain déplacement). Si le déplacement est interdit, le gros bouton propose « Finir ma journée ».
 - **Voyage rapide** : dans la fenêtre « Choisis ton prochain voyage », bouton « 🚆 Train jusqu'à [ville de départ] » : moins de 10 cases 2 pièces, 10 à 19 cases 3, 20 et plus 4. Prend la journée ; les objectifs se comptent depuis la ville de départ.
+
+## En ligne : attente plus claire et petits messages (15 octobre 2026, maquette AttenteChatC validée)
+- **Pendant le tour de l'autre** : bandeau orange « C'est à Marion de jouer · jour N · Marion roule… » (+ « 🔄 Recharger ») ; barre du bas « ⏳ Marion roule… » ; **ta fiche complète** reste consultable (tous les onglets, ta main, ton voyage, ta météo), boutons d'action grisés.
+- **💬 Messages** (à côté de « À toi de jouer ») : pastille du nombre de messages non lus ; petit tiroir avec les 30 derniers messages, phrases rapides (À toi !, Bien joué 👏, Je reviens dans 5 min, 😅, 🚴💨) et ligne pour écrire (Entrée pour envoyer) ; bandeau de 4 secondes quand un message arrive. Messages rangés dans `/games/CODE/chat` (50 derniers), à part de l'état de la partie.

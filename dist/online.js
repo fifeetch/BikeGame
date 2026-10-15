@@ -39,7 +39,9 @@ function localBackend(){
   async get(code){return read(code);},
   async create(code,value){if(read(code))return false;write(code,value);return true;},
   async update(code,fn){const cur=read(code),next=fn(cur);if(next===undefined)return {committed:false,value:cur};write(code,next);return {committed:true,value:next};},
-  listen(code,cb){const list=listeners.get(code)||[];list.push(cb);listeners.set(code,list);setTimeout(()=>cb(read(code)),0);return ()=>listeners.set(code,(listeners.get(code)||[]).filter(f=>f!==cb));}
+  listen(code,cb){const list=listeners.get(code)||[];list.push(cb);listeners.set(code,list);setTimeout(()=>cb(read(code)),0);return ()=>listeners.set(code,(listeners.get(code)||[]).filter(f=>f!==cb));},
+  async sendChat(code,msg){const k='chat:'+code,list=[...(read(k)||[]),msg].slice(-50);write(k,list);},
+  listenChat(code,cb){const k='chat:'+code;return this.listen(k,v=>cb(v||[]));}
  };
 }
 async function firebaseBackend(){
@@ -50,7 +52,9 @@ async function firebaseBackend(){
   async create(code,value){const r=await db.runTransaction(node(code),cur=>cur?undefined:value);return r.committed;},
   // Firebase appelle d'abord la fonction avec sa copie locale, parfois vide (null) : on renvoie null pour qu'il relise le serveur.
   async update(code,fn){const r=await db.runTransaction(node(code),cur=>cur===null?null:fn(cur));const v=r.snapshot.val();return {committed:r.committed&&v!==null,value:v};},
-  listen(code,cb){return db.onValue(node(code),snap=>cb(snap.val()));}
+  listen(code,cb){return db.onValue(node(code),snap=>cb(snap.val()));},
+  async sendChat(code,msg){await db.push(db.ref(base,'games/'+code+'/chat'),msg);},
+  listenChat(code,cb){return db.onValue(db.query(db.ref(base,'games/'+code+'/chat'),db.limitToLast(50)),snap=>{const out=[];snap.forEach(c=>{out.push(c.val());});cb(out);});}
  };
 }
 let backendPromise=null;
@@ -104,3 +108,7 @@ export async function listenRaw(code,cb){const net=await backend();return net.li
 export async function leaveLobby(code,seat){const net=await backend(),me=clientId();
  await net.update(code,g=>{if(!g||g.status!=='lobby'||g.lobby?.[seat]?.client!==me)return undefined;
   if(g.host===me)return {...g,status:'closed',updatedAt:Date.now()};const lobby={...g.lobby};delete lobby[seat];return {...g,lobby,updatedAt:Date.now()};});}
+
+// ---------- Petits messages entre joueurs (rangés à part de l'état de la partie) ----------
+export async function sendChat(code,msg){const net=await backend();return net.sendChat(code,{...msg,text:String(msg.text||'').slice(0,200),at:Date.now()});}
+export async function listenChat(code,cb){const net=await backend();return net.listenChat(code,cb);}

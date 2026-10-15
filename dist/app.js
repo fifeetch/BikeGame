@@ -373,7 +373,9 @@ const dayMain=(sym,label,tag,action,disabled=false)=>`<button type="button" clas
 function dayAction(blocked){const p=S.player(m),left=Math.max(0,S.distance(m)-m.moved),hand=p.cardHand.length;
  const cards=S.encountersOn(m)?'':dockIcon('🃏','Cartes '+hand,'cards',m.phase==='card-choice'||m.phase==='card-resolution'||m.phase==='puncture');
  let step,center,icons;
- if(blocked){step=m.moved?2:0;center=dayMain('⏳','Patiente…','','endturn',true);icons=cards;}
+ if(blocked||(typeof onlineGame==='function'&&onlineGame()&&!myTurn())){step=m.moved?2:0;
+  if(typeof onlineGame==='function'&&onlineGame()&&!myTurn()){const a=m.players.find(q=>q.id===NET.actorId(m));center=`<div class="dock-wait"><span aria-hidden="true">⏳</span><span><b>${esc(a?.name||'L’autre joueur')} ${m.pendingAttack?'répond à une carte…':'roule…'}</b><br>Tes boutons se réveillent dès que c’est ton tour. En attendant, regarde ta fiche.</span></div>`;icons=dockIcon('🔄','Recharger','net-resync');}
+  else{center=dayMain('⏳','Patiente…','','endturn',true);icons=cards;}}
  else if(route.length){const c=S.routeCheck(m,route),n=route.length;step=1;
   center=dayMain('🚴',c.ok?`Rouler ${n} case${n>1?'s':''}`:'Parcours impossible',c.ok?`−${c.energyUsed} ⚡`:'','route-go',!c.ok)+(c.ok?'':`<p class="dock-why">${esc(c.reason||'')}</p>`);
   icons=dockIcon('✕','Effacer','route-clear')+cards;}
@@ -670,7 +672,7 @@ async function netAction(a){
  if(a==='net-leave'){leaveOnline();message='Tu as quitté la partie en ligne sur cet appareil (elle reste en ligne pour les autres).';render();return;}
  if(a.startsWith('net-'))return netAction(a);
  if(a==='net-resync'){resyncOnline('Partie rechargée depuis le serveur.');return;}
- if(onlineGame()&&screen==='game'&&!['zoomin','zoomout','center','art','sheet-toggle','split-view','meteo','close','help','stats','settings'].includes(a)&&!/^(help-tab-|meteo-day-|intro-close)/.test(a))netDirty=true;
+ if(onlineGame()&&screen==='game'&&!['zoomin','zoomout','center','art','sheet-toggle','split-view','meteo','close','help','stats','settings'].includes(a)&&!/^(help-tab-|meteo-day-|intro-close|chat-|net-)/.test(a))netDirty=true;
  if(onlineGame()&&a==='new'){leaveOnline();}
  if(onlineGame()&&(a==='mapedit'||a==='rules')&&screen==='game'){message=a==='mapedit'?'Pas de modification de carte pendant une partie en ligne.':'Les règles ne se changent pas pendant une partie en ligne.';render();return;}
  return priorAct(a);};}
@@ -682,24 +684,25 @@ async function netAction(a){
  const mine=myTurn(),actor=seatName(NET.actorId(m)),brand=document.querySelector('header .brand');
  brand?.insertAdjacentHTML('beforeend',`<span class="net-pill ${mine?'mine':''}" role="status">${mine?'À toi de jouer':esc(actor)+' joue…'} · ${esc(online.code)}</span>`);
  document.body?.classList?.toggle('net-waiting',!mine);
+ if(!mine){const a=m.players.find(p=>p.id===NET.actorId(m)),what=m.pendingAttack?'répond à une carte…':m.phase==='card-intervention'?'peut jouer une carte météo…':'roule…';
+  document.querySelector('header')?.insertAdjacentHTML('afterend',`<div class="net-banner" role="status"><span class="nb-dot" style="background:${esc(a?.color||'#267b91')}"></span><b>C’est à ${esc(a?.name||'l’autre joueur')} de jouer</b><span>· jour ${m.round} · ${esc(a?.name||'')} ${what}</span><button type="button" data-action="net-resync" class="nb-btn">🔄 Recharger</button></div>`);}
  if(netWasMyTurn===false&&mine)message='À toi de jouer !';netWasMyTurn=mine;
  try{document.title=(mine?'● À toi — ':'')+'L’Aventure à Vélo';}catch{}
  // Toute différence vient d'une action faite ici (hors de son tour, les actions sont bloquées) : on l'envoie.
  const light=lightOf(m);if(light!==netLight&&netDirty){netLight=light;pushNow();}else if(light!==netLight&&!netDirty&&!netPushing){/* changement fait par l'affichage seul : on attend l'état en ligne */}
 };}
+// Pendant le tour de l'autre : ta fiche complète (tous les onglets), affichée comme si c'était toi ; les actions restent bloquées.
 {const priorSheet=playerSheet;playerSheet=(inline=false)=>{
  if(!onlineGame()||myTurn())return priorSheet(inline);
- const me=m.players.find(p=>p.id===online.seat)||S.player(m),actor=m.players.find(p=>p.id===NET.actorId(m));
- const body=`<div class="player-sheet-head fiche-head"><span class="fiche-num" style="background:${me.color}" aria-hidden="true">${esc(me.id.slice(1))}</span><div><h2>${esc(me.name)}</h2><small>Partie en ligne ${esc(online.code)}</small></div><span class="mat-day">Jour ${m.round}</span></div>
- ${ficheGauges(me)}<section class="net-wait"><span class="fiche-kicker">En attente</span><b>${esc(actor?.name||'Un cycliste')} ${m.pendingAttack?'répond à une carte…':m.phase==='card-intervention'?'peut jouer une carte météo…':'roule…'}</b><p>Tu vois son cycliste avancer sur la carte. Tes boutons se réveillent dès que c’est ton tour. <button type="button" class="net-resync" data-action="net-resync">🔄 Ça semble bloqué ? Recharger la partie</button>${me.cardHand?.length?` Tu as ${me.cardHand.length} carte${me.cardHand.length>1?'s':''} en main, cachée${me.cardHand.length>1?'s':''} jusqu’à ton tour.`:''}</p></section>`;
- return inline?`<section class="player-sheet-inline player-mat fiche">${body}</section>`:`<div class="player-mat fiche">${body}</div>`;};}
+ const mine=m.players.findIndex(p=>p.id===online.seat);if(mine<0)return priorSheet(inline);
+ const keep=m.activeIndex;m.activeIndex=mine;try{return priorSheet(inline).replace('class="player-mat fiche','class="player-mat fiche net-mine-sheet').replace('class="player-sheet-inline player-mat fiche','class="player-sheet-inline player-mat fiche net-mine-sheet');}finally{m.activeIndex=keep;}};}
 {const priorOverlay=overlay;overlay=()=>{if(onlineGame()&&screen==='game'&&!myTurn()&&!['meteo','stats'].includes(modal))return '';return priorOverlay();};}
 // Hors de son tour : seuls les boutons « pour regarder » marchent.
 const NET_VIEW_ACTIONS=new Set(['net-resync','zoomin','zoomout','center','art','sheet-toggle','split-view','meteo','close','home','settings','stats','online','net-play','net-leave','reveal-close']);
 globalThis.document?.addEventListener?.('click',e=>{
  if(!onlineGame()||screen!=='game'||myTurn())return;
  const el=e.target.closest?.('[data-action],[data-sheet-tab],button,a,input,select,[data-board-key],svg,.map-wrap');if(!el)return;
- if(el.closest('[data-sheet-tab]')||NET_VIEW_ACTIONS.has(el.dataset?.action)||/^(help|intro-close|help-tab-|meteo-day-)/.test(el.dataset?.action||'')||el.closest('.maptools')||el.closest('header')||el.closest('.split-size'))return;
+ if(el.closest('[data-sheet-tab]')||NET_VIEW_ACTIONS.has(el.dataset?.action)||/^(help|intro-close|help-tab-|meteo-day-|chat-)/.test(el.dataset?.action||'')||el.closest('.chat-drawer')||el.closest('.chat-toast')||el.closest('.maptools')||el.closest('header')||el.closest('.split-size'))return;
  e.stopPropagation();e.preventDefault();message=`C’est au tour de ${seatName(NET.actorId(m))}.`;const toast=document.querySelector('.toast');if(toast)toast.textContent=message;
 },true);
 // Au démarrage : reprendre l'écoute de la partie en ligne, ou ouvrir l'écran « Rejoindre » si le lien contient un code.
@@ -862,3 +865,42 @@ const receivedFor=()=>{if(!m||m.done||screen!=='game'||m.pendingAttack)return nu
   return `<div class="modal-back"><section class="modal wide recv-modal" role="dialog" aria-modal="true"><span class="eyebrow">AU DÉBUT DE TON TOUR · ${esc(p.name)}</span><h2>${list.length>1?'Des cartes ont été jouées contre toi':'Une carte a été jouée contre toi'}</h2><div class="recv-faces">${faces}</div>${pills.length?`<p class="recv-now"><b>En ce moment :</b> ${pills.map(esc).join(' · ')}</p>`:''}${p.flat?'<p class="recv-now">Il faut d’abord réparer (ou te soigner) : la fenêtre suivante te le propose.</p>':''}${btn('J’ai compris','received-ok')}</section></div>`;}
  return priorOverlay();};}
 {const priorAct=act;act=a=>{if(a==='received-ok'){const p=S.player(m);if(p)p.receivedCards=[];modal='';render();return;}return priorAct(a);};}
+
+// ==========================================================================
+// Petits messages en partie en ligne : bouton 💬 avec pastille, petit tiroir, phrases rapides, bandeau à l'arrivée.
+// ==========================================================================
+let chat=[],chatOpen=false,chatUnlisten=null,chatCode='',chatSeenAt=0,chatToastTimer=null;
+const CHAT_QUICK=['À toi !','Bien joué 👏','Je reviens dans 5 min','😅','🚴💨'];
+const chatSeenKey=()=>'velo-chat-seen-'+(online?.code||'');
+const chatUnread=()=>chat.filter(c=>c.from!==online?.seat&&c.at>chatSeenAt).length;
+function chatMarkSeen(){chatSeenAt=Math.max(chatSeenAt,...chat.map(c=>c.at||0),0);try{localStorage.setItem(chatSeenKey(),String(chatSeenAt));}catch{}}
+async function chatListen(){if(!online||chatCode===online.code)return;chatUnlisten?.();chatCode=online.code;chat=[];try{chatSeenAt=Number(localStorage.getItem(chatSeenKey())||0);}catch{chatSeenAt=0;}
+ try{chatUnlisten=await NET.listenChat(online.code,list=>{const before=chat.length;chat=Array.isArray(list)?list.filter(c=>c&&c.text):[];
+  const fresh=chat.slice(before).filter(c=>c.from!==online?.seat&&c.at>chatSeenAt);
+  if(chatOpen)chatMarkSeen();else if(fresh.length)chatToast(fresh.at(-1));
+  if(screen==='game')chatRefresh();});}catch{}}
+const chatBind=()=>document.querySelectorAll('.chat-drawer [data-action],.chat-toast,.chat-btn').forEach(el=>el.onclick=()=>act(el.dataset.action));
+function chatToast(c){const old=document.querySelector('.chat-toast');old?.remove();clearTimeout(chatToastTimer);
+ document.body?.insertAdjacentHTML('beforeend',`<button type="button" class="chat-toast" data-action="chat-toggle">💬 <b>${esc(c.name||'')}</b> : ${esc(c.text)}</button>`);chatBind();
+ chatToastTimer=setTimeout(()=>document.querySelector('.chat-toast')?.remove(),4000);}
+function chatDrawer(){const me=online?.seat;return `<aside class="chat-drawer" aria-label="Messages"><div class="cd-head"><b>💬 Messages</b><button type="button" data-action="chat-toggle" aria-label="Fermer">✕</button></div>
+ <div class="cd-list">${chat.length?chat.slice(-30).map(c=>`<p class="${c.from===me?'me':''}"><small>${esc(c.from===me?'Toi':c.name||'')}</small>${esc(c.text)}</p>`).join(''):'<p class="cd-empty">Pas encore de message.</p>'}</div>
+ <div class="cd-quick">${CHAT_QUICK.map((t,i)=>`<button type="button" data-action="chat-quick-${i}">${esc(t)}</button>`).join('')}</div>
+ <div class="cd-send"><input id="chat-input" maxlength="200" autocomplete="off" placeholder="Écris un message…"/><button type="button" data-action="chat-send">Envoyer</button></div></aside>`;}
+// Mise à jour légère (sans redessiner la partie) : pastille et tiroir.
+function chatRefresh(){const n=chatUnread(),b=document.querySelector('.chat-btn');if(b)b.innerHTML=`💬 Messages${n?` <span class="chat-badge">${n}</span>`:''}`;
+ const d=document.querySelector('.chat-drawer');if(d){const list=d.querySelector('.cd-list'),html=document.createElement('div');html.innerHTML=chatDrawer();d.querySelector('.cd-list').replaceWith(html.querySelector('.cd-list'));d.querySelector('.cd-list').scrollTop=1e6;}}
+async function chatSend(text){text=String(text||'').trim();if(!text||!online)return;const me=m?.players.find(p=>p.id===online.seat);
+ try{await NET.sendChat(online.code,{from:online.seat,name:me?.name||'',text});}catch(e){message='Message non envoyé : '+e.message;render();}}
+{const priorAct=act;act=a=>{
+ if(a==='chat-toggle'){chatOpen=!chatOpen;if(chatOpen)chatMarkSeen();document.querySelector('.chat-toast')?.remove();render();if(chatOpen)setTimeout(()=>{document.querySelector('.cd-list')&&(document.querySelector('.cd-list').scrollTop=1e6);document.querySelector('#chat-input')?.focus();},30);return;}
+ if(a==='chat-send'){const i=document.querySelector('#chat-input');chatSend(i?.value);if(i)i.value='';return;}
+ if(a.startsWith('chat-quick-')){chatSend(CHAT_QUICK[+a.slice(11)]);return;}
+ return priorAct(a);};}
+{const priorRender=render;render=()=>{const typed=document.querySelector('#chat-input')?.value||'';priorRender();
+ if(!onlineGame()||screen!=='game'){return;}chatListen();
+ const brand=document.querySelector('header .brand')||document.querySelector('header');
+ brand?.insertAdjacentHTML('beforeend',`<button type="button" class="chat-btn" data-action="chat-toggle"></button>`);chatRefresh();
+ if(chatOpen){document.body.insertAdjacentHTML('beforeend',chatDrawer());const i=document.querySelector('#chat-input');if(i)i.value=typed;const l=document.querySelector('.cd-list');if(l)l.scrollTop=1e6;}
+ else document.querySelectorAll('.chat-drawer').forEach(e=>e.remove());chatBind();};}
+globalThis.document?.addEventListener?.('keydown',e=>{if(e.target?.id==='chat-input'&&e.key==='Enter'){e.preventDefault();act('chat-send');}});
