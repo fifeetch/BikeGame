@@ -211,3 +211,5 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - Bouton « 💬 Messages » déplacé dans la zone libre du haut, juste après la pioche et la défausse (icône seule sur les écrans étroits).
 
 - Correction (MacBook Air de Marion) : pendant le tour de l’autre, le bandeau orange était inséré juste sous l’en-tête et cassait une règle d’affichage : les anciens blocs du haut réapparaissaient et la carte devenait un petit bandeau. Le bandeau flotte maintenant au-dessus de la carte, et la page peut défiler si tout ne tient pas.
+
+- Mise à jour du jeu : le service worker vérifie toujours la dernière version des fichiers (avant, un fichier comme online.js pouvait rester ancien jusqu’à 10 minutes après une mise en ligne : les messages ne marchaient alors que d’un côté). Si les messages ne peuvent pas démarrer, un message demande de recharger la page.

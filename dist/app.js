@@ -876,10 +876,11 @@ const chatSeenKey=()=>'velo-chat-seen-'+(online?.code||'');
 const chatUnread=()=>chat.filter(c=>c.from!==online?.seat&&c.at>chatSeenAt).length;
 function chatMarkSeen(){chatSeenAt=Math.max(chatSeenAt,...chat.map(c=>c.at||0),0);try{localStorage.setItem(chatSeenKey(),String(chatSeenAt));}catch{}}
 async function chatListen(){if(!online||chatCode===online.code)return;chatUnlisten?.();chatCode=online.code;chat=[];try{chatSeenAt=Number(localStorage.getItem(chatSeenKey())||0);}catch{chatSeenAt=0;}
+ if(typeof NET.listenChat!=='function'){message='Messages indisponibles : recharge la page (Ctrl + Maj + R) pour avoir la dernière version du jeu.';chatCode='';return;}
  try{chatUnlisten=await NET.listenChat(online.code,list=>{const before=chat.length;chat=Array.isArray(list)?list.filter(c=>c&&c.text):[];
   const fresh=chat.slice(before).filter(c=>c.from!==online?.seat&&c.at>chatSeenAt);
   if(chatOpen)chatMarkSeen();else if(fresh.length)chatToast(fresh.at(-1));
-  if(screen==='game')chatRefresh();});}catch{}}
+  if(screen==='game')chatRefresh();});}catch(e){chatCode='';message='Messages : connexion impossible ('+e.message+').';}}
 const chatBind=()=>document.querySelectorAll('.chat-drawer [data-action],.chat-toast,.chat-btn').forEach(el=>el.onclick=()=>act(el.dataset.action));
 function chatToast(c){const old=document.querySelector('.chat-toast');old?.remove();clearTimeout(chatToastTimer);
  document.body?.insertAdjacentHTML('beforeend',`<button type="button" class="chat-toast" data-action="chat-toggle">💬 <b>${esc(c.name||'')}</b> : ${esc(c.text)}</button>`);chatBind();
