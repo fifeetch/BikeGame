@@ -29,9 +29,9 @@ export function createSVGBoardRenderer(container,options={}){
  const ocean=make('rect',{class:'map-ocean',width:MAP_WIDTH,height:MAP_HEIGHT}),sea=make('path',{class:'board-sea-face',fill:'url(#board-sea-pattern)'});
  const lands=make('g',{class:'hex-cells'}),cities=make('g',{class:'city-names','aria-hidden':true}),numbers=make('g',{class:'route-numbers','aria-hidden':true}),tokens=make('g',{class:'map-symbols','aria-hidden':true}),seaCursor=make('g',{class:'board-sea-cursor','aria-hidden':true});
  // Étape 5 : décor (sous la grille), routes et ferries (au-dessus) ; étape 6 : tracé d'itinéraire et halos.
- const decor=make('g',{class:'board-decor','aria-hidden':true}),roads=make('g',{class:'board-roads','aria-hidden':true}),ferries=make('g',{class:'board-ferries'}),trail=make('g',{class:'route-trail','aria-hidden':true}),halos=make('g',{class:'board-halos','aria-hidden':true});
+ const decor=make('g',{class:'board-decor','aria-hidden':true}),roads=make('g',{class:'board-roads','aria-hidden':true}),ferries=make('g',{class:'board-ferries'}),trail=make('g',{class:'route-trail','aria-hidden':true}),halos=make('g',{class:'board-halos','aria-hidden':true}),adventure=make('g',{class:'board-adventure'});
  const trailCase=make('path',{class:'route-trail-case'}),trailLine=make('path',{class:'route-trail-line'});trail.append(trailCase,trailLine);
- svg.append(ocean,sea,decor,lands,roads,ferries,trail,halos,cities,numbers,tokens,seaCursor);container.append(svg);
+ svg.append(ocean,sea,decor,lands,roads,ferries,trail,halos,adventure,cities,numbers,tokens,seaCursor);container.append(svg);
  let artWanted=options.art!==false&&readArtPreference(),artLayer=options.art===false?null:createTerrainLayer(container),artReady=false;
  const artOn=()=>Boolean(artLayer&&artWanted&&artReady);
  artLayer?.onStatus(ok=>{artReady=ok;if(state)update(state);});
@@ -48,7 +48,7 @@ export function createSVGBoardRenderer(container,options={}){
  function onCamera(view){lastView=view;if(!browser()){applyZoomEffects(view);return;}if(!cameraFrame)cameraFrame=raf(()=>{cameraFrame=0;if(!destroyed&&lastView)applyZoomEffects(lastView);});}
  function applyZoomEffects(view){
   const sym=symbolScale(view.scale).toFixed(2),lab=labelScale(view.scale).toFixed(2),key=sym+'|'+lab;
-  if(key!==symBucket){symBucket=key;for(const g of [tokens,numbers,halos,ferries,trail])setVar(g,'--sym',sym);setVar(cities,'--lab',lab);}
+  if(key!==symBucket){symBucket=key;for(const g of [tokens,numbers,halos,ferries,trail,adventure])setVar(g,'--sym',sym);setVar(cities,'--lab',lab);setVar(adventure,'--lab',lab);}
   const detail=view.scale>=DETAIL_SCALE;if(detail!==detailOn){detailOn=detail;attrsTo(decor,{'data-visible':detail});attrsTo(roads,{'data-detail':detail});}
   drawMinimapView(view);
  }
@@ -170,6 +170,23 @@ export function createSVGBoardRenderer(container,options={}){
   if(sel){const g1=make('g',{class:'sel-halo',transform:`translate(${f1(sel.x)} ${f1(sel.y)})`});g1.append(make('circle',{r:13.5}));halos.append(g1);}
  }
 
+ // ---------- Aventure : cols mythiques nommés (drapeau + nom) et lieux cachés (jetons « ? ») ----------
+ let adventureSig='';
+ const esc=v=>String(v).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+ function drawAdventure(g,editMode){
+  const cols=Object.values(g.board).filter(t=>t.type==='col'&&t.colName),marks=Object.entries(g.landmarks||{}),climbed=g.colsClimbed||{},colorOf=id=>(g.players||[]).find(p=>p.id===id)?.color||'';
+  const sig=editMode+'|'+cols.map(t=>t.key+(climbed[t.key]||'')).join(',')+'|'+marks.map(([k,l])=>k+(l.found?'1':'0')).join(',');
+  if(sig===adventureSig)return;adventureSig=sig;
+  if(editMode){adventure.innerHTML='';return;}
+  let out='';
+  for(const t of cols){const who=climbed[t.key],color=colorOf(who),up=cols.some(o=>o!==t&&Math.hypot(o.x-t.x,o.y-t.y)<45&&(o.x>t.x||o.x===t.x&&o.y>t.y));
+   out+=`<g class="col-flag${who?' claimed':''}" transform="translate(${f1(t.x)} ${f1(t.y)})"><title>${esc(t.colName)}${who?' · premier de cordée : '+esc((g.players||[]).find(p=>p.id===who)?.name||''):' · premier à passer : +3 points'}</title><g class="col-flag-inner"><path class="col-pole" d="M-2 6V-12"/><path class="col-cloth" d="M-2 -12l11 3.4-11 3.4Z"${color?` style="fill:${esc(color)}"`:''}/></g><text class="col-name${up?' up':''}">${esc(t.colName)}</text></g>`;}
+  for(const [k,l]of marks){const t=g.board[k];if(!t)continue;
+   out+=l.found?`<g class="landmark found" transform="translate(${f1(t.x)} ${f1(t.y)})"><title>${esc(l.name)} (+${l.value})</title><g class="landmark-inner"><circle r="5.5"/><text y="2.6">✦</text></g></g>`
+    :`<g class="landmark" transform="translate(${f1(t.x)} ${f1(t.y)})"><title>Lieu remarquable caché</title><g class="landmark-inner"><circle r="7.5"/><text y="3.6">?</text></g></g>`;}
+  adventure.innerHTML=out;
+ }
+
  // ---------- Jetons des cyclistes, avec déplacement case par case ----------
  function tokenTarget(g,p){const t=g.board[p.pos];if(!t)return null;const same=(g.players||[]).filter(a=>a.pos===p.pos),offset=(same.indexOf(p)-(same.length-1)/2)*14;return {x:t.x+offset,y:t.y};}
  function animateToken(record,points,stepMs){
@@ -252,6 +269,7 @@ export function createSVGBoardRenderer(container,options={}){
   drawFerries(g,editMode?[]:ferryTargets);
   drawTrail(g,editMode?[]:route);
   drawHalos(g,selected,editMode);
+  drawAdventure(g,editMode);
   const moveMs=drawTokens(g,previous);
   picker.hidden=!editMode;
   const owner=container.closest('.map-wrap')||container.parentElement;

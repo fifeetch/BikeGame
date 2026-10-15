@@ -7,13 +7,14 @@
 // Les règles du jeu et les types de terrain ne sont jamais touchés : ceci ne fait que dessiner.
 import {MAP_CELLS} from './assets/europe/board-data.js';
 import {CELL_PATCHES,GROUND_PATCHES,MOTIF_PATCHES,PATCH_SCALE} from './terrain-patches.js';
-import {MAP_WIDTH,MAP_HEIGHT} from './europe.js';
+import {MAP_WIDTH,MAP_HEIGHT,NAMED_COLS} from './europe.js';
 import {validVariant} from './terrain-variants.js';
 
 export const GROUND_SRC='./assets/terrain/europe-ground.webp';
 export const PATCHES_SRC='./assets/terrain/patches.webp';
 const DIRS=[[1,0],[1,1],[0,1],[-1,0],[-1,-1],[0,-1]];
 const baked=new Map(MAP_CELLS.map(c=>[`${c.q},${c.r}`,c.type]));
+for(const c of NAMED_COLS)if(baked.has(`${c.q},${c.r}`))baked.set(`${c.q},${c.r}`,'col');
 // Cases d'origine qui ont des motifs, rangées par type : elles servent de modèles quand une case change de type.
 const models={};
 for(const [key,type] of baked)if(CELL_PATCHES[key])(models[type]??=[]).push(key);

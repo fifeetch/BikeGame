@@ -102,7 +102,7 @@ test('only one own-turn card may be played, including after reload; reactions re
 test('positive resource cards apply their printed values and respect caps',()=>{
  for(const [id,field,start,expected] of [['evt-02','food',5,6],['evt-03','energy',9,10],['evt-04','energy',6,9],['evt-05','money',1,4],['evt-06','food',5,6],['evt-08','points',0,2]]){
   const m=game(),p=m.players[0];p[field]=start;const i=give(m,id,p);assert(S.playCard(m,i,p.id),id);assert.equal(p[field],expected,id);
-  if(id==='evt-06')assert.equal(p.money,6);conserved(m);
+  if(id==='evt-06')assert.equal(p.money,11);conserved(m);
  }
 });
 

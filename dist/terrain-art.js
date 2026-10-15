@@ -4,6 +4,7 @@
 // dans l'éditeur, terrain-dynamic.js redessine en direct les cases changées dans le même style peint
 // (en attendant que ses images soient chargées, ou si elles échouent, on retombe sur l'ancien dessin à pictogrammes).
 import {MAP_CELLS} from './assets/europe/board-data.js';
+import {NAMED_COLS} from './europe.js';
 import {createDynamicLayer} from './terrain-dynamic.js';
 import {validVariant} from './terrain-variants.js';
 
@@ -12,6 +13,8 @@ export const TERRAIN_ART_STORAGE='aventure-velo-illustrations';
 
 // Type de chaque case au moment où l'image a été fabriquée.
 const baked=new Map(MAP_CELLS.map(c=>[`${c.q},${c.r}`,c.type]));
+// Les cols nommés sont peints comme la montagne qui les porte : la peinture reste valable.
+for(const c of NAMED_COLS)if(baked.has(`${c.q},${c.r}`))baked.set(`${c.q},${c.r}`,'col');
 // La clé du jeu est "hex-q-r" ; on la convertit pour comparer.
 const bakedType=t=>baked.get(`${t.q},${t.r}`);
 export const isCellStale=t=>bakedType(t)!==t.type||validVariant(t.type,t.variant);

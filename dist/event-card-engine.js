@@ -1,4 +1,5 @@
 import {random} from './engine.js';
+import {energyCap} from './rules.js';
 import {EVENT_CARDS,eventCardById} from './event-cards.js';
 
 export const HAND_LIMIT=3;
@@ -109,7 +110,7 @@ export function playOwnCard(m,index,replaceIndex){const p=m.players[m.activeInde
   case 'free_road_steps':p.freeSteps=(p.freeSteps||0)+c.effectValue;p.freeRoadSteps=(p.freeRoadSteps||0)+c.effectValue;break;
   case 'free_steps':p.freeSteps=(p.freeSteps||0)+c.effectValue;p.freeGeneralSteps=(p.freeGeneralSteps||0)+c.effectValue;break;
   case 'gain_food':p.food=Math.min(foodCapacity(m,p),p.food+c.effectValue);break;
-  case 'gain_energy':p.energy=Math.min(m.rules.maxEnergy,p.energy+c.effectValue);break;
+  case 'gain_energy':if(/habitant/i.test(c.name||''))p.fatigue=0;p.energy=Math.min(energyCap(m,p),p.energy+c.effectValue);break;
   case 'gain_money':p.money+=c.effectValue;break;
   case 'market':p.food=Math.min(foodCapacity(m,p),p.food+2);p.money++;break;
   case 'gain_points':p.points+=c.effectValue;break;
@@ -117,7 +118,7 @@ export function playOwnCard(m,index,replaceIndex){const p=m.players[m.activeInde
  }
  discard(m,c.id);note(m,p,`${p.name} joue ${c.name} : ${c.effectText}`,'card-play',{cardId:c.id});return true;
 }
-export function onCityVisit(m,p,cityKey){const warm=bonusForEffect(m,p,'warmshowers'),journal=bonusForEffect(m,p,'travel_journal');if(warm&&p.warmTurn!==m.turn){p.energy=Math.min(m.rules.maxEnergy,p.energy+1);p.warmTurn=m.turn;note(m,p,`${p.name} récupère 1 énergie grâce à ${warm.name}.`);}
+export function onCityVisit(m,p,cityKey){const warm=bonusForEffect(m,p,'warmshowers'),journal=bonusForEffect(m,p,'travel_journal');if(warm&&p.warmTurn!==m.turn){p.energy=Math.min(energyCap(m,p),p.energy+1);p.warmTurn=m.turn;note(m,p,`${p.name} récupère 1 énergie grâce à ${warm.name}.`);}
  if(journal&&!p.journalCities.includes(cityKey)){p.journalCities.push(cityKey);if(p.journalCities.length%3===0){p.points+=2;note(m,p,`${p.name} gagne 2 points grâce à ${journal.name}.`);}}
 }
-export function onTurnEnd(m,p){const solar=bonusForEffect(m,p,'solar');if(solar){const old=p.energy;p.energy=Math.min(m.rules.maxEnergy,p.energy+1);if(p.energy>old)note(m,p,`${p.name} récupère 1 énergie grâce à ${solar.name}.`);}}
+export function onTurnEnd(m,p){const solar=bonusForEffect(m,p,'solar');if(solar){const old=p.energy;p.energy=Math.min(energyCap(m,p),p.energy+1);if(p.energy>old)note(m,p,`${p.name} récupère 1 énergie grâce à ${solar.name}.`);}}

@@ -971,3 +971,20 @@ html.reduce-motion .mc-clouds{display:none}
 .menu-c .mc-import input{min-height:0;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;width:auto}
 @media(max-width:760px){.menu-c .mc-sign.main{font-size:24px;min-height:60px}.menu-c .mc-sign{font-size:20px}}
 .mc-item-name{min-width:0}
+
+/* Aventure : cols mythiques nommés et lieux remarquables cachés */
+.board-adventure{pointer-events:none}
+.board-adventure title{pointer-events:auto}
+.col-flag-inner,.landmark-inner{transform:scale(var(--sym,1))}
+.col-pole{stroke:#3b2a14;stroke-width:1.6;stroke-linecap:round;fill:none}
+.col-cloth{fill:#f2a541;stroke:#3b2a14;stroke-width:.8;stroke-linejoin:round}
+.col-flag.claimed .col-cloth{stroke:#fff8e6}
+.col-name{fill:#3b2a14;paint-order:stroke;stroke:#fff3cf;stroke-width:calc(3px * var(--lab,1));stroke-linejoin:round;font:italic 700 calc(8.5px * var(--lab,1)) 'Fraunces',Georgia,serif;text-anchor:middle;transform:translateY(calc(var(--lab,1) * 11px + 9px))}
+.landmark circle{fill:#1b1406;stroke:#f2a541;stroke-width:1.6}
+.landmark text{fill:#f6d36a;font:900 10px 'Fraunces',Georgia,serif;text-anchor:middle}
+.landmark.found circle{fill:#fff3cf;stroke:#b07a2a;stroke-width:1;opacity:.85}
+.landmark.found text{fill:#b07a2a;font-size:7px}
+@media (prefers-reduced-motion:no-preference){.supplied-map:not(.motion-reduced) .landmark:not(.found) .landmark-inner{animation:landmark-breathe 3.2s ease-in-out infinite}}
+@keyframes landmark-breathe{0%,100%{opacity:.82}50%{opacity:1}}
+.mc-hud>div>small{font-size:14px;color:var(--mc-mute);margin-top:2px}
+.col-name.up{transform:translateY(calc(var(--lab,1) * -14px - 12px))}

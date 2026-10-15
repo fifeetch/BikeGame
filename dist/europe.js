@@ -1,8 +1,10 @@
 import {MAP_CELLS} from './assets/europe/board-data.js';
 
-export const MAP_VERSION=11;
+export const MAP_VERSION=12;
 // Ferries : de port à port, comme les liaisons réelles les plus utilisées.
 export const FERRY_ROUTES=[['Calais','Douvres'],['Dublin','Holyhead'],['Helsingør','Helsingborg'],['Hirtshals','Kristiansand'],['Ancona','Split'],['Thessalonique','Izmir']];
+// Cols mythiques nommés, placés à leur vraie position (case la plus proche, en montagne).
+export const NAMED_COLS=[{name:'Col du Tourmalet',q:3,r:35},{name:'Col du Galibier',q:8,r:33},{name:'Mont Ventoux',q:7,r:33},{name:'Col du Stelvio',q:11,r:31},{name:'Grossglockner',q:12,r:30},{name:'Transfăgărășan',q:23,r:32},{name:'Trollstigen',q:-2,r:10},{name:'Alto de l’Angliru',q:-2,r:35}];
 export const MAP_WIDTH=1261, MAP_HEIGHT=842, HEX_SPACING=29/Math.sqrt(2), HEX_RADIUS=HEX_SPACING/Math.sqrt(3), HEX_ROW_STEP=HEX_RADIUS*1.5;
 export const HEX_DIRECTIONS=[[1,0],[1,1],[0,1],[-1,0],[-1,-1],[0,-1]];
 export const hexKey=(q,r)=>`hex-${q}-${r}`;
@@ -15,6 +17,7 @@ export const CITY_ANCHORS={Dublin:[231,260],Londres:[332,299],Paris:[350,420],Li
 
 export function europeBoard(from,to){
  const nodes=MAP_CELLS.map((c,i)=>({id:i+1,key:c.name?'city-'+c.name:hexKey(c.q,c.r),q:c.q,r:c.r,name:c.name||'',x:c.x,y:c.y,type:c.type,roads:[],rotation:0,links:[]}));
+ for(const c of NAMED_COLS){const t=nodes.find(t=>t.q===c.q&&t.r===c.r&&!t.name&&t.type!=='mer');if(t){t.type='col';t.colName=c.name;}}
  const byName=Object.fromEntries(nodes.filter(t=>t.name).map(t=>[t.name,t]));
  const board={},edges=[];for(const t of nodes)board[t.key]=t;
  const link=(a,b,ferry=false)=>{if(!a||!b||a===b||a.links.includes(b.key))return;a.links.push(b.key);b.links.push(a.key);edges.push({a:a.key,b:b.key,ferry});};

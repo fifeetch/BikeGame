@@ -29,7 +29,7 @@ test('supplied map has one regular hit hex per cell, medium mountain, and city a
  for(const t of cells.filter(t=>t.name))assert(seen.has(t.key),t.name+' is isolated');
 });
 test('setup equipment respects prices, capacity and grants three cards',()=>{
- const m=match(),p=S.player(m);assert.equal(p.money,1);assert.equal(S.inventorySpace(m),4);assert.equal(p.cardHand.length,3);
+ const m=match(),p=S.player(m);assert.equal(p.money,6);assert.equal(S.inventorySpace(m),4);assert.equal(p.cardHand.length,3);
  assert.throws(()=>S.createMatch([{...roster[0],items:['tente','duvet','kit']}],'plateau',CLASSIC,1));
 });
 test('a saved Europe game refreshes its click targets without losing the rider',()=>{
@@ -52,7 +52,7 @@ test('ferry is paid, requires confirmation API and ends the day with draw choice
  // Ferries de port à port : le cycliste part du port danois de Helsingør vers Helsingborg (Suède).
  assert.equal(p.pos,'city-Copenhague');assert(!S.ferryOptions(m).length);p.pos='city-Helsingør';assert(S.ferryOptions(m).some(t=>t.key==='city-Helsingborg'));
  assert(!S.moves(m).some(t=>t.key==='city-Helsingborg'));assert(!S.move(m,'city-Helsingborg'));
- assert(S.travelFerry(m,'city-Helsingborg'));assert.equal(p.pos,'city-Helsingborg');assert.equal(p.money,2);assert.equal(m.phase,'card-choice');
+ assert(S.travelFerry(m,'city-Helsingborg'));assert.equal(p.pos,'city-Helsingborg');assert.equal(p.money,7);assert.equal(m.phase,'card-choice');
  assert.equal(m.cardChoices.length,2);assert(S.chooseCard(m,0));assert.equal(p.cardHand.length,4);
 });
 test('flat card hits another player on their next day; kit repairs, no kit returns to city',()=>{

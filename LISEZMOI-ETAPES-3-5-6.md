@@ -53,3 +53,11 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - **3. Garage** (pour chaque cycliste) : choix du vélo (Gravel ou Randonnée, effets lus dans les règles) et chargement des sacoches. Chaque objet acheté va dans une vraie sacoche dessinée sur le vélo ; la bourse, les places et une jauge de poids réagissent en direct. Le poids est une ambiance : il ne change pas les règles.
 - **4. Voyage** : trois cartes illustrées avec la longueur du voyage en cases.
 - Les règles du jeu ne changent pas. Fichier : `dist/menus.js` ; styles en fin de `dist/style.css` (bloc « Menus style C »).
+
+## Nouvelles mécaniques d'aventure (validées par Fi)
+- **Lieux remarquables cachés** : 24 jetons « ? » posés au hasard en début de partie (même graine, mêmes jetons), jamais sur une ville ni un col, à 3 cases au moins les uns des autres. Le premier cycliste qui passe dessus gagne des points d'aventure : 1 point (50 % des jetons), 2 points (30 %), 3 points (20 %). Le jeton devient alors une petite étoile.
+- **Cols mythiques nommés** : Col du Tourmalet, Col du Galibier, Mont Ventoux, Col du Stelvio, Grossglockner, Transfăgărășan, Trollstigen, Alto de l'Angliru, placés à leur vraie position (`NAMED_COLS` dans `dist/europe.js`, carte n° 12). Passer un col coûte 3 d'énergie et rapporte **2 points d'aventure** (avant : 6). Le premier à franchir un col gagne **+3** (« premier de cordée », son drapeau prend sa couleur). Le titre **Grimpeur** donne **+5** pour 3 cols différents.
+- **Fatigue** : jauge de 0 à 3. Chaque journée où l'on roule ajoute +1, et +1 de plus si on a passé un col. Une nuit au camping ou à l'hôtel (ou la carte « Nuit chez l'habitant ») la remet à 0. Le bivouac et les jours sans rouler ne la changent pas. À 3, le cycliste est **fourbu** : son énergie maximale baisse de 2 jusqu'à sa prochaine vraie nuit.
+- **Budget du voyage** : l'action « Travailler » est retirée. Chaque cycliste reçoit 5 pièces après l'achat de son matériel, puis 5 pièces tous les 5 tours.
+- Tous les chiffres se règlent dans **Règles** (groupes « Budget du voyage », « Lieux cachés et cols », « Fatigue »).
+- Tests : `tests/aventure-mecaniques.test.js` (6 tests). `npm test` : 128 tests, 105 réussis, 23 échecs (les mêmes 23 qu'avant, aucun nouvel échec). Les tests qui vérifiaient l'argent ou le bouton « Travailler » ont été mis à jour.
