@@ -119,3 +119,12 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
   - Sacoches : les places du vélo dessinées, remplies par les objets ; encadré « Ce que ça t'apporte » ; boutique avec description, prix et place.
   - Voyage, Cartes, Carnet : mêmes couleurs papier.
 - **Pions** : chaque joueur est un médaillon crème avec un cycliste sur son vélo (maillot, cadre et casque à sa couleur) et son numéro dans une pastille. Le cycliste regarde dans le sens où il roule.
+
+## Rencontres (au choix en début de partie, idéal en solo)
+- Sur l'écran des cyclistes, bloc **« Événements de la route »** : **Cartes Événement** (comme avant, par défaut) ou **Rencontres**. Avec les rencontres, plus aucune carte (ni main, ni pioche, ni attaque) : l'onglet Cartes et le bouton « En main » disparaissent.
+- **Chaque soir** (après une journée de route, un repos ou un bateau), une rencontre liée à l'endroit s'ouvre : type de case (ville, montagne, côte, plaine), région de la météo, ou partout. On choisit parmi 2 ou 3 réponses ; certaines coûtent des pièces ou un repas. Pas de répétition tant qu'il reste des rencontres possibles à cet endroit.
+- **Effets** : énergie (sans dépasser le maximum), repas, pièces, points d'aventure, fatigue, et une case de plus ou de moins **le lendemain**.
+- **20 rencontres** dans `dist/encounters.js` (berger de l'alpage, grange ouverte, boulangerie, pêcheurs, cycliste égaré, fête du village, babouchka, vigneron…). Fi peut y écrire ses vraies rencontres en gardant la même forme.
+- Chaque rencontre vécue entre dans le **carnet de voyage** avec son jour.
+- Sauvegarde possible en pleine rencontre. Tests : 3 tests dans `tests/meteo-carnet.test.js` ; robots : 1 000 rencontres jouées, aucune erreur (`RENCONTRES=1 node tools/simulation/parties-auto.mjs`).
+- Correction : la note de la **fenêtre d'intervention** (et les cadres clairs des fenêtres sombres) est maintenant lisible.

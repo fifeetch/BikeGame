@@ -7,6 +7,7 @@ import * as C from './event-card-engine.js';
 import {EVENT_CARDS,normalizeEventEdits} from './event-cards.js';
 import {applyRoads,isRoadStep,hasRoad} from './routes.js';
 import {regionOf,weatherOn,forecast,REGIONS,WEATHER,STORM_MAX} from './weather.js';
+import {ENCOUNTERS} from './encounters.js';
 
 export const player=m=>m.players[m.activeIndex];
 // ---------- Règle « hors route » (mode Plateau) ----------
@@ -47,7 +48,7 @@ export function createMatch(roster,mode='plateau',rules=CLASSIC,seed=randomSeed(
  if(!['plateau','tuiles'].includes(mode))throw Error('Mode inconnu.');
  const r=validateRules(rules);for(const p of roster)if(!r.bikes[p.bike]||!voyages.some(v=>v.id===p.voyage))throw Error('Vélo ou objectif inconnu.');
  const base=E.makeGame(roster[0].bike,seed,roster[0].voyage,mode);
- const m={version:2,cardVersion:3,forecast:Boolean(r.weather?.forecast&&mode==='plateau'),customCards:normalizeCustomCards(customCards),eventCardEdits:normalizeEventEdits(eventCardEdits),mode,seed:base.seed,board:base.board,edges:base.edges||[],mapVersion:base.mapVersion,deck:base.deck,hand:base.hand,rules:r,players:[],activeIndex:0,round:1,turn:1,phase:mode==='plateau'?'move':'place',moved:0,ate:0,placed:false,event:null,cardChoices:[],turnKind:'travel',done:false,history:[],stats:{turns:0,events:0,categories:{negative:0,positive:0,challenge:0},terrain:{},work:0,rest:0,energySpent:0,moneySpent:0}};
+ const m={version:2,cardVersion:3,forecast:Boolean(r.weather?.forecast&&mode==='plateau'),encounters:Boolean(r.encounters?.enabled&&mode==='plateau'),customCards:normalizeCustomCards(customCards),eventCardEdits:normalizeEventEdits(eventCardEdits),mode,seed:base.seed,board:base.board,edges:base.edges||[],mapVersion:base.mapVersion,deck:base.deck,hand:base.hand,rules:r,players:[],activeIndex:0,round:1,turn:1,phase:mode==='plateau'?'move':'place',moved:0,ate:0,placed:false,event:null,cardChoices:[],turnKind:'travel',done:false,history:[],stats:{turns:0,events:0,categories:{negative:0,positive:0,challenge:0},terrain:{},work:0,rest:0,energySpent:0,moneySpent:0}};
  roster.forEach((entry,i)=>{
   const v=voyages.find(v=>v.id===entry.voyage);let pos;
   if(mode==='plateau')pos='city-'+v.from;
@@ -179,7 +180,7 @@ export function endTurn(m){if(m.pendingAttack||m.done||!['move','place'].include
   if(!was&&isExhausted(m,rider)){rider.energy=Math.min(rider.energy,energyCap(m,rider));record(m,'fatigue',`${rider.name} est fourbu : énergie maximale −${fatigue.maxEnergyPenalty} jusqu’à une vraie nuit (camping ou hôtel).`);}}
  rider.dayCols=0;
  record(m,'end','Fin du tour sur '+(m.board[player(m).pos].name||E.terrains[m.board[player(m).pos].type].name)+'.',{distance:m.moved,action:m.turnKind});
- if(C.isEventGame(m)){const p=player(m);C.onTurnEnd(m,p);if(p.blockedFirst){for(const effect of (p.pendingEffects||[]).filter(e=>e.kind==='road_closed'))C.discard(m,effect.cardId);p.pendingEffects=(p.pendingEffects||[]).filter(e=>e.kind!=='road_closed');p.blockedFirst=null;}p.freeSteps=0;p.freeGeneralSteps=0;p.freeRoadSteps=0;p.bonusDistanceUsed=0;p.shortcutActive=false;C.drawChoices(m);if(!m.cardChoices.length&&!m.pendingAttack)advance(m);return true;}
+ if(C.isEventGame(m)){const p=player(m);C.onTurnEnd(m,p);if(p.blockedFirst){for(const effect of (p.pendingEffects||[]).filter(e=>e.kind==='road_closed'))C.discard(m,effect.cardId);p.pendingEffects=(p.pendingEffects||[]).filter(e=>e.kind!=='road_closed');p.blockedFirst=null;}p.freeSteps=0;p.freeGeneralSteps=0;p.freeRoadSteps=0;p.bonusDistanceUsed=0;p.shortcutActive=false;if(m.encounters){beginEncounter(m);return true;}C.drawChoices(m);if(!m.cardChoices.length&&!m.pendingAttack)advance(m);return true;}
  m.cardChoices=[drawCard(m),drawCard(m)];m.phase='card-choice';record(m,'draw','Deux cartes de jeu piochées : en garder une.');return true;
 }
 export function chooseCard(m,index){if(C.isEventGame(m)){if(!C.keepChoice(m,index))return false;if(m.phase!=='card-discard')advance(m);return true;}
@@ -207,6 +208,25 @@ export function resolve(m,choice='accept'){
  record(m,'resolve',accepted?'Carte résolue : '+e.title+(protection?' (équipement utilisé).':'.'):'Défi refusé : '+e.title);m.event=null;advance(m);return true;
 }
 function applyEffect(m,effect){const p=player(m);for(const [k,v]of Object.entries(effect))p[k]=Math.max(0,k==='energy'?Math.min(energyCap(m,p),p[k]+v):k==='food'&&C.isEventGame(m)?Math.min(C.foodCapacity(m,p),p[k]+v):p[k]+v);}
+// ---------- Rencontres (mode choisi au début de la partie, à la place des cartes Événement) ----------
+export const encountersOn=m=>Boolean(m.encounters&&m.mode==='plateau');
+function encounterPlace(m,p){const t=m.board[p.pos],type=['moyenne_montagne','montagne','col'].includes(t?.type)?'montagne':t?.type;return {type,region:regionOf(t)};}
+export function encounterOptions(m,p=player(m)){const {type,region}=encounterPlace(m,p),seen=p.encountersSeen||[];
+ const fits=ENCOUNTERS.filter(e=>e.where==='partout'||e.where===type||e.where===region);const fresh=fits.filter(e=>!seen.includes(e.id));return fresh.length?fresh:fits;}
+function beginEncounter(m){const p=player(m),options=encounterOptions(m,p);if(!options.length){advance(m);return;}
+ let h=(m.seed^Math.imul(m.turn+1,0x9e3779b1))>>>0;h=Math.imul(h^(h>>>15),0x2c1b3c6d)>>>0;const e=options[h%options.length];
+ m.encounter={id:e.id,playerId:p.id};m.phase='encounter';}
+export const currentEncounter=m=>m.encounter?ENCOUNTERS.find(e=>e.id===m.encounter.id):null;
+export function canChooseEncounter(m,index){const e=currentEncounter(m),c=e?.choices[index],p=player(m);if(!c||m.phase!=='encounter')return false;return Object.entries(c.need||{}).every(([k,v])=>(p[k]||0)>=v);}
+export function resolveEncounter(m,index){if(!canChooseEncounter(m,index))return false;const e=currentEncounter(m),c=e.choices[index],p=player(m),fx=c.effect||{};
+ if(fx.energy)p.energy=Math.max(0,Math.min(energyCap(m,p),p.energy+fx.energy));
+ for(const k of ['food','money','points'])if(fx[k])p[k]=Math.max(0,p[k]+fx[k]);
+ if(fx.food)p.food=Math.min(p.food,C.foodCapacity(m,p));
+ if(fx.fatigue&&m.rules.fatigue?.enabled){const was=isExhausted(m,p);p.fatigue=Math.max(0,Math.min(m.rules.fatigue.days,(p.fatigue||0)+fx.fatigue));if(!was&&isExhausted(m,p))p.energy=Math.min(p.energy,energyCap(m,p));}
+ if(fx.tomorrow)p.nextDay={tomorrow:fx.tomorrow};
+ p.encountersSeen=[...(p.encountersSeen||[]),e.id];
+ record(m,'encounter',`${e.title} : ${c.label}. ${c.text}`,{encounterId:e.id,choice:index});
+ m.encounter=null;m.phase='move';advance(m);return true;}
 function advance(m){player(m).turns++;m.stats.turns++;const r=m.rules.victory,budget=m.rules.budget,rider=player(m);
  if(budget?.amount>0&&rider.turns%budget.every===0){rider.money+=budget.amount;record(m,'budget',`Budget du voyage : +${budget.amount} pièces pour ${rider.name} (tous les ${budget.every} tours).`);}
  const win=r.mode==='objectives'&&(r.allObjectives?m.players.every(p=>p.completed):m.players.some(p=>p.completed))||r.mode==='points'&&m.players.some(p=>p.points>=r.points);
@@ -219,6 +239,8 @@ function advance(m){player(m).turns++;m.stats.turns++;const r=m.rules.victory,bu
  const nextPlayer=player(m);nextPlayer.turnModifiers={};
  if(C.isEventGame(m)){
   nextPlayer.freeSteps=0;nextPlayer.freeGeneralSteps=0;nextPlayer.freeRoadSteps=0;nextPlayer.bonusDistanceUsed=0;nextPlayer.shortcutActive=false;nextPlayer.blockedFirst=null;
+  // Rencontre de la veille : une case de plus (cases offertes) ou de moins aujourd'hui.
+  const nd=nextPlayer.nextDay;if(nd){if(nd.tomorrow>0){nextPlayer.freeSteps+=nd.tomorrow;nextPlayer.freeGeneralSteps+=nd.tomorrow;}else if(nd.tomorrow<0)nextPlayer.turnModifiers.distancePenalty=-nd.tomorrow;nextPlayer.nextDay=null;}
   for(const effect of [...(nextPlayer.pendingEffects||[])])if(['skip_move','short_move'].includes(effect.kind)){
    if(effect.kind==='skip_move')nextPlayer.turnModifiers.skipMove=true;else nextPlayer.turnModifiers.distancePenalty=(nextPlayer.turnModifiers.distancePenalty||0)+effect.value;
    C.discard(m,effect.cardId);nextPlayer.pendingEffects.splice(nextPlayer.pendingEffects.indexOf(effect),1);
@@ -231,12 +253,12 @@ export function serialize(m){return JSON.stringify(m);}
 export function load(text){
  const raw=JSON.parse(text);if(raw?.version===1)return migrate(raw);
  const count=n=>Number.isInteger(n)&&n>=0;
- if(raw?.version!==2||!Array.isArray(raw.players)||raw.players.length<1||raw.players.length>6||!raw.board||!count(raw.activeIndex)||!raw.players[raw.activeIndex]||!['plateau','tuiles'].includes(raw.mode)||!['move','place','event','card-choice','card-discard','card-intervention','card-resolution','puncture','finished'].includes(raw.phase)||!count(raw.round)||raw.round<1||!count(raw.turn)||!count(raw.moved)||raw.moved>(raw.cardVersion===3?40:5)||!Array.isArray(raw.history)||!Array.isArray(raw.deck)||!Array.isArray(raw.hand)||!raw.stats||!raw.stats.categories||!raw.stats.terrain)throw Error('Sauvegarde invalide.');
+ if(raw?.version!==2||!Array.isArray(raw.players)||raw.players.length<1||raw.players.length>6||!raw.board||!count(raw.activeIndex)||!raw.players[raw.activeIndex]||!['plateau','tuiles'].includes(raw.mode)||!['move','place','event','card-choice','card-discard','card-intervention','card-resolution','puncture','encounter','finished'].includes(raw.phase)||raw.phase==='encounter'&&!ENCOUNTERS.some(e=>e.id===raw.encounter?.id)||!count(raw.round)||raw.round<1||!count(raw.turn)||!count(raw.moved)||raw.moved>(raw.cardVersion===3?40:5)||!Array.isArray(raw.history)||!Array.isArray(raw.deck)||!Array.isArray(raw.hand)||!raw.stats||!raw.stats.categories||!raw.stats.terrain)throw Error('Sauvegarde invalide.');
   raw.rules=validateRules(raw.rules);
   if(raw.cardVersion===3)raw.eventCardEdits=normalizeEventEdits(raw.eventCardEdits||[]);
  raw.customCards=normalizeCustomCards(raw.customCards||[]);
  if(raw.cardVersion===3){raw.soloEventQueue??=[];raw.eventCardIds??=EVENT_CARDS.filter(c=>raw.players.length>1||c.targetType==='self').map(c=>c.id);
-  if(!Array.isArray(raw.eventCardIds)||!raw.eventCardIds.length||new Set(raw.eventCardIds).size!==raw.eventCardIds.length||raw.eventCardIds.some(id=>!EVENT_CARDS.some(c=>c.id===id))||!Array.isArray(raw.soloEventQueue)||raw.players.length>1&&raw.soloEventQueue.length)throw Error('Bibliothèque Événement invalide.');
+  if(!Array.isArray(raw.eventCardIds)||!raw.eventCardIds.length&&!raw.encounters||new Set(raw.eventCardIds).size!==raw.eventCardIds.length||raw.eventCardIds.some(id=>!EVENT_CARDS.some(c=>c.id===id))||!Array.isArray(raw.soloEventQueue)||raw.players.length>1&&raw.soloEventQueue.length)throw Error('Bibliothèque Événement invalide.');
   const ids=[...(raw.eventDeck||[]),...(raw.eventDiscard||[]),...(raw.cardChoices||[]),...raw.soloEventQueue,...(raw.pendingAttack?[raw.pendingAttack.cardId]:[]),...raw.players.flatMap(p=>[...(p.cardHand||[]),...(p.bonusCards||[]),...(p.pendingEffects||[]).map(e=>e.cardId)])],expected=raw.eventCardIds;
   if(!Array.isArray(raw.eventDeck)||!Array.isArray(raw.eventDiscard)||ids.length!==expected.length||new Set(ids).size!==expected.length||ids.some(id=>!expected.includes(id))||raw.players.some(p=>p.cardHand?.length>C.handLimit(raw)+1||p.bonusCards?.length>C.bonusLimit(raw)))throw Error('Pioche Événement invalide.');
   if(raw.pendingAttack&&(!raw.players.some(p=>p.id===raw.pendingAttack.actorId)||!raw.players.some(p=>p.id===raw.pendingAttack.targetId)||raw.pendingAttack.actorId===raw.pendingAttack.targetId&&!(raw.players.length===1&&raw.pendingAttack.solo===true)))throw Error('Attaque sauvegardée invalide.');

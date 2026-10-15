@@ -8,7 +8,7 @@ export const handLimit=m=>m.rules.eventCards?.handLimit??HAND_LIMIT;
 export const bonusLimit=m=>m.rules.eventCards?.bonusLimit??BONUS_LIMIT;
 export const drawPerTurn=m=>m.rules.eventCards?.drawPerTurn??2;
 // Avec la météo annoncée, les cartes climatiques sont retirées de la pioche.
-export const enabledCardIds=rules=>EVENT_CARDS.filter(c=>rules.eventCards?.categories?.[c.category]!==false&&!(rules.weather?.forecast&&c.category==='climatic')).map(c=>c.id);
+export const enabledCardIds=rules=>rules.encounters?.enabled?[]:EVENT_CARDS.filter(c=>rules.eventCards?.categories?.[c.category]!==false&&!(rules.weather?.forecast&&c.category==='climatic')).map(c=>c.id);
 export const isEventGame=m=>m?.cardVersion===3;
 export const card=(id,m)=>eventCardById(id,m);
 export const hasBonus=(p,id)=>p.bonusCards?.includes(id)||false;
@@ -22,7 +22,7 @@ export function note(m,actor,text,kind='card',extra={}){
 export function discard(m,id){if(id)m.eventDiscard.push(id);}
 function shuffle(m,ids){const out=[...ids];for(let i=out.length-1;i>0;i--){const j=Math.floor(random(m)*(i+1));[out[i],out[j]]=[out[j],out[i]];}return out;}
 export function draw(m){if(!m.eventDeck.length&&m.eventDiscard.length){m.eventDeck=m.rules.eventCards?.shuffle===false?[...m.eventDiscard]:shuffle(m,m.eventDiscard);m.eventDiscard=[];}return m.eventDeck.pop()||null;}
-export function setup(m){m.eventCardIds=enabledCardIds(m.rules);const starting=m.rules.eventCards?.startingHand??3;
+export function setup(m){m.eventCardIds=enabledCardIds(m.rules);const starting=m.eventCardIds.length?m.rules.eventCards?.startingHand??3:0;// mode Rencontres : aucune carte
  if(starting*m.players.length>m.eventCardIds.length)throw Error('La pioche ne contient pas assez de cartes pour la distribution de départ.');
  m.eventDeck=m.rules.eventCards?.shuffle===false?[...m.eventCardIds].reverse():shuffle(m,m.eventCardIds);m.eventDiscard=[];m.cardChoices=[];m.cardWindow=null;m.pendingAttack=null;m.soloEventQueue=[];
  for(const p of m.players){p.bonusCards=[];p.pendingEffects=[];p.journalCities=[];p.cardHand=[];p.freeSteps=0;p.freeGeneralSteps=0;p.freeRoadSteps=0;p.bonusDistanceUsed=0;p.cardPlayedTurn=0;p.climatePlayedTurn=0;p.negativePlayedTurn=0;p.warmTurn=0;p.lightTurn=0;for(let i=0;i<starting;i++){const id=draw(m);if(id)p.cardHand.push(id);}}

@@ -1339,3 +1339,32 @@ body .player-sheet-mount .player-mat.fiche,body .modal .player-mat.fiche,body .p
 body .player-mat.fiche .fiche-end{text-transform:none;letter-spacing:0}
 body .player-mat.fiche .fiche-shop em{color:var(--f-ink)}
 @media(max-width:760px){body .player-mat.fiche .fiche-tabs button{font-size:13px;letter-spacing:0}body .player-mat.fiche .fiche-tabs button span{white-space:nowrap}}
+
+/* Fenêtres sombres : plus de cadres clairs avec un texte crème illisible */
+.modal .event-intervention-note{background:rgba(127,192,232,.12);border:2px solid #7fc0e8;color:#f6e7c1;font-size:19px;line-height:1.4}
+.modal .event-pile{background:rgba(246,231,193,.08);border-color:rgba(246,231,193,.4);color:#f6e7c1}
+.modal:not(.player-sheet-modal) .event-bonus-slot{background:rgba(246,231,193,.08);color:#f6e7c1;border-color:rgba(242,165,65,.6)}
+
+/* ---------- Rencontres : fenêtre du soir ---------- */
+.modal.encounter-modal{padding:0;max-width:560px;border-color:#f2a541}
+.modal .encounter{display:flex;flex-direction:column;gap:0;margin:0;border-radius:18px;overflow:hidden;background:#f6e7c1;color:#1b1406;font-family:'Barlow',system-ui,sans-serif}
+.encounter-art{position:relative}
+.encounter-art svg{display:block;width:100%;height:auto}
+.encounter-art span{position:absolute;left:16px;top:14px;padding:6px 14px;border-radius:999px;background:#1b1406;color:#f6d36a;font:700 15px 'Barlow Condensed',system-ui,sans-serif;letter-spacing:.18em;text-transform:uppercase}
+.encounter-body{display:flex;flex-direction:column;gap:12px;padding:20px 24px 24px}
+.encounter-body .eyebrow{color:#8a5a14;font-size:14px;letter-spacing:.14em}
+.encounter-body h2{margin:0;font:900 32px/1.05 'Fraunces',Georgia,serif;color:#1b3b38}
+.encounter-quote{margin:0;font:italic 700 19px/1.4 'Fraunces',Georgia,serif;color:#5a4a2c}
+.encounter-choices{display:flex;flex-direction:column;gap:10px}
+.modal .encounter-choice{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-height:64px;padding:12px 16px;border-radius:14px;border:2px solid #1b3b38;background:#fff7df;color:#1b1406;text-align:left;font-family:'Barlow',system-ui,sans-serif;cursor:pointer;text-transform:none;letter-spacing:0}
+.modal .encounter-choice b{font-size:19px}
+.modal .encounter-choice small{font-size:16px;color:#5a4a2c;font-weight:600}
+.modal .encounter-choice.quiet{border-style:dashed;border-color:#c9b88d;background:transparent}
+.modal .encounter-choice.quiet small{color:#5a4a2c;font-weight:500}
+.modal .encounter-choice:not(:disabled):hover{background:#fff1c9;border-color:#e08a1e}
+.modal .encounter-choice:disabled{opacity:.55;cursor:not-allowed}
+.modal .encounter-choice em{font-style:normal;font-size:15px;color:#a3361f}
+.carnet-souvenirs li.carnet-rencontre{border-color:#7fae5a}
+body .modal.encounter-modal .encounter-body h2{color:#1b3b38}
+body .modal.encounter-modal .encounter-body .encounter-quote{color:#5a4a2c}
+body .modal.encounter-modal .encounter-body .eyebrow{color:#8a5a14}

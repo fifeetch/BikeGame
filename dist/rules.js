@@ -11,6 +11,8 @@ export const CLASSIC={
  offroad:{enabled:true,item:'gps',maxDistance:{gravel:3,randonneur:2}},
  // Météo : forecast=true → météo annoncée (weather.js) et cartes Événement climatiques retirées ; false → cartes météo.
  weather:{forecast:false},
+ // Rencontres : enabled=true → plus de cartes Événement ; chaque soir, une rencontre propose un choix (encounters.js).
+ encounters:{enabled:false},
  bikes:{gravel:{name:'Gravel',price:5,capacity:4,mountainDiscount:0,extraDistance:0,extraFood:0},randonneur:{name:'Randonnée',price:3,capacity:8,mountainDiscount:0,extraDistance:0,extraFood:0}},
  rest:{bivouac:{name:'Bivouac',price:0,energy:3,days:1,tent:true,cityOnly:false},camping:{name:'Camping',price:1,energy:5,days:1,tent:false,cityOnly:false},hotel:{name:'Hôtel',price:3,energy:10,days:1,tent:false,cityOnly:true}},
  food:{energy:3,stoveBonus:2,price:1,quantity:2,maxPerTurn:1,cityOnly:true,restaurantPrice:1,restaurantEnergy:4},

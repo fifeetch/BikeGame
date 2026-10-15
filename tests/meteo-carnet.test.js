@@ -59,3 +59,29 @@ test('carnet : les cases hors route sont comptées et chaque case garde son jour
  const m=game(false),p=S.player(m),off=neighbours(m,'city-Paris').find(t=>!isRoadStep(m.board['city-Paris'],t));m.round=4;
  assert(S.move(m,off.key));assert.equal(p.stats.offroad,1);assert.equal(p.travelHistory.at(-1).day,4);
 });
+
+// ---------- Rencontres (mode choisi au début de la partie) ----------
+import {ENCOUNTERS} from '../dist/encounters.js';
+function encounterGame(){const r=clone(CLASSIC);r.encounters.enabled=true;const m=S.createMatch([{name:'Fi',bike:'gravel',voyage:'traversee',items:[]}],'plateau',r,5);return m;}
+
+test('rencontres : plus aucune carte Événement, une rencontre chaque soir, la partie se sauvegarde en pleine rencontre',()=>{
+ const m=encounterGame(),p=S.player(m);assert(S.encountersOn(m));assert.equal(m.eventCardIds.length,0);assert.equal(p.cardHand.length,0);
+ assert(S.endTurn(m));assert.equal(m.phase,'encounter');const e=S.currentEncounter(m);assert(e);
+ const back=S.load(S.serialize(m));assert.equal(back.phase,'encounter');assert.equal(S.currentEncounter(back).id,e.id);
+ const free=e.choices.findIndex((c,i)=>S.canChooseEncounter(m,i));const day=m.round;assert(S.resolveEncounter(m,free));
+ assert.equal(m.phase,'move');assert.equal(m.round,day+1);assert(m.history.some(h=>h.kind==='encounter'));assert(p.encountersSeen.includes(e.id));
+});
+
+test('rencontres : effets appliqués (énergie plafonnée, coût exigé, case de plus ou de moins le lendemain)',()=>{
+ for(const e of ENCOUNTERS){assert(['partout','ville','montagne','cote','plaine','ouest','alpes','nord','est','balkans'].includes(e.where),e.id);assert(e.choices.length>=2);}
+ let m=encounterGame(),p=S.player(m);S.endTurn(m);m.encounter={id:'mecano',playerId:p.id};
+ p.money=0;assert(!S.canChooseEncounter(m,0),'il faut 2 pièces');p.money=5;assert(S.resolveEncounter(m,0));assert.equal(p.money,3);assert.equal(S.distance(m),6,'une case de plus demain');
+ m=encounterGame();p=S.player(m);S.endTurn(m);m.encounter={id:'crevaison-nuit',playerId:p.id};assert(S.resolveEncounter(m,1));assert.equal(S.distance(m),4,'une case de moins demain');
+ m=encounterGame();p=S.player(m);S.endTurn(m);m.encounter={id:'source',playerId:p.id};p.energy=9;assert(S.resolveEncounter(m,0));assert.equal(p.energy,10,'énergie plafonnée au maximum');
+});
+
+test('rencontres : choisies selon l’endroit (ville, montagne, région) et sans répétition tant que possible',()=>{
+ const m=encounterGame(),p=S.player(m);p.pos='city-Paris';
+ for(const e of S.encounterOptions(m,p))assert(['partout','ville','ouest'].includes(e.where),e.id);
+ const first=S.encounterOptions(m,p).length;p.encountersSeen=[S.encounterOptions(m,p)[0].id];assert.equal(S.encounterOptions(m,p).length,first-1);
+});

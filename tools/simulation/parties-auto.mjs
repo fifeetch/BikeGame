@@ -9,8 +9,8 @@ import {CLASSIC,energyCap} from '../../dist/rules.js';
 import {voyages,progress} from '../../dist/voyages.js';
 
 const GAMES=Number(process.argv[2]||20),MAX_ROUNDS=150;
-// Options : FORECAST=1 (météo annoncée au lieu des cartes météo) ; SAVE=fichier.json STOP_ROUND=8 (arrête la 1re partie au jour 8 et l'enregistre, pour la tester dans le navigateur).
-const RULES=(()=>{const r=JSON.parse(JSON.stringify(CLASSIC));if(process.env.FORECAST==='1')r.weather.forecast=true;return r;})();
+// Options : FORECAST=1 (météo annoncée au lieu des cartes météo) ; RENCONTRES=1 (rencontres au lieu des cartes Événement) ; SAVE=fichier.json STOP_ROUND=8 (arrête la 1re partie au jour 8 et l'enregistre, pour la tester dans le navigateur).
+const RULES=(()=>{const r=JSON.parse(JSON.stringify(CLASSIC));if(process.env.FORECAST==='1')r.weather.forecast=true;if(process.env.RENCONTRES==='1')r.encounters.enabled=true;return r;})();
 const LOADOUTS=[
  {bike:'gravel',items:['tente','gps']},          // 5+2+3 = 10 pièces
  {bike:'randonneur',items:['tente','kit','rechaud']},// sans GPS
@@ -60,6 +60,7 @@ function handlePhases(m,rand,ctx,guard=0){
   else if(m.phase==='card-discard')S.discardEventHand(m,0);
   else if(m.phase==='card-resolution'){for(const c of ['auto','tube','lose','kit','return'])if(S.resolvePendingCard(m,c))break;}
   else if(m.phase==='puncture')S.repairPuncture(m);
+  else if(m.phase==='encounter'){const e=S.currentEncounter(m),options=e.choices.map((c,i)=>i).filter(i=>S.canChooseEncounter(m,i));S.resolveEncounter(m,options[Math.floor(rand()*options.length)]);ctx.encounters=(ctx.encounters||0)+1;}
   else if(m.phase==='event'){for(const c of ['accept','refuse'])if(S.resolve(m,c))break;}
   else return true;
   check(m,'phase',ctx);
@@ -112,7 +113,7 @@ function playGame(n,seed,rulesTweak){
    problem('cyclistes immobiles','aucun mouvement pendant 12 jours',{...ctx,positions:m.players.map(q=>q.pos+' ⚡'+q.energy+' 🪙'+q.money+' 🍎'+q.food).join(' | ')});break;}
  }
  handlePhases(m,rand,ctx);roundTrip(m,ctx);
- stat.rounds=m.round;stat.done=m.done;stat.finished=m.players.filter(p=>p.completed).map(p=>p.name);stat.winner=S.ranking(m)[0]?.name;
+ stat.encounters=ctx.encounters||0;stat.rounds=m.round;stat.done=m.done;stat.finished=m.players.filter(p=>p.completed).map(p=>p.name);stat.winner=S.ranking(m)[0]?.name;
  stat.players_detail=m.players.map(p=>({name:p.name,bike:p.bike,gps:p.items.includes('gps'),voyage:p.voyage,completed:p.completed,points:p.points,cols:p.cols,money:p.money,fatigue:p.fatigue}));
  if(!m.done&&m.round>MAX_ROUNDS)problem('partie interminable',`pas finie après ${MAX_ROUNDS} jours`,ctx);
  return stat;

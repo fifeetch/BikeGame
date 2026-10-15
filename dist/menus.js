@@ -123,6 +123,11 @@ export function playersScreen({btn,roster,colors,rules}){
     <button type="button" data-action="weather-cards" aria-pressed="${!rules.weather?.forecast}" class="${!rules.weather?.forecast?'on':''}"><b>Cartes météo</b><small>Les cartes Événement climatiques (pluie, neige, vent…) se jouent entre cyclistes.</small></button>
     <button type="button" data-action="weather-forecast" aria-pressed="${!!rules.weather?.forecast}" class="${rules.weather?.forecast?'on':''}"><b>Météo annoncée</b><small>Chaque soir, le bulletin du lendemain pour 5 régions. Les cartes climatiques sont retirées.</small></button>
    </div></section>
+  <section class="mc-weather" aria-label="Événements de la partie"><div><p class="mc-kicker">Événements de la route</p><p>Les cartes à se jouer entre cyclistes, ou des rencontres à vivre chaque soir.</p></div>
+   <div class="mc-weather-choices" role="group" aria-label="Choix des événements">
+    <button type="button" data-action="events-cards" aria-pressed="${!rules.encounters?.enabled}" class="${!rules.encounters?.enabled?'on':''}"><b>Cartes Événement</b><small>On pioche, on garde, on joue ses cartes et on en donne aux autres.</small></button>
+    <button type="button" data-action="events-encounters" aria-pressed="${!!rules.encounters?.enabled}" class="${rules.encounters?.enabled?'on':''}"><b>Rencontres · idéal en solo</b><small>Plus de cartes : chaque soir, une rencontre liée à l’endroit propose un choix.</small></button>
+   </div></section>
   <footer class="mc-foot">${btn('← Plateau','modes','mc-ghost')}<span>Règles : ${esc(rules.name)} · ${rules.distance} cases/jour · ${rules.startEnergy} énergie · ${rules.startMoney} pièces · ${btn('Modifier','rules','mc-link')}</span>${btn('Au garage →','start','mc-go')}</footer>
  </main>`;
 }
