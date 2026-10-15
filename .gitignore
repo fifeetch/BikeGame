@@ -1,3 +1,4 @@
 board-inspect-*.png
 qa/
 *.tar.gz
+tools/simulation/rapport.json
