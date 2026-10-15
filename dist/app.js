@@ -678,14 +678,15 @@ async function netAction(a){
  return priorAct(a);};}
 // Après chaque affichage : envoyer ses coups, cacher ce qui n'est pas à soi, bandeau « à toi de jouer ».
 {const priorRender=render;render=()=>{
+ globalThis.document?.querySelectorAll?.('.net-banner').forEach(e=>e.remove());
  if(onlineGame())privacyCover=false;// chacun son écran : pas besoin de « passage de main »
  priorRender();
  if(!onlineGame()||screen!=='game')return;
  const mine=myTurn(),actor=seatName(NET.actorId(m)),brand=document.querySelector('header .brand');
  brand?.insertAdjacentHTML('beforeend',`<span class="net-pill ${mine?'mine':''}" role="status">${mine?'À toi de jouer':esc(actor)+' joue…'} · ${esc(online.code)}</span>`);
- document.body?.classList?.toggle('net-waiting',!mine);
+ document.body?.classList?.toggle('net-waiting',!mine);if(mine)document.querySelectorAll('.net-banner').forEach(e=>e.remove());
  if(!mine){const a=m.players.find(p=>p.id===NET.actorId(m)),what=m.pendingAttack?'répond à une carte…':m.phase==='card-intervention'?'peut jouer une carte météo…':'roule…';
-  document.querySelector('header')?.insertAdjacentHTML('afterend',`<div class="net-banner" role="status"><span class="nb-dot" style="background:${esc(a?.color||'#267b91')}"></span><b>C’est à ${esc(a?.name||'l’autre joueur')} de jouer</b><span>· jour ${m.round} · ${esc(a?.name||'')} ${what}</span><button type="button" data-action="net-resync" class="nb-btn">🔄 Recharger</button></div>`);}
+  document.querySelectorAll('.net-banner').forEach(e=>e.remove());document.body?.insertAdjacentHTML('beforeend',`<div class="net-banner" role="status"><span class="nb-dot" style="background:${esc(a?.color||'#267b91')}"></span><b>C’est à ${esc(a?.name||'l’autre joueur')} de jouer</b><span>· jour ${m.round} · ${esc(a?.name||'')} ${what}</span><button type="button" data-action="net-resync" class="nb-btn">🔄 Recharger</button></div>`);}
  if(netWasMyTurn===false&&mine)message='À toi de jouer !';netWasMyTurn=mine;
  try{document.title=(mine?'● À toi — ':'')+'L’Aventure à Vélo';}catch{}
  // Toute différence vient d'une action faite ici (hors de son tour, les actions sont bloquées) : on l'envoie.

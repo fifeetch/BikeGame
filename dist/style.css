@@ -1657,3 +1657,12 @@ header .event-piles .chat-btn:hover{background:#24504b}
 header .chat-btn.chat-top{flex:none;margin:0 12px;padding:10px 22px;border-radius:999px;border:2px solid #f2a541;background:#1b3b38;color:#f6e7c1;font:700 16px 'Barlow',sans-serif;cursor:pointer;min-height:0;white-space:nowrap;align-self:center}
 header .chat-btn.chat-top:hover{background:#24504b}
 @media(max-width:1500px){header .chat-btn.chat-top{padding:8px 12px;margin:0 6px}header .chat-btn.chat-top .chat-label{display:none}}
+/* Petits écrans (MacBook Air…) : le bandeau d'attente flotte au-dessus de la carte au lieu de prendre de la hauteur,
+   et la page peut défiler si tout ne tient pas. */
+.net-banner{position:fixed;top:78px;left:50%;transform:translateX(-50%);z-index:30;width:auto;max-width:min(860px,94vw);border-radius:999px;padding:8px 10px 8px 16px;gap:10px;font-size:14px;box-shadow:0 10px 26px rgba(0,0,0,.45)}
+.net-banner b{font-size:18px;white-space:nowrap}
+.net-banner>span:not(.nb-dot){white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.net-banner .nb-btn{margin-left:8px;padding:5px 12px;font-size:13px}
+#app:has(.game-split){overflow-y:auto}
+.game.game-split{min-height:600px}
+header.in-game~.game>.player-order,header.in-game~.game>.topbar,header.in-game~.game>.hint,header.in-game~.game>.objective{display:none}

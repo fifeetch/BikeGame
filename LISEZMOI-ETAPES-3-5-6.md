@@ -209,3 +209,5 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - **💬 Messages** (à côté de « À toi de jouer ») : pastille du nombre de messages non lus ; petit tiroir avec les 30 derniers messages, phrases rapides (À toi !, Bien joué 👏, Je reviens dans 5 min, 😅, 🚴💨) et ligne pour écrire (Entrée pour envoyer) ; bandeau de 4 secondes quand un message arrive. Messages rangés dans `/games/CODE/chat` (50 derniers), à part de l'état de la partie.
 
 - Bouton « 💬 Messages » déplacé dans la zone libre du haut, juste après la pioche et la défausse (icône seule sur les écrans étroits).
+
+- Correction (MacBook Air de Marion) : pendant le tour de l’autre, le bandeau orange était inséré juste sous l’en-tête et cassait une règle d’affichage : les anciens blocs du haut réapparaissaient et la carte devenait un petit bandeau. Le bandeau flotte maintenant au-dessus de la carte, et la page peut défiler si tout ne tient pas.
