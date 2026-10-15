@@ -171,3 +171,10 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - Le vélo s'appelle **Randonneuse** (et non « Randonnée »).
 - **Gravel : 5 cases par jour ; Randonneuse : 4 cases par jour** (elle garde ses 8 places de sacoche). Les règles enregistrées sur l'appareil sont mises à jour automatiquement.
 - **Cases par jour de chaque vélo réglables** : fenêtre « ⚙️ Règles » → « Vélos et inventaires » → « Cases par jour (1 à 5) » pour le Gravel et la Randonneuse (au lieu de l'ancien « bonus distance »). L'écran des cyclistes affiche « Gravel 5 / Randonneuse 4 cases/jour ».
+
+## Boutons de la journée plus clairs (15 octobre 2026, maquette AideC validée)
+- Sous la carte, **un seul gros bouton orange = la prochaine chose à faire** :
+  1. rien de tracé : consigne « 👆 Clique sur les cases entourées… » + petits boutons « 🌙 Me reposer aujourd'hui » (ouvre la fiche, rubrique Dormir) et « ⏭ Passer la journée » ;
+  2. étape tracée : « 🚴 Rouler N cases · −X ⚡ » + « ✕ Effacer » (la raison s'affiche si le parcours est impossible) ;
+  3. après avoir roulé : « ⏭ Finir ma journée » ; s'il reste des cases, une fenêtre demande confirmation.
+- Les anciens boutons « Terminer le tour », « Effectuer le parcours » et « Terminer ma journée » (fiche) sont remplacés.

@@ -1473,3 +1473,17 @@ body.net-waiting .player-sheet-dock,body.net-waiting .route-planner{opacity:.45;
 .mc-online-card .mc-vic-field input{width:60px;min-height:40px;font-size:18px}
 .mc-online-card .mc-victory p{color:#5a4a2c}
 .player-sheet-dock .dock-finish{background:#f2a541;color:#1b1406;border-color:#f2a541;font-weight:700}
+/* Barre de la journée : un seul gros bouton orange = la prochaine chose à faire */
+.player-sheet-dock .dock-day{display:flex;flex-wrap:wrap;align-items:center;gap:10px;flex:1 1 100%;min-width:0}
+.player-sheet-dock .dock-day .dock-main{flex:1 1 320px;min-height:64px;padding:12px 20px;border-radius:16px;border:0;background:#f2a541;color:#1b1406;font:900 clamp(19px,2.2vw,25px)/1.1 'Fraunces',Georgia,serif;box-shadow:0 5px 0 #b97a24;cursor:pointer}
+.player-sheet-dock .dock-day .dock-main:not(:disabled):hover{transform:translateY(-1px);box-shadow:0 6px 0 #b97a24,0 10px 20px rgba(0,0,0,.25)}
+.player-sheet-dock .dock-day .dock-main:disabled{opacity:.45;box-shadow:none;cursor:not-allowed}
+.player-sheet-dock .dock-day .dock-small{min-height:48px;padding:8px 16px;border-radius:14px;border:2px solid rgba(246,231,193,.45);background:transparent;color:#f6e7c1;font-weight:700;font-size:15px;cursor:pointer}
+.player-sheet-dock .dock-day .dock-hint{flex:1 1 320px;display:flex;align-items:center;gap:12px;margin:0;padding:12px 16px;border-radius:14px;border:2px dashed #f2a541;color:#f6e7c1;font-size:16px;line-height:1.35}
+.player-sheet-dock .dock-day .dock-hint>span:first-child{font-size:26px}
+.player-sheet-dock .dock-day .dock-hint small{opacity:.8}
+.player-sheet-dock .dock-day .dock-why{flex:1 1 100%;margin:0;color:#f2c98a;font-size:14px}
+.player-sheet-dock{flex-wrap:wrap}
+.player-sheet-dock .dock-day{grid-column:1/-1}
+body .player-sheet-dock .dock-day .dock-small{flex:0 0 auto;width:auto}
+body .player-sheet-dock .dock-day .dock-main{width:auto}
