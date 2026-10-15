@@ -888,7 +888,7 @@ function chatDrawer(){const me=online?.seat;return `<aside class="chat-drawer" a
  <div class="cd-quick">${CHAT_QUICK.map((t,i)=>`<button type="button" data-action="chat-quick-${i}">${esc(t)}</button>`).join('')}</div>
  <div class="cd-send"><input id="chat-input" maxlength="200" autocomplete="off" placeholder="Écris un message…"/><button type="button" data-action="chat-send">Envoyer</button></div></aside>`;}
 // Mise à jour légère (sans redessiner la partie) : pastille et tiroir.
-function chatRefresh(){const n=chatUnread(),b=document.querySelector('.chat-btn');if(b)b.innerHTML=`💬 Messages${n?` <span class="chat-badge">${n}</span>`:''}`;
+function chatRefresh(){const n=chatUnread(),b=document.querySelector('.chat-btn');if(b)b.innerHTML=`💬<span class="chat-label"> Messages</span>${n?` <span class="chat-badge">${n}</span>`:''}`;
  const d=document.querySelector('.chat-drawer');if(d){const list=d.querySelector('.cd-list'),html=document.createElement('div');html.innerHTML=chatDrawer();d.querySelector('.cd-list').replaceWith(html.querySelector('.cd-list'));d.querySelector('.cd-list').scrollTop=1e6;}}
 async function chatSend(text){text=String(text||'').trim();if(!text||!online)return;const me=m?.players.find(p=>p.id===online.seat);
  try{await NET.sendChat(online.code,{from:online.seat,name:me?.name||'',text});}catch(e){message='Message non envoyé : '+e.message;render();}}
@@ -899,8 +899,9 @@ async function chatSend(text){text=String(text||'').trim();if(!text||!online)ret
  return priorAct(a);};}
 {const priorRender=render;render=()=>{const typed=document.querySelector('#chat-input')?.value||'';priorRender();
  if(!onlineGame()||screen!=='game'){return;}chatListen();
- const brand=document.querySelector('header .brand')||document.querySelector('header');
- brand?.insertAdjacentHTML('beforeend',`<button type="button" class="chat-btn" data-action="chat-toggle"></button>`);chatRefresh();
+ // Dans la zone libre du haut, juste après la pioche et la défausse (sinon après le nom du jeu).
+ const slot=document.querySelector('header .event-piles'),brand=document.querySelector('header .brand')||document.querySelector('header');
+ if(slot)slot.insertAdjacentHTML('afterend',`<button type="button" class="chat-btn chat-top" data-action="chat-toggle"></button>`);else brand?.insertAdjacentHTML('beforeend',`<button type="button" class="chat-btn" data-action="chat-toggle"></button>`);chatRefresh();
  if(chatOpen){document.body.insertAdjacentHTML('beforeend',chatDrawer());const i=document.querySelector('#chat-input');if(i)i.value=typed;const l=document.querySelector('.cd-list');if(l)l.scrollTop=1e6;}
  else document.querySelectorAll('.chat-drawer').forEach(e=>e.remove());chatBind();};}
 globalThis.document?.addEventListener?.('keydown',e=>{if(e.target?.id==='chat-input'&&e.key==='Enter'){e.preventDefault();act('chat-send');}});

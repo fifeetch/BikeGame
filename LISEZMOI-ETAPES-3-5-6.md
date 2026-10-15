@@ -207,3 +207,5 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 ## En ligne : attente plus claire et petits messages (15 octobre 2026, maquette AttenteChatC validée)
 - **Pendant le tour de l'autre** : bandeau orange « C'est à Marion de jouer · jour N · Marion roule… » (+ « 🔄 Recharger ») ; barre du bas « ⏳ Marion roule… » ; **ta fiche complète** reste consultable (tous les onglets, ta main, ton voyage, ta météo), boutons d'action grisés.
 - **💬 Messages** (à côté de « À toi de jouer ») : pastille du nombre de messages non lus ; petit tiroir avec les 30 derniers messages, phrases rapides (À toi !, Bien joué 👏, Je reviens dans 5 min, 😅, 🚴💨) et ligne pour écrire (Entrée pour envoyer) ; bandeau de 4 secondes quand un message arrive. Messages rangés dans `/games/CODE/chat` (50 derniers), à part de l'état de la partie.
+
+- Bouton « 💬 Messages » déplacé dans la zone libre du haut, juste après la pioche et la défausse (icône seule sur les écrans étroits).

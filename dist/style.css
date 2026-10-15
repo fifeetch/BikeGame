@@ -1652,3 +1652,8 @@ body.net-waiting .net-mine-sheet button[data-action]:not([data-action=meteo]):no
 .chat-drawer .cd-send button{padding:0 14px;border-radius:10px;border:0;background:#f2a541;color:#1b1406;font-weight:700;cursor:pointer}
 .chat-toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:70;max-width:min(560px,92vw);padding:12px 18px;border-radius:14px;border:2px solid #f2a541;background:#102226;color:#f6e7c1;font-size:16px;box-shadow:0 12px 30px rgba(0,0,0,.5);cursor:pointer;text-align:left}
 header .brand .chat-btn{margin-left:8px;padding:6px 14px;border-radius:999px;border:2px solid #f2a541;background:#1b3b38;color:#f6e7c1;font:700 14px 'Barlow',sans-serif;cursor:pointer;min-height:0;white-space:nowrap}
+header .event-piles .chat-btn{margin-left:18px;padding:10px 20px;border-radius:999px;border:2px solid #f2a541;background:#1b3b38;color:#f6e7c1;font:700 16px 'Barlow',sans-serif;cursor:pointer;min-height:0;white-space:nowrap;align-self:center}
+header .event-piles .chat-btn:hover{background:#24504b}
+header .chat-btn.chat-top{flex:none;margin:0 12px;padding:10px 22px;border-radius:999px;border:2px solid #f2a541;background:#1b3b38;color:#f6e7c1;font:700 16px 'Barlow',sans-serif;cursor:pointer;min-height:0;white-space:nowrap;align-self:center}
+header .chat-btn.chat-top:hover{background:#24504b}
+@media(max-width:1500px){header .chat-btn.chat-top{padding:8px 12px;margin:0 6px}header .chat-btn.chat-top .chat-label{display:none}}
