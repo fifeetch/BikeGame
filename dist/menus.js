@@ -79,6 +79,7 @@ export function titleScreen({btn,saveLine='',hasSave=false,message='',reduced=fa
    <nav class="mc-signs" aria-label="Menu principal">
     ${btn('Nouveau voyage','new','mc-sign main')}
     ${hasSave?btn(`Reprendre${saveLine?` <small>${esc(saveLine)}</small>`:''}`,'continue','mc-sign'):''}
+    ${btn('Jouer en ligne','online','mc-sign')}
     ${btn('Cartes Événement','card-editor-open','mc-sign small')}
     ${btn('Créer une carte','editor-new','mc-sign small')}
    </nav>
@@ -177,4 +178,31 @@ export function voyagesScreen({player,index,total,drawn,lengths,artwork,message=
   </article>`).join('')}</div>
   <p class="toast" role="alert">${esc(message)}</p>
  </main>`;
+}
+
+// ---------- Partie en ligne : créer (mettre sa partie en ligne), rejoindre avec un code, choisir son cycliste ----------
+// net : {view:'home'|'seats'|'created', code, players:[{id,name,taken,mine}], busy, error}
+// local : la partie préparée sur cet appareil (ou null) ; current : la partie en ligne en cours sur cet appareil (ou null).
+export function onlineScreen({btn,net={},local=null,current=null,message=''}){
+ const card=(content,cls='')=>`<section class="mc-online-card ${cls}">${content}</section>`;
+ const head=`<header class="mc-head"><div><p class="mc-kicker">Partie en ligne</p><h1>Jouer à deux, chacun chez soi</h1><p class="mc-lead">La partie est gardée en ligne : chacun joue son tour quand il veut, sur son ordinateur ou son téléphone. Ta main de cartes reste sur ton écran.</p></div></header>`;
+ let body='';
+ if(net.view==='created')body=card(`<p class="mc-kicker">Donne ce code à ton ami</p><b class="mc-online-code">${esc(net.code)}</b>
+   <div class="mc-online-row">${btn('Copier le code','net-copy','mc-ghost')}${btn('Copier le lien','net-copy-link','mc-ghost')}</div>
+   <ul class="mc-online-seats">${(net.players||[]).map(p=>`<li class="${p.taken||p.mine?'on':''}"><b>${esc(p.name)}</b><span>${p.mine?'toi, sur cet appareil':p.taken?'connecté':'en attente…'}</span></li>`).join('')}</ul>
+   <p>Ton ami ouvre le jeu, choisit « Jouer en ligne », tape le code puis choisit son cycliste. Tu peux commencer à jouer : il te rejoindra.</p>
+   ${btn('Aller à la partie →','net-play','mc-go')}`,'wide');
+ else if(net.view==='seats')body=card(`<p class="mc-kicker">Partie ${esc(net.code)}</p><h2>Quel cycliste es-tu ?</h2>
+   <div class="mc-online-pick">${(net.players||[]).map(p=>`<button type="button" data-action="net-seat-${esc(p.id)}" ${p.taken?'disabled':''}><b>${esc(p.name)}</b><small>${p.mine?'déjà sur cet appareil':p.taken?'déjà pris':'libre'}</small></button>`).join('')}</div>
+   ${btn('← Retour','net-back','mc-ghost')}`,'wide');
+ else{
+  const create=local?card(`<p class="mc-kicker">Créer</p><h2>Mettre ma partie en ligne</h2><p>Partie préparée sur cet appareil : ${esc(local.title)}. Choisis le cycliste que tu joues ici ; les autres se joueront sur l’appareil de tes amis.</p>
+    <div class="mc-online-pick">${local.players.map(p=>`<button type="button" data-action="net-create-${esc(p.id)}"><b>Je suis ${esc(p.name)}</b><small>${esc(p.detail)}</small></button>`).join('')}</div>`)
+   :card(`<p class="mc-kicker">Créer</p><h2>Mettre une partie en ligne</h2><p>Prépare d’abord la partie comme d’habitude avec <b>tous</b> les cyclistes (« Nouveau voyage » : plateau, cyclistes, garage, voyages), puis reviens ici pour la mettre en ligne.</p>${btn('Nouveau voyage','new','mc-ghost')}`);
+  const join=card(`<p class="mc-kicker">Rejoindre</p><h2>J’ai reçu un code</h2><label class="mc-online-label">Code de la partie <input id="net-code" inputmode="numeric" autocomplete="off" placeholder="VELO-1234" value="${esc(net.code||'')}"/></label>${btn('Rejoindre la partie','net-peek','mc-go')}`);
+  const now=current?card(`<p class="mc-kicker">Sur cet appareil</p><h2>Partie ${esc(current.code)}</h2><p>Tu joues ${esc(current.name)}.</p><div class="mc-online-row">${btn('Reprendre la partie →','net-play','mc-go')}${btn('Quitter cette partie en ligne','net-leave','mc-ghost')}</div>`,'wide'):'';
+  body=now+`<div class="mc-online-grid">${create}${join}</div>`;
+ }
+ return `<main class="menu-c mc-page mc-online">${backdrop()}${head}${net.busy?'<p class="mc-online-busy" role="status">Connexion…</p>':''}${net.error?`<p class="mc-online-error" role="alert">${esc(net.error)}</p>`:''}${body}
+  <footer class="mc-foot">${btn('← Accueil','home','mc-ghost')}</footer><p class="toast" role="status">${esc(message)}</p></main>`;
 }

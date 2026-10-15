@@ -130,3 +130,12 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - Correction : la note de la **fenêtre d'intervention** (et les cadres clairs des fenêtres sombres) est maintenant lisible.
 - Météo sur la carte : les étiquettes « Région · Temps » cachaient la carte quand on zoomait. Elles sont remplacées par de **petites pastilles rondes** (icône du temps) qui gardent la même petite taille à l'écran et ne bloquent plus les clics. Le détail reste dans la fiche Journée et le bulletin.
 - Fenêtre d'intervention : quand la partie n'a pas de cartes climatiques (météo annoncée ou mode Rencontres), elle ne s'ouvre plus ; le parcours part directement.
+
+## Partie en ligne (deux appareils, Firebase)
+- Écran titre → **« Jouer en ligne »**.
+  - **Créer** : prépare d'abord la partie comme d'habitude avec tous les cyclistes, puis « Je suis … » : la partie part en ligne et un code s'affiche (ex. VELO-4821), avec « Copier le code » et « Copier le lien ».
+  - **Rejoindre** : taper le code (ou ouvrir le lien), puis choisir son cycliste.
+- En partie : bandeau **« À toi de jouer · VELO-4821 »** ou **« Léa joue… »**. Hors de son tour, on voit la carte bouger en direct, mais les actions sont bloquées et la fiche affiche « En attente » avec ses propres jauges : la main de cartes des autres n'est jamais affichée. Pas de modification de carte ni de règles pendant une partie en ligne.
+- On peut fermer le jeu : « Jouer en ligne » → « Reprendre la partie ». « Quitter cette partie en ligne » la laisse en ligne pour les autres.
+- Technique : `dist/online.js`. Base Firebase Realtime Database du projet « bikepacking-the-game » (Belgique). Le plateau (≈ 700 Ko) est envoyé une seule fois ; ensuite seul l'état léger (≈ 15 Ko) circule, avec un numéro de version pour éviter que deux coups s'écrasent.
+- Test sans Internet : ajouter `?reseau=local` à l'adresse ; deux onglets du même navigateur jouent ensemble. Tests : `tests/en-ligne.test.js`.

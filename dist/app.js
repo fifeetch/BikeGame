@@ -9,7 +9,8 @@ import {CARD_PRESETS,cardById as findCard,effectiveCards,makeCustomCard,normaliz
 import {renderCardEditor} from './card-editor.js';
 import {readArtPreference} from './terrain-art.js';
 import {readDisplayPrefs,writeDisplayPref} from './display-prefs.js';
-import {titleScreen,plateauScreen,playersScreen,garageScreen,voyagesScreen} from './menus.js';
+import {titleScreen,plateauScreen,playersScreen,garageScreen,voyagesScreen,onlineScreen} from './menus.js';
+import * as NET from './online.js';
 import {europeBoard} from './europe.js';
 import {EVENT_CARDS,eventCardById as resolveEventCard,normalizeEventEdits} from './event-cards.js';
 import {eventFace} from './event-card-ui.js';
@@ -94,7 +95,7 @@ function render(){
  if(boardElement?.parentElement)boardElement.remove();boardRenderState=null;
  const sheetTurn=screen==='game'&&m?S.player(m).id+':'+m.turn:'';
  const sheetScroll=sheetTurn===renderedSheetTurn?document.querySelector('.player-sheet-mount')?.scrollTop:0;
- let page=screen==='card-editor'?renderCardEditor(customCards,cardDraft,message,eventEdits,eventDraft):screen==='map-editor'?editorScreen():screen==='game'&&m?game():screen==='voyages'?choices():screen==='equipment'?equipmentSetup():screen==='setup'?setup():screen==='modes'?modes():home();
+ let page=screen==='card-editor'?renderCardEditor(customCards,cardDraft,message,eventEdits,eventDraft):screen==='map-editor'?editorScreen():screen==='game'&&m?game():screen==='voyages'?choices():screen==='equipment'?equipmentSetup():screen==='setup'?setup():screen==='modes'?modes():screen==='online'?onlineView():home();
  if(screen==='game'&&splitView)page=page.replace('<main class="game">',`<main class="game game-split" style="--sheet-width:${splitWidth}%">`);
  const splitControls=screen==='game'&&m?`<button type="button" class="light split-toggle" data-action="split-view" aria-pressed="${splitView}">${splitView?'▤ Vue verticale':'◧ Vue côte à côte'}</button>${splitView?`<label class="split-size" for="split-width">Fiche <output id="split-width-value">${splitWidth}%</output><input id="split-width" type="range" min="30" max="50" step="5" value="${splitWidth}" aria-label="Largeur de la fiche joueur"/></label>`:''}`:'';
   app.innerHTML=`<header class="${screen==='game'?'in-game':''}"><div class="brand"><b>🚲 L’Aventure à Vélo</b>${screen==='game'&&m?`<span class="active-player" style="--player-color:${S.player(m).color}"><i aria-hidden="true"></i>${esc(S.player(m).name)}</span>`:''}</div>${screen==='game'&&m?.cardVersion===3?eventPiles():''}<nav>${splitControls}${btn('⚙️ Règles','rules','light')}${btn('Paramètres','settings','light')}${['game','map-editor','card-editor'].includes(screen)?btn('Accueil','home','light'):''}</nav></header>`+page+overlay();
@@ -516,3 +517,101 @@ render();if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.j
  // Garage : choix de la monture. Si le nouveau vélo a moins de place, on garde les objets dans l'ordre tant qu'ils tiennent.
  document.querySelectorAll('[data-bike-choice]').forEach(el=>el.onclick=()=>{const p=roster[choosing],id=el.dataset.bikeChoice;if(!p||!setupRules.bikes[id])return;p.bike=id;let room=setupRules.bikes[id].capacity,purse=setupRules.startMoney-(setupRules.bikes[id].price||0);p.items=(p.items||[]).filter(item=>{const e=setupRules.equipment[item],space=e?.space||0,price=e?.price||0;if(space>room||price>purse)return false;room-=space;purse-=price;return true;});render();});
 };applySheetLayout();applyMotionClass();}
+
+// ==========================================================================
+// Partie en ligne (Firebase) : chacun joue son cycliste sur son appareil.
+// La partie préparée sur un appareil est mise en ligne avec un code ; les autres la rejoignent et choisissent leur cycliste.
+// Hors de son tour, on peut regarder la carte mais pas agir ; la main de cartes des autres n'est jamais affichée.
+// ==========================================================================
+let online=(()=>{try{return JSON.parse(localStorage.getItem('velo-online')||'null');}catch{return null;}})();
+let net={view:'home'},netUnlisten=null,netLight='',netPushing=false,netAgain=false,netDeferred=null,netWasMyTurn=null;
+const saveOnline=()=>{try{online?localStorage.setItem('velo-online',JSON.stringify(online)):localStorage.removeItem('velo-online');}catch{}};
+const lightOf=g=>{if(!g)return '';const {board,edges,...l}=g;return JSON.stringify(l);};
+const onlineGame=()=>Boolean(online&&m&&m.mode==='plateau');
+const myTurn=()=>!onlineGame()||NET.actorId(m)===online.seat;
+const seatName=id=>m?.players.find(p=>p.id===id)?.name||'un cycliste';
+function onlineView(){
+ const local=m&&m.mode==='plateau'&&!m.done&&!online?{title:`Jour ${m.round} · ${m.players.length} cycliste${m.players.length>1?'s':''}`,players:m.players.map(p=>({id:p.id,name:p.name,detail:`${m.rules.bikes[p.bike]?.name||p.bike} · ${voyages.find(v=>v.id===p.voyage)?.title||''}`}))}:null;
+ return onlineScreen({btn,net,local,current:online&&m?{code:online.code,name:seatName(online.seat)}:null,message});}
+function applyRemote(text,rev){
+ let next;try{next=S.load(text);}catch(e){message='Partie en ligne illisible : '+e.message;return;}
+ m=next;online.rev=rev;saveOnline();netLight=lightOf(m);mapSelection='';route=[];
+ if(net.joining){net={view:'home'};screen='game';modal='';}
+ if(screen==='game'||screen==='online')render();
+}
+async function startListening(){
+ netUnlisten?.();netUnlisten=null;if(!online)return;
+ try{netUnlisten=await NET.listenOnline(online.code,(text,rev,g)=>{
+  if(net.view==='created'&&g?.names)net.players=Object.entries(g.names).map(([id,name])=>({id,name,taken:Boolean(g.seats?.[id]),mine:id===online.seat}));
+  if(rev<=online.rev&&!net.joining){if(screen==='online')render();return;}
+  if(netPushing){netDeferred={text,rev};return;}
+  applyRemote(text,rev);});}
+ catch(e){message='Connexion impossible à la partie en ligne : '+e.message;render();}
+}
+async function pushNow(){
+ if(!onlineGame())return;if(netPushing){netAgain=true;return;}
+ netPushing=true;const sent=lightOf(m);
+ try{const rev=await NET.pushState(online.code,m,online.rev);
+  if(rev){online.rev=rev;saveOnline();}else message='Un autre joueur a joué en même temps : la partie est rechargée.';}
+ catch(e){message='Envoi impossible (connexion ?) : '+e.message;}
+ netPushing=false;
+ if(netAgain&&lightOf(m)!==sent){netAgain=false;netLight=lightOf(m);pushNow();return;}netAgain=false;
+ if(netDeferred){const d=netDeferred;netDeferred=null;if(d.rev>online.rev)applyRemote(d.text,d.rev);}
+}
+function leaveOnline(){netUnlisten?.();netUnlisten=null;online=null;saveOnline();net={view:'home'};}
+async function netAction(a){
+ try{
+  if(a.startsWith('net-create-')){const seat=a.slice(11);net={view:'home',busy:true};render();
+   const r=await NET.createOnline(m,seat);online={code:r.code,seat,rev:r.rev};saveOnline();netLight=lightOf(m);
+   net={view:'created',code:r.code,players:m.players.map(p=>({id:p.id,name:p.name,taken:p.id===seat,mine:p.id===seat}))};startListening();}
+  else if(a==='net-peek'){const code=NET.cleanCode(document.querySelector('#net-code')?.value);if(!code)throw Error('Tape le code reçu, par exemple VELO-4821.');
+   net={view:'home',busy:true,code};render();const r=await NET.peekOnline(code);net={view:'seats',code,players:r.players};}
+  else if(a.startsWith('net-seat-')){const seat=a.slice(9),code=net.code;net={...net,busy:true};render();
+   await NET.takeSeat(code,seat);leaveOnline();online={code,seat,rev:0};saveOnline();net={view:'home',joining:true};startListening();return;}
+  else if(a==='net-copy'||a==='net-copy-link'){const text=a==='net-copy'?net.code:location.origin+location.pathname+'?partie='+net.code;
+   try{await navigator.clipboard.writeText(text);message=a==='net-copy'?'Code copié.':'Lien copié : envoie-le à ton ami.';}catch{message=text;}}
+ }catch(e){net={...net,busy:false,error:e.message};}
+ render();
+}
+{const priorAct=act;act=a=>{
+ if(a==='online'){net={view:'home',code:new URLSearchParams(location.search).get('partie')||''};screen='online';modal='';render();return;}
+ if(a==='net-back'){net={view:'home'};render();return;}
+ if(a==='net-play'){if(online&&m){screen='game';modal='';net={view:'home'};render();center?.();}return;}
+ if(a==='net-leave'){leaveOnline();message='Tu as quitté la partie en ligne sur cet appareil (elle reste en ligne pour les autres).';render();return;}
+ if(a.startsWith('net-'))return netAction(a);
+ if(onlineGame()&&a==='new'){leaveOnline();}
+ if(onlineGame()&&(a==='mapedit'||a==='rules')&&screen==='game'){message=a==='mapedit'?'Pas de modification de carte pendant une partie en ligne.':'Les règles ne se changent pas pendant une partie en ligne.';render();return;}
+ return priorAct(a);};}
+// Après chaque affichage : envoyer ses coups, cacher ce qui n'est pas à soi, bandeau « à toi de jouer ».
+{const priorRender=render;render=()=>{
+ if(onlineGame())privacyCover=false;// chacun son écran : pas besoin de « passage de main »
+ priorRender();
+ if(!onlineGame()||screen!=='game')return;
+ const mine=myTurn(),actor=seatName(NET.actorId(m)),brand=document.querySelector('header .brand');
+ brand?.insertAdjacentHTML('beforeend',`<span class="net-pill ${mine?'mine':''}" role="status">${mine?'À toi de jouer':esc(actor)+' joue…'} · ${esc(online.code)}</span>`);
+ document.body?.classList?.toggle('net-waiting',!mine);
+ if(netWasMyTurn===false&&mine)message='À toi de jouer !';netWasMyTurn=mine;
+ try{document.title=(mine?'● À toi — ':'')+'L’Aventure à Vélo';}catch{}
+ // Toute différence vient d'une action faite ici (hors de son tour, les actions sont bloquées) : on l'envoie.
+ const light=lightOf(m);if(light!==netLight){netLight=light;pushNow();}
+};}
+{const priorSheet=playerSheet;playerSheet=(inline=false)=>{
+ if(!onlineGame()||myTurn())return priorSheet(inline);
+ const me=m.players.find(p=>p.id===online.seat)||S.player(m),actor=m.players.find(p=>p.id===NET.actorId(m));
+ const body=`<div class="player-sheet-head fiche-head"><span class="fiche-num" style="background:${me.color}" aria-hidden="true">${esc(me.id.slice(1))}</span><div><h2>${esc(me.name)}</h2><small>Partie en ligne ${esc(online.code)}</small></div><span class="mat-day">Jour ${m.round}</span></div>
+ ${ficheGauges(me)}<section class="net-wait"><span class="fiche-kicker">En attente</span><b>${esc(actor?.name||'Un cycliste')} ${m.pendingAttack?'répond à une carte…':m.phase==='card-intervention'?'peut jouer une carte météo…':'roule…'}</b><p>Tu vois son cycliste avancer sur la carte. Tes boutons se réveillent dès que c’est ton tour.${me.cardHand?.length?` Tu as ${me.cardHand.length} carte${me.cardHand.length>1?'s':''} en main, cachée${me.cardHand.length>1?'s':''} jusqu’à ton tour.`:''}</p></section>`;
+ return inline?`<section class="player-sheet-inline player-mat fiche">${body}</section>`:`<div class="player-mat fiche">${body}</div>`;};}
+{const priorOverlay=overlay;overlay=()=>{if(onlineGame()&&screen==='game'&&!myTurn()&&!['meteo','stats'].includes(modal))return '';return priorOverlay();};}
+// Hors de son tour : seuls les boutons « pour regarder » marchent.
+const NET_VIEW_ACTIONS=new Set(['zoomin','zoomout','center','art','sheet-toggle','split-view','meteo','close','home','settings','stats','online','net-play','net-leave','reveal-close']);
+globalThis.document?.addEventListener?.('click',e=>{
+ if(!onlineGame()||screen!=='game'||myTurn())return;
+ const el=e.target.closest?.('[data-action],[data-sheet-tab],button,a,input,select,[data-board-key],svg,.map-wrap');if(!el)return;
+ if(el.closest('[data-sheet-tab]')||NET_VIEW_ACTIONS.has(el.dataset?.action)||el.closest('.maptools')||el.closest('header')||el.closest('.split-size'))return;
+ e.stopPropagation();e.preventDefault();message=`C’est au tour de ${seatName(NET.actorId(m))}.`;const toast=document.querySelector('.toast');if(toast)toast.textContent=message;
+},true);
+// Au démarrage : reprendre l'écoute de la partie en ligne, ou ouvrir l'écran « Rejoindre » si le lien contient un code.
+if(online){netLight=lightOf(m);startListening();}
+{const code=(()=>{try{return NET.cleanCode(new URLSearchParams(location.search).get('partie'));}catch{return '';}})();if(code&&!online){net={view:'home',code};screen='online';render();}}
+// Test local (?reseau=local) : accès à l'état pour vérifier la synchronisation.
+if(NET.isLocalTest())globalThis.__velo={get m(){return m;},get online(){return online;},get net(){return {pushing:netPushing,again:netAgain,deferred:Boolean(netDeferred)};}};

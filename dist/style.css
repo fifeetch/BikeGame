@@ -1374,3 +1374,32 @@ body .modal.encounter-modal .encounter-body .eyebrow{color:#8a5a14}
 .weather-badge circle{fill:rgba(16,34,38,.85);stroke:#f2a541;stroke-width:1.6}
 .weather-badge.w-vent circle{stroke:#c9d6dc}.weather-badge.w-pluie circle{stroke:#7fc0e8}.weather-badge.w-orage circle{stroke:#ff8a6e}.weather-badge.w-neige circle{stroke:#fff}
 .weather-badge .weather-icon{font-size:9.5px;text-anchor:middle}
+
+/* ---------- Partie en ligne ---------- */
+.mc-online .mc-head{margin-bottom:18px}
+.mc-online-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px}
+.mc-online-card{display:flex;flex-direction:column;gap:12px;padding:24px;border-radius:20px;background:#f6e7c1;color:#1b1406;font-family:'Barlow',system-ui,sans-serif;font-size:17px;box-shadow:0 20px 50px rgba(0,0,0,.4);margin-bottom:20px}
+.mc-online-card h2{margin:0;font:900 28px/1.05 'Fraunces',Georgia,serif;color:#1b3b38}
+.mc-online-card p{margin:0;color:#5a4a2c;line-height:1.4}
+.mc-online-card .mc-kicker{color:#8a5a14;font-size:15px}
+.mc-online-code{display:block;padding:14px;border-radius:16px;background:#1b3b38;color:#f6e7c1;text-align:center;font:900 48px 'Fraunces',Georgia,serif;letter-spacing:.1em}
+.mc-online-row{display:flex;flex-wrap:wrap;gap:10px}
+.mc-online-card .mc-ghost{color:#1b3b38;border-color:#1b3b38}
+.mc-online-label{display:flex;flex-direction:column;gap:6px;font-weight:700}
+.mc-online-label input{min-height:56px;padding:0 16px;border-radius:14px;border:2px solid #1b3b38;background:#fff7df;color:#1b1406;font:900 26px 'Fraunces',Georgia,serif;letter-spacing:.08em}
+.mc-online-pick{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.mc-online-pick button{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-height:64px;padding:12px 16px;border-radius:14px;border:2px solid #1b3b38;background:#fff7df;color:#1b1406;text-align:left;cursor:pointer;font-family:'Barlow',system-ui,sans-serif}
+.mc-online-pick button b{font-size:19px}.mc-online-pick button small{font-size:15px;color:#5a4a2c}
+.mc-online-pick button:disabled{border-style:dashed;opacity:.55;cursor:not-allowed}
+.mc-online-seats{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.mc-online-seats li{display:flex;justify-content:space-between;gap:10px;padding:10px 14px;border-radius:12px;border:2px dashed #c9b88d}
+.mc-online-seats li.on{border:2px solid #427a4b;background:#fff7df}.mc-online-seats li span{color:#5a4a2c}
+.mc-online-busy,.mc-online-error{padding:12px 16px;border-radius:12px;font-size:18px}
+.mc-online-busy{background:rgba(127,192,232,.15);color:#f6e7c1}.mc-online-error{background:#fbe1d6;color:#7a2c16;font-weight:700}
+.net-pill{margin-left:10px;padding:6px 12px;border-radius:999px;background:#1b3b38;border:2px solid #7fc0e8;color:#f6e7c1;font:700 15px 'Barlow Condensed',system-ui,sans-serif;white-space:nowrap}
+.net-pill.mine{background:#f2a541;border-color:#f2a541;color:#1b1406}
+body .player-mat.fiche .net-wait{display:flex;flex-direction:column;gap:6px;padding:16px 18px;border-radius:16px;background:#1b3b38;color:#e8dcbc}
+body .player-mat.fiche .net-wait b{font:900 24px 'Fraunces',Georgia,serif;color:#f6e7c1}
+body .player-mat.fiche .net-wait p{margin:0;font-size:16px;line-height:1.4}
+body.net-waiting .player-sheet-dock,body.net-waiting .route-planner{opacity:.45;filter:grayscale(.4)}
+.mc-online-card .mc-ghost{background:transparent;border:2px solid #1b3b38;color:#1b3b38}
