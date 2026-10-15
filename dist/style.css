@@ -1515,3 +1515,35 @@ body .help-modal button.light{color:#1b3b38;border-color:#1b3b38;background:tran
 .modal-back .modal.help-modal .ri-hide{display:flex!important;flex-direction:row!important;align-items:center;gap:10px;justify-content:center}
 .modal-back .modal.help-modal .ri-hide input{width:20px;height:20px;margin:0}
 .modal-back .modal.help-modal p b,.modal-back .modal.help-modal li b{color:#1b1406!important}
+/* Barre de la journée — style « road-book » crème (visuel 1 validé par Fi) */
+body .player-sheet-dock.dock-v1{display:block;background:transparent;border:0;box-shadow:none;padding:0}
+body .dock-v1 .dock-day{display:flex;flex-wrap:nowrap;align-items:center;gap:16px;padding:12px 16px;border-radius:22px;background:#f6e7c1;border:2px solid #e2cf9f;box-shadow:0 12px 30px rgba(0,0,0,.4);color:#1b1406}
+body .dock-v1 .dock-steps{position:relative;display:flex;justify-content:space-between;gap:14px;margin:0;padding:0 4px;list-style:none;flex:none}
+body .dock-v1 .dock-steps::before{content:"";position:absolute;left:18px;right:18px;top:12px;border-top:3px dashed #c9b88d}
+body .dock-v1 .dock-steps li{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px}
+body .dock-v1 .dock-steps li span{width:26px;height:26px;border-radius:50%;background:#fff7df;border:3px solid #c9b88d;color:#8a7a5a;font:900 13px 'Fraunces',Georgia,serif;display:flex;align-items:center;justify-content:center}
+body .dock-v1 .dock-steps li small{font:700 11px 'Barlow',sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#8a7a5a}
+body .dock-v1 .dock-steps li.done span{background:#1b3b38;border-color:#1b3b38;color:#f6e7c1}
+body .dock-v1 .dock-steps li.done small,body .dock-v1 .dock-steps li.now small{color:#1b3b38}
+body .dock-v1 .dock-steps li.now span{background:#f2a541;border-color:#1b3b38;color:#1b1406}
+body .dock-v1 .dock-center{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:4px}
+body .dock-v1 .dock-main{display:flex;align-items:center;gap:14px;width:100%;min-height:64px;padding:0 20px 0 8px;border-radius:999px;border:0;background:linear-gradient(180deg,#f6b65a,#e8952c);box-shadow:0 5px 0 #a8661c,inset 0 2px 0 rgba(255,255,255,.45);color:#1b1406;cursor:pointer;text-align:left}
+body .dock-v1 .dock-main:not(:disabled):hover{transform:translateY(-1px);box-shadow:0 6px 0 #a8661c,0 10px 20px rgba(0,0,0,.25),inset 0 2px 0 rgba(255,255,255,.45)}
+body .dock-v1 .dock-main:disabled{opacity:.5;cursor:not-allowed;transform:none}
+body .dock-v1 .dock-main .dm-ico{width:48px;height:48px;flex:none;border-radius:50%;background:#1b3b38;color:#f6e7c1;display:flex;align-items:center;justify-content:center;font-size:22px;border:3px solid #fff3cf}
+body .dock-v1 .dock-main b{font:900 clamp(18px,2vw,24px)/1.1 'Fraunces',Georgia,serif;color:#1b1406;letter-spacing:0;text-transform:none}
+body .dock-v1 .dock-main .dm-tag{margin-left:auto;font:700 15px 'Barlow',sans-serif;background:rgba(27,59,56,.12);padding:6px 12px;border-radius:999px;white-space:nowrap}
+body .dock-v1 .dock-hint{display:flex;align-items:center;gap:12px;min-height:64px;margin:0;padding:6px 16px;border-radius:18px;background:repeating-linear-gradient(135deg,#fff7df 0 12px,#fbefcf 12px 24px);border:2px dashed #e09a3c;color:#3a2f1a;font:600 15px/1.35 'Barlow',sans-serif}
+body .dock-v1 .dock-hint>span:first-child{font-size:26px}
+body .dock-v1 .dock-hint b{font:900 18px 'Fraunces',Georgia,serif;color:#1b3b38}
+body .dock-v1 .dock-why{margin:0;color:#a3401f;font-size:14px;font-weight:600}
+body .dock-v1 .dock-icons{display:flex;gap:8px;flex:none}
+body .dock-v1 .dock-ico{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:58px;padding:0;border:0;background:transparent;color:#5a4a2c;cursor:pointer;box-shadow:none}
+body .dock-v1 .dock-ico span{width:46px;height:46px;border-radius:50%;background:#fff7df;border:2px solid #c9b88d;display:flex;align-items:center;justify-content:center;font-size:20px}
+body .dock-v1 .dock-ico small{font:700 12px 'Barlow',sans-serif;color:#5a4a2c;text-transform:none;letter-spacing:0}
+body .dock-v1 .dock-ico:not(:disabled):hover span{border-color:#e09a3c;background:#fff}
+body .dock-v1 .dock-ico:disabled{opacity:.4;cursor:not-allowed}
+body .dock-v1 .dock-ico.dim span{opacity:.7}
+body .dock-v1 .dock-finish-row{margin-bottom:8px}
+body .dock-v1 .dock-finish{width:100%;min-height:50px;border-radius:14px;border:2px solid #1b3b38;background:#fff7df;color:#1b3b38;font-weight:700}
+@media(max-width:900px){body .dock-v1 .dock-day{flex-wrap:wrap}body .dock-v1 .dock-steps{display:none}body .dock-v1 .dock-center{flex-basis:100%}body .dock-v1 .dock-icons{width:100%;justify-content:space-around}}
