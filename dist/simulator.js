@@ -36,11 +36,35 @@ export function weatherExtra(m,p,from,t,movedBefore){if(!forecastOn(m)||!t)retur
  return w==='vent'&&movedBefore===0?1:w==='pluie'&&!roadStep(m,from,t)?1:w==='neige'&&['montagne','col'].includes(t.type)?1:0;}
 export const distance=m=>{const p=player(m);let d=baseDistance(m);if(offroadLimited(m,p,offroadToday(m,p)))d=Math.min(d,offroadMax(m,p));if(stormToday(m,p))d=Math.min(d,STORM_MAX);return d;};
 export const inventorySpace=(m,p=player(m))=>p.items.reduce((sum,id)=>sum+(m.rules.equipment[id]?.space||0),0);
+// ---------- Fin de partie (mode « multi ») : 50 points, 3 voyages ou 40 jours (réglable) ----------
+export const multiVictory=m=>m.rules.victory?.mode==='multi';
+// Arrivé à la ville d'arrivée sans tous les objectifs : on peut terminer quand même, avec 40 % de points en moins (règle de Fi).
+export const PARTIAL_PENALTY=.4;
+export function canFinishVoyageEarly(m,p=player(m)){const v=voyages.find(v=>v.id===p.voyage);return Boolean(multiVictory(m)&&v&&!p.completed&&!m.done&&['move','place'].includes(m.phase)&&!m.pendingAttack&&m.board[p.pos]?.name===v.to&&!progress(view(m,p)).ready);}
+export const earlyVoyagePoints=(m,p=player(m))=>Math.round(voyagePoints(p.voyage)*(1-PARTIAL_PENALTY));
+export function finishVoyageEarly(m){const p=player(m);if(!canFinishVoyageEarly(m,p))return false;completeVoyage(m,p,voyages.find(v=>v.id===p.voyage),true);return true;}
+function completeVoyage(m,p,v,partial=false){p.completed=true;p.voyageWon=true;const pts=partial?Math.round(voyagePoints(v)*(1-PARTIAL_PENALTY)):voyagePoints(v);p.points+=pts;p.voyagesDone=[...(p.voyagesDone||[]),{id:v.id,day:m.round,points:pts,partial}];
+ record(m,'objective',(partial?'Voyage terminé sans tous les objectifs : ':'Objectif accompli : ')+v.title+' (+'+pts+' points'+(partial?', −40 %':'')+')');
+ if(multiVictory(m)){const r=m.rules.victory;if(!(r.voyages&&p.voyagesDone.length>=r.voyages))p.voyageChoices=newVoyageChoices(m,p);}}
+// 3 nouvelles cartes : jamais une carte déjà faite, ni une carte qui arrive là où l'on est.
+export function newVoyageChoices(m,p){const here=m.board[p.pos]?.name,done=new Set((p.voyagesDone||[]).map(d=>d.id));
+ const pool=voyages.filter(v=>!done.has(v.id)&&v.id!==p.voyage&&v.to!==here),out=[];
+ while(out.length<3&&pool.length)out.push(pool.splice(Math.floor(random(m)*pool.length),1)[0].id);return out;}
+export function chooseNewVoyage(m,id){const p=player(m);if(m.phase!=='voyage-choice'||!p.voyageChoices?.includes(id))return false;
+ p.voyage=id;p.voyageFrom=p.travelHistory.length;p.completed=false;p.voyageChoices=[];const v=voyages.find(v=>v.id===id);
+ record(m,'voyage',`${p.name} prend un nouveau voyage : ${v.title} (${v.from} → ${v.to}). Les objectifs se comptent à partir d’ici.`);
+ m.phase=p.flat?'puncture':m.mode==='tuiles'&&m.hand.length?'place':'move';return true;}
+function checkMultiVictory(m){if(!multiVictory(m)||m.done)return false;const r=m.rules.victory;let w=null,why='';
+ const byPoints=r.points?[...m.players].filter(p=>p.points>=r.points).sort((a,b)=>b.points-a.points)[0]:null;
+ const byVoyages=r.voyages?m.players.find(p=>(p.voyagesDone||[]).length>=r.voyages):null;
+ if(byVoyages){w=byVoyages;why=`${r.voyages} voyages réussis`;}else if(byPoints){w=byPoints;why=`${r.points} points d’aventure atteints`;}
+ else if(r.days&&m.round>r.days){w=ranking(m)[0];why=`${r.days} jours écoulés, le plus de points`;}
+ if(!w)return false;m.done=true;m.phase='finished';m.winner=w.id;m.winReason=why;record(m,'finish',`${w.name} gagne la partie : ${why}.`);return true;}
 export function view(m,p=player(m)){
  const v=voyages.find(v=>v.id===p.voyage),board={};
  for(const [k,t]of Object.entries(m.board))board[k]={...t,id:t.name===v?.from?0:t.id===0?-1:t.id};
  const arrival=Object.values(board).find(t=>t.name===v?.to);
- return {...m,...p,board,arrivalId:arrival?.id,phase:m.phase,done:m.done,turn:m.round,mapVersion:m.mapVersion};
+ return {...m,...p,travelHistory:(p.travelHistory||[]).slice(p.voyageFrom||0),board,arrivalId:arrival?.id,phase:m.phase,done:m.done,turn:m.round,mapVersion:m.mapVersion};
 }
 const randomSeed=()=>globalThis.crypto?.getRandomValues?crypto.getRandomValues(new Uint32Array(1))[0]:(Date.now()^Math.floor(Math.random()*4294967296))>>>0;
 export function createMatch(roster,mode='plateau',rules=CLASSIC,seed=randomSeed(),customCards=[],eventCardEdits=[]){
@@ -140,6 +164,8 @@ export function beginEventRoute(m,route){if(!C.isEventGame(m))return executeRout
 export function passEventIntervention(m){if(!C.passIntervention(m))return false;if(!C.currentResponder(m))finishEventRoute(m);return true;}
 export function finishEventRoute(m){const window=m.cardWindow;if(!window||m.pendingAttack)return false;const p=player(m),weather=routeWeather(m);window.resolving=true;m.phase='move';if(weather.some(w=>w.kind==='frost'))p.frostTurn=m.turn;
  let route=window.route;if(weather.some(w=>w.kind==='stop'))route=[];const penalty=weather.filter(w=>w.kind==='short_move').reduce((n,w)=>n+w.value,0);if(penalty)route=route.slice(0,Math.max(0,route.length-penalty));
+ // Brouillard : −1 énergie, et arrêt avant la première case hors route.
+ if(weather.some(w=>w.kind==='fog')){p.energy=Math.max(0,p.energy-1);let from=p.pos,cut=route.length;for(let i=0;i<route.length;i++){if(!roadStep(m,from,m.board[route[i]])){cut=i;break;}from=route[i];}route=route.slice(0,cut);C.note(m,p,`Brouillard : ${p.name} perd 1 énergie et reste sur la route.`);}
  let moved=0;for(const key of route){window.stepIndex=moved;const t=m.board[key],check=eventRouteCheck(m,[key]);if(!check.ok)break;if(!move(m,key))break;moved++;if(weather.some(w=>w.kind==='coastal_storm')&&t.type==='cote')break;}
  if(!moved&&weather.length)C.note(m,p,`${p.name} ne peut pas avancer après l’intervention météo.`);
  if(window.solo){if(penalty)p.turnModifiers.distancePenalty=(p.turnModifiers.distancePenalty||0)+penalty;if(weather.some(w=>w.kind==='stop')||!moved&&weather.length||weather.some(w=>w.kind==='coastal_storm')&&m.board[p.pos].type==='cote')p.turnModifiers.skipMove=true;}
@@ -167,7 +193,7 @@ export function move(m,k){const p=player(m),t=m.board[k];if(C.isEventGame(m)&&m.
  const first=!p.visited.includes(k);if(first){p.visited.push(k);p.points+=m.rules.points[t.type];if(t.type==='col')p.cols++;if(t.type==='ville')p.cities++;if(t.type==='decouverte')p.discoveries++;}
  adventureStep(m,p,k,t,first);
  if(eventGame&&t.type==='ville')C.onCityVisit(m,p,k);
- if(!p.completed&&t.name===v.to&&progress(view(m)).ready){p.completed=true;p.voyageWon=true;p.points+=voyagePoints(v);record(m,'objective','Objectif accompli : '+v.title+' (+'+voyagePoints(v)+' points)');}
+ if(!p.completed&&t.name===v.to&&progress(view(m)).ready)completeVoyage(m,p,v);
  record(m,'move','Déplacement : '+(t.name||E.terrains[t.type].name)+' (−'+spent+' énergie).',{terrain:t.type,energy:spent});if(eventGame&&!m.cardWindow)p.shortcutActive=false;return true;
 }
 export function eat(m){const p=player(m);if(m.pendingAttack||m.done||!['move','place'].includes(m.phase)||m.ate>=m.rules.food.maxPerTurn||p.food<1||p.energy>=energyCap(m,p)||(!p.items.includes('rechaud')&&!['ville','auberge'].includes(m.board[p.pos].type)))return false;p.food--;m.ate++;const base=C.isEventGame(m)?C.hasBonusEffect(m,p,'efficient_stove')?3:m.rules.cardBalance.foodEnergy:m.rules.food.energy;p.energy=Math.min(energyCap(m,p),p.energy+base+(p.items.includes('rechaud')?m.rules.food.stoveBonus:0));record(m,'food','Un repas a été consommé.');return true;}
@@ -208,7 +234,7 @@ export function defendEventAttack(m){if(!C.isEventGame(m)||!C.defend(m))return f
 export function resolveEventAttack(m,choice){if(!C.isEventGame(m)||!C.resolveAttack(m,choice))return false;settleSoloDraw(m);return true;}
 export function resolvePendingCard(m,choice='auto'){const p=player(m);if(m.phase!=='card-resolution'||!p.pendingCards?.length)return false;const id=p.pendingCards[0],card=cardById(id,m);if(!card)return false;const hasTube=p.items.includes('chambre'),hasKit=p.items.includes('kit');if(card.resolution==='tube'){if(choice==='tube'&&hasTube)p.items=p.items.filter(i=>i!=='chambre');else if(choice==='lose'||!hasTube)p.turnModifiers={...p.turnModifiers,distancePenalty:(p.turnModifiers?.distancePenalty||0)+1};else return false;}else if(card.resolution==='kit-energy'){if(choice==='kit'&&hasKit){}else if(choice==='energy'||!hasKit)p.energy=Math.max(0,p.energy-2);else return false;}else if(card.resolution==='rain')p.turnModifiers={...p.turnModifiers,distancePenalty:(p.turnModifiers?.distancePenalty||0)+1};else if(card.resolution==='hunger'){if(choice==='food'&&p.food>0)p.food--;else if(choice==='energy'||!p.food)p.energy=Math.max(0,p.energy-2);else return false;}else if(card.resolution==='bad-night')p.energy=Math.max(0,p.energy-1);else if(card.resolution==='detour')p.turnModifiers={...p.turnModifiers,bonusDistance:Math.min(1,(p.turnModifiers?.bonusDistance||0)+1),extraMoveEnergy:1};p.pendingCards.shift();record(m,'card-resolution',card.title+' résolue.');if(p.pendingCards.length)m.phase='card-resolution';else m.phase=p.flat?'puncture':m.mode==='tuiles'&&m.hand.length?'place':'move';return true;}
 export function repairPuncture(m){const p=player(m);if(m.phase!=='puncture'||!p.flat)return false;const b=breakdownOf(p),what=b.item==='secours'?'trousse de secours':'kit de réparation';p.flatKind=null;if(p.items.includes(b.item)){p.flat=false;record(m,'repair',`${b.title} : ${b.item==='secours'?'soigné':'réparé'} avec ${b.item==='secours'?'la':'le'} ${what}, la journée peut continuer.`);m.phase=m.mode==='tuiles'&&m.hand.length?'place':'move';return true;}p.flat=false;p.pos=p.lastCity&&m.board[p.lastCity]?p.lastCity:p.pos;record(m,'repair',`${b.title} sans ${what} : retour à la dernière ville et journée perdue.`);m.phase='move';m.turnKind='repair';endTurn(m);return true;}
-export function travelFerry(m,destination){const p=player(m),t=ferryOptions(m).find(t=>t.key===destination),fare=m.rules.ferryPrice;if(!t||p.money<fare)return false;p.money-=fare;m.stats.moneySpent+=fare;p.pos=t.key;if(t.type==='ville')p.lastCity=t.key;p.travel.push(t.key);const v=voyages.find(v=>v.id===p.voyage);p.travelHistory.push({key:t.key,boardKey:t.key,type:t.type,endpoint:t.name===v.from||t.name===v.to,day:m.round});if(!p.visited.includes(t.key)){p.visited.push(t.key);p.points+=m.rules.points[t.type];}if(!p.completed&&t.name===v.to&&progress(view(m)).ready){p.completed=true;p.voyageWon=true;p.points+=voyagePoints(v);record(m,'objective','Objectif accompli : '+v.title+' (+'+voyagePoints(v)+' points)');}m.turnKind='ferry';record(m,'ferry','Bateau vers '+(t.name||t.key)+' : −'+fare+' pièces, journée terminée.');endTurn(m);return true;}
+export function travelFerry(m,destination){const p=player(m),t=ferryOptions(m).find(t=>t.key===destination),fare=m.rules.ferryPrice;if(!t||p.money<fare)return false;p.money-=fare;m.stats.moneySpent+=fare;p.pos=t.key;if(t.type==='ville')p.lastCity=t.key;p.travel.push(t.key);const v=voyages.find(v=>v.id===p.voyage);p.travelHistory.push({key:t.key,boardKey:t.key,type:t.type,endpoint:t.name===v.from||t.name===v.to,day:m.round});if(!p.visited.includes(t.key)){p.visited.push(t.key);p.points+=m.rules.points[t.type];}if(!p.completed&&t.name===v.to&&progress(view(m)).ready)completeVoyage(m,p,v);m.turnKind='ferry';record(m,'ferry','Bateau vers '+(t.name||t.key)+' : −'+fare+' pièces, journée terminée.');endTurn(m);return true;}
 export function canChallenge(m){const p=player(m),e=m.event;if(!e||e.category!=='challenge')return false;if(e.protect&&p.items.includes(e.protect))return true;return Object.entries(e.cost||{}).every(([k,v])=>p[k]>=v);}
 export function resolve(m,choice='accept'){
  const p=player(m),e=m.event;if(m.phase!=='event'||!e)return false;
@@ -240,12 +266,14 @@ export function resolveEncounter(m,index){if(!canChooseEncounter(m,index))return
  m.encounter=null;m.phase='move';advance(m);return true;}
 function advance(m){player(m).turns++;m.stats.turns++;const r=m.rules.victory,budget=m.rules.budget,rider=player(m);
  if(budget?.amount>0&&rider.turns%budget.every===0){rider.money+=budget.amount;record(m,'budget',`Budget du voyage : +${budget.amount} pièces pour ${rider.name} (tous les ${budget.every} tours).`);}
+ if(multiVictory(m)){if(checkMultiVictory(m))return;}
  const win=r.mode==='objectives'&&(r.allObjectives?m.players.every(p=>p.completed):m.players.some(p=>p.completed))||r.mode==='points'&&m.players.some(p=>p.points>=r.points);
  if(win){m.done=true;m.phase='finished';record(m,'finish','Condition de victoire atteinte.');return;}
  player(m).availableDay=(player(m).availableDay||m.round)+(m.actionDays||1);
  const nextDay=Math.min(...m.players.map(p=>p.availableDay));let next=m.activeIndex;
  for(let offset=1;offset<=m.players.length;offset++){const i=(m.activeIndex+offset)%m.players.length;if(m.players[i].availableDay===nextDay){next=i;break;}}
  m.activeIndex=next;m.round=nextDay;m.turn++;m.moved=0;m.ate=0;m.placed=false;m.turnKind='travel';m.actionDays=1;
+ if(checkMultiVictory(m))return;
  if(r.mode==='turns'&&m.round>r.turns){m.done=true;m.phase='finished';record(m,'finish','Nombre de manches atteint.');return;}
  const nextPlayer=player(m);nextPlayer.turnModifiers={};
  if(C.isEventGame(m)){
@@ -256,15 +284,15 @@ function advance(m){player(m).turns++;m.stats.turns++;const r=m.rules.victory,bu
    if(effect.kind==='no_mountain')nextPlayer.turnModifiers.noMountain=true;else if(effect.kind==='skip_move')nextPlayer.turnModifiers.skipMove=true;else nextPlayer.turnModifiers.distancePenalty=(nextPlayer.turnModifiers.distancePenalty||0)+effect.value;
    C.discard(m,effect.cardId);nextPlayer.pendingEffects.splice(nextPlayer.pendingEffects.indexOf(effect),1);
   }
-  m.phase=nextPlayer.flat?'puncture':m.mode==='tuiles'&&m.hand.length?'place':'move';
- }else m.phase=nextPlayer.pendingCards?.length?'card-resolution':nextPlayer.flat?'puncture':m.mode==='tuiles'&&m.hand.length?'place':'move';
+  m.phase=nextPlayer.voyageChoices?.length?'voyage-choice':nextPlayer.flat?'puncture':m.mode==='tuiles'&&m.hand.length?'place':'move';
+ }else m.phase=nextPlayer.voyageChoices?.length?'voyage-choice':nextPlayer.pendingCards?.length?'card-resolution':nextPlayer.flat?'puncture':m.mode==='tuiles'&&m.hand.length?'place':'move';
 }
-export const ranking=m=>[...m.players].sort((a,b)=>b.points-a.points||Number(b.completed)-Number(a.completed));
+export const ranking=m=>[...m.players].sort((a,b)=>(m.winner?Number(b.id===m.winner)-Number(a.id===m.winner):0)||b.points-a.points||(b.voyagesDone?.length||0)-(a.voyagesDone?.length||0)||Number(b.completed)-Number(a.completed));
 export function serialize(m){return JSON.stringify(m);}
 export function load(text){
  const raw=JSON.parse(text);if(raw?.version===1)return migrate(raw);
  const count=n=>Number.isInteger(n)&&n>=0;
- if(raw?.version!==2||!Array.isArray(raw.players)||raw.players.length<1||raw.players.length>6||!raw.board||!count(raw.activeIndex)||!raw.players[raw.activeIndex]||!['plateau','tuiles'].includes(raw.mode)||!['move','place','event','card-choice','card-discard','card-intervention','card-resolution','puncture','encounter','finished'].includes(raw.phase)||raw.phase==='encounter'&&!ENCOUNTERS.some(e=>e.id===raw.encounter?.id)||!count(raw.round)||raw.round<1||!count(raw.turn)||!count(raw.moved)||raw.moved>(raw.cardVersion===3?40:5)||!Array.isArray(raw.history)||!Array.isArray(raw.deck)||!Array.isArray(raw.hand)||!raw.stats||!raw.stats.categories||!raw.stats.terrain)throw Error('Sauvegarde invalide.');
+ if(raw?.version!==2||!Array.isArray(raw.players)||raw.players.length<1||raw.players.length>6||!raw.board||!count(raw.activeIndex)||!raw.players[raw.activeIndex]||!['plateau','tuiles'].includes(raw.mode)||!['move','place','event','card-choice','card-discard','card-intervention','card-resolution','puncture','encounter','voyage-choice','finished'].includes(raw.phase)||raw.phase==='encounter'&&!ENCOUNTERS.some(e=>e.id===raw.encounter?.id)||!count(raw.round)||raw.round<1||!count(raw.turn)||!count(raw.moved)||raw.moved>(raw.cardVersion===3?40:5)||!Array.isArray(raw.history)||!Array.isArray(raw.deck)||!Array.isArray(raw.hand)||!raw.stats||!raw.stats.categories||!raw.stats.terrain)throw Error('Sauvegarde invalide.');
   raw.rules=validateRules(raw.rules);
   if(raw.cardVersion===3)raw.eventCardEdits=normalizeEventEdits(raw.eventCardEdits||[]);
  raw.customCards=normalizeCustomCards(raw.customCards||[]);

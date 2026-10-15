@@ -25,13 +25,13 @@ export const EVENT_CARDS=[
  make(15,'Erreur d’itinéraire','negative','Une mauvaise intersection t’éloigne de ton parcours.','Le joueur ciblé ne se déplace pas à son prochain tour. GPS de randonnée annule l’effet.','wrong_turn',0,'🪧'),
  make(16,'Chute à vélo','negative','Un virage mal négocié provoque une lourde chute.','Le joueur ciblé perd 2 énergies. Au début de son tour, il se soigne avec sa trousse de secours ; sans trousse, il retourne à la dernière ville et perd sa journée.','fall',2,'⚠️'),
  make(17,'Intoxication alimentaire','negative','Le dernier repas ne passe vraiment pas…','Le joueur ciblé perd immédiatement 2 énergies.','food_poisoning',2,'🤢'),
- make(18,'Route barrée','negative','Des travaux t’obligent à modifier ton itinéraire.','Le prochain trajet annoncé est interdit ; choisis une autre route. GPS de randonnée annule l’effet.','road_closed',0,'🚧'),
+ make(18,'Route barrée','negative','Des travaux t’obligent à modifier ton itinéraire.','Au prochain tour, le joueur ciblé fait 2 cases de moins (détour obligé). GPS de randonnée annule l’effet.','road_closed',2,'🚧'),
  make(19,'Sacoche déchirée','negative','Une sacoche s’accroche et des provisions disparaissent.','Le joueur ciblé perd 1 nourriture, ou 1 énergie s’il n’en possède pas.','torn_bag',1,'🎒'),
  make(20,'Matériel endommagé','negative','Une mauvaise manipulation abîme un équipement essentiel.','Le joueur ciblé choisit un bonus permanent à défausser ; sinon il perd 1 énergie.','damage_bonus',1,'💥'),
  make(21,'Vent de face','climatic','De puissantes rafales ralentissent le cycliste.','Le déplacement en cours coûte 2 énergies supplémentaires.','headwind_now',2,'🌬️'),
  make(22,'Canicule','climatic','La chaleur écrasante épuise les réserves.','Le joueur ciblé perd immédiatement 2 énergies.','heatwave',2,'☀️'),
  make(23,'Orage violent','climatic','La pluie et les éclairs rendent la route dangereuse.','Interrompt le déplacement sur la dernière case atteinte.','storm_now',0,'⛈️'),
- make(24,'Brouillard épais','climatic','La visibilité devient presque nulle.','Réduis de 2 cases la distance restante du déplacement en cours.','fog',2,'🌫️'),
+ make(24,'Brouillard épais','climatic','La visibilité devient presque nulle.','Le joueur ciblé perd 1 énergie et ne peut pas quitter la route pendant ce trajet : il s’arrête avant la première case hors route.','fog',1,'🌫️'),
  make(25,'Neige au sommet','climatic','La neige recouvre la route du col.','Au prochain tour du joueur ciblé, les cases de montagne et les cols lui sont interdits.','mountain_snow',0,'❄️'),
  make(26,'Pluie torrentielle','climatic','Le chemin devient un véritable bourbier.','Sur une case sans route, le joueur ciblé perd 2 énergies.','heavy_rain',2,'🌧️','sans_route'),
  make(27,'Vent latéral','climatic','De violentes bourrasques gênent la trajectoire.','Réduis de 2 cases le déplacement en cours.','crosswind',2,'💨'),
@@ -46,7 +46,7 @@ export const EVENT_CARDS=[
  make(36,'Réchaud performant','permanent','Un bon repas chaud aide à repartir.','Chaque nourriture consommée rapporte 3 énergies au lieu de 2.','efficient_stove',3,'🍲'),
  make(37,'Tente grand confort','permanent','Bien dormir aide à rouler longtemps.','Lors d’une nuit sous tente, récupère 2 énergies au lieu de 1.','comfortable_tent',2,'⛺'),
  make(38,'Vélo léger','permanent','Quelques kilos en moins comptent en montagne.','Réduis de 1 énergie le premier surcoût de terrain à chaque tour.','light_bike',1,'🚲'),
- make(39,'Carnet de voyage','permanent','Chaque ville traversée enrichit ton aventure.','Souvenir de route. (Nouvel effet à venir.)','travel_journal',0,'📓'),
+ make(39,'Carnet de voyage','permanent','Chaque ville traversée enrichit ton aventure.','À chaque nouvelle ville visitée depuis l’activation : +1 pièce (tu racontes ton voyage aux habitants).','travel_journal',1,'📓'),
  make(40,'Réseau Warmshowers','permanent','La communauté accueille les cyclistes.','Une fois par tour, à l’arrivée dans une ville : +1 énergie.','warmshowers',1,'🏠')
 ];
 const officialCard=id=>EVENT_CARDS.find(card=>card.id===id);

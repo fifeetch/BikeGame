@@ -1432,3 +1432,44 @@ body.net-waiting .player-sheet-dock,body.net-waiting .route-planner{opacity:.45;
 .mc-voyage-art .voyage-art.voyage-art-map{height:100%}
 .mc-tier{display:inline-block;padding:3px 10px;border-radius:999px;background:#f2a541;color:#1b1406;font-weight:700;margin-right:6px}
 .mc-len-cases{display:block;margin-top:4px}
+/* Nouveau voyage après un voyage réussi */
+.newvoyage-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin-top:14px}
+.newvoyage{border:3px solid var(--voyage-color);border-radius:16px;overflow:hidden;background:#f6e7c1;color:#1b1406;display:flex;flex-direction:column}
+.newvoyage-art{height:120px;position:relative;overflow:hidden}.newvoyage-art .voyage-art{position:absolute;inset:0;height:100%;width:100%;margin:0;border-radius:0;aspect-ratio:auto}
+.newvoyage-copy{padding:12px;display:flex;flex-direction:column;gap:6px;flex:1}
+.newvoyage-copy small{font-weight:700;color:#8a5a14;letter-spacing:.06em;text-transform:uppercase}
+.newvoyage-copy h3{margin:0;font:900 20px/1.1 'Fraunces',Georgia,serif;color:#1b3b38}
+.newvoyage-copy ul{margin:0;padding-left:18px;font-size:15px;color:#3a2f1a}
+.newvoyage-copy button{margin-top:auto}
+.win-line{font-size:18px}
+/* Nouveau voyage après un voyage réussi */
+.newvoyage-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin-top:14px}
+.newvoyage{border:3px solid var(--voyage-color);border-radius:16px;overflow:hidden;background:#f6e7c1;color:#1b1406;display:flex;flex-direction:column}
+.newvoyage-art{height:120px;position:relative;overflow:hidden}.newvoyage-art .voyage-art{position:absolute;inset:0;height:100%;width:100%;margin:0;border-radius:0;aspect-ratio:auto}
+.newvoyage-copy{padding:12px;display:flex;flex-direction:column;gap:6px;flex:1}
+.newvoyage-copy small{font-weight:700;color:#8a5a14;letter-spacing:.06em;text-transform:uppercase}
+.newvoyage-copy h3{margin:0;font:900 20px/1.1 'Fraunces',Georgia,serif;color:#1b3b38}
+.newvoyage-copy ul{margin:0;padding-left:18px;font-size:15px;color:#3a2f1a}
+.newvoyage-copy button{margin-top:auto}
+.win-line{font-size:18px}
+/* Fin de partie (écran des cyclistes et création en ligne) */
+.mc-victory .mc-vic-row{display:flex;flex-wrap:wrap;gap:10px;align-items:stretch}
+.mc-vic-field{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:14px;background:rgba(246,231,193,.1);border:2px solid rgba(246,231,193,.35);font-weight:700}
+.mc-vic-field input{width:72px;min-height:44px;border-radius:10px;border:2px solid #f2a541;background:#fff7df;color:#1b1406;font:900 20px 'Fraunces',Georgia,serif;text-align:center}
+.mc-victory .mc-vic-row button{display:flex;flex-direction:column;align-items:flex-start;padding:8px 14px;border-radius:14px;border:2px solid rgba(246,231,193,.35);background:transparent;color:inherit;cursor:pointer}
+.mc-victory .mc-vic-row button.on{border-color:#f2a541;box-shadow:0 0 0 2px #f2a541;background:rgba(242,165,65,.15)}
+.mc-online-card .mc-victory{padding:0;background:none;border:0}
+.mc-online-card .mc-vic-field{background:#fff7df;border-color:#c9b88d;color:#1b1406}
+.mc-online-card .mc-victory .mc-vic-row button{border-color:#c9b88d;color:#1b3b38;background:#fff7df}
+.mc-online-card .mc-victory .mc-vic-row button.on{background:#1b3b38;color:#f6e7c1;border-color:#f2a541}
+.modal:has(.newvoyage-grid){width:min(1000px,94vw);max-width:none}
+.modal .newvoyage .newvoyage-copy h3{color:#1b3b38}
+.modal .newvoyage .newvoyage-copy ul,.modal .newvoyage .newvoyage-copy li{color:#3a2f1a}
+.modal .newvoyage .newvoyage-copy small{color:#8a5a14}
+.newvoyage .mc-tier{align-self:flex-start;white-space:nowrap}
+.mc-online-card .mc-victory{display:flex;flex-direction:column;gap:10px}
+.mc-online-card .mc-victory .mc-vic-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.mc-online-card .mc-vic-field{font-size:14px;padding:6px 10px}
+.mc-online-card .mc-vic-field input{width:60px;min-height:40px;font-size:18px}
+.mc-online-card .mc-victory p{color:#5a4a2c}
+.player-sheet-dock .dock-finish{background:#f2a541;color:#1b1406;border-color:#f2a541;font-weight:700}

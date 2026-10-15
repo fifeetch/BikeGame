@@ -109,6 +109,12 @@ export function plateauScreen({btn,maps=[],message=''}){
 }
 
 // ---------- 2. Cyclistes ----------
+// Fin de partie : Standard (50 points, 3 voyages ou 40 jours) ou personnalisée. 0 = condition non utilisée.
+export function victoryBlock(rules,btn){const v=rules.victory||{},multi=v.mode==='multi',std=multi&&v.points===35&&v.voyages===3&&v.days===40;
+ const num=(k,label)=>`<label class="mc-vic-field"><input type="number" min="0" max="999" step="1" data-victory="${k}" value="${multi?Number(v[k]||0):''}"/> ${label}</label>`;
+ return `<section class="mc-weather mc-victory" aria-label="Fin de partie"><div><p class="mc-kicker">Fin de partie</p><p>La partie s’arrête dès que l’une de ces conditions est atteinte (0 = pas utilisée). Après un voyage réussi, on en tire un nouveau.</p></div>
+  <div class="mc-vic-row">${num('points','points d’aventure')}${num('voyages','voyages réussis')}${num('days','jours (le plus de points gagne)')}
+  <button type="button" data-action="victory-standard" class="${std?'on':''}" aria-pressed="${std}"><b>Standard</b><small>35 points · 3 voyages · 40 jours</small></button></div></section>`;}
 export function playersScreen({btn,roster,colors,rules}){
  const cards=roster.map((p,i)=>`<section class="mc-player" style="--player-color:${colors[i]}" aria-label="Cycliste ${i+1}">
    <div class="mc-player-head"><span class="mc-token" aria-hidden="true">${i+1}</span><span>Cycliste ${i+1}</span></div>
@@ -129,6 +135,7 @@ export function playersScreen({btn,roster,colors,rules}){
     <button type="button" data-action="events-cards" aria-pressed="${!rules.encounters?.enabled}" class="${!rules.encounters?.enabled?'on':''}"><b>Cartes Événement</b><small>On pioche, on garde, on joue ses cartes et on en donne aux autres.</small></button>
     <button type="button" data-action="events-encounters" aria-pressed="${!!rules.encounters?.enabled}" class="${rules.encounters?.enabled?'on':''}"><b>Rencontres · idéal en solo</b><small>Plus de cartes : chaque soir, une rencontre liée à l’endroit propose un choix.</small></button>
    </div></section>
+  ${victoryBlock(rules,btn)}
   <footer class="mc-foot">${btn('← Plateau','modes','mc-ghost')}<span>Règles : ${esc(rules.name)} · ${rules.distance} cases/jour · ${rules.startEnergy} énergie · ${rules.startMoney} pièces · ${btn('Modifier','rules','mc-link')}</span>${btn('Au garage →','start','mc-go')}</footer>
  </main>`;
 }
@@ -212,6 +219,7 @@ export function onlineScreen({btn,net={},local=null,current=null,message='',rule
     <label class="mc-online-label">Nombre de cyclistes <select id="net-count">${[2,3,4,5,6].map(n=>`<option value="${n}" ${(net.count||2)===n?'selected':''}>${n}</option>`).join('')}</select></label>
     <div class="mc-weather-choices mc-online-opts" role="group" aria-label="Météo">${toggle(!forecast,'weather-cards','Cartes météo','Pluie, neige, vent… en cartes.')}${toggle(forecast,'weather-forecast','Météo annoncée','Bulletin chaque soir, sans cartes climatiques.')}</div>
     <div class="mc-weather-choices mc-online-opts" role="group" aria-label="Événements">${toggle(!enc,'events-cards','Cartes Événement','On joue des cartes aux autres.')}${toggle(enc,'events-encounters','Rencontres','Une rencontre chaque soir.')}</div>
+    ${victoryBlock(rules,btn)}
     ${btn('Créer la partie en ligne','net-lobby-create','mc-go')}`);
   const upload=local?card(`<p class="mc-kicker">Ou bien</p><h2>Mettre ma partie en cours en ligne</h2><p>Partie préparée sur cet appareil : ${esc(local.title)}. Choisis le cycliste que tu joues ici ; les autres se joueront sur l’appareil de tes amis.</p>
     <div class="mc-online-pick">${local.players.map(p=>`<button type="button" data-action="net-create-${esc(p.id)}"><b>Je suis ${esc(p.name)}</b><small>${esc(p.detail)}</small></button>`).join('')}</div>`)

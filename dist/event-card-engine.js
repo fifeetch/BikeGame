@@ -90,7 +90,7 @@ export function resolveAttack(m,choice={}){const a=m.pendingAttack;if(!a)return 
   case 'headwind_next':p.pendingEffects.push({cardId:c.id,kind:'extra_energy',value:2});deferred=true;break;
   case 'storm_next':loseEnergy(p,1);p.pendingEffects.push({cardId:c.id,kind:'skip_move'});deferred=true;break;
   case 'wrong_turn':p.pendingEffects.push({cardId:c.id,kind:'skip_move'});deferred=true;break;
-  case 'road_closed':p.pendingEffects.push({cardId:c.id,kind:'road_closed'});deferred=true;break;
+  case 'road_closed':p.pendingEffects.push({cardId:c.id,kind:'short_move',value:2});deferred=true;break;
   case 'fall':loseEnergy(p,2);p.flat=true;p.flatKind='fall';break;
   case 'mountain_snow':p.pendingEffects.push({cardId:c.id,kind:'no_mountain'});deferred=true;break;
   case 'torn_bag':if(p.food)p.food--;else loseEnergy(p,1);break;
@@ -103,7 +103,7 @@ export function resolveAttack(m,choice={}){const a=m.pendingAttack;if(!a)return 
  if(a.solo&&['move','place'].includes(m.phase))for(const effect of [...p.pendingEffects])if(['skip_move','short_move'].includes(effect.kind)){if(effect.kind==='skip_move')p.turnModifiers.skipMove=true;else p.turnModifiers.distancePenalty=(p.turnModifiers.distancePenalty||0)+effect.value;discard(m,effect.cardId);p.pendingEffects.splice(p.pendingEffects.indexOf(effect),1);}
  if(!deferred)discard(m,c.id);note(m,p,protectedBy?`${p.name} est protégé par ${protectedBy}.`:`${p.name} subit ${c.name} : ${c.effectText}`,'card-result',{cardId:c.id});m.pendingAttack=null;nextSoloEvent(m);return true;
 }
-export function weatherFor(c){return {kind:({headwind_now:'extra_energy',storm_now:'stop',fog:'short_move',crosswind:'short_move',morning_frost:'frost'}[c.effectType]||c.effectType),value:c.effectValue};}
+export function weatherFor(c){return {kind:({headwind_now:'extra_energy',storm_now:'stop',fog:'fog',crosswind:'short_move',morning_frost:'frost'}[c.effectType]||c.effectType),value:c.effectValue};}
 export function playOwnCard(m,index,replaceIndex){const p=m.players[m.activeIndex],c=card(p.cardHand[index],m);if(!c||m.done||!['move','place'].includes(m.phase)||!['positive','permanent'].includes(c.category))return false;
  if(m.pendingAttack||p.cardPlayedTurn===m.turn)return false;
  if(c.effectType==='cancel_attack')return false;
@@ -125,6 +125,6 @@ export function playOwnCard(m,index,replaceIndex){const p=m.players[m.activeInde
  discard(m,c.id);note(m,p,`${p.name} joue ${c.name} : ${c.effectText}`,'card-play',{cardId:c.id});return true;
 }
 export function onCityVisit(m,p,cityKey){const warm=bonusForEffect(m,p,'warmshowers'),journal=bonusForEffect(m,p,'travel_journal');if(warm&&p.warmTurn!==m.turn){p.energy=Math.min(energyCap(m,p),p.energy+1);p.warmTurn=m.turn;note(m,p,`${p.name} récupère 1 énergie grâce à ${warm.name}.`);}
- if(journal&&!p.journalCities.includes(cityKey)){p.journalCities.push(cityKey);/* plus de points (choix de Fi, 15 octobre 2026) : nouvel effet à définir */}
+ if(journal&&!p.journalCities.includes(cityKey)){p.journalCities.push(cityKey);p.money+=1;note(m,p,`${p.name} gagne 1 pièce grâce à ${journal.name}.`);}
 }
 export function onTurnEnd(m,p){const solar=bonusForEffect(m,p,'solar');if(solar){const old=p.energy;p.energy=Math.min(energyCap(m,p),p.energy+1);if(p.energy>old)note(m,p,`${p.name} récupère 1 énergie grâce à ${solar.name}.`);}}

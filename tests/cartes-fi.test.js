@@ -8,7 +8,7 @@ import {eventCardsFor} from '../dist/event-cards.js';
 
 const roster=[{name:'Fi',bike:'gravel',voyage:'traversee',items:[]},{name:'Léa',bike:'gravel',voyage:'soleil',items:[]}];
 function game(){const m=S.createMatch(roster,'plateau',CLASSIC,13);m.pendingAttack=null;m.phase='move';m.cardChoices=[];
- for(const p of m.players){p.cardHand=[];p.bonusCards=[];p.pendingEffects=[];p.turnModifiers={};p.energy=10;}m.moved=0;return m;}
+ for(const p of m.players){m.eventDiscard.push(...p.cardHand,...p.bonusCards);p.cardHand=[];p.bonusCards=[];p.pendingEffects=[];p.turnModifiers={};p.energy=10;}m.moved=0;return m;}
 // Fi (joueur actif) joue la carte <effet> contre Léa ; Léa subit.
 function attack(m,effect){const fi=m.players[0],lea=m.players[1],id=eventCardsFor(m).find(c=>c.effectType===effect).id;
  fi.cardHand=[id];fi.cardPlayedTurn=-1;fi.negativePlayedTurn=-1;
@@ -54,4 +54,37 @@ test('Vent dans le dos : cases gratuites en plaine, côte, moyenne montagne — 
 test('GPS de randonnée (bonus) : quitter la route sans pénalité',()=>{
  const m=game(),p=S.player(m);assert(!S.hasOffroadItem(m,p));
  p.bonusCards=[eventCardsFor(m).find(c=>c.effectType==='gps_immunity').id];assert(S.hasOffroadItem(m,p));
+});
+
+// ---------- Cartes 18, 24, 39 revues et fin de partie (15 octobre 2026) ----------
+test('Route barrée : 2 cases de moins au prochain tour',()=>{
+ const m=game(),lea=attack(m,'road_closed');assert(lea.pendingEffects.some(e=>e.kind==='short_move'&&e.value===2));toLea(m);assert.equal(lea.turnModifiers.distancePenalty,2);
+});
+test('Carnet de voyage : +1 pièce par nouvelle ville',()=>{
+ const m=game(),p=S.player(m);p.bonusCards=[eventCardsFor(m).find(c=>c.effectType==='travel_journal').id];const money=p.money;
+ C.onCityVisit(m,p,'city-A');C.onCityVisit(m,p,'city-B');C.onCityVisit(m,p,'city-A');assert.equal(p.money,money+2);
+});
+test('fin de partie standard : 50 points, 3 voyages ou 40 jours ; un voyage réussi en fait tirer un autre',()=>{
+ const m=game(),p=S.player(m);assert.equal(m.rules.victory.mode,'multi');assert.deepEqual([m.rules.victory.points,m.rules.victory.voyages,m.rules.victory.days],[35,3,40]);
+ // voyage réussi : 3 nouvelles cartes, jamais la même ni une qui arrive ici
+ p.voyagesDone=[{id:p.voyage,day:1,points:9}];p.completed=true;p.voyageChoices=S.newVoyageChoices(m,p);assert.equal(p.voyageChoices.length,3);assert(!p.voyageChoices.includes(p.voyage));
+ m.phase='voyage-choice';const pick=p.voyageChoices[1];p.travelHistory.push({key:'x',type:'plaine',day:1});
+ assert(S.chooseNewVoyage(m,pick));assert.equal(p.voyage,pick);assert.equal(p.completed,false);assert.equal(m.phase,'move');assert.equal(S.view(m).travelHistory.length,0,'objectifs comptés à partir de maintenant');
+ assert.equal(S.load(S.serialize(m)).players[0].voyage,pick);
+ // 50 points : victoire au prochain passage de tour
+ p.points=35;m.phase='move';S.endTurn(m);if(m.phase==='card-choice')S.chooseCard(m,0);if(m.phase==='card-discard')S.discardEventHand(m,0);
+ assert(m.done);assert.equal(m.winner,p.id);assert.equal(S.ranking(m)[0].id,p.id);
+});
+test('fin de partie après 40 jours : le plus de points gagne',()=>{
+ const m=game();m.players[1].points=7;m.players[0].points=3;for(const q of m.players)q.availableDay=41;m.round=41;m.phase='move';
+ S.endTurn(m);if(m.phase==='card-choice')S.chooseCard(m,0);if(m.phase==='card-discard')S.discardEventHand(m,0);
+ assert(m.done);assert.equal(m.winner,'p2');
+});
+test('arrivé sans tous les objectifs : on peut terminer le voyage avec 40 % de points en moins',()=>{
+ const m=game(),p=S.player(m);
+ const voyage=S.view(m).voyage,dest=Object.values(m.board).find(t=>t.type==='ville'&&t.name===({traversee:'Istanbul',soleil:'Rome'}[voyage]));
+ p.pos=dest.key;p.travelHistory=[];p.voyageFrom=0;m.phase='move';
+ assert(S.canFinishVoyageEarly(m));const before=p.points,full={traversee:15,soleil:12}[voyage];
+ assert(S.finishVoyageEarly(m));assert.equal(p.points-before,Math.round(full*.6));assert(p.completed);assert.equal(p.voyageChoices.length,3);assert(p.voyagesDone.at(-1).partial);
+ assert(!S.canFinishVoyageEarly(m),'une seule fois');
 });

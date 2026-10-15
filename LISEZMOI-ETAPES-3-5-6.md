@@ -159,3 +159,10 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - Toujours 3 cartes tirées au hasard, on en garde une. Les nouveaux voyages sans illustration montrent une petite carte du trajet.
 - Les jetons « ? » restent dans la zone des 8 voyages d'origine, plus la zone des voyages choisis dans la partie.
 - Robots : `VOYAGE=<id> JOUEURS=1 node tools/simulation/parties-auto.mjs 3` pour tester un voyage.
+
+## Fin de partie réglable et plusieurs voyages (15 octobre 2026)
+- **Fin de partie** choisie avant de jouer (écran des cyclistes, création en ligne, fenêtre Règles) : **Standard = 35 points d'aventure, 3 voyages réussis ou 40 jours** (au bout des jours, le plus de points gagne). Chaque nombre est modifiable ; 0 = condition non utilisée.
+- **Voyage réussi → nouveau voyage** : au début de son tour suivant, le cycliste tire 3 cartes et en garde 1 ; il part d'où il est et seules les cases parcourues ensuite comptent.
+- **Arrivé sans tous les objectifs** : bouton « 🏁 Terminer le voyage ici » ; le voyage compte, mais rapporte 40 % de points en moins.
+- **Cartes revues** : 18 Route barrée = 2 cases de moins au prochain tour (GPS protège) ; 24 Brouillard = −1 énergie et pas de sortie de route pendant ce trajet ; 39 Carnet de voyage = +1 pièce par nouvelle ville.
+- Les règles enregistrées sur l'appareil avant ces changements sont mises à jour automatiquement (points et fin de partie).

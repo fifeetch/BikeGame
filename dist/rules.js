@@ -1,7 +1,7 @@
 import {events as legacyEvents} from './engine.js';
 
 export const COLORS=['#b74732','#267b91','#6d5699','#a77d1e','#427a4b','#b05181'];
-export const CLASSIC={
+export const CLASSIC={rulesVersion:2,
  name:'Classique',terrain:{plaine:1,moyenne_montagne:2,montagne:3,cote:1,ville:0,camping:1,auberge:1,col:3,decouverte:1},ferryPrice:3,
  distance:5,startEnergy:8,maxEnergy:10,startMoney:10,startFood:3,maxFood:6,salary:2,workDays:1,workCityOnly:true,workEnabled:false,
  budget:{startBonus:5,every:5,amount:5},
@@ -21,7 +21,7 @@ export const CLASSIC={
  equipment:{tente:{name:'Tente',price:2,space:2,energyBonus:0},rechaud:{name:'Réchaud',price:1,space:1,energyBonus:0},chambre:{name:'Chambre à air',price:1,space:1,energyBonus:0},kit:{name:'Kit de réparation',price:1,space:1,energyBonus:0},gps:{name:'GPS',price:3,space:1,energyBonus:0},duvet:{name:'Matelas et duvet',price:3,space:2,energyBonus:1},secours:{name:'Trousse de secours',price:2,space:1,energyBonus:0},sacoches:{name:'Sacoches',price:2,space:1,energyBonus:0,foodBonus:3}},
  probabilities:{negative:50,positive:30,challenge:20},eventAfterWork:false,eventAfterRest:false,
  points:{plaine:0,moyenne_montagne:0,montagne:0,cote:0,ville:0,camping:2,auberge:2,col:2,decouverte:4,objective:10},
- victory:{mode:'objectives',points:40,turns:20,allObjectives:false},
+ victory:{mode:'multi',points:35,voyages:3,days:40,turns:20,allObjectives:false},
  events:legacyEvents.map(e=>({...e,id:'legacy-'+e.id,category:Object.values(e.effect).some(v=>v<0)?'negative':'positive',protect:e.id===16?'chambre':e.id===7?'tente':e.protect||'',consume:e.id===16,weight:1})).concat([
  {id:'blessure',title:'Petite chute',text:'Une blessure légère demande des soins.',terrain:'general',category:'negative',weight:1,protect:'secours',consume:false,effect:{energy:-2}},
  {id:'defi-plaine',title:'Étape sportive',text:'Consacre de l’énergie à une échappée, ou garde tes forces.',terrain:'general',category:'challenge',weight:1,protect:'',consume:false,cost:{energy:2,money:0,food:0},effect:{energy:0,money:0,food:0,points:4}},
@@ -31,6 +31,10 @@ export const CLASSIC={
 };
 export const clone=value=>JSON.parse(JSON.stringify(value));
 function merge(base,value){if(Array.isArray(base))return value===undefined?clone(base):clone(value);if(base&&typeof base==='object'){const out={};for(const k of Object.keys(base))out[k]=merge(base[k],value?.[k]);return out;}return value===undefined?base:value;}
+// Règles enregistrées sur l'appareil avant le 15 octobre 2026 : on remet à jour les points et la fin de partie décidés par Fi
+// (le reste — météo, rencontres, réglages personnels — est gardé).
+export const RULES_VERSION=2;
+export function upgradeStoredRules(raw){if(!raw||typeof raw!=='object')return raw;if((raw.rulesVersion||1)<RULES_VERSION){const out={...raw};delete out.points;delete out.adventure;delete out.victory;out.rulesVersion=RULES_VERSION;return out;}return raw;}
 export function validateRules(input){
  const r=merge(CLASSIC,input);
  const walk=(v,path='')=>{for(const [k,n]of Object.entries(v)){const p=path+'.'+k;if(n&&typeof n==='object')walk(n,p);else if(typeof n==='number'&&(!Number.isFinite(n)||Math.abs(n)>100000||(!p.includes('.events.')&&n<0)))throw Error('Valeur incorrecte : '+p);else if(typeof n!=='number'&&typeof n!=='boolean'&&typeof n!=='string')throw Error('Valeur incorrecte : '+p);}};walk(r);
@@ -45,7 +49,8 @@ export function validateRules(input){
  if(!Number.isInteger(r.budget.every)||r.budget.every<1||!Number.isInteger(r.fatigue.days)||r.fatigue.days<1||r.fatigue.maxEnergyPenalty>=r.maxEnergy)throw Error('Budget : versement tous les 1 jour ou plus ; fatigue : au moins 1 jour, pénalité inférieure à l’énergie maximale.');
  if((r.offroad.item&&!r.equipment[r.offroad.item])||!Object.values(r.offroad.maxDistance).every(n=>Number.isInteger(n)&&n>=1&&n<=5))throw Error('Hors route : objet protecteur connu, et distance maximale hors route entière de 1 à 5 cases.');
  if(Object.values(r.probabilities).reduce((a,b)=>a+b,0)!==100)throw Error('Les probabilités doivent totaliser 100 %.');
- if(!['objectives','points','turns'].includes(r.victory.mode)||r.victory.points<1||!Number.isInteger(r.victory.turns)||r.victory.turns<1)throw Error('Condition de victoire incorrecte.');
+ if(r.victory.mode==='multi'){const v=r.victory;for(const k of ['points','voyages','days']){v[k]=Number(v[k]??0);if(!Number.isInteger(v[k])||v[k]<0||v[k]>999)throw Error('Fin de partie : des nombres entiers de 0 à 999 (0 = pas utilisé).');}if(!v.points&&!v.voyages&&!v.days)throw Error('Fin de partie : choisis au moins une condition (points, voyages ou jours).');}
+ else if(!['objectives','points','turns'].includes(r.victory.mode)||r.victory.points<1||!Number.isInteger(r.victory.turns)||r.victory.turns<1)throw Error('Condition de victoire incorrecte.');
  const ids=new Set();for(const e of r.events){if(!e||typeof e.id!=='string'||ids.has(e.id)||typeof e.title!=='string'||typeof e.text!=='string'||!['negative','positive','challenge'].includes(e.category)||!['general',...Object.keys(r.terrain)].includes(e.terrain)||!Number.isFinite(e.weight)||e.weight<0||typeof e.consume!=='boolean'||typeof e.protect!=='string'||(e.protect&&!r.equipment[e.protect])||!e.effect||typeof e.effect!=='object'||Array.isArray(e.effect)||e.cost&&(typeof e.cost!=='object'||Array.isArray(e.cost)))throw Error('Événement invalide.');ids.add(e.id);for(const effects of [e.effect,e.cost||{}])for(const [k,v]of Object.entries(effects))if(!['energy','food','money','points'].includes(k)||typeof v!=='number'||!Number.isFinite(v)||Math.abs(v)>100000)throw Error('Effet d’événement invalide.');if(Object.values(e.cost||{}).some(v=>v<0))throw Error('Un coût de défi doit être positif.');}
  for(const category of Object.keys(r.probabilities))if(r.probabilities[category]>0&&!r.events.some(e=>e.category===category&&e.terrain==='general'&&e.weight>0))throw Error('Il faut un événement général actif pour chaque catégorie utilisée.');
  return r;
