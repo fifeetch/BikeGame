@@ -188,3 +188,9 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 ## Barre de la journée « road-book » (15 octobre 2026, visuel 1 choisi par Fi)
 - Bande crème : à gauche les 3 étapes **Tracer → Rouler → Finir** sur un chemin pointillé ; au centre le gros bouton orange arrondi (pastille 🚴 / 🌙, coût ou cases restantes à droite) ou la consigne « Trace ton étape » ; à droite des boutons ronds (Me reposer, Passer, Effacer, Manger, Cartes, Météo).
 - Quand la place manque (vue côte à côte), le gros bouton passe sur une 2e ligne.
+
+## Mes parties : plusieurs sauvegardes (15 octobre 2026, maquette PartiesC validée)
+- Chaque partie s'enregistre toute seule dans sa propre place (réserve IndexedDB du navigateur, `dist/saves.js`), jusqu'à 20 parties par appareil.
+- Écran titre « Reprendre » → **Mes parties** : cartes avec petite carte du trajet, étiquettes (Solo, joueurs, En ligne, Rencontres, Météo annoncée, Terminée), cyclistes et points, jour, date ; Reprendre / Renommer / ⬇️ Fichier / 🗑 ; filtres Toutes, En cours, Terminées ; « Importer une partie ». Avec une seule partie, « Reprendre » la relance directement.
+- « Nouveau voyage » ne remplace plus la partie en cours : elle reste dans la liste.
+- Les parties en ligne apparaissent aussi et se reprennent avec leur code.

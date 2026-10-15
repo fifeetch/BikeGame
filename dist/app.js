@@ -11,6 +11,8 @@ import {readArtPreference} from './terrain-art.js';
 import {readDisplayPrefs,writeDisplayPref} from './display-prefs.js';
 import {titleScreen,plateauScreen,playersScreen,garageScreen,voyagesScreen,onlineScreen} from './menus.js';
 import {rulesIntro,rulesHelp,HELP_TABS} from './rules-help.js';
+import * as SAVES from './saves.js';
+import {partiesScreen} from './menus.js';
 import * as NET from './online.js';
 import {europeBoard} from './europe.js';
 import {EVENT_CARDS,eventCardById as resolveEventCard,normalizeEventEdits} from './event-cards.js';
@@ -96,7 +98,7 @@ function render(){
  if(boardElement?.parentElement)boardElement.remove();boardRenderState=null;
  const sheetTurn=screen==='game'&&m?S.player(m).id+':'+m.turn:'';
  const sheetScroll=sheetTurn===renderedSheetTurn?document.querySelector('.player-sheet-mount')?.scrollTop:0;
- let page=screen==='card-editor'?renderCardEditor(customCards,cardDraft,message,eventEdits,eventDraft):screen==='map-editor'?editorScreen():screen==='game'&&m?game():screen==='voyages'?choices():screen==='equipment'?equipmentSetup():screen==='setup'?setup():screen==='modes'?modes():screen==='online'?onlineView():home();
+ let page=screen==='card-editor'?renderCardEditor(customCards,cardDraft,message,eventEdits,eventDraft):screen==='map-editor'?editorScreen():screen==='game'&&m?game():screen==='voyages'?choices():screen==='equipment'?equipmentSetup():screen==='setup'?setup():screen==='modes'?modes():screen==='online'?onlineView():screen==='parties'?partiesView():home();
  if(screen==='game'&&splitView)page=page.replace('<main class="game">',`<main class="game game-split" style="--sheet-width:${splitWidth}%">`);
  const splitControls=screen==='game'&&m?`<button type="button" class="light split-toggle" data-action="split-view" aria-pressed="${splitView}">${splitView?'▤ Vue verticale':'◧ Vue côte à côte'}</button>${splitView?`<label class="split-size" for="split-width">Fiche <output id="split-width-value">${splitWidth}%</output><input id="split-width" type="range" min="30" max="50" step="5" value="${splitWidth}" aria-label="Largeur de la fiche joueur"/></label>`:''}`:'';
   app.innerHTML=`<header class="${screen==='game'?'in-game':''}"><div class="brand"><b>🚲 L’Aventure à Vélo</b>${screen==='game'&&m?`<span class="active-player" style="--player-color:${S.player(m).color}"><i aria-hidden="true"></i>${esc(S.player(m).name)}</span>`:''}</div>${screen==='game'&&m?.cardVersion===3?eventPiles():''}<nav>${splitControls}${btn('📖 Règles','help','light help-btn')+btn('⚙️ Réglages','rules','light')}${btn('Paramètres','settings','light')}${['game','map-editor','card-editor'].includes(screen)?btn('Accueil','home','light'):''}</nav></header>`+page+overlay();
@@ -106,7 +108,7 @@ function render(){
  renderedSheetTurn=sheetTurn;persist();
 }
 function journeySteps(active){return `<nav class="journey-steps" aria-label="Étapes de préparation"><span class="${active==='map'?'current':''}"><i>1</i> Plateau</span><b aria-hidden="true"></b><span class="${active==='players'?'current':''}"><i>2</i> Cyclistes</span><b aria-hidden="true"></b><span class="${active==='gear'?'current':''}"><i>3</i> Équipement</span><b aria-hidden="true"></b><span class="${active==='goal'?'current':''}"><i>4</i> Voyages</span></nav>`;}
-function home(){return titleScreen({btn,hasSave:Boolean(m),saveLine:m?`Jour ${m.round} · ${S.player(m).name}`:'',message,reduced:Boolean(displayPrefs.reduced),maps});}
+function home(){const n=typeof partiesList!=='undefined'?partiesList.length:0;return titleScreen({btn,hasSave:Boolean(m)||n>0,saveLine:n>1?`${n} parties enregistrées`:m?`Jour ${m.round} · ${S.player(m).name}`:'',message,reduced:Boolean(displayPrefs.reduced),maps});}
 function modes(){return plateauScreen({btn,maps,message});}
 function editorScreen(){return `<main class="game map-editor-page"><div class="topbar"><div><span class="eyebrow">ÉDITEUR DE CARTE</span><h1>Créer une carte Europe</h1><p>Choisis une case pour changer son terrain. Les villes des voyages restent fixes.</p></div></div><div class="editor-controls"><label>Nom de la carte <input id="editor-map-name" maxlength="60" value="${esc(editorName)}"/></label><span>Col mythique : ${editorColEffort} énergie</span>${btn('💾 Enregistrer la carte','map-save-project')}${btn('⬇️ Enregistrer en fichier','map-export-file','light')}${btn('Choisir ce plateau','map-play','light')}</div><div class="map-wrap"><div class="map">${boardSurfaceMarkup({g:editorGame,reachable:[],cost:()=>editorColEffort,selected:mapEditKey,route:[],nextSteps:[],editMode:true})}</div><div class="maptools">${btn('−','zoomout')}${btn('+','zoomin')}${btn('◎','center')}${artButton()}</div></div><p class="muted">Les changements sont conservés sur cet appareil après « Enregistrer la carte ». Le fichier .json permet de les garder ou de les importer ailleurs.</p><p class="toast" role="status">${esc(message)}</p>${btn('Retour au menu','home','light')}</main>`;}
 function setup(){return playersScreen({btn,roster,colors:COLORS,rules:setupRules});}
@@ -770,3 +772,48 @@ const helpRules=()=>m&&screen==='game'?m.rules:setupRules,helpEvent=()=>m&&scree
  try{if(screen==='game'&&m&&!m.done&&!modal&&m.round===1&&localStorage.getItem('velo-hide-intro')!=='1'){const seen=JSON.parse(localStorage.getItem('velo-intro-seen')||'[]'),id=String(m.seed);
   if(!seen.includes(id)){localStorage.setItem('velo-intro-seen',JSON.stringify([...seen.slice(-20),id]));modal='rules-intro';}}}catch{}
  priorRender();};}
+
+// ==========================================================================
+// Mes parties : plusieurs parties enregistrées (IndexedDB), reprises depuis une liste.
+// ==========================================================================
+var partiesList=[];let partiesFilter='all',partiesRenaming='',partySaveTimer=null,partyDelete='';const partyLastData=new Map();
+async function refreshParties(){partiesList=await SAVES.allSaves();if(screen==='parties'||screen==='home')render();}
+function partiesView(){return partiesScreen({btn,list:partiesList,filter:partiesFilter,currentId:m?SAVES.saveIdOf(m):'',message,miniMap:id=>{const v=voyages.find(x=>x.id===id);return v?`<div class="voyage-art voyage-art-map">${voyageMiniMap(v)}</div>`:'';},renaming:partiesRenaming});}
+function saveParty(){clearTimeout(partySaveTimer);partySaveTimer=setTimeout(async()=>{if(!m)return;try{
+ const id=SAVES.saveIdOf(m),data=S.serialize(m);if(partyLastData.get(id)===data)return;
+ const old=await SAVES.getSave(id).catch(()=>null),summary=SAVES.summarize(m,{voyages,online:typeof onlineGame==='function'&&onlineGame()?online:null});
+ await SAVES.putSave({id,name:old?.customName?old.name:SAVES.autoName(summary),customName:Boolean(old?.customName),createdAt:old?.createdAt||Date.now(),updatedAt:Date.now(),summary,data});
+ partyLastData.set(id,data);if(!old){await SAVES.trimSaves(id);}partiesList=await SAVES.allSaves();if(screen==='parties')render();}catch{/* pas de réserve : la sauvegarde simple suffit */}},1200);}
+{const p0=persist;persist=(force=false)=>{const r=p0(force);if(m&&(auto||force))saveParty();return r;};}
+function downloadText(text,name){const blob=new Blob([text],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();URL.revokeObjectURL(url);}
+const slug=t=>String(t||'partie').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'partie';
+async function openParty(id){const rec=await SAVES.getSave(id);if(!rec){message='Partie introuvable.';render();return;}
+ let next;try{next=S.load(rec.data);}catch(e){message='Partie illisible : '+e.message;render();return;}
+ if(typeof onlineGame==='function'&&onlineGame()&&!(rec.summary?.online&&online?.code===rec.summary.online.code))leaveOnline();
+ m=next;partyLastData.set(id,rec.data);route=[];mapSelection='';modal='';zoom=1;selected=0;
+ if(rec.summary?.online&&!online){online={code:rec.summary.online.code,seat:rec.summary.online.seat,rev:0};saveOnline();netLight=lightOf(m);net={view:'home',joining:true};startListening();}
+ screen='game';try{localStorage.setItem('velo-save',rec.data);}catch{}render();center?.();}
+{const priorAct=act;act=a=>{
+ if(a==='continue'&&!(m&&partiesList.length<=1)){screen='parties';modal='';partiesRenaming='';render();refreshParties();return;}// une seule partie : on la reprend directement
+ if(a==='new'&&m&&!m.done){persist(true);if(typeof onlineGame==='function'&&onlineGame())leaveOnline();screen='modes';modal='';render();return;}// la partie en cours reste dans « Mes parties »
+ if(a==='new-game')return act('new');
+ if(a.startsWith('parties-filter-')){partiesFilter=a.slice(15);render();return;}
+ if(a.startsWith('party-open-')){openParty(a.slice(11));return;}
+ if(a.startsWith('party-rename-ok-')){const id=a.slice(16),name=(document.querySelector('#party-name')?.value||'').trim().slice(0,60);partiesRenaming='';
+  SAVES.getSave(id).then(rec=>rec&&name?SAVES.putSave({...rec,name,customName:true}):null).then(refreshParties);return;}
+ if(a.startsWith('party-rename-')){partiesRenaming=a.slice(13);render();setTimeout(()=>document.querySelector('#party-name')?.focus(),30);return;}
+ if(a.startsWith('party-export-')){SAVES.getSave(a.slice(13)).then(rec=>{if(rec)downloadText(rec.data,slug(rec.name)+'-jour-'+(rec.summary?.round||1)+'.json');});return;}
+ if(a.startsWith('party-delete-')&&a!=='party-delete-ok'){partyDelete=a.slice(13);modal='party-delete';render();return;}
+ if(a==='party-delete-ok'){const id=partyDelete;partyDelete='';modal='';
+  if(m&&SAVES.saveIdOf(m)===id){if(typeof onlineGame==='function'&&onlineGame())leaveOnline();m=null;try{localStorage.removeItem('velo-save');}catch{}}
+  SAVES.deleteSave(id).catch(()=>{}).then(()=>{message='Partie supprimée.';return refreshParties();});return;}
+ return priorAct(a);};}
+{const priorOverlay=overlay;overlay=()=>{if(modal==='party-delete'){const rec=partiesList.find(r=>r.id===partyDelete);
+ return `<div class="modal-back"><section class="modal" role="dialog" aria-modal="true"><h2>🗑 Supprimer cette partie ?</h2><p>« ${esc(rec?.name||'Partie')} » sera effacée de cet appareil. ${rec?.summary?.online?'La partie en ligne continue pour les autres joueurs.':'Pense à « ⬇️ Fichier » si tu veux la garder.'}</p>${btn('Oui, supprimer','party-delete-ok')}${btn('Annuler','close','light')}</section></div>`;}
+ return priorOverlay();};}
+// Importer une partie depuis un fichier : elle s'ajoute à la liste.
+globalThis.document?.addEventListener?.('change',async e=>{if(e.target?.id!=='import-party')return;const file=e.target.files?.[0];if(!file)return;
+ try{const text=await file.text(),game=S.load(text),summary=SAVES.summarize(game,{voyages});let id=SAVES.saveIdOf(game);if(await SAVES.getSave(id).catch(()=>null))id+='-import-'+Date.now().toString(36);
+  await SAVES.putSave({id,name:SAVES.autoName(summary)+' (importée)',customName:false,createdAt:Date.now(),updatedAt:Date.now(),summary,data:text});message='Partie importée : elle est dans la liste.';}
+ catch(err){message='Fichier illisible : '+err.message;}refreshParties();});
+refreshParties();

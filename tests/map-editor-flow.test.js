@@ -50,7 +50,8 @@ test('menu editor saves and exports a col map, choice starts on it, and later ed
   let game=JSON.parse(storage.get('velo-save'));assert.equal(game.mapChoice,saved[0].id);assert.equal(game.rules.terrain.col,5);assert.equal(game.board[original.key].type,'col');assert.equal(S.cost(game,game.board[original.key]),5);
   click('data-action','home');controls.type='plaine';click('data-edit-map',saved[0].id);click('data-move',original.key);click('data-action','map-save');click('data-action','map-save-project');click('data-action','home');click('data-action','continue');
   game=JSON.parse(storage.get('velo-save'));assert.equal(game.board[original.key].type,'col');
-  click('data-action','home');click('data-action','new');click('data-action','selectbike');click('data-map-choice','');click('data-action','start');click('data-action','equipment-next');click('data-voyage',elements.get('data-voyage')[0].dataset.voyage);
+  // Depuis « Mes parties » (15 octobre 2026), « Nouveau voyage » ne remplace plus la partie en cours : on va directement au choix du plateau.
+  click('data-action','home');click('data-action','new');click('data-map-choice','');click('data-action','start');click('data-action','equipment-next');click('data-voyage',elements.get('data-voyage')[0].dataset.voyage);
   game=JSON.parse(storage.get('velo-save'));assert.equal(game.board[original.key].type,'montagne');assert.equal(game.mapName,'Europe standard');
   click('data-action','home');mapInput.files=[{size:1000,text:async()=>JSON.stringify(exported)}];await mapInput.onchange();
   assert(app.innerHTML.includes('ÉDITEUR DE CARTE'));assert.equal(JSON.parse(storage.get('velo-maps')).length,2);

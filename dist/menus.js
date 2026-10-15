@@ -232,3 +232,29 @@ export function onlineScreen({btn,net={},local=null,current=null,message='',rule
  return `<main class="menu-c mc-page mc-online">${backdrop()}${head}${net.busy?'<p class="mc-online-busy" role="status">Connexion…</p>':''}${net.error?`<p class="mc-online-error" role="alert">${esc(net.error)}</p>`:''}${body}
   <footer class="mc-foot">${btn('← Accueil','home','mc-ghost')}</footer><p class="toast" role="status">${esc(message)}</p></main>`;
 }
+
+// ---------- Mes parties : plusieurs sauvegardes ----------
+export function partiesScreen({btn,list=[],filter='all',currentId='',message='',miniMap=()=>'',renaming=''}){
+ const when=t=>{const d=new Date(t),now=new Date(),day=86400000,h=d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+  if(d.toDateString()===now.toDateString())return 'Joué aujourd’hui à '+h;if(d.toDateString()===new Date(now-day).toDateString())return 'Hier à '+h;return d.toLocaleDateString('fr-FR',{day:'numeric',month:'long'});};
+ const counts={all:list.length,run:list.filter(r=>!r.summary?.done).length,done:list.filter(r=>r.summary?.done).length};
+ const shown=list.filter(r=>filter==='run'?!r.summary?.done:filter==='done'?r.summary?.done:true);
+ const tab=(id,label)=>`<button type="button" data-action="parties-filter-${id}" class="${filter===id?'on':''}" aria-pressed="${filter===id}">${label} (${counts[id]})</button>`;
+ const card=r=>{const s=r.summary||{},ps=s.players||[],badge=(t,cls='')=>`<span class="pt-badge ${cls}">${t}</span>`;
+  const badges=[s.online?badge('En ligne','online'):'',badge(ps.length>1?ps.length+' joueurs':'Solo','dark'),s.encounters?badge('Rencontres','soft'):'',s.forecast?badge('Météo annoncée','soft'):'',s.done?badge('Terminée 🏆','done'):badge('En cours','run')].join('');
+  const voyages=[...new Set(ps.map(p=>p.from&&p.to?`${p.from} → ${p.to}`:''))].filter(Boolean).join(' · ');
+  const name=r.id===renaming?`<label class="pt-rename"><input id="party-name" maxlength="60" value="${esc(r.name)}"/>${btn('OK','party-rename-ok-'+r.id,'pt-ok')}</label>`:`<h2>${esc(r.name)}</h2>`;
+  return `<article class="pt-card ${r.id===currentId?'current':''}"><div class="pt-map">${miniMap(ps[0]?.voyage)}</div>
+   <div class="pt-main"><div class="pt-badges">${badges}</div>${name}<p>${esc(voyages)}${s.online?` · code ${esc(s.online.code)}`:''}</p>
+    <div class="pt-players">${ps.map(p=>`<span><i style="background:${esc(p.color)}"></i>${esc(p.name)} · ${p.points} pts${p.voyagesDone?` · ${p.voyagesDone} voyage${p.voyagesDone>1?'s':''}`:''}</span>`).join('')}</div></div>
+   <div class="pt-side"><b>Jour ${s.round||1}</b><small>${when(r.updatedAt)}</small>${btn(s.done?'Revoir →':'Reprendre →','party-open-'+r.id,'pt-go')}
+    <div class="pt-tools">${btn('✏️ Renommer','party-rename-'+r.id,'pt-tool')}${btn('⬇️ Fichier','party-export-'+r.id,'pt-tool')}${btn('🗑','party-delete-'+r.id,'pt-tool')}</div></div></article>`;};
+ return `<main class="menu-c mc-page mc-parties">${backdrop()}
+  <header class="mc-head"><div><p class="mc-kicker">Mes parties</p><h1>Reprendre un voyage</h1></div></header>
+  <div class="pt-layout"><section class="pt-list"><div class="pt-tabs">${tab('all','Toutes')}${tab('run','En cours')}${tab('done','Terminées')}</div>
+   ${shown.length?shown.map(card).join(''):`<p class="pt-empty">${list.length?'Aucune partie ici.':'Aucune partie enregistrée pour l’instant : commence un nouveau voyage !'}</p>`}</section>
+   <aside class="pt-aside"><div class="pt-new"><h2>Nouvelle partie</h2><p>Elle s’ajoute à la liste : tes autres parties restent enregistrées.</p>${btn('Nouveau voyage','new-game','pt-new-btn')}</div>
+    <div class="pt-help"><b>Comment ça marche</b><span>• Chaque partie s’enregistre <b>toute seule</b>, dans sa propre place.</span><span>• La dernière partie jouée est en haut, encadrée d’orange.</span><span>• Jusqu’à 20 parties sur cet appareil. « ⬇️ Fichier » pour en garder une ailleurs ou l’envoyer.</span><span>• Les parties en ligne apparaissent aussi : on peut aussi les reprendre sur un autre appareil avec leur code.</span></div>
+    <label class="pt-import">⬆️ Importer une partie (fichier) <input id="import-party" type="file" accept="application/json,.json"/></label></aside></div>
+  <footer class="mc-foot">${btn('← Accueil','home','mc-ghost')}</footer><p class="toast" role="status">${esc(message)}</p></main>`;
+}

@@ -1558,3 +1558,38 @@ body .dock-v1 .dock-main b{min-width:0;overflow:hidden;text-overflow:ellipsis;wh
  body .dock-v1 .dock-center{order:3;flex:1 1 100%}
 }
 body .dock-v1 .dock-center .dock-hint,body .dock-v1 .dock-center .dock-main{flex:none}
+/* Mes parties */
+.mc-parties .pt-layout{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:24px;align-items:start}
+.mc-parties .pt-list{display:flex;flex-direction:column;gap:14px}
+.mc-parties .pt-tabs{display:flex;gap:8px;flex-wrap:wrap}
+.mc-parties .pt-tabs button{padding:8px 16px;border-radius:999px;border:2px solid rgba(246,231,193,.4);background:transparent;color:#f6e7c1;font-weight:700;cursor:pointer}
+.mc-parties .pt-tabs button.on{background:#f6e7c1;color:#1b1406;border-color:#f6e7c1}
+.mc-parties .pt-card{display:flex;gap:16px;padding:14px;border-radius:18px;background:#f6e7c1;color:#1b1406;border:3px solid #e2cf9f;box-shadow:0 12px 28px rgba(0,0,0,.35)}
+.mc-parties .pt-card.current{border-color:#f2a541}
+.mc-parties .pt-map{width:150px;height:110px;flex:none;border-radius:12px;overflow:hidden;position:relative;background:#2c6f86}
+.mc-parties .pt-map .voyage-art{position:absolute;inset:0;width:100%;height:100%;margin:0;border-radius:0;aspect-ratio:auto}
+.mc-parties .pt-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.mc-parties .pt-main h2{margin:0;font:900 22px/1.15 'Fraunces',Georgia,serif;color:#1b3b38}
+.mc-parties .pt-main p{margin:0;font-size:14px;color:#5a4a2c}
+.mc-parties .pt-badges{display:flex;gap:6px;flex-wrap:wrap}
+.mc-parties .pt-badge{padding:4px 10px;border-radius:999px;font:700 12px 'Barlow',sans-serif;background:#e2cf9f;color:#1b1406}
+.mc-parties .pt-badge.dark{background:#1b3b38;color:#f6e7c1}.mc-parties .pt-badge.online{background:#f2a541}.mc-parties .pt-badge.run{background:#cfe6c9}.mc-parties .pt-badge.soft{background:#f6d9a8}
+.mc-parties .pt-players{display:flex;gap:14px;flex-wrap:wrap;font:600 14px 'Barlow',sans-serif}
+.mc-parties .pt-players i{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+.mc-parties .pt-side{width:200px;flex:none;display:flex;flex-direction:column;gap:6px;align-items:stretch;text-align:right}
+.mc-parties .pt-side b{font:900 20px 'Fraunces',Georgia,serif;color:#1b3b38}.mc-parties .pt-side small{color:#8a7a5a}
+.mc-parties .pt-go{margin-top:auto;padding:10px;border-radius:12px;border:0;background:#f2a541;color:#1b1406;font:900 17px 'Fraunces',Georgia,serif;cursor:pointer}
+.mc-parties .pt-tools{display:flex;justify-content:space-between;gap:4px}
+.mc-parties .pt-tool{padding:4px 6px;border:0;background:transparent;color:#1b3b38;font:700 13px 'Barlow',sans-serif;cursor:pointer}
+.mc-parties .pt-rename{display:flex;gap:6px}.mc-parties .pt-rename input{flex:1;min-height:40px;border-radius:10px;border:2px solid #1b3b38;padding:0 10px;font:700 18px 'Fraunces',Georgia,serif;background:#fff7df;color:#1b1406}
+.mc-parties .pt-ok{padding:0 14px;border-radius:10px;border:0;background:#1b3b38;color:#f6e7c1;font-weight:700}
+.mc-parties .pt-empty{padding:20px;border-radius:16px;background:rgba(16,34,38,.9);color:#e8dcbc}
+.mc-parties .pt-aside{display:flex;flex-direction:column;gap:14px}
+.mc-parties .pt-new{padding:18px;border-radius:18px;background:#f6e7c1;color:#1b1406;display:flex;flex-direction:column;gap:10px}
+.mc-parties .pt-new h2{margin:0;font:900 22px 'Fraunces',Georgia,serif;color:#1b3b38}.mc-parties .pt-new p{margin:0;font-size:15px;color:#5a4a2c}
+.mc-parties .pt-new-btn{padding:12px;border-radius:12px;border:0;background:#1b3b38;color:#f6e7c1;font:900 18px 'Fraunces',Georgia,serif;cursor:pointer}
+.mc-parties .pt-help{padding:18px;border-radius:18px;background:rgba(16,34,38,.94);border:2px solid rgba(246,231,193,.3);display:flex;flex-direction:column;gap:8px;font-size:15px;line-height:1.45;color:#e8dcbc}
+.mc-parties .pt-help>b{color:#f6e7c1;font:900 18px 'Fraunces',Georgia,serif}
+.mc-parties .pt-import{display:block;padding:12px;border-radius:12px;border:2px solid rgba(246,231,193,.4);text-align:center;font-weight:700;color:#f6e7c1;cursor:pointer}
+.mc-parties .pt-import input{display:block;margin:8px auto 0;color:#e8dcbc;font-size:13px}
+@media(max-width:900px){.mc-parties .pt-layout{grid-template-columns:1fr}.mc-parties .pt-card{flex-wrap:wrap}.mc-parties .pt-side{width:100%;text-align:left}}
