@@ -213,3 +213,16 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - Correction (MacBook Air de Marion) : pendant le tour de l’autre, le bandeau orange était inséré juste sous l’en-tête et cassait une règle d’affichage : les anciens blocs du haut réapparaissaient et la carte devenait un petit bandeau. Le bandeau flotte maintenant au-dessus de la carte, et la page peut défiler si tout ne tient pas.
 
 - Mise à jour du jeu : le service worker vérifie toujours la dernière version des fichiers (avant, un fichier comme online.js pouvait rester ancien jusqu’à 10 minutes après une mise en ligne : les messages ne marchaient alors que d’un côté). Si les messages ne peuvent pas démarrer, un message demande de recharger la page.
+## Apprendre à jouer — partie guidée (16 octobre 2026)
+- Nouveau bouton **🎓 Apprendre à jouer** sur l'écran titre : une vraie petite partie solo, déjà préparée (Gravel avec tente, 5 jours).
+- Carte Voyage spéciale **« Premier voyage : vers la mer Égée »**, Budapest → Athènes : 3 villes, 3 cases côtières, 1 case montagne (+9 points). Elle est en dehors des 20 cartes et n'est jamais tirée au hasard.
+- **Chemin conseillé** en pointillés orange sur le plateau, et un cercle qui pulse sur la prochaine case à cliquer.
+- **20 bulles** (papier crème, flèche vers l'endroit concerné). Le guide attend que le joueur fasse la chose demandée :
+  - jour 1 : carte Voyage, énergie, tracer, rouler, manger en ville, finir la journée ;
+  - jour 2 : météo annoncée (allumée ce jour-là), repas du matin, jeton « ? » (+2), hors route (3 cases) ;
+  - jour 3 : fatigue, Sofia, la montagne, Thessalonique ; le soir, le joueur est fourbu ;
+  - jour 4 : camping (la fatigue s'efface) ;
+  - jour 5 : carte Événement « Vent dans le dos » offerte, les 3 côtes, l'arrivée, puis « Bravo ! Tu sais jouer. ».
+- Pas de pioche de cartes pendant le guide. Météo fixée sur du beau temps pour les Balkans. « Passer le guide » est possible à tout moment.
+- À la fin : « Continuer la partie » (nouveau voyage, météo et cartes allumées, comme une partie normale) ou « Retour au menu ».
+- Aucune règle du jeu n'est changée. Fichiers : `dist/tutorial.js` (déroulé et bulles), fin de `dist/app.js` (affichage des bulles), `dist/board-renderer-svg.js` (pointillés), `dist/voyages.js` (carte du didacticiel), test `tests/tutoriel.test.js`.

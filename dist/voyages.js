@@ -21,13 +21,17 @@ export const voyages=[
 {id:'riviera',title:'De la Provence à la lagune',from:'Marseille',to:'Venise',color:'#c0703a',cities:2,cols:1,coast:2},
 {id:'carpates',title:'Au pied des Carpates',from:'Budapest',to:'Odessa',color:'#7a6a2e',cities:2,plainRun:3,mountainRun:2}
 ];
+// Carte Voyage de la partie guidée « Apprendre à jouer » : hors des 20 cartes, jamais tirée au hasard.
+export const TUTORIAL_VOYAGE={id:'apprentissage',title:'Premier voyage : vers la mer Égée',from:'Budapest',to:'Athènes',color:'#3b6fa8',cities:3,coast:3,mountain:1,tutorial:true};
+// Trouver une carte Voyage par son identifiant (les 20 cartes + celle de la partie guidée).
+export const findVoyage=id=>voyages.find(v=>v.id===id)||(id===TUTORIAL_VOYAGE.id?TUTORIAL_VOYAGE:undefined);
 // Points d'aventure du voyage selon sa longueur (nombre de cases du trajet le plus court).
 export const VOYAGE_TIERS=[{max:8,name:'Courte',points:6},{max:13,name:'Moyenne',points:9},{max:20,name:'Longue',points:12},{max:Infinity,name:'Très longue',points:15}];
-export const VOYAGE_LENGTHS={traversee:27,soleil:14,alpes:13,campagne:11,nord:21,atlantique:11,est:16,balkans:12,iberique:11,manche:10,iles:9,rhin:9,danube:12,adriatique:10,grece:6,anatolie:9,fjords:15,baltique:12,riviera:8,carpates:10};
+export const VOYAGE_LENGTHS={traversee:27,soleil:14,alpes:13,campagne:11,nord:21,atlantique:11,est:16,balkans:12,iberique:11,manche:10,iles:9,rhin:9,danube:12,adriatique:10,grece:6,anatolie:9,fjords:15,baltique:12,riviera:8,carpates:10,apprentissage:13};
 export const voyageTier=v=>{const id=typeof v==='string'?v:v?.id,len=VOYAGE_LENGTHS[id]||0;return VOYAGE_TIERS.find(t=>len<=t.max);};
 export const voyagePoints=v=>voyageTier(v).points;
 export function drawVoyages(rng=Math.random){const cards=[...voyages];for(let i=cards.length-1;i>0;i--){let j=Math.floor(rng()*(i+1));[cards[i],cards[j]]=[cards[j],cards[i]];}return cards.slice(0,3);}
-export function progress(g){const v=voyages.find(v=>v.id===g.voyage);if(!v)return null;const history=g.travelHistory||(g.travel||[]).map(k=>({key:k,type:g.board[k]?.type,endpoint:g.board[k]?.id===0||g.board[k]?.id===g.arrivalId}));const first=new Map();for(const t of history)if(!first.has(t.key))first.set(t.key,t);const unique=[...first.values()];const count=type=>unique.filter(t=>t.type===type&&!t.endpoint).length;
+export function progress(g){const v=findVoyage(g.voyage);if(!v)return null;const history=g.travelHistory||(g.travel||[]).map(k=>({key:k,type:g.board[k]?.type,endpoint:g.board[k]?.id===0||g.board[k]?.id===g.arrivalId}));const first=new Map();for(const t of history)if(!first.has(t.key))first.set(t.key,t);const unique=[...first.values()];const count=type=>unique.filter(t=>t.type===type&&!t.endpoint).length;
 let runs={montagne:0,cote:0,plaine:0},current=0,last='',seen=new Set(),chains=0,chainAwarded=false;
 for(const {key:k,type} of history){if(type!==last){current=0;chainAwarded=false;}if(seen.has(k)){current=0;}else {current++;seen.add(k);}last=type;if(type in runs)runs[type]=Math.max(runs[type],current);if(type==='montagne'&&current>=2&&!chainAwarded){chains++;chainAwarded=true;}}
 const rows=[];const add=(label,value,target)=>rows.push({label,value:Math.min(value,target),target,done:value>=target});

@@ -30,7 +30,8 @@ export function setup(m){m.eventCardIds=enabledCardIds(m.rules);const starting=m
 }
 function extractSoloEvents(m,ids){return ids.filter(id=>{if(['negative','climatic'].includes(card(id,m)?.category)){m.soloEventQueue.push(id);return false;}return true;});}
 function nextSoloEvent(m){if(m.players.length!==1||m.pendingAttack||!m.soloEventQueue?.length)return;const id=m.soloEventQueue.shift(),p=m.players[0];m.pendingAttack={cardId:id,actorId:p.id,targetId:p.id,solo:true};note(m,p,`${p.name} pioche un événement solo : ${card(id,m).name}.`,'card-solo',{cardId:id});}
-export function drawChoices(m){m.cardChoices=Array.from({length:drawPerTurn(m)},()=>draw(m)).filter(Boolean);m.phase='card-choice';if(m.players.length===1){m.cardChoices=extractSoloEvents(m,m.cardChoices);nextSoloEvent(m);}return m.cardChoices;}
+// Partie guidée : pas de pioche tant que le guide garde les cartes coupées.
+export function drawChoices(m){m.cardChoices=Array.from({length:m.tutorial?.cardsOff?0:drawPerTurn(m)},()=>draw(m)).filter(Boolean);m.phase='card-choice';if(m.players.length===1){m.cardChoices=extractSoloEvents(m,m.cardChoices);nextSoloEvent(m);}return m.cardChoices;}
 export function keepChoice(m,index){if(m.pendingAttack||m.phase!=='card-choice'||!m.cardChoices[index])return false;
  const p=m.players[m.activeIndex],kept=m.cardChoices[index];p.cardHand.push(kept);
  m.cardChoices.forEach((id,i)=>{if(i!==index)discard(m,id);});m.cardChoices=[];

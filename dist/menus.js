@@ -78,6 +78,7 @@ export function titleScreen({btn,saveLine='',hasSave=false,message='',reduced=fa
    <p class="mc-lead">Paris → Istanbul, le Cap Nord, les Balkans… Choisis ta monture, charge tes sacoches et trace ta route.</p>
    <nav class="mc-signs" aria-label="Menu principal">
     ${btn('Nouveau voyage','new','mc-sign main')}
+    ${btn('🎓 Apprendre à jouer','tuto-start','mc-sign tuto-sign')}
     ${hasSave?btn(`Reprendre${saveLine?` <small>${esc(saveLine)}</small>`:''}`,'continue','mc-sign'):''}
     ${btn('Jouer en ligne','online','mc-sign')}
     ${btn('Cartes Événement','card-editor-open','mc-sign small')}

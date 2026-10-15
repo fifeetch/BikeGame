@@ -1,7 +1,7 @@
 import * as E from './engine.js';
 import * as S from './simulator.js';
 import {CLASSIC,COLORS,clone,validateRules,upgradeStoredRules,setPath,energyCap,isExhausted} from './rules.js';
-import {drawVoyages,progress,voyages,voyageTier} from './voyages.js';
+import {drawVoyages,progress,voyages,voyageTier,findVoyage,TUTORIAL_VOYAGE} from './voyages.js';
 import {createBoardRenderer,boardSnapshotMarkup} from './board-renderer.js';
 import {artFor} from './tile-art.js';
 import {MAP_WIDTH,MAP_HEIGHT,FERRY_ROUTES} from './europe.js';
@@ -21,6 +21,7 @@ import {EDITABLE_TERRAINS,normalizeMap,applyMap} from './map-library.js';
 import {WEATHER,REGIONS} from './weather.js';
 import * as CARNET from './carnet-data.js';
 import {variantsFor,validVariant} from './terrain-variants.js';
+import * as TUTO from './tutorial.js';
 import {drawVariantPreview} from './terrain-dynamic.js';
 const app=document.querySelector('#app');
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -174,7 +175,7 @@ function overlay(){let content='',wide=false;
  else if(modal==='shop'){const p=S.player(m);content=`<h2>Inventaire de ${esc(p.name)}</h2><p>${S.inventorySpace(m)}/${m.rules.bikes[p.bike].capacity} emplacements · achats en ville.</p><div class="shop">${Object.entries(m.rules.equipment).map(([id,e])=>`<button data-buy="${id}" ${p.items.includes(id)||p.money<e.price||S.inventorySpace(m)+e.space>m.rules.bikes[p.bike].capacity||m.board[p.pos].type!=='ville'?'disabled':''}>${esc(e.name)} · ${e.price} pièces · ${e.space} place(s)${p.items.includes(id)?' · acquis':''}</button>${p.items.includes(id)?`<button class="light" data-discard="${id}">Déposer ${esc(e.name)} (sans remboursement)</button>`:''}`).join('')}</div><p role="status">${esc(message)}</p>${btn('Fermer','close','light')}`;}
  else if(modal==='stats'){wide=true;content=`<h2>Équilibrage de la partie</h2><p>${m.stats.turns} tours terminés · ${m.stats.events} événements · ${m.stats.energySpent} énergie dépensée · ${m.stats.moneySpent} pièces dépensées.</p><p>Cartes observées : ${Object.entries(m.stats.categories).map(([k,v])=>k+' '+v).join(' · ')}. Un petit échantillon peut s’écarter des probabilités.</p><div class="table-scroll"><table><thead><tr><th>Joueur</th><th>Déplacements</th><th>Travail</th><th>Repos</th><th>Événements</th><th>Points</th></tr></thead><tbody>${m.players.map(p=>`<tr><td>${esc(p.name)}</td><td>${p.stats.steps}</td><td>${p.stats.work}</td><td>${p.stats.rest}</td><td>${p.stats.events}</td><td>${p.points}</td></tr>`).join('')}</tbody></table></div><details><summary>Historique complet (${m.history.length})</summary><ol class="history">${[...m.history].reverse().map(h=>`<li>Jour ${h.round} · ${esc(h.name)} : ${esc(h.text)}</li>`).join('')}</ol></details>${btn('Exporter la partie et ses statistiques','export','light')}${btn('Fermer','close','light')}`;}
  else if(modal.startsWith('player-')){const p=m.players[+modal.slice(7)];content=`<h2 style="color:${p.color}">${esc(p.name)}</h2><p>${p.energy} énergie · ${p.food} nourriture · ${p.money} pièces · ${p.points} points.</p>${objective(S.view(m,p))}<p>Inventaire : ${p.items.map(i=>esc(m.rules.equipment[i].name)).join(' · ')||'vide'}</p>${btn('Fermer','close','light')}`;}
- else if(modal==='confirm'){const v=m?voyages.find(v=>v.id===S.player(m).voyage):null;content=`<span class="modal-eyebrow">Nouveau carnet de route</span><h2>Nouvelle partie ?</h2>${m?`<div class="modal-save"><span aria-hidden="true">📔</span><div><small>Partie en cours</small><b>Jour ${m.round} · ${m.players.map(p=>esc(p.name)).join(' et ')}${v?' · '+esc(v.from)+' → '+esc(v.to):''}</b></div></div>`:''}<p>Cette partie sera remplacée quand la nouvelle commencera. Exporte-la d’abord si tu veux la garder.</p><div class="modal-actions">${btn('Choisir le plateau →','selectbike','modal-primary')}<div class="modal-pair">${btn('Exporter','export','light')}${btn('Règles du jeu','rules','light')}</div>${btn('Annuler, je reprends la route','close','modal-link')}</div>`;}
+ else if(modal==='confirm'){const v=m?findVoyage(S.player(m).voyage):null;content=`<span class="modal-eyebrow">Nouveau carnet de route</span><h2>Nouvelle partie ?</h2>${m?`<div class="modal-save"><span aria-hidden="true">📔</span><div><small>Partie en cours</small><b>Jour ${m.round} · ${m.players.map(p=>esc(p.name)).join(' et ')}${v?' · '+esc(v.from)+' → '+esc(v.to):''}</b></div></div>`:''}<p>Cette partie sera remplacée quand la nouvelle commencera. Exporte-la d’abord si tu veux la garder.</p><div class="modal-actions">${btn('Choisir le plateau →','selectbike','modal-primary')}<div class="modal-pair">${btn('Exporter','export','light')}${btn('Règles du jeu','rules','light')}</div>${btn('Annuler, je reprends la route','close','modal-link')}</div>`;}
  else if(modal==='finish')content=`<h2>Terminer la partie ?</h2><p>Afficher le classement final et conserver l’historique.</p>${btn('Terminer','finish-confirm')}${btn('Annuler','close','light')}`;
  else if(m?.event&&screen==='game'){const e=m.event,p=S.player(m);content=`<span class="eyebrow">FIN DE JOURNÉE · ${esc(p.name)} · ${e.category==='negative'?'NÉGATIF':e.category==='positive'?'POSITIF':'DÉFI'}</span><h2>${esc(e.title)}</h2><p>${esc(e.text)}</p><p>Effets : ${Object.entries(e.effect).filter(([,v])=>v!==0).map(([k,v])=>(v>0?'+':'')+v+' '+({energy:'énergie',food:'nourriture',money:'pièces',points:'points Aventure'}[k])).join(' · ')||'aucun'}.</p>${e.protect?`<p>Équipement utile : ${esc(m.rules.equipment[e.protect]?.name||e.protect)}${e.consume?' (consommé)':''}.</p>`:''}${e.category==='challenge'?`<p>Coût sans équipement : ${Object.entries(e.cost||{}).filter(([,v])=>v>0).map(([k,v])=>v+' '+k).join(' · ')||'gratuit'}. Aucun dé.</p>${btn('Relever le défi','resolve','',!S.canChallenge(m))}${btn('Refuser le défi','decline','light')}`:btn('Résoudre et passer au joueur suivant →','resolve')}`;}
  else if(m?.done&&screen==='game')content=`<h2>🏆 Partie terminée</h2>${m.winner?`<p class="win-line"><b>${esc(m.players.find(p=>p.id===m.winner)?.name||'')}</b> gagne : ${esc(m.winReason||'')}.</p>`:''}${leaderboard()}${btn('Historique et statistiques','stats')}${btn('Retour à l’accueil','home','light')}`;
@@ -405,7 +406,7 @@ overlay=()=>{let content='';if(!modal&&m&&screen==='game'&&m.phase==='card-choic
  else if(!modal&&m&&screen==='game'&&m.phase==='encounter')content=encounterModal();
  else if(!modal&&m&&screen==='game'&&m.phase==='voyage-choice'){const p=S.player(m),done=(p.voyagesDone||[]).length,r=m.rules.victory;
   content=`<span class="eyebrow">VOYAGE ACCOMPLI · ${esc(p.name)}</span><h2>🎉 Choisis ton prochain voyage</h2><p>${done} voyage${done>1?'s':''} réussi${done>1?'s':''}${r?.voyages?` sur ${r.voyages}`:''} · ${p.points} points d’aventure. </p><p>Choisis ta prochaine carte. Tu pars de la ville où tu es : seules les cases que tu parcours <b>à partir de maintenant</b> comptent pour les objectifs de la nouvelle carte. Ensuite, rejoins sa ville d’arrivée.</p><p class="muted">Si tu arrives sans avoir rempli tous les objectifs, tu peux quand même terminer le voyage, mais il rapporte 40 % de points en moins.</p>
-  <div class="newvoyage-grid">${(p.voyageChoices||[]).map(id=>{const v=voyages.find(x=>x.id===id),t=voyageTier(v),rows=progress({voyage:id,travelHistory:[],mode:'plateau'}).rows;return `<article class="newvoyage" style="--voyage-color:${v.color}"><div class="newvoyage-art"><div class="voyage-art voyage-art-map">${voyageMiniMap(v)}</div></div><div class="newvoyage-copy"><small>${esc(v.from)} → ${esc(v.to)}</small><h3>${esc(v.title)}</h3><ul>${rows.map(r=>`<li>${r.target} ${esc(r.label.toLowerCase())}</li>`).join('')}</ul><b class="mc-tier">${esc(t.name)} · +${t.points} points</b>${btn('Prendre ce voyage','newvoyage-'+id)}${(()=>{const f=S.fastTravelInfo(m,id,p);return f?btn(`🚆 Train jusqu’à ${esc(f.name)} · ${f.price} pièces`,'fasttravel-'+id,'light nv-train',!f.affordable||p.flat)+`<small class="nv-train-note">${f.cases} cases · prend la journée${f.affordable?'':' · pas assez de pièces'}</small>`:'';})()}</div></article>`;}).join('')}</div>`;}
+  <div class="newvoyage-grid">${(p.voyageChoices||[]).map(id=>{const v=findVoyage(id),t=voyageTier(v),rows=progress({voyage:id,travelHistory:[],mode:'plateau'}).rows;return `<article class="newvoyage" style="--voyage-color:${v.color}"><div class="newvoyage-art"><div class="voyage-art voyage-art-map">${voyageMiniMap(v)}</div></div><div class="newvoyage-copy"><small>${esc(v.from)} → ${esc(v.to)}</small><h3>${esc(v.title)}</h3><ul>${rows.map(r=>`<li>${r.target} ${esc(r.label.toLowerCase())}</li>`).join('')}</ul><b class="mc-tier">${esc(t.name)} · +${t.points} points</b>${btn('Prendre ce voyage','newvoyage-'+id)}${(()=>{const f=S.fastTravelInfo(m,id,p);return f?btn(`🚆 Train jusqu’à ${esc(f.name)} · ${f.price} pièces`,'fasttravel-'+id,'light nv-train',!f.affordable||p.flat)+`<small class="nv-train-note">${f.cases} cases · prend la journée${f.affordable?'':' · pas assez de pièces'}</small>`:'';})()}</div></article>`;}).join('')}</div>`;}
  else if(!modal&&m&&screen==='game'&&m.phase==='puncture'){const b=S.breakdownOf(S.player(m)),has=S.player(m).items.includes(b.item);content=`<h2>${b.item==='secours'?'🩹':'🚲'} ${esc(b.title)}</h2><p>${has?b.fix:b.none}</p>${btn(has?b.ok:'Retourner à la ville','repair')}`;}
  else if(modal==='cards'){const p=S.player(m);content=`<h2>🃏 Cartes de jeu de ${esc(p.name)}</h2><p>Les positives se jouent pendant ton tour. Une carte négative se donne à un adversaire et sera résolue au début de son prochain tour.</p><div class="card-choice-list">${p.cardHand.map((id,i)=>{const c=cardById(id);return `<article class="game-card ${c.type||'positive'}"><div class="card-title"><span>${c.icon||'🃏'}</span><div><small>${c.type==='negative'?'Négative · à donner':'Positive · pour toi'}</small><h3>${esc(c.title)}</h3></div></div><p>${esc(c.text)}</p>${btn(c.target==='other'?'Donner à un adversaire':'Jouer','card-'+i,'',c.target==='other'&&m.players.length<2||!S.canPlayCard(m,i))}</article>`;}).join('')||'<p>Aucune carte en main.</p>'}</div>${btn('Fermer','close','light')}`;}
  else if(modal==='card-effect-choice'){const c=cardById(S.player(m).cardHand[cardIndex]);content=`<h2>${c?.icon||'🍎'} ${esc(c?.title||'Bon ravito')}</h2><p>Choisis ton ravitaillement.</p>${btn('+1 nourriture','ravito-food')}${btn('+1 énergie','ravito-energy','',S.player(m).energy>=m.rules.maxEnergy)}${btn('Annuler','cards','light')}`;}
@@ -474,13 +475,13 @@ function carnetSouvenirs(p){const out=[],pick=(list,key)=>list[[...String(key)].
  const seen=new Set();for(const step of p.travelHistory||[]){const t=m.board[step.boardKey||step.key];if(!t?.name||t.type!=='ville'||seen.has(t.key))continue;seen.add(t.key);
   out.push({day:step.day,tag:'Ville',title:t.name,text:CARNET.VILLES[t.name]||pick(CARNET.VILLE_GENERIQUE,t.name),kind:'ville'});}
  return out.sort((a,b)=>(a.day??0)-(b.day??0));}
-function carnetMap(p){const v=voyages.find(v=>v.id===p.voyage),from=m.board['city-'+v?.from];
+function carnetMap(p){const v=findVoyage(p.voyage),from=m.board['city-'+v?.from];
  const pts=[from,...(p.travel||[]).map(k=>m.board[k])].filter(Boolean),all=[...pts,m.board['city-'+v?.to]].filter(Boolean);if(!pts.length)return '';
  const xs=all.map(t=>t.x),ys=all.map(t=>t.y),pad=18,x0=Math.min(...xs)-pad,y0=Math.min(...ys)-pad,w=Math.max(60,Math.max(...xs)-x0+pad),h=Math.max(40,Math.max(...ys)-y0+pad),f=n=>Math.round(n*10)/10;
  const fs=f(Math.max(10,w/16)),rr=f(Math.max(4,w/45)),line=pts.map((t,i)=>(i?'L':'M')+f(t.x)+' '+f(t.y)).join(''),to=m.board['city-'+v?.to],now=m.board[p.pos];
  const found=Object.entries(m.landmarks||{}).filter(([,l])=>l.found===p.id).map(([k])=>m.board[k]).filter(Boolean),cols=[...new Set(m.history.filter(h=>h.player===p.id&&h.kind==='col').map(h=>h.key))].map(k=>m.board[k]).filter(Boolean);
  return `<svg class="carnet-map" style="--fs:${fs}px" viewBox="${f(x0)} ${f(y0)} ${f(w)} ${f(h)}" role="img" aria-label="Trajet de ${esc(p.name)} depuis ${esc(v?.from||'')}"><path class="carnet-line" d="${line}"/>${found.map(t=>`<circle class="carnet-lieu" cx="${f(t.x)}" cy="${f(t.y)}" r="${rr}"/>`).join('')}${cols.map(t=>`<path class="carnet-col" d="M${f(t.x)} ${f(t.y-6)}l5 9h-10Z"/>`).join('')}${to?`<circle class="carnet-goal" cx="${f(to.x)}" cy="${f(to.y)}" r="${rr}"/><text x="${f(to.x)}" y="${f(to.y-rr*1.8)}">${esc(to.name)}</text>`:''}<circle class="carnet-start" cx="${f(from.x)}" cy="${f(from.y)}" r="${rr}"/><text x="${f(from.x)}" y="${f(from.y-rr*1.8)}">${esc(from.name)}</text>${now&&now!==from?`<circle class="carnet-now" cx="${f(now.x)}" cy="${f(now.y)}" r="${rr}" style="fill:${p.color}"/>`:''}</svg>`;}
-function ficheCarnet(p){const v=voyages.find(v=>v.id===p.voyage),souvenirs=carnetSouvenirs(p),steps=p.stats?.steps||0,mot=CARNET.MOTS_DU_VOYAGEUR[Math.floor(steps/8)%CARNET.MOTS_DU_VOYAGEUR.length];
+function ficheCarnet(p){const v=findVoyage(p.voyage),souvenirs=carnetSouvenirs(p),steps=p.stats?.steps||0,mot=CARNET.MOTS_DU_VOYAGEUR[Math.floor(steps/8)%CARNET.MOTS_DU_VOYAGEUR.length];
  const stat=(n,label)=>`<div><b>${n}</b><small>${label}</small></div>`;
  return `<div class="carnet"><p class="carnet-kicker">${esc(v?v.from+' → '+v.to+' · '+v.title:'Mon voyage')}</p>${carnetMap(p)}
  <div class="carnet-stats">${stat(steps,'cases roulées')}${stat(p.stats?.offroad||0,'hors route')}${stat(p.cols||0,'cols mythiques')}${stat(p.points,'points d’aventure')}</div>
@@ -584,7 +585,7 @@ function ficheGauges(p){const r=m.rules,cap=energyCap(m,p),fourbu=isExhausted(m,
  const box=(cls,icon,n,label)=>`<div class="fiche-count ${cls}">${svgI(icon,26)}<b>${n}</b><small>${label}</small></div>`;
  return `<section class="fiche-gauges" aria-label="Jauges de ${esc(p.name)}"><div class="fiche-energy-box"><div class="fiche-gauge-head"><span>Énergie</span><b>${p.energy}<small> / ${cap}</small></b></div><div class="fiche-energy" style="--cells:${r.maxEnergy}" aria-hidden="true">${cells}</div>${fatigue}</div>
  ${box('food','<path d="M12 7c-4 0-6 3-6 7s3 7 6 7 6-3 6-7-2-7-6-7Z"/><path d="M12 7c0-2 1-4 3-4"/>',p.food,'repas')}${box('money','<circle cx="12" cy="12" r="8"/><path d="M12 8v8M9.5 10h4a1.5 1.5 0 0 1 0 3h-3a1.5 1.5 0 0 0 0 3h4"/>',p.money,'pièces')}${box('points','<path d="M12 3l2.6 5.6 6 .7-4.5 4 1.3 6L12 16.4 6.6 19.3l1.3-6-4.5-4 6-.7Z"/>',p.points,'aventure')}</section>`;}
-playerSheet=(inline=false)=>{const p=S.player(m),r=m.rules,v=voyages.find(v=>v.id===p.voyage),here=m.board[p.pos],tab=ficheTab(),place=here?.name||E.terrains[here?.type]?.name||'';
+playerSheet=(inline=false)=>{const p=S.player(m),r=m.rules,v=findVoyage(p.voyage),here=m.board[p.pos],tab=ficheTab(),place=here?.name||E.terrains[here?.type]?.name||'';
  const panels={journee:ficheJournee(p),sacoches:ficheSacoches(p),voyage:ficheVoyage(p),cartes:ficheCartes(),carnet:ficheCarnet(p)};
  const body=`<div class="player-sheet-head fiche-head"><span class="fiche-num" style="background:${p.color}" aria-hidden="true">${esc(p.id.slice(1))}</span><div><span class="eyebrow">PLATEAU DU CYCLISTE</span><h2>${esc(p.name)}</h2><small>${esc(r.bikes[p.bike].name)}${v?' · '+esc(v.from)+' → '+esc(v.to):''}</small></div><span class="mat-day">Jour ${p.availableDay}</span></div>
  ${ficheGauges(p)}
@@ -616,7 +617,7 @@ const onlineGame=()=>Boolean(online&&m&&m.mode==='plateau');
 const myTurn=()=>!onlineGame()||NET.actorId(m)===online.seat;
 const seatName=id=>m?.players.find(p=>p.id===id)?.name||'un cycliste';
 function onlineView(){
- const local=m&&m.mode==='plateau'&&!m.done&&!online?{title:`Jour ${m.round} · ${m.players.length} cycliste${m.players.length>1?'s':''}`,players:m.players.map(p=>({id:p.id,name:p.name,detail:`${m.rules.bikes[p.bike]?.name||p.bike} · ${voyages.find(v=>v.id===p.voyage)?.title||''}`}))}:null;
+ const local=m&&m.mode==='plateau'&&!m.done&&!online?{title:`Jour ${m.round} · ${m.players.length} cycliste${m.players.length>1?'s':''}`,players:m.players.map(p=>({id:p.id,name:p.name,detail:`${m.rules.bikes[p.bike]?.name||p.bike} · ${findVoyage(p.voyage)?.title||''}`}))}:null;
  return onlineScreen({btn,net,local,current:online&&m?{code:online.code,name:seatName(online.seat)}:null,message,rules:setupRules,lobbyBack:lobby&&net.view!=='lobby'?lobby.code:null});}
 function applyRemote(text,rev,force=false){
  if(online&&rev<online.rev)return;// jamais revenir à un état plus ancien (réponse lente du serveur)
@@ -719,7 +720,7 @@ const saveLobby=()=>{try{lobby?netStore().setItem('velo-lobby',JSON.stringify(lo
 function lobbyRules(g){try{return validateRules(JSON.parse(g.rules));}catch{return clone(CLASSIC);}}
 function lobbySeats(g){const r=lobbyRules(g),me=NET.clientId();
  return NET.seatIds(g.count||2).map((id,i)=>{const s=g.lobby?.[id];if(!s?.client)return {id,num:i+1,state:'free'};
-  const v=voyages.find(x=>x.id===s.voyage);return {id,num:i+1,name:s.name||'Cycliste',mine:s.client===me,state:s.ready?'ready':'prep',detail:s.ready?`${r.bikes[s.bike]?.name||s.bike} · ${v?v.title+' ('+v.from+' → '+v.to+')':''}`:''};});}
+  const v=findVoyage(s.voyage);return {id,num:i+1,name:s.name||'Cycliste',mine:s.client===me,state:s.ready?'ready':'prep',detail:s.ready?`${r.bikes[s.bike]?.name||s.bike} · ${v?v.title+' ('+v.from+' → '+v.to+')':''}`:''};});}
 function lobbyRulesLine(g){const r=lobbyRules(g);return `Météo : ${r.weather?.forecast?'annoncée':'cartes météo'} · Événements : ${r.encounters?.enabled?'rencontres':'cartes'} · ${r.distance} cases/jour · ${r.startMoney} pièces`;}
 function showLobby(g){net={...net,view:'lobby',code:lobby.code,game:g,seats:lobbySeats(g),host:g.host===NET.clientId(),rulesLine:lobbyRulesLine(g),busy:false};}
 async function enterLobby(code,seat){
@@ -798,7 +799,7 @@ const helpRules=()=>m&&screen==='game'?m.rules:setupRules,helpEvent=()=>m&&scree
  return priorOverlay();};}
 // Le résumé s'affiche une fois par partie, au premier jour (en ligne : sur chaque appareil).
 {const priorRender=render;render=()=>{
- try{if(screen==='game'&&m&&!m.done&&!modal&&m.round===1&&localStorage.getItem('velo-hide-intro')!=='1'){const seen=JSON.parse(localStorage.getItem('velo-intro-seen')||'[]'),id=String(m.seed);
+ try{if(screen==='game'&&m&&!m.done&&!m.tutorial&&!modal&&m.round===1&&localStorage.getItem('velo-hide-intro')!=='1'){const seen=JSON.parse(localStorage.getItem('velo-intro-seen')||'[]'),id=String(m.seed);
   if(!seen.includes(id)){localStorage.setItem('velo-intro-seen',JSON.stringify([...seen.slice(-20),id]));modal='rules-intro';}}}catch{}
  priorRender();};}
 
@@ -807,10 +808,10 @@ const helpRules=()=>m&&screen==='game'?m.rules:setupRules,helpEvent=()=>m&&scree
 // ==========================================================================
 var partiesList=[];let partiesFilter='all',partiesRenaming='',partySaveTimer=null,partyDelete='';const partyLastData=new Map();
 async function refreshParties(){partiesList=await SAVES.allSaves();if(screen==='parties'||screen==='home')render();}
-function partiesView(){return partiesScreen({btn,list:partiesList,filter:partiesFilter,currentId:m?SAVES.saveIdOf(m):'',message,miniMap:id=>{const v=voyages.find(x=>x.id===id);return v?`<div class="voyage-art voyage-art-map">${voyageMiniMap(v)}</div>`:'';},renaming:partiesRenaming});}
+function partiesView(){return partiesScreen({btn,list:partiesList,filter:partiesFilter,currentId:m?SAVES.saveIdOf(m):'',message,miniMap:id=>{const v=findVoyage(id);return v?`<div class="voyage-art voyage-art-map">${voyageMiniMap(v)}</div>`:'';},renaming:partiesRenaming});}
 function saveParty(){clearTimeout(partySaveTimer);partySaveTimer=setTimeout(async()=>{if(!m)return;try{
  const id=SAVES.saveIdOf(m),data=S.serialize(m);if(partyLastData.get(id)===data)return;
- const old=await SAVES.getSave(id).catch(()=>null),summary=SAVES.summarize(m,{voyages,online:typeof onlineGame==='function'&&onlineGame()?online:null});
+ const old=await SAVES.getSave(id).catch(()=>null),summary=SAVES.summarize(m,{voyages:[...voyages,TUTORIAL_VOYAGE],online:typeof onlineGame==='function'&&onlineGame()?online:null});
  await SAVES.putSave({id,name:old?.customName?old.name:SAVES.autoName(summary),customName:Boolean(old?.customName),createdAt:old?.createdAt||Date.now(),updatedAt:Date.now(),summary,data});
  partyLastData.set(id,data);if(!old){await SAVES.trimSaves(id);}partiesList=await SAVES.allSaves();if(screen==='parties')render();}catch{/* pas de réserve : la sauvegarde simple suffit */}},1200);}
 {const p0=persist;persist=(force=false)=>{const r=p0(force);if(m&&(auto||force))saveParty();return r;};}
@@ -842,7 +843,7 @@ async function openParty(id){const rec=await SAVES.getSave(id);if(!rec){message=
  return priorOverlay();};}
 // Importer une partie depuis un fichier : elle s'ajoute à la liste.
 globalThis.document?.addEventListener?.('change',async e=>{if(e.target?.id!=='import-party')return;const file=e.target.files?.[0];if(!file)return;
- try{const text=await file.text(),game=S.load(text),summary=SAVES.summarize(game,{voyages});let id=SAVES.saveIdOf(game);if(await SAVES.getSave(id).catch(()=>null))id+='-import-'+Date.now().toString(36);
+ try{const text=await file.text(),game=S.load(text),summary=SAVES.summarize(game,{voyages:[...voyages,TUTORIAL_VOYAGE]});let id=SAVES.saveIdOf(game);if(await SAVES.getSave(id).catch(()=>null))id+='-import-'+Date.now().toString(36);
   await SAVES.putSave({id,name:SAVES.autoName(summary)+' (importée)',customName:false,createdAt:Date.now(),updatedAt:Date.now(),summary,data:text});message='Partie importée : elle est dans la liste.';}
  catch(err){message='Fichier illisible : '+err.message;}refreshParties();});
 refreshParties();
@@ -907,3 +908,61 @@ async function chatSend(text){text=String(text||'').trim();if(!text||!online)ret
  if(chatOpen){document.body.insertAdjacentHTML('beforeend',chatDrawer());const i=document.querySelector('#chat-input');if(i)i.value=typed;const l=document.querySelector('.cd-list');if(l)l.scrollTop=1e6;}
  else document.querySelectorAll('.chat-drawer').forEach(e=>e.remove());chatBind();};}
 globalThis.document?.addEventListener?.('keydown',e=>{if(e.target?.id==='chat-input'&&e.key==='Enter'){e.preventDefault();act('chat-send');}});
+
+// ---------- Partie guidée « Apprendre à jouer » (bouton de l'écran titre) ----------
+// Une bulle crème pointe l'endroit concerné et attend que le joueur fasse la chose demandée.
+let tutoTimer=null,tutoFocusStep=-1;
+const tutoUi=()=>({route});
+const tutoKeyOf=sel=>sel==='hex:next'?TUTO.nextGuideKey(m,route):sel.slice(4);
+function tutoFocusKey(){const s=TUTO.currentStep(m);for(const sel of s?.target||[])if(sel.startsWith('hex:')){const k=tutoKeyOf(sel);if(k)return k;}return '';}
+function tutoTargetEl(s){for(const sel of s.target||[]){if(sel.startsWith('hex:')){const key=tutoKeyOf(sel);const el=key&&document.querySelector(`.playable-europe [data-board-key="${key}"]`);if(el)return {el,key};continue;}const el=[...document.querySelectorAll(sel)].find(e=>e.getClientRects().length&&!e.closest('[hidden]'));if(el)return {el};}return null;}
+function tutoEffect(e){if(e==='meteo'){modal='meteo';meteoDay='today';}
+ // Sur petit écran, la fiche ne s'ouvre que pour les bulles qui la montrent ; sinon on laisse voir le plateau.
+ if(e.startsWith('tab:')){const [,tab,open]=e.split(':');sheetTab=tab;if(narrowScreen())sheetDrawer=open==='open';else if(!displayPrefs.sheet)displayPrefs=writeDisplayPref('sheet',true);}}
+function tutoBubble(s){const i=m.tutorial.step,n=TUTO.STEPS.length-1;
+ const actions=s.final?btn('Continuer la partie →','tuto-continue','tuto-primary')+btn('Retour au menu','tuto-menu','tuto-light')
+  :(s.wait?`<span class="tuto-wait">${esc(s.waiting||'')}</span>`:btn(s.next||'Compris →','tuto-next','tuto-primary'))+(s.button&&!document.querySelector('.fiche-journee')?btn(esc(s.button.label),s.button.action,'tuto-light'):'')+btn('Passer le guide','tuto-skip','tuto-skip');
+ return `<div class="tuto-layer${s.center?' tuto-centered':''}"><aside class="tuto-bubble" role="dialog" aria-live="polite" aria-label="Guide : ${esc(s.title)}"><span class="tuto-arrow" aria-hidden="true"></span><small class="tuto-eyebrow">🎓 ${s.final?'Fin du guide':`Étape ${i+1} sur ${n}`} · Jour ${m.round}</small><b class="tuto-title">${esc(s.title)}</b><p>${s.text(m)}</p><div class="tuto-actions">${actions}</div></aside></div>`;}
+function tutoPlace(){const b=document.querySelector('.tuto-layer .tuto-bubble');if(!b||!m)return;const s=TUTO.currentStep(m);
+ document.querySelectorAll('.tuto-target').forEach(e=>e.classList.remove('tuto-target'));
+ if(!s){b.hidden=true;return;}
+ if(s.center){b.hidden=false;b.dataset.side='center';b.style.left='';b.style.top='';return;}
+ const t=tutoTargetEl(s),back=document.querySelector('.modal-back');
+ // Une autre fenêtre est ouverte (découverte, choix…) : la bulle attend qu'on la ferme.
+ b.hidden=Boolean(back&&!(t&&back.contains(t.el)));if(b.hidden)return;
+ if(t&&!t.key)t.el.classList.add('tuto-target');
+ const W=innerWidth,H=innerHeight,bw=b.offsetWidth,bh=b.offsetHeight,gap=16,dock=()=>{b.dataset.side='dock';b.style.left='';b.style.top='';};
+ if(!t||W<720)return dock();
+ const r=t.el.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;
+ if(r.bottom<0||r.top>H||r.right<0||r.left>W)return dock();
+ let side,x,y;
+ if(r.bottom+gap+bh<H-8){side='below';y=r.bottom+gap;x=cx-bw/2;}
+ else if(r.top-gap-bh>8){side='above';y=r.top-gap-bh;x=cx-bw/2;}
+ else if(r.right+gap+bw<W-8){side='right';x=r.right+gap;y=cy-bh/2;}
+ else if(r.left-gap-bw>8){side='left';x=r.left-gap-bw;y=cy-bh/2;}
+ else return dock();
+ x=Math.max(8,Math.min(W-bw-8,x));y=Math.max(8,Math.min(H-bh-8,y));
+ b.dataset.side=side;b.style.left=Math.round(x)+'px';b.style.top=Math.round(y)+'px';
+ const arrow=b.querySelector('.tuto-arrow');
+ if(side==='below'||side==='above'){arrow.style.left=Math.round(Math.max(20,Math.min(bw-20,cx-x)))+'px';arrow.style.top='';}
+ else{arrow.style.top=Math.round(Math.max(20,Math.min(bh-20,cy-y)))+'px';arrow.style.left='';}}
+// Le plateau reçoit le chemin conseillé et la case à cliquer.
+{const prior=boardSurfaceMarkup;boardSurfaceMarkup=state=>prior(screen==='game'&&TUTO.tutorialOn(m)?{...state,guidePath:TUTO.guidePath(m),guideFocus:tutoFocusKey()}:state);}
+{const priorRender=render;render=()=>{
+ if(screen==='game'&&m&&TUTO.tutorialOn(m))for(const e of TUTO.tutorialTick(m,tutoUi()))tutoEffect(e);
+ priorRender();
+ document.querySelectorAll('.tuto-layer').forEach(e=>e.remove());document.querySelectorAll('.tuto-target').forEach(e=>e.classList.remove('tuto-target'));
+ clearInterval(tutoTimer);tutoTimer=null;
+ if(screen!=='game'||!m||!TUTO.tutorialOn(m)||!TUTO.currentStep(m))return;
+ const s=TUTO.currentStep(m);document.body.insertAdjacentHTML('beforeend',tutoBubble(s));
+ document.querySelectorAll('.tuto-layer [data-action]').forEach(el=>el.onclick=()=>act(el.dataset.action));
+ if(tutoFocusStep!==m.tutorial.step){tutoFocusStep=m.tutorial.step;const t=m.board[tutoFocusKey()];if(t&&boardRenderer)boardRenderer.focusOn(t.x,t.y,{minScale:1.7});}
+ tutoPlace();tutoTimer=setInterval(tutoPlace,250);};}
+{const priorAct=act;act=a=>{
+ if(a==='tuto-start'){if(onlineGame())leaveOnline();try{m=TUTO.createTutorialMatch(customCards,eventEdits);}catch(e){message=e.message;render();return;}
+  screen='game';zoom=1;modal='';route=[];mapSelection='';selected=0;message='';tutoFocusStep=-1;render();center();return;}
+ if(m&&a==='tuto-next'){const was=TUTO.currentStep(m)?.id;for(const e of TUTO.tutorialNext(m,tutoUi()))tutoEffect(e);if(was==='meteo'&&modal==='meteo')modal='';render();return;}
+ if(m&&a==='tuto-skip'){TUTO.endTutorial(m);message='Guide arrêté : la partie continue normalement, avec la météo et les cartes.';render();return;}
+ if(m&&a==='tuto-continue'){TUTO.endTutorial(m);message='À toi de jouer : finis ta journée, puis choisis ton prochain voyage !';render();return;}
+ if(m&&a==='tuto-menu'){TUTO.endTutorial(m);modal='';screen='home';render();return;}
+ return priorAct(a);};}

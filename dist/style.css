@@ -1666,3 +1666,39 @@ header .chat-btn.chat-top:hover{background:#24504b}
 #app:has(.game-split){overflow-y:auto}
 .game.game-split{min-height:600px}
 header.in-game~.game>.player-order,header.in-game~.game>.topbar,header.in-game~.game>.hint,header.in-game~.game>.objective{display:none}
+
+/* ---------- Partie guidée « Apprendre à jouer » ---------- */
+.menu-c .mc-sign.tuto-sign{background:#2c5b57;color:#f6e7c1;box-shadow:inset 0 -5px 0 #1b3b38,inset 0 3px 0 #3d7a74}
+.guide-line-case{fill:none;stroke:#1b1406;stroke-opacity:.35;stroke-width:calc(5px * var(--sym,1));stroke-linecap:round;stroke-linejoin:round}
+.guide-line{fill:none;stroke:#f2a541;stroke-width:calc(3px * var(--sym,1));stroke-dasharray:calc(6px * var(--sym,1)) calc(5px * var(--sym,1));stroke-linecap:round;stroke-linejoin:round}
+.guide-focus-inner{transform:scale(var(--sym,1))}
+.guide-ring{fill:#f2a5412e;stroke:#f2a541;stroke-width:3;transform-box:fill-box;transform-origin:center;animation:guide-pulse 1.8s ease-out infinite}
+.guide-ring.late{fill:none;animation-delay:.9s}
+@keyframes guide-pulse{0%{transform:scale(.8);opacity:1}100%{transform:scale(1.8);opacity:0}}
+.motion-reduced .guide-ring{animation:none}.motion-reduced .guide-ring.late{display:none}
+.tuto-layer{position:fixed;inset:0;z-index:4000;pointer-events:none}
+.tuto-layer.tuto-centered{background:rgba(9,20,22,.55);pointer-events:auto;display:flex;align-items:center;justify-content:center;padding:16px}
+.tuto-bubble{position:fixed;pointer-events:auto;width:min(360px,calc(100vw - 32px));box-sizing:border-box;padding:16px 18px 14px;border-radius:18px;background:#f6e7c1;color:#1b1406;box-shadow:0 0 0 3px #f2a541,0 18px 40px rgba(0,0,0,.45);font-size:15px;line-height:1.45;display:flex;flex-direction:column;gap:6px}
+.tuto-bubble[hidden]{display:none}
+.tuto-centered .tuto-bubble{position:relative;width:min(460px,100%);padding:22px 24px 18px;font-size:16px}
+.tuto-bubble[data-side="dock"]{left:50%;bottom:120px;transform:translateX(-50%)}
+.tuto-eyebrow{font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:11.5px;color:#8a5a14}
+.tuto-title{font:900 20px/1.15 'Fraunces',Georgia,serif;color:#1b3b38}
+.tuto-centered .tuto-title{font-size:26px}
+.tuto-bubble p{margin:0}
+.tuto-bubble p small{display:block;margin-top:6px;font-size:13px;color:#5d4b26}
+.tuto-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:6px}
+.tuto-bubble button{min-height:40px;padding:0 14px;border-radius:10px;font:700 14px 'Barlow',system-ui,sans-serif;cursor:pointer}
+.tuto-bubble .tuto-primary{border:0;background:#f2a541;color:#1b1406}
+.tuto-bubble .tuto-light{border:2px solid #c9b88d;background:transparent;color:#1b1406}
+.tuto-bubble .tuto-skip{margin-left:auto;min-height:32px;padding:0 6px;border:0;background:none;color:#6b5a33;font-weight:600;font-size:13px;text-decoration:underline}
+.tuto-wait{font-style:italic;font-size:13.5px;color:#6b5a33}
+.tuto-arrow{position:absolute;width:16px;height:16px;box-sizing:border-box;background:#f6e7c1;border:0 solid #f2a541;transform:rotate(45deg);display:none;z-index:-1}
+.tuto-bubble[data-side="below"] .tuto-arrow{display:block;top:-11px;margin-left:-8px;border-top-width:3px;border-left-width:3px}
+.tuto-bubble[data-side="above"] .tuto-arrow{display:block;bottom:-11px;margin-left:-8px;border-bottom-width:3px;border-right-width:3px}
+.tuto-bubble[data-side="right"] .tuto-arrow{display:block;left:-11px;margin-top:-8px;border-left-width:3px;border-bottom-width:3px}
+.tuto-bubble[data-side="left"] .tuto-arrow{display:block;right:-11px;margin-top:-8px;border-top-width:3px;border-right-width:3px}
+.tuto-target{outline:3px solid #f2a541 !important;outline-offset:3px;border-radius:12px;animation:tuto-glow 1.6s ease-in-out infinite}
+@keyframes tuto-glow{50%{outline-color:#f6e7c1}}
+@media (prefers-reduced-motion:reduce){.tuto-target{animation:none}.guide-ring{animation:none}}
+@media (max-width:719px){.tuto-bubble[data-side="dock"]{bottom:auto;top:12px}}
