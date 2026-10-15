@@ -74,4 +74,32 @@ export async function pushState(code,m,baseRev){const net=await backend(),{light
  return r.committed?r.value.rev:null;}
 // Écouter la partie : cb(texte complet de la sauvegarde, rev) à chaque changement.
 export async function listenOnline(code,cb){const net=await backend();let board=null;
- return net.listen(code,g=>{if(!g)return;board=board||g.board;cb(joinGame(g.state,board),g.rev,g);});}
+ return net.listen(code,g=>{if(!g||!g.state||!g.board&&!board)return;board=board||g.board;cb(joinGame(g.state,board),g.rev,g);});}
+
+// ---------- Salle d'attente : on crée la partie en ligne dès le départ, chacun prépare son cycliste chez soi ----------
+// /games/<CODE> pendant la préparation : { status:'lobby', count, rules (texte), host, lobby:{ p1:{client,name,bike,items,voyage,ready}, … } }
+// Au lancement, l'hôte crée la partie avec tous les cyclistes et la même adresse passe en status:'playing'.
+export const seatIds=count=>Array.from({length:count},(_,i)=>'p'+(i+1));
+export async function createLobby({count,rules,name}){const net=await backend(),me=clientId();
+ for(let tries=0;tries<8;tries++){const code=makeCode();
+  if(await net.create(code,{status:'lobby',count,rules:JSON.stringify(rules),host:me,lobby:{p1:{client:me,name,ready:false}},createdAt:Date.now(),updatedAt:Date.now()}))return {code,seat:'p1'};}
+ throw Error('Impossible de créer un code de partie, réessaie.');}
+// Rejoindre la salle d'attente : première place libre (ou la sienne si on revient).
+export async function joinLobby(code,name){const net=await backend(),me=clientId();let seat='';
+ const r=await net.update(code,g=>{if(!g||g.status!=='lobby')return undefined;const lobby={...(g.lobby||{})},mine=Object.keys(lobby).find(id=>lobby[id]?.client===me);
+  seat=mine||seatIds(g.count).find(id=>!lobby[id]?.client)||'';if(!seat)return undefined;lobby[seat]={...(lobby[seat]||{}),client:me,name:name||lobby[seat]?.name||'Cycliste',ready:Boolean(mine&&lobby[seat]?.ready)};return {...g,lobby,updatedAt:Date.now()};});
+ if(!r.committed)throw Error('Partie complète ou déjà commencée.');return {code,seat};}
+export async function setLobbySeat(code,seat,data){const net=await backend(),me=clientId();
+ const r=await net.update(code,g=>{if(!g||g.status!=='lobby'||g.lobby?.[seat]?.client!==me)return undefined;return {...g,lobby:{...g.lobby,[seat]:{...g.lobby[seat],...data,client:me}},updatedAt:Date.now()};});
+ if(!r.committed)throw Error('Impossible d’enregistrer ton cycliste (partie déjà lancée ?).');}
+// Lancer : l'hôte envoie la partie complète ; chaque appareil garde sa place.
+export async function startLobby(code,m){const net=await backend(),{light,board}=splitGame(m),me=clientId();
+ const r=await net.update(code,g=>{if(!g||g.status!=='lobby'||g.host!==me)return undefined;const seats=Object.fromEntries(Object.entries(g.lobby||{}).map(([id,s])=>[id,s.client]));
+  return {...g,status:'playing',board,state:light,rev:1,seats,names:Object.fromEntries(m.players.map(p=>[p.id,p.name])),updatedAt:Date.now()};});
+ if(!r.committed)throw Error('Lancement impossible.');return 1;}
+export async function getGame(code){const net=await backend();return net.get(code);}
+export async function listenRaw(code,cb){const net=await backend();return net.listen(code,g=>cb(g));}
+// Quitter la salle d'attente : la place redevient libre (l'hôte, lui, ferme la partie).
+export async function leaveLobby(code,seat){const net=await backend(),me=clientId();
+ await net.update(code,g=>{if(!g||g.status!=='lobby'||g.lobby?.[seat]?.client!==me)return undefined;
+  if(g.host===me)return {...g,status:'closed',updatedAt:Date.now()};const lobby={...g.lobby};delete lobby[seat];return {...g,lobby,updatedAt:Date.now()};});}

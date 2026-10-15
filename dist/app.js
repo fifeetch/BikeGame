@@ -523,20 +523,23 @@ render();if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.j
 // La partie préparée sur un appareil est mise en ligne avec un code ; les autres la rejoignent et choisissent leur cycliste.
 // Hors de son tour, on peut regarder la carte mais pas agir ; la main de cartes des autres n'est jamais affichée.
 // ==========================================================================
-let online=(()=>{try{return JSON.parse(localStorage.getItem('velo-online')||'null');}catch{return null;}})();
+// En test local (deux onglets), chaque onglet garde sa propre place.
+const netStore=()=>NET.isLocalTest()?sessionStorage:localStorage;
+let lobby=(()=>{try{return JSON.parse(netStore().getItem('velo-lobby')||'null');}catch{return null;}})(),lobbyUnlisten=null,lobbyPrep=false,lobbyRulesBackup=null;
+let online=(()=>{try{return JSON.parse(netStore().getItem('velo-online')||'null');}catch{return null;}})();
 let net={view:'home'},netUnlisten=null,netLight='',netPushing=false,netAgain=false,netDeferred=null,netWasMyTurn=null;
-const saveOnline=()=>{try{online?localStorage.setItem('velo-online',JSON.stringify(online)):localStorage.removeItem('velo-online');}catch{}};
+const saveOnline=()=>{try{online?netStore().setItem('velo-online',JSON.stringify(online)):netStore().removeItem('velo-online');}catch{}};
 const lightOf=g=>{if(!g)return '';const {board,edges,...l}=g;return JSON.stringify(l);};
 const onlineGame=()=>Boolean(online&&m&&m.mode==='plateau');
 const myTurn=()=>!onlineGame()||NET.actorId(m)===online.seat;
 const seatName=id=>m?.players.find(p=>p.id===id)?.name||'un cycliste';
 function onlineView(){
  const local=m&&m.mode==='plateau'&&!m.done&&!online?{title:`Jour ${m.round} · ${m.players.length} cycliste${m.players.length>1?'s':''}`,players:m.players.map(p=>({id:p.id,name:p.name,detail:`${m.rules.bikes[p.bike]?.name||p.bike} · ${voyages.find(v=>v.id===p.voyage)?.title||''}`}))}:null;
- return onlineScreen({btn,net,local,current:online&&m?{code:online.code,name:seatName(online.seat)}:null,message});}
+ return onlineScreen({btn,net,local,current:online&&m?{code:online.code,name:seatName(online.seat)}:null,message,rules:setupRules,lobbyBack:lobby&&net.view!=='lobby'?lobby.code:null});}
 function applyRemote(text,rev){
  let next;try{next=S.load(text);}catch(e){message='Partie en ligne illisible : '+e.message;return;}
  m=next;online.rev=rev;saveOnline();netLight=lightOf(m);mapSelection='';route=[];
- if(net.joining){net={view:'home'};screen='game';modal='';}
+ if(net.joining){net={view:'home'};screen='game';modal='';message='La partie commence !';}
  if(screen==='game'||screen==='online')render();
 }
 async function startListening(){
@@ -565,7 +568,11 @@ async function netAction(a){
    const r=await NET.createOnline(m,seat);online={code:r.code,seat,rev:r.rev};saveOnline();netLight=lightOf(m);
    net={view:'created',code:r.code,players:m.players.map(p=>({id:p.id,name:p.name,taken:p.id===seat,mine:p.id===seat}))};startListening();}
   else if(a==='net-peek'){const code=NET.cleanCode(document.querySelector('#net-code')?.value);if(!code)throw Error('Tape le code reçu, par exemple VELO-4821.');
-   net={view:'home',busy:true,code};render();const r=await NET.peekOnline(code);net={view:'seats',code,players:r.players};}
+   const name=(document.querySelector('#net-join-name')?.value||'').trim();net={view:'home',busy:true,code,name};render();
+   const g=await NET.getGame(code);if(!g)throw Error('Aucune partie avec ce code.');
+   if(g.status==='lobby'){if(!name)throw Error('Écris ton nom avant de rejoindre.');const r=await NET.joinLobby(code,name);enterLobby(r.code,r.seat);return;}
+   if(g.status==='closed')throw Error('Cette partie a été annulée.');
+   const r=await NET.peekOnline(code);net={view:'seats',code,players:r.players};}
   else if(a.startsWith('net-seat-')){const seat=a.slice(9),code=net.code;net={...net,busy:true};render();
    await NET.takeSeat(code,seat);leaveOnline();online={code,seat,rev:0};saveOnline();net={view:'home',joining:true};startListening();return;}
   else if(a==='net-copy'||a==='net-copy-link'){const text=a==='net-copy'?net.code:location.origin+location.pathname+'?partie='+net.code;
@@ -615,3 +622,72 @@ if(online){netLight=lightOf(m);startListening();}
 {const code=(()=>{try{return NET.cleanCode(new URLSearchParams(location.search).get('partie'));}catch{return '';}})();if(code&&!online){net={view:'home',code};screen='online';render();}}
 // Test local (?reseau=local) : accès à l'état pour vérifier la synchronisation.
 if(NET.isLocalTest())globalThis.__velo={get m(){return m;},get online(){return online;},get net(){return {pushing:netPushing,again:netAgain,deferred:Boolean(netDeferred)};}};
+
+// ==========================================================================
+// Salle d'attente en ligne : la partie est créée en ligne dès le départ, chacun prépare son cycliste sur son appareil.
+// ==========================================================================
+const saveLobby=()=>{try{lobby?netStore().setItem('velo-lobby',JSON.stringify(lobby)):netStore().removeItem('velo-lobby');}catch{}};
+function lobbyRules(g){try{return validateRules(JSON.parse(g.rules));}catch{return clone(CLASSIC);}}
+function lobbySeats(g){const r=lobbyRules(g),me=NET.clientId();
+ return NET.seatIds(g.count||2).map((id,i)=>{const s=g.lobby?.[id];if(!s?.client)return {id,num:i+1,state:'free'};
+  const v=voyages.find(x=>x.id===s.voyage);return {id,num:i+1,name:s.name||'Cycliste',mine:s.client===me,state:s.ready?'ready':'prep',detail:s.ready?`${r.bikes[s.bike]?.name||s.bike} · ${v?v.title+' ('+v.from+' → '+v.to+')':''}`:''};});}
+function lobbyRulesLine(g){const r=lobbyRules(g);return `Météo : ${r.weather?.forecast?'annoncée':'cartes météo'} · Événements : ${r.encounters?.enabled?'rencontres':'cartes'} · ${r.distance} cases/jour · ${r.startMoney} pièces`;}
+function showLobby(g){net={...net,view:'lobby',code:lobby.code,game:g,seats:lobbySeats(g),host:g.host===NET.clientId(),rulesLine:lobbyRulesLine(g),busy:false};}
+async function enterLobby(code,seat){
+ lobby={code,seat};saveLobby();lobbyUnlisten?.();lobbyUnlisten=null;net={view:'lobby',code,seats:[],busy:true};screen='online';render();
+ lobbyUnlisten=await NET.listenRaw(code,g=>{
+  if(!lobby||lobby.code!==code)return;
+  if(!g||g.status==='closed'){leaveLobbyLocal();message='La partie '+code+' a été annulée par l’hôte.';if(screen==='online')render();return;}
+  if(g.status==='playing'){// la partie est lancée : chacun rejoint sa place
+   const seat=lobby.seat;leaveLobbyLocal();if(online?.code===code)return;
+   leaveOnline();online={code,seat,rev:0};saveOnline();net={view:'home',joining:true};screen='online';render();startListening();return;}
+  if(!g.lobby?.[lobby.seat]||g.lobby[lobby.seat].client!==NET.clientId()){leaveLobbyLocal();message='Tu n’as plus de place dans cette partie.';if(screen==='online')render();return;}
+  if(lobbyPrep)return;// on prépare son vélo : on ne change pas d'écran
+  showLobby(g);if(screen==='online')render();});
+}
+function leaveLobbyLocal(){lobbyUnlisten?.();lobbyUnlisten=null;lobby=null;saveLobby();endPrep();if(net.view==='lobby')net={view:'home'};}
+function endPrep(){if(lobbyPrep&&lobbyRulesBackup)setupRules=lobbyRulesBackup;lobbyPrep=false;lobbyRulesBackup=null;}
+function readNetForm(){const name=document.querySelector('#net-name')?.value??document.querySelector('#net-join-name')?.value,count=document.querySelector('#net-count')?.value,code=document.querySelector('#net-code')?.value;
+ if(name!==undefined)net.name=name;if(count)net.count=+count;if(code!==undefined)net.code=code;}
+async function lobbyAction(a){
+ try{
+  if(a==='net-lobby-create'){readNetForm();const name=(net.name||'').trim();if(!name)throw Error('Écris ton nom pour créer la partie.');
+   net={...net,busy:true,error:''};render();const r=await NET.createLobby({count:net.count||2,rules:setupRules,name});await enterLobby(r.code,r.seat);return;}
+  if(a==='net-lobby-back'){if(lobby)await enterLobby(lobby.code,lobby.seat);return;}
+  if(a==='net-lobby-leave'){const l=lobby;leaveLobbyLocal();if(l)await NET.leaveLobby(l.code,l.seat).catch(()=>{});net={view:'home'};message='Tu as quitté la salle d’attente.';render();return;}
+  if(a==='net-lobby-prep'){const g=net.game,s=g?.lobby?.[lobby.seat];if(!s)return;
+   lobbyRulesBackup=lobbyRulesBackup||setupRules;setupRules=lobbyRules(g);lobbyPrep=true;
+   if(s.ready)NET.setLobbySeat(lobby.code,lobby.seat,{ready:false}).catch(()=>{});
+   roster=[{name:s.name||'Cycliste',bike:s.bike&&setupRules.bikes[s.bike]?s.bike:'gravel',items:[...(s.items||[])]}];choosing=0;screen='equipment';modal='';message='';render();return;}
+  if(a==='net-lobby-start'){const g=await NET.getGame(lobby.code);if(!g||g.status!=='lobby')throw Error('La partie n’est plus en attente.');
+   const seats=NET.seatIds(g.count);if(!seats.every(id=>g.lobby?.[id]?.ready))throw Error('Tout le monde n’est pas encore prêt.');
+   const list=seats.map(id=>{const s=g.lobby[id];return {name:s.name,bike:s.bike,items:s.items||[],voyage:s.voyage};});
+   net={...net,busy:true};render();
+   const game=S.createMatch(list,'plateau',lobbyRules(g),undefined,customCards,eventEdits);
+   const chosen=findMap(selectedMapId);if(chosen){applyCustomMap(game,chosen);game.mapChoice=chosen.id;game.mapName=chosen.name;}else{game.mapChoice='';game.mapName='Europe standard';}
+   const seat=lobby.seat,code=lobby.code;leaveLobbyLocal();leaveOnline();
+   await NET.startLobby(code,game);m=game;online={code,seat,rev:1};saveOnline();netLight=lightOf(m);net={view:'home'};
+   screen='game';zoom=1;mapSelection='';selected=0;modal='';message='C’est parti ! La partie est lancée chez tout le monde.';render();center?.();startListening();return;}
+ }catch(e){net={...net,busy:false,error:e.message};}
+ render();
+}
+{const priorAct=act;act=a=>{
+ if(a.startsWith('net-lobby-'))return lobbyAction(a);
+ if(screen==='online'){readNetForm();if(['weather-cards','weather-forecast','events-cards','events-encounters'].includes(a)){
+  if(a.startsWith('weather'))setupRules.weather={...(setupRules.weather||{}),forecast:a==='weather-forecast'};else setupRules.encounters={...(setupRules.encounters||{}),enabled:a==='events-encounters'};
+  try{localStorage.setItem('velo-setup-rules',JSON.stringify(setupRules));}catch{}render();return;}}
+ // Pendant la préparation en ligne : « ← Cyclistes » ramène à la salle d'attente.
+ if(lobbyPrep&&(a==='setup'||a==='home'||a==='online')){endPrep();if(lobby){showLobbyAgain();return;}}
+ return priorAct(a);};}
+async function showLobbyAgain(){try{const g=await NET.getGame(lobby.code);if(g&&g.status==='lobby')showLobby(g);}catch{}screen='online';render();}
+// Choix du voyage pendant la préparation en ligne : on enregistre son cycliste au lieu de lancer une partie sur cet appareil.
+globalThis.document?.addEventListener?.('click',async e=>{
+ if(!lobbyPrep||screen!=='voyages')return;const el=e.target.closest?.('[data-voyage]');if(!el)return;
+ e.stopPropagation();e.preventDefault();const id=el.dataset.voyage;if(!drawn.some(v=>v.id===id))return;
+ const p=roster[0];try{await NET.setLobbySeat(lobby.code,lobby.seat,{name:p.name,bike:p.bike,items:p.items||[],voyage:id,ready:true});
+  endPrep();message='Ton cycliste est prêt !';await showLobbyAgain();}
+ catch(e2){message=e2.message;render();}
+},true);
+// Au démarrage : revenir dans la salle d'attente si on l'avait quittée en fermant le jeu.
+if(lobby&&!online){enterLobby(lobby.code,lobby.seat).catch(()=>{});}
+if(NET.isLocalTest())Object.defineProperty(globalThis.__velo,'lobby',{get:()=>({lobby,prep:lobbyPrep,net})});

@@ -183,11 +183,21 @@ export function voyagesScreen({player,index,total,drawn,lengths,artwork,message=
 // ---------- Partie en ligne : créer (mettre sa partie en ligne), rejoindre avec un code, choisir son cycliste ----------
 // net : {view:'home'|'seats'|'created', code, players:[{id,name,taken,mine}], busy, error}
 // local : la partie préparée sur cet appareil (ou null) ; current : la partie en ligne en cours sur cet appareil (ou null).
-export function onlineScreen({btn,net={},local=null,current=null,message=''}){
+export function onlineScreen({btn,net={},local=null,current=null,message='',rules={},lobbyBack=null}){
  const card=(content,cls='')=>`<section class="mc-online-card ${cls}">${content}</section>`;
  const head=`<header class="mc-head"><div><p class="mc-kicker">Partie en ligne</p><h1>Jouer à deux, chacun chez soi</h1><p class="mc-lead">La partie est gardée en ligne : chacun joue son tour quand il veut, sur son ordinateur ou son téléphone. Ta main de cartes reste sur ton écran.</p></div></header>`;
  let body='';
- if(net.view==='created')body=card(`<p class="mc-kicker">Donne ce code à ton ami</p><b class="mc-online-code">${esc(net.code)}</b>
+ const toggle=(on,action,title,small)=>`<button type="button" data-action="${action}" aria-pressed="${on}" class="${on?'on':''}"><b>${title}</b><small>${small}</small></button>`;
+ if(net.view==='lobby'){const g=net.game||{},seats=net.seats||[],me=seats.find(s=>s.mine),all=seats.length&&seats.every(s=>s.state==='ready');
+  body=card(`<p class="mc-kicker">Salle d’attente</p><h2>Donne ce code à tes amis</h2><b class="mc-online-code">${esc(net.code)}</b>
+   <div class="mc-online-row">${btn('Copier le code','net-copy','mc-ghost')}${btn('Copier le lien','net-copy-link','mc-ghost')}</div>
+   <ul class="mc-online-seats mc-lobby-seats">${seats.map(s=>`<li class="${s.state} ${s.mine?'mine':''}"><span class="mc-lobby-num">${s.num}</span><b>${s.state==='free'?'En attente d’un ami…':esc(s.name)+(s.mine?' (toi)':'')}${s.detail?`<small>${esc(s.detail)}</small>`:''}</b><span>${s.state==='ready'?'prêt':s.state==='prep'?'prépare son vélo…':'place libre'}</span></li>`).join('')}</ul>
+   <p class="mc-lobby-rules">${esc(net.rulesLine||'')}</p>
+   <p>Chacun, sur son appareil : ouvre le jeu, « Jouer en ligne », tape le code, puis passe au garage (vélo, sacoches) et choisit son voyage.</p>
+   <div class="mc-online-row">${me&&me.state!=='ready'?btn('Préparer mon cycliste →','net-lobby-prep','mc-go'):me?btn('Modifier mon cycliste','net-lobby-prep','mc-ghost'):''}
+   ${net.host?btn(all?'Lancer la partie →':'Lancer quand tout le monde est prêt','net-lobby-start','mc-go',!all):'<span class="mc-lobby-wait">L’hôte lance la partie quand tout le monde est prêt.</span>'}</div>
+   ${btn(net.host?'Annuler la partie':'Quitter la salle d’attente','net-lobby-leave','mc-ghost')}`,'wide');}
+ else if(net.view==='created')body=card(`<p class="mc-kicker">Donne ce code à ton ami</p><b class="mc-online-code">${esc(net.code)}</b>
    <div class="mc-online-row">${btn('Copier le code','net-copy','mc-ghost')}${btn('Copier le lien','net-copy-link','mc-ghost')}</div>
    <ul class="mc-online-seats">${(net.players||[]).map(p=>`<li class="${p.taken||p.mine?'on':''}"><b>${esc(p.name)}</b><span>${p.mine?'toi, sur cet appareil':p.taken?'connecté':'en attente…'}</span></li>`).join('')}</ul>
    <p>Ton ami ouvre le jeu, choisit « Jouer en ligne », tape le code puis choisit son cycliste. Tu peux commencer à jouer : il te rejoindra.</p>
@@ -196,12 +206,20 @@ export function onlineScreen({btn,net={},local=null,current=null,message=''}){
    <div class="mc-online-pick">${(net.players||[]).map(p=>`<button type="button" data-action="net-seat-${esc(p.id)}" ${p.taken?'disabled':''}><b>${esc(p.name)}</b><small>${p.mine?'déjà sur cet appareil':p.taken?'déjà pris':'libre'}</small></button>`).join('')}</div>
    ${btn('← Retour','net-back','mc-ghost')}`,'wide');
  else{
-  const create=local?card(`<p class="mc-kicker">Créer</p><h2>Mettre ma partie en ligne</h2><p>Partie préparée sur cet appareil : ${esc(local.title)}. Choisis le cycliste que tu joues ici ; les autres se joueront sur l’appareil de tes amis.</p>
+  const forecast=Boolean(rules.weather?.forecast),enc=Boolean(rules.encounters?.enabled);
+  const create=card(`<p class="mc-kicker">Créer</p><h2>Créer une partie en ligne</h2><p>Chacun choisira son vélo, ses sacoches et son voyage sur son propre appareil.</p>
+    <label class="mc-online-label">Ton nom <input id="net-name" maxlength="40" autocomplete="off" value="${esc(net.name||'')}" placeholder="Fi"/></label>
+    <label class="mc-online-label">Nombre de cyclistes <select id="net-count">${[2,3,4,5,6].map(n=>`<option value="${n}" ${(net.count||2)===n?'selected':''}>${n}</option>`).join('')}</select></label>
+    <div class="mc-weather-choices mc-online-opts" role="group" aria-label="Météo">${toggle(!forecast,'weather-cards','Cartes météo','Pluie, neige, vent… en cartes.')}${toggle(forecast,'weather-forecast','Météo annoncée','Bulletin chaque soir, sans cartes climatiques.')}</div>
+    <div class="mc-weather-choices mc-online-opts" role="group" aria-label="Événements">${toggle(!enc,'events-cards','Cartes Événement','On joue des cartes aux autres.')}${toggle(enc,'events-encounters','Rencontres','Une rencontre chaque soir.')}</div>
+    ${btn('Créer la partie en ligne','net-lobby-create','mc-go')}`);
+  const upload=local?card(`<p class="mc-kicker">Ou bien</p><h2>Mettre ma partie en cours en ligne</h2><p>Partie préparée sur cet appareil : ${esc(local.title)}. Choisis le cycliste que tu joues ici ; les autres se joueront sur l’appareil de tes amis.</p>
     <div class="mc-online-pick">${local.players.map(p=>`<button type="button" data-action="net-create-${esc(p.id)}"><b>Je suis ${esc(p.name)}</b><small>${esc(p.detail)}</small></button>`).join('')}</div>`)
-   :card(`<p class="mc-kicker">Créer</p><h2>Mettre une partie en ligne</h2><p>Prépare d’abord la partie comme d’habitude avec <b>tous</b> les cyclistes (« Nouveau voyage » : plateau, cyclistes, garage, voyages), puis reviens ici pour la mettre en ligne.</p>${btn('Nouveau voyage','new','mc-ghost')}`);
-  const join=card(`<p class="mc-kicker">Rejoindre</p><h2>J’ai reçu un code</h2><label class="mc-online-label">Code de la partie <input id="net-code" inputmode="numeric" autocomplete="off" placeholder="VELO-1234" value="${esc(net.code||'')}"/></label>${btn('Rejoindre la partie','net-peek','mc-go')}`);
+   :'';
+  const join=card(`<p class="mc-kicker">Rejoindre</p><h2>J’ai reçu un code</h2><label class="mc-online-label">Code de la partie <input id="net-code" inputmode="numeric" autocomplete="off" placeholder="VELO-1234" value="${esc(net.code||'')}"/></label><label class="mc-online-label">Ton nom <input id="net-join-name" maxlength="40" autocomplete="off" value="${esc(net.name||'')}" placeholder="Léa"/></label>${btn('Rejoindre la partie','net-peek','mc-go')}`);
   const now=current?card(`<p class="mc-kicker">Sur cet appareil</p><h2>Partie ${esc(current.code)}</h2><p>Tu joues ${esc(current.name)}.</p><div class="mc-online-row">${btn('Reprendre la partie →','net-play','mc-go')}${btn('Quitter cette partie en ligne','net-leave','mc-ghost')}</div>`,'wide'):'';
-  body=now+`<div class="mc-online-grid">${create}${join}</div>`;
+  const back=lobbyBack?card(`<p class="mc-kicker">Salle d’attente</p><h2>Partie ${esc(lobbyBack)}</h2><p>Une partie en préparation t’attend.</p>${btn('Retour à la salle d’attente →','net-lobby-back','mc-go')}`,'wide'):'';
+  body=now+back+`<div class="mc-online-grid">${create}${join}</div>`+(upload?`<div class="mc-online-grid mc-online-upload">${upload}</div>`:'');
  }
  return `<main class="menu-c mc-page mc-online">${backdrop()}${head}${net.busy?'<p class="mc-online-busy" role="status">Connexion…</p>':''}${net.error?`<p class="mc-online-error" role="alert">${esc(net.error)}</p>`:''}${body}
   <footer class="mc-foot">${btn('← Accueil','home','mc-ghost')}</footer><p class="toast" role="status">${esc(message)}</p></main>`;

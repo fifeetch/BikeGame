@@ -133,7 +133,10 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 
 ## Partie en ligne (deux appareils, Firebase)
 - Écran titre → **« Jouer en ligne »**.
-  - **Créer** : prépare d'abord la partie comme d'habitude avec tous les cyclistes, puis « Je suis … » : la partie part en ligne et un code s'affiche (ex. VELO-4821), avec « Copier le code » et « Copier le lien ».
+  - **Créer une partie en ligne** (dès le départ) : ton nom, le nombre de cyclistes, la météo (cartes ou annoncée) et les événements (cartes ou rencontres). Un code s'affiche (ex. VELO-4821) dans la **salle d'attente**, avec « Copier le code » et « Copier le lien ».
+  - **Chacun sur son appareil** : tape le code + son nom → « Préparer mon cycliste » → garage (vélo, sacoches) → choix du voyage → « prêt ». Les règles sont celles choisies par l'hôte.
+  - Quand tout le monde est prêt, l'hôte clique **« Lancer la partie »** : la partie s'ouvre chez tout le monde, chacun sur son cycliste. Fermer le jeu pendant l'attente n'est pas grave : on revient dans la salle d'attente en rouvrant le jeu.
+  - Toujours possible : **« Mettre ma partie en cours en ligne »** (partie déjà préparée sur cet appareil avec tous les cyclistes), puis « Je suis … ».
   - **Rejoindre** : taper le code (ou ouvrir le lien), puis choisir son cycliste.
 - En partie : bandeau **« À toi de jouer · VELO-4821 »** ou **« Léa joue… »**. Hors de son tour, on voit la carte bouger en direct, mais les actions sont bloquées et la fiche affiche « En attente » avec ses propres jauges : la main de cartes des autres n'est jamais affichée. Pas de modification de carte ni de règles pendant une partie en ligne.
 - On peut fermer le jeu : « Jouer en ligne » → « Reprendre la partie ». « Quitter cette partie en ligne » la laisse en ligne pour les autres.
