@@ -11,6 +11,7 @@
 /* Equal-size hexagonal Europe board. Geometry comes only from europe.js. */
 .layout>section{min-width:0}
 .player-number{font:700 15px system-ui,sans-serif;text-anchor:middle;fill:white}
+.rider-token .player-number{font:800 7px 'Barlow Condensed',system-ui,sans-serif}
 header nav{display:flex;gap:8px;flex-wrap:wrap}
 input,select{font:inherit;border:1px solid #aab7a3;border-radius:8px;padding:9px;background:white;color:#244b40;min-width:0;max-width:100%}
 label{display:flex;gap:8px;flex-direction:column;margin:10px 0}
@@ -70,7 +71,7 @@ summary{cursor:pointer;font-weight:700;min-height:32px}
 .map-marker{font:24px system-ui,sans-serif;text-anchor:middle}
 .map-marker.rider{position:static;animation:none;filter:none}
 .rider-shadow{fill:#173b3b;opacity:.2}
-.rider-base{fill:#fff9e8;stroke:#264d40;stroke-width:1.5}
+.rider-base{fill:#f6e7c1;stroke:#264d40;stroke-width:2.2}
 .map-ferries path{fill:none;stroke:#668e9f;stroke-width:2.5;stroke-dasharray:5 7}
 .supplied-map .terrain-face{stroke:#fff8e7;stroke-width:1.15;stroke-linejoin:round}
 .supplied-map .terrain-mer .terrain-face{fill:#176f9b}
@@ -1201,3 +1202,140 @@ body.en-partie .sheet-drawer-close{background:#0b1a1d;color:var(--c-cream);borde
 .carnet-mot span{font-size:14px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#f2a541}
 .carnet-mot p{margin:4px 0 0;font-family:'Fraunces',Georgia,serif;font-style:italic;font-size:19px;line-height:1.35}
 @media(max-width:760px){.carnet-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* ---------- Pion : cycliste sur son vélo ---------- */
+.rider-flip{--rider:#b74732}
+.rider-wheel{fill:rgba(255,255,255,.35);stroke:#1b1406;stroke-width:1.3}
+.rider-frame{fill:none;stroke:var(--rider);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.rider-body,.rider-arm,.rider-leg{fill:none;stroke-linecap:round;stroke-linejoin:round}
+.rider-body{stroke:var(--rider);stroke-width:3.2}
+.rider-arm{stroke:#1b1406;stroke-width:1.3}
+.rider-leg{stroke:#1b3b38;stroke-width:1.8}
+.rider-head{fill:#f2d1a8;stroke:#1b1406;stroke-width:.7}
+.rider-helmet{fill:var(--rider);stroke:#1b1406;stroke-width:.6}
+.rider-bag{fill:#8a5a14;stroke:#1b1406;stroke-width:.6}
+.rider-badge{stroke:#f6e7c1;stroke-width:1.2}
+.rider-token.active .rider-base{stroke-width:3.2}
+.rider-inner{transform:scale(calc(var(--sym,1)*1.3))}
+
+/* ==========================================================================
+   Fiche du cycliste « carnet crème » (maquette validée par Fi, 15 octobre)
+   Papier crème, texte foncé, textes ≥ 15 px, icônes dessinées.
+   ========================================================================== */
+body .player-mat.fiche{--f-paper:#f6e7c1;--f-card:#fff7df;--f-line:#e2cf9f;--f-ink:#1b1406;--f-sub:#5a4a2c;--f-brown:#8a5a14;--f-green:#1b3b38;--f-gain:#2f7a3c;
+ background:var(--f-paper);color:var(--f-ink);border:0;box-shadow:0 18px 50px rgba(0,0,0,.4);font-family:'Barlow',system-ui,sans-serif;gap:16px;padding:22px 24px}
+body .player-mat.fiche .fiche-head{gap:14px}
+body .player-mat.fiche .fiche-num{flex:none;width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff3cf;font:900 26px 'Fraunces',Georgia,serif;box-shadow:inset 0 0 0 3px rgba(255,255,255,.25)}
+body .player-mat.fiche .fiche-head h2{color:var(--f-green);font-size:32px}
+body .player-mat.fiche .fiche-head small{color:var(--f-sub);font-size:17px}
+body .player-mat.fiche .mat-day{border:0;background:var(--f-green);color:var(--f-paper);font:700 17px 'Barlow Condensed',system-ui,sans-serif;letter-spacing:.08em}
+/* Jauges */
+body .player-mat.fiche .fiche-gauges{display:grid;grid-template-columns:2fr repeat(3,minmax(0,1fr));gap:10px;padding:0;background:transparent;border:0}
+body .player-mat.fiche .fiche-energy-box,body .player-mat.fiche .fiche-count{border-radius:14px;background:var(--f-card);border:2px solid var(--f-line)}
+body .player-mat.fiche .fiche-energy-box{display:flex;flex-direction:column;gap:8px;padding:12px 14px}
+body .player-mat.fiche .fiche-gauge-head span{font:700 15px 'Barlow',system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--f-brown)}
+body .player-mat.fiche .fiche-gauge-head b{font:900 28px 'Fraunces',Georgia,serif;color:var(--f-ink)}
+body .player-mat.fiche .fiche-gauge-head b small{font-size:17px;color:#8a7a5a}
+body .player-mat.fiche .fiche-energy i{height:12px;background:#e6d6ad}
+body .player-mat.fiche .fiche-energy i.on{background:#e08a1e}
+body .player-mat.fiche .fiche-energy i.lock{background:repeating-linear-gradient(45deg,#d9826a 0 3px,transparent 3px 7px);outline:1px solid #d9826a}
+body .player-mat.fiche .fiche-energy-box small{font-size:15px;color:var(--f-sub)}
+body .player-mat.fiche .fiche-energy-box small.fourbu{color:#a3361f;font-weight:700}
+body .player-mat.fiche .fiche-count{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:10px 6px}
+body .player-mat.fiche .fiche-count b{font:900 26px 'Fraunces',Georgia,serif;line-height:1.05}
+body .player-mat.fiche .fiche-count small{font-size:15px;color:var(--f-sub)}
+body .player-mat.fiche .fiche-count.food svg{color:#427a4b}body .player-mat.fiche .fiche-count.money svg{color:#a77d1e}body .player-mat.fiche .fiche-count.points svg{color:#d9771e}
+/* Onglets */
+body .player-mat.fiche .fiche-tabs{background:var(--f-green);border-radius:14px;padding:5px;gap:4px}
+body .player-mat.fiche .fiche-tabs button{min-height:54px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:var(--f-paper);font:700 16px 'Barlow Condensed',system-ui,sans-serif;letter-spacing:.02em;text-transform:none}
+body .player-mat.fiche .fiche-tabs button.on{background:#f2a541;color:var(--f-ink)}
+body .player-mat.fiche .fiche-tabs button span{overflow:hidden;text-overflow:ellipsis;max-width:100%}
+/* Libellés et notes */
+body .player-mat.fiche .fiche-label{margin:4px 0 -4px;font:700 15px 'Barlow',system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--f-brown)}
+body .player-mat.fiche .fiche-kicker{display:block;font:700 15px 'Barlow',system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#f2a541}
+body .player-mat.fiche .fiche-note{background:#fbe1d6;color:#7a2c16;font-size:16px}
+/* Météo */
+body .player-mat.fiche .fiche-meteo{margin:0;padding:14px 16px;gap:14px;border:0;border-radius:16px;background:var(--f-green);color:var(--f-paper)}
+body .player-mat.fiche .fiche-meteo-icon{display:flex;color:#f2a541}
+body .player-mat.fiche .fiche-meteo.w-orage .fiche-meteo-icon{color:#ff8a6e}body .player-mat.fiche .fiche-meteo.w-pluie .fiche-meteo-icon{color:#7fc0e8}body .player-mat.fiche .fiche-meteo.w-neige .fiche-meteo-icon{color:#fff}body .player-mat.fiche .fiche-meteo.w-vent .fiche-meteo-icon{color:#c9d6dc}
+body .player-mat.fiche .fiche-meteo b{display:block;font:900 22px/1.1 'Fraunces',Georgia,serif;color:var(--f-paper)}
+body .player-mat.fiche .fiche-meteo small{font-size:16px;color:#e8dcbc}
+body .player-mat.fiche .fiche-meteo-btn{min-height:46px;padding:0 14px;border-radius:12px;background:transparent;border:2px solid rgba(246,231,193,.5);color:var(--f-paper);font:700 17px 'Barlow Condensed',system-ui,sans-serif}
+/* Route du jour */
+body .player-mat.fiche .fiche-route-card{display:flex;flex-direction:column;gap:8px}
+body .player-mat.fiche .fiche-route-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+body .player-mat.fiche .fiche-route-head b{font:900 22px 'Fraunces',Georgia,serif;color:var(--f-green)}
+body .player-mat.fiche .fiche-route-head span{font-size:16px;color:var(--f-sub)}
+body .player-mat.fiche .fiche-rings{display:flex;align-items:center;flex-wrap:wrap;gap:12px}
+body .player-mat.fiche .fiche-rings>span{display:flex;gap:7px}
+body .player-mat.fiche .fiche-rings i{width:36px;height:36px;border-radius:50%;border:3px solid var(--f-green);box-sizing:border-box}
+body .player-mat.fiche .fiche-rings i.on{background:#e08a1e;border-color:#e08a1e}
+body .player-mat.fiche .fiche-rings i.lost{border:3px dashed #c9b88d}
+body .player-mat.fiche .fiche-rings b{font:900 24px 'Fraunces',Georgia,serif}
+body .player-mat.fiche .fiche-route-card p{margin:0;font-size:16px;line-height:1.35;color:var(--f-sub)}
+/* Boutons d'action */
+body .player-mat.fiche .fiche-tile{min-height:70px;border-radius:14px;border:2px solid var(--f-green);background:var(--f-card);color:var(--f-ink);font-family:'Barlow',system-ui,sans-serif}
+body .player-mat.fiche .fiche-tile b{font-size:18px}
+body .player-mat.fiche .fiche-tile small{font-size:15px;color:var(--f-sub)}
+body .player-mat.fiche .fiche-tile small.gain{color:var(--f-gain);font-weight:700}
+body .player-mat.fiche .fiche-tile:not(:disabled):hover{background:#fff1c9;border-color:#e08a1e}
+body .player-mat.fiche .fiche-tile:disabled{border:2px dashed #c9b88d;background:transparent;color:#8a7a5a}
+body .player-mat.fiche .fiche-tile:disabled small{color:#8a7a5a}
+body .player-mat.fiche .fiche-tile.conseil{border-color:#2f7a3c;background:#e6f0d6}
+body .player-mat.fiche .fiche-end{min-height:62px;border-radius:16px;background:var(--f-green);color:var(--f-paper);font:900 23px 'Fraunces',Georgia,serif}
+body .player-mat.fiche .fiche-end:not(:disabled):hover{background:#244d49}
+body .player-mat.fiche .fiche-secondary{min-height:50px;border-radius:14px;background:transparent;color:var(--f-green);border:2px solid var(--f-green);font:700 18px 'Barlow',system-ui,sans-serif}
+body .player-mat.fiche .fiche-secondary:disabled{border-style:dashed;color:#8a7a5a;border-color:#c9b88d;opacity:1}
+body .player-mat.fiche .fiche-link{color:var(--f-green);font:600 16px 'Barlow',system-ui,sans-serif;text-decoration:underline}
+/* Sacoches */
+body .player-mat.fiche .fiche-bag-title{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+body .player-mat.fiche .fiche-bag-title>b{font:900 26px 'Fraunces',Georgia,serif;color:var(--f-green)}
+body .player-mat.fiche .fiche-bag-title span{font-size:17px;color:var(--f-sub)}body .player-mat.fiche .fiche-bag-title span b{color:var(--f-ink)}
+body .player-mat.fiche .fiche-slots{display:grid;gap:10px}
+body .player-mat.fiche .fiche-slot{min-height:88px;border-radius:14px;background:var(--f-card);border:2px solid #427a4b;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:8px;text-align:center;color:#427a4b}
+body .player-mat.fiche .fiche-slot.wide{flex-direction:row;justify-content:flex-start;gap:12px;padding:0 14px;text-align:left}
+body .player-mat.fiche .fiche-slot b{font-size:16px;color:var(--f-ink);display:block}
+body .player-mat.fiche .fiche-slot small{font-size:14px;color:var(--f-sub)}
+body .player-mat.fiche .fiche-slot.free{border:2px dashed #c9b88d;background:transparent}
+body .player-mat.fiche .fiche-gives{display:flex;flex-direction:column;gap:4px;padding:14px 16px;border-radius:14px;background:var(--f-green);color:#e8dcbc;font-size:16px}
+body .player-mat.fiche .fiche-gives b{font-size:18px;color:var(--f-paper)}
+body .player-mat.fiche .fiche-gives .warn{color:#ffb38a}
+body .player-mat.fiche .fiche-shop-head{display:flex;justify-content:space-between;align-items:baseline;font-size:15px;color:var(--f-sub)}
+body .player-mat.fiche .fiche-shop{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+body .player-mat.fiche .fiche-shop li{display:grid;grid-template-columns:auto auto 1fr auto;align-items:center;gap:10px;padding:10px 14px;border-radius:12px;background:var(--f-card);border:2px solid var(--f-line)}
+body .player-mat.fiche .fiche-shop-icon{display:flex;color:var(--f-brown)}
+body .player-mat.fiche .fiche-shop b{font-size:17px}
+body .player-mat.fiche .fiche-shop small{font-size:15px;color:var(--f-sub);text-align:right}
+body .player-mat.fiche .fiche-shop em{font-style:normal;padding:4px 10px;border-radius:8px;background:#efdcb0;font-size:14px;font-weight:700;white-space:nowrap}
+body .player-mat.fiche .fiche-shop-note{margin:0;font-size:15px;color:var(--f-brown)}
+/* Voyage */
+body .player-mat.fiche .fiche-voyage h3{color:var(--f-green)}
+body .player-mat.fiche .fiche-voyage li{background:var(--f-card);border:2px solid var(--f-line);font-size:17px;color:var(--f-ink)}
+body .player-mat.fiche .fiche-voyage li b{color:var(--f-ink)}
+body .player-mat.fiche .fiche-voyage li.done{background:#e6f0d6;border-color:#9cc48a}body .player-mat.fiche .fiche-voyage li.done span{color:var(--f-gain)}
+body .player-mat.fiche .fiche-voyage p{color:var(--f-sub);font-size:16px}
+/* Cartes (cartes Événement gardent leurs couleurs) */
+body .player-mat.fiche .sheet-card{background:var(--f-card);color:var(--f-ink);border:2px solid var(--f-line)}
+body .player-mat.fiche .sheet-card h3:not(.event-face *),body .player-mat.fiche .sheet-section-heading h3{color:var(--f-green)}
+body .player-mat.fiche .sheet-section-heading span,body .player-mat.fiche .muted,body .player-mat.fiche .sheet-zone-note{color:var(--f-sub)}
+body .player-mat.fiche .event-bonus-slot{background:var(--f-card);color:var(--f-ink);border-color:var(--f-line)}
+body .player-mat.fiche .event-effect-list span{color:var(--f-ink);border-color:var(--f-line)}
+body .player-mat.fiche .sheet-extras{color:var(--f-ink);border-color:var(--f-line)}body .player-mat.fiche .sheet-extras summary{color:var(--f-green)}
+body .player-mat.fiche .log{color:var(--f-ink)}
+/* Carnet : déjà sur papier, on retire le double fond */
+body .player-mat.fiche .carnet{padding:0;background:transparent}
+@media(max-width:760px){
+ body .player-mat.fiche{padding:16px 14px}
+ body .player-mat.fiche .fiche-gauges{grid-template-columns:repeat(3,minmax(0,1fr))}
+ body .player-mat.fiche .fiche-energy-box{grid-column:1/-1}
+ body .player-mat.fiche .fiche-tabs{grid-template-columns:repeat(5,minmax(0,1fr))}
+ body .player-mat.fiche .fiche-tabs button{font-size:14px;min-height:52px;padding:4px 2px}
+ body .player-mat.fiche .fiche-meteo{grid-template-columns:auto 1fr}
+ body .player-mat.fiche .fiche-meteo-btn{grid-column:1/-1}
+ body .player-mat.fiche .fiche-shop li{grid-template-columns:auto 1fr auto}
+ body .player-mat.fiche .fiche-shop small{grid-column:2/-1;grid-row:2;text-align:left}
+}
+body .player-sheet-mount .player-mat.fiche,body .modal .player-mat.fiche,body .player-mat.fiche.fiche{background:var(--f-paper);color:var(--f-ink);border:0}
+body .player-mat.fiche .fiche-end{text-transform:none;letter-spacing:0}
+body .player-mat.fiche .fiche-shop em{color:var(--f-ink)}
+@media(max-width:760px){body .player-mat.fiche .fiche-tabs button{font-size:13px;letter-spacing:0}body .player-mat.fiche .fiche-tabs button span{white-space:nowrap}}

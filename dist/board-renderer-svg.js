@@ -194,7 +194,7 @@ export function createSVGBoardRenderer(container,options={}){
  }
 
  // ---------- Jetons des cyclistes, avec déplacement case par case ----------
- function tokenTarget(g,p){const t=g.board[p.pos];if(!t)return null;const same=(g.players||[]).filter(a=>a.pos===p.pos),offset=(same.indexOf(p)-(same.length-1)/2)*14;return {x:t.x+offset,y:t.y};}
+ function tokenTarget(g,p){const t=g.board[p.pos];if(!t)return null;const same=(g.players||[]).filter(a=>a.pos===p.pos),offset=(same.indexOf(p)-(same.length-1)/2)*22;return {x:t.x+offset,y:t.y};}
  function animateToken(record,points,stepMs){
   record.anim&&(record.anim.cancelled=true);
   const anim={cancelled:false};record.anim=anim;
@@ -216,14 +216,23 @@ export function createSVGBoardRenderer(container,options={}){
   for(let i=1;i<out.length;i++)if(!(out[i-1].links||[]).includes(out[i].key))return null;
   return out;
  }
+// Cycliste vu de profil, centré sur la case : roues, cadre et maillot à la couleur du joueur (--rider).
+ const RIDER_SVG='<circle class="rider-wheel" cx="-6.6" cy="5" r="4.6"/><circle class="rider-wheel" cx="6.6" cy="5" r="4.6"/>'
+  +'<path class="rider-frame" d="M-6.6 5 L-2.4 -1.6 L5 -1.6 L6.6 5 M-2.4 -1.6 L0.6 5 L5 -1.6 M0.6 5 L-6.6 5 M5 -1.6 L5.8 -4.2 L7.6 -4.4"/>'
+  +'<path class="rider-leg" d="M-2.6 -3.4 L1.6 0.2 L0.6 5"/><path class="rider-body" d="M-2.8 -3.6 L1.4 -9"/><path class="rider-arm" d="M1.4 -8.6 L5.6 -4.6"/>'
+  +'<circle class="rider-head" cx="3.2" cy="-11.4" r="2.5"/><path class="rider-helmet" d="M0.6 -11.6 A2.7 2.7 0 0 1 5.8 -11.8 Z"/><path class="rider-bag" d="M-7.6 -2.2 h4 v3 h-4 Z"/>';
  function drawTokens(g,prev){
   const playerKeys=new Set(),players=g.players||[];let longest=0;
   for(const p of players){const target=tokenTarget(g,p);if(!target)continue;playerKeys.add(p.id);
    let record=playerNodes.get(p.id);
-   if(!record){record={el:make('g',{class:'rider-token'}),inner:make('g',{class:'rider-inner'}),shadow:make('ellipse',{class:'rider-shadow',cx:0,cy:9,rx:9,ry:3}),circle:make('circle',{class:'rider-base',r:11}),text:make('text',{class:'player-number',y:4}),pos:p.pos};record.inner.append(record.shadow,record.circle,record.text);record.el.append(record.inner);tokens.append(record.el);playerNodes.set(p.id,record);}
+   if(!record){
+    // Pion : un médaillon crème avec un cycliste sur son vélo (couleur du joueur), et le numéro du joueur dans une pastille.
+    record={el:make('g',{class:'rider-token'}),inner:make('g',{class:'rider-inner'}),shadow:make('ellipse',{class:'rider-shadow',cx:0,cy:13,rx:11,ry:3}),circle:make('circle',{class:'rider-base',r:13}),flip:make('g',{class:'rider-flip'}),badge:make('circle',{class:'rider-badge',cx:11.5,cy:-11,r:5.4}),text:make('text',{class:'player-number',x:11.5,y:-8.6}),pos:p.pos,facing:1};
+    record.flip.innerHTML=RIDER_SVG;record.inner.append(record.shadow,record.circle,record.flip,record.badge,record.text);record.el.append(record.inner);tokens.append(record.el);playerNodes.set(p.id,record);}
    attrsTo(record.el,{class:`rider-token${p.id===g.id?' active':''}${record.anim?' moving':''}`,'aria-label':p.name});
-   attrsTo(record.circle,{style:`fill:${p.color};stroke:white`});if(record.text.textContent!==p.id.slice(1))record.text.textContent=p.id.slice(1);
+   attrsTo(record.circle,{style:`stroke:${p.color}`});attrsTo(record.flip,{style:`--rider:${p.color}`});attrsTo(record.badge,{style:`fill:${p.color}`});if(record.text.textContent!==p.id.slice(1))record.text.textContent=p.id.slice(1);
    const moved=record.pos!==p.pos,from=g.board[record.pos];record.pos=p.pos;
+   if(moved&&from&&Math.abs(target.x-from.x)>1){record.facing=target.x<from.x?-1:1;attrsTo(record.flip,{transform:record.facing<0?'scale(-1 1)':''});}// le cycliste regarde dans le sens de la route
    if(moved&&from&&prev&&!reduced()&&browser()){
     // Chemin affiché : l'itinéraire qui venait d'être choisi, sinon le ferry, sinon un glissement direct.
     const r=prev.route||[],ferry=(g.edges||[]).find(e=>e.ferry&&((e.a===from.key&&e.b===p.pos)||(e.b===from.key&&e.a===p.pos)));

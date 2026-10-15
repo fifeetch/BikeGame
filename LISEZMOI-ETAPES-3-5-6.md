@@ -112,3 +112,10 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - Les textes sont dans `dist/carnet-data.js` : phrases génériques pour l'instant. Fi peut y écrire ses vraies anecdotes, ville par ville (liste VILLES) et pour « Le mot du voyageur ».
 - Chaque case parcourue garde son jour, et les cases hors route sont comptées (anciennes parties : comptage à partir de maintenant).
 - Tests : `tests/meteo-carnet.test.js` (7 tests) + un test des jetons loin des routes. 60 parties de robots (30 avec météo annoncée, 30 avec cartes météo) : aucune erreur.
+
+## Fiche « carnet crème » et pions cyclistes
+- **Fiche du cycliste** refaite d'après la maquette validée : papier crème et texte foncé (bien plus lisible), textes de 15 px au moins, grands chiffres (énergie, repas, pièces, aventure), onglets avec icônes sur une barre vert foncé.
+  - Journée : bandeau météo du jour (avec demain) en tête, « Route du jour » en gros ronds (cases perdues en pointillés, avec la raison : orage, hors route sans GPS, carte), gains en vert, actions impossibles en pointillés avec leur raison, gros bouton « Terminer ma journée ».
+  - Sacoches : les places du vélo dessinées, remplies par les objets ; encadré « Ce que ça t'apporte » ; boutique avec description, prix et place.
+  - Voyage, Cartes, Carnet : mêmes couleurs papier.
+- **Pions** : chaque joueur est un médaillon crème avec un cycliste sur son vélo (maillot, cadre et casque à sa couleur) et son numéro dans une pastille. Le cycliste regarde dans le sens où il roule.
