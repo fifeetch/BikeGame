@@ -339,3 +339,8 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - « Où dormir ce soir ? » : les nuits deviennent 4 cartes illustrées (bivouac, camping, hôtel, demander), dessin selon la météo du soir.
 - Après le choix, une fenêtre montre la scène : bivouac monté (feu, Zzz), arrivée au camping, entrée à l'hôtel, ou « toc toc » chez l'habitant (chambre d'amis, jardin ou refus). Bouton « Passer », fermeture seule à la fin. Aucune règle changée.
 - Nouveau fichier : dist/night-scenes.js (dessins seulement).
+
+## 16 octobre (soir) — Scènes animées avec la carte en fond
+- Chaque fenêtre de rencontre (en route, le soir, imprévus) montre en haut une petite animation propre à la scène (51 scènes + vendanges et fête nationale ; scène simple pour les autres), jouée une fois puis vivante sur sa dernière image.
+- Le fond est la vraie carte du jeu autour de la case du cycliste (village, côte, montagne…), case entourée d'orange ; le soir la carte s'assombrit.
+- Nouveau fichier : dist/encounter-scenes.js (dessins seulement). Aucune règle changée.

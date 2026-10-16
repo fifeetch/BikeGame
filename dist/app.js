@@ -9,6 +9,7 @@ import {CARD_PRESETS,cardById as findCard,effectiveCards,makeCustomCard,normaliz
 import {renderCardEditor} from './card-editor.js';
 import {readArtPreference} from './terrain-art.js';
 import {nightSceneSvg,NIGHT_SCENE_LENGTH} from './night-scenes.js';
+import {sceneFor,encounterSceneSvg} from './encounter-scenes.js';
 import {readDisplayPrefs,writeDisplayPref} from './display-prefs.js';
 import {titleScreen,plateauScreen,playersScreen,garageScreen,voyagesScreen,onlineScreen,editorHubScreen} from './menus.js';
 import {rulesIntro,rulesHelp,HELP_TABS} from './rules-help.js';
@@ -1241,3 +1242,20 @@ document.addEventListener?.('keydown',e=>{if(nightOpen&&(e.key==='Escape'||e.key
    title={grand:'Grand accueil',jardin:'Oui, le jardin',refus:'Refus poli'}[kind];badge=kind==='grand'?'Chambre d’amis':kind==='jardin'?'Coin du jardin':p.money<money0?`Refus → camping${coin(money0-p.money)}`:'Refus → nuit dehors';}
   nightScene(id,{rain:Boolean(info?.stormy),color:p.color,name:p.name,badge,outcome,title});}catch(err){console.error(err);}
  return out;};}
+
+// ---------- Scènes animées dans la fenêtre de la rencontre, avec la carte en fond (planche validée par Fi le 16 octobre) ----------
+const ENC_MAP='assets/terrain/europe-terrain.webp';
+let encAnim={key:'',start:0,raf:0};
+function encSceneInfo(){const e=S.currentEncounter(m),p=S.player(m);if(!e)return null;const enc=m.encounter||{},t=m.board[p.pos]||{};
+ const kind=enc.situation?'imprevu':!S.immersionOn(m)?'rencontre':enc.road?'route':'soir';
+ return {sc:sceneFor(e.title,kind),key:[m.turn,p.id,e.id||e.title,kind].join('|'),opts:{href:ENC_MAP,x:t.x,y:t.y,color:p.color,uid:'enc'}};}
+function encAnimTick(now){encAnim.raf=0;const el=document.querySelector('.encounter-art svg.enc-anim');if(!el||!m)return;const info=encSceneInfo();if(!info)return;
+ if(info.key!==encAnim.key){encAnim.key=info.key;encAnim.start=now;}
+ if(el.closest('.hold')||nightOpen||colPhotoOpen)encAnim.start=now;
+ el.innerHTML=encounterSceneSvg(info.sc,(now-encAnim.start)/1000,{...info.opts,now});
+ if(!matchMedia('(prefers-reduced-motion: reduce)').matches)encAnim.raf=requestAnimationFrame(encAnimTick);}
+{const priorEnc=encounterModal;encounterModal=()=>{const h=priorEnc();try{const info=encSceneInfo();if(!info)return h;
+ const now=performance.now(),el=info.key===encAnim.key?(now-encAnim.start)/1000:0,reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+ const svg=`<svg class="enc-anim" viewBox="-48 0 416 150" role="img" aria-label="${esc(S.currentEncounter(m).title)}">${encounterSceneSvg(info.sc,reduce?99:el,{...info.opts,now})}</svg>`;
+ return h.replace(/<svg viewBox="0 0 520 180"[\s\S]*?<\/svg>/,svg);}catch(err){console.error(err);return h;}};}
+{const priorRender=render;render=(...a)=>{priorRender(...a);try{if(screen==='game'&&m&&document.querySelector('.encounter-art svg.enc-anim')&&!encAnim.raf)encAnim.raf=requestAnimationFrame(encAnimTick);}catch{}};}

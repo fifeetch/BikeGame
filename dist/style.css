@@ -2085,3 +2085,6 @@ body .modal.night-wrap .night-cards .imm-night.off{opacity:.45}
 .night-cards .imm-night .sub{flex:0 0 100%;margin-top:0;font-size:11.5px;text-transform:none}
 @media (max-width:720px){.night-modal .imm-nights.night-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .modal.night-wrap:has(.night-cards){max-width:900px}
+
+/* Scène animée de la rencontre (carte en fond) */
+.encounter-art svg.enc-anim{aspect-ratio:416/150;max-height:34vh;width:100%;object-fit:cover}
