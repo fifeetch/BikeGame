@@ -22,7 +22,7 @@ export const saveIdOf=m=>'partie-'+String(m?.seed??'0');
 // Résumé affiché dans la liste (sans relire toute la partie).
 export function summarize(m,{voyages=[],online=null}={}){
  const title=id=>voyages.find(v=>v.id===id);
- return {round:m.round,done:Boolean(m.done),winner:m.winner||'',mode:m.mode,forecast:Boolean(m.forecast),encounters:Boolean(m.encounters),
+ return {round:m.round,done:Boolean(m.done),winner:m.winner||'',mode:m.mode,forecast:Boolean(m.forecast),encounters:Boolean(m.encounters),immersion:Boolean(m.immersion),
   online:online?{code:online.code,seat:online.seat}:null,
   players:m.players.map(p=>({id:p.id,name:p.name,color:p.color,points:p.points,voyage:p.voyage,voyageTitle:title(p.voyage)?.title||'',from:title(p.voyage)?.from||'',to:title(p.voyage)?.to||'',voyagesDone:(p.voyagesDone||[]).length}))};}
 export function autoName(sum){const ps=sum.players||[];if(!ps.length)return 'Partie';

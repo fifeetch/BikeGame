@@ -8,6 +8,7 @@ import {EVENT_CARDS,normalizeEventEdits} from './event-cards.js';
 import {applyRoads,isRoadStep,hasRoad} from './routes.js';
 import {regionOf,weatherOn,forecast,REGIONS,WEATHER,STORM_MAX} from './weather.js';
 import {ENCOUNTERS} from './encounters.js';
+import {SCENES,SITUATIONS,SITUATION_SCENES,COMPANIONS,fillVariants,demandOdds,RARITY_WEIGHT,SCENE_COOLDOWN,ROAD_CHANCE,DEMAND} from './immersion.js';
 
 export const player=m=>m.players[m.activeIndex];
 // ---------- Règle « hors route » (mode Plateau) ----------
@@ -33,7 +34,7 @@ const dayStartPos=(m,p)=>p.dayStart?.turn===m.turn?p.dayStart.pos:p.pos;
 export const stormToday=(m,p=player(m))=>forecastOn(m)&&weatherToday(m,dayStartPos(m,p))==='orage';
 // Énergie en plus due à la météo pour le pas from → t (movedBefore = cases déjà faites aujourd'hui).
 export function weatherExtra(m,p,from,t,movedBefore){if(!forecastOn(m)||!t)return 0;const w=weatherOn(m.seed,m.round,regionOf(t));
- return w==='vent'&&movedBefore===0?1:w==='pluie'&&!roadStep(m,from,t)?1:w==='neige'&&['montagne','col'].includes(t.type)?1:0;}
+ return (w==='vent'&&movedBefore===0?1:w==='pluie'&&!roadStep(m,from,t)?1:w==='neige'&&['montagne','col'].includes(t.type)?1:0)+immExtra(m,p,from,t,movedBefore);}
 export const distance=m=>{const p=player(m);let d=baseDistance(m);if(offroadLimited(m,p,offroadToday(m,p)))d=Math.min(d,offroadMax(m,p));if(stormToday(m,p))d=Math.min(d,STORM_MAX);return d;};
 export const inventorySpace=(m,p=player(m))=>p.items.reduce((sum,id)=>sum+(m.rules.equipment[id]?.space||0),0);
 // ---------- Fin de partie (mode « multi ») : 50 points, 3 voyages ou 40 jours (réglable) ----------
@@ -80,9 +81,10 @@ const randomSeed=()=>globalThis.crypto?.getRandomValues?crypto.getRandomValues(n
 export function createMatch(roster,mode='plateau',rules=CLASSIC,seed=randomSeed(),customCards=[],eventCardEdits=[]){
  if(!Array.isArray(roster)||roster.length<1||roster.length>6)throw Error('Choisir de 1 à 6 joueurs.');
  if(!['plateau','tuiles'].includes(mode))throw Error('Mode inconnu.');
- const r=validateRules(rules);for(const p of roster)if(!r.bikes[p.bike]||!findVoyage(p.voyage))throw Error('Vélo ou objectif inconnu.');
+ const r=validateRules(rules);if(r.immersion?.enabled&&mode==='plateau'){r.weather={...r.weather,forecast:true};r.encounters={...r.encounters,enabled:true};}for(const p of roster)if(!r.bikes[p.bike]||!findVoyage(p.voyage))throw Error('Vélo ou objectif inconnu.');
  const base=E.makeGame(roster[0].bike,seed,roster[0].voyage,mode);
  const m={version:2,cardVersion:3,forecast:Boolean(r.weather?.forecast&&mode==='plateau'),encounters:Boolean(r.encounters?.enabled&&mode==='plateau'),customCards:normalizeCustomCards(customCards),eventCardEdits:normalizeEventEdits(eventCardEdits),mode,seed:base.seed,board:base.board,edges:base.edges||[],mapVersion:base.mapVersion,deck:base.deck,hand:base.hand,rules:r,players:[],activeIndex:0,round:1,turn:1,phase:mode==='plateau'?'move':'place',moved:0,ate:0,placed:false,event:null,cardChoices:[],turnKind:'travel',done:false,history:[],stats:{turns:0,events:0,categories:{negative:0,positive:0,challenge:0},terrain:{},work:0,rest:0,energySpent:0,moneySpent:0}};
+ if(r.immersion?.enabled&&mode==='plateau'){m.immersion=true;m.imm={rng:((base.seed^0x51ed27)>>>0)||1,situations:[],seq:0};}
  roster.forEach((entry,i)=>{
   const v=findVoyage(entry.voyage);let pos;
   if(mode==='plateau')pos='city-'+v.from;
@@ -127,7 +129,7 @@ function record(m,kind,text,extra={}){const p=player(m);m.history.push({turn:m.t
 export function updateRules(m,input){const r=validateRules(input);if(C.isEventGame(m)&&m.players.some(p=>p.bonusCards.length>r.eventCards.bonusLimit||p.cardHand.length>r.eventCards.handLimit+1))throw Error('La nouvelle limite est inférieure aux cartes déjà détenues. Choisis une limite suffisante ou applique ce profil à une nouvelle partie.');m.rules=r;record(m,'rules','Règles modifiées : application aux prochaines actions.');return true;}
 export function cost(m,t){if(C.isEventGame(m))return eventStepCost(m,t);const p=player(m),discount=['moyenne_montagne','montagne','col'].includes(t.type)?m.rules.bikes[p.bike].mountainDiscount:0;return Math.max(0,(m.rules.terrain[t.type]??0)-discount);}
 export function ferryOptions(m,from=player(m).pos){return m.mode==='plateau'&&!m.pendingAttack&&!m.done&&m.phase==='move'?m.edges.filter(e=>e.ferry&&(e.a===from||e.b===from)).map(e=>m.board[e.a===from?e.b:e.a]):[];}
-export function moves(m){if(m.pendingAttack||m.done||m.phase!=='move'||m.moved>=distance(m)||C.isEventGame(m)&&player(m).turnModifiers?.skipMove)return [];const out=E.moves(view(m));if(m.mode!=='plateau')return out;const p=player(m),off=offroadToday(m,p);return out.filter(t=>!m.edges.some(e=>e.ferry&&((e.a===p.pos&&e.b===t.key)||(e.b===p.pos&&e.a===t.key)))&&offroadAllows(m,p,p.pos,t,m.moved,off)&&!snowBlocked(m,p,t));}
+export function moves(m){if(m.pendingAttack||m.done||m.phase!=='move'||m.moved>=distance(m)||C.isEventGame(m)&&player(m).turnModifiers?.skipMove)return [];const out=E.moves(view(m));if(m.mode!=='plateau')return out;const p=player(m),off=offroadToday(m,p);return out.filter(t=>!m.edges.some(e=>e.ferry&&((e.a===p.pos&&e.b===t.key)||(e.b===p.pos&&e.a===t.key)))&&offroadAllows(m,p,p.pos,t,m.moved,off)&&!snowBlocked(m,p,t)&&!immBlocked(m,t));}
 export function routeCheck(m,route){if(C.isEventGame(m))return eventRouteCheck(m,route);if(!Array.isArray(route)||!route.length||m.done||m.phase!=='move'||route.length>distance(m)-m.moved)return {ok:false,reason:'Limite de 5 cases ou journée indisponible.'};let pos=player(m).pos,energy=player(m).energy;const p=player(m),normalDistance=Math.max(0,Math.min(5,m.rules.distance+m.rules.bikes[p.bike].extraDistance)-(p.turnModifiers?.distancePenalty||0)-m.moved);let off=offroadToday(m,p);for(let i=0;i<route.length;i++){const key=route[i],t=m.board[key];if(!t||key===pos)return {ok:false,reason:'Les cases doivent se suivre.'};const near=m.mode==='plateau'?m.board[pos].links.includes(key)&&!m.edges.some(e=>e.ferry&&((e.a===pos&&e.b===key)||(e.b===pos&&e.a===key))):E.moves({...view(m),pos}).some(n=>E.key(n.x,n.y)===key);if(!near)return {ok:false,reason:'Choisis des cases voisines ; les bateaux se prennent séparément.'};if(!offroadAllows(m,p,pos,t,m.moved+i,off))return {ok:false,reason:offroadReason(m,p)};off=off||!roadStep(m,pos,t);energy-=cost(m,t)+(i>=normalDistance?(p.turnModifiers?.extraMoveEnergy||0):0)+weatherExtra(m,p,pos,t,m.moved+i);if(energy<0)return {ok:false,reason:'Énergie insuffisante pour ce parcours.'};pos=key;}return {ok:true,energyUsed:p.energy-energy};}
 function offroadReason(m,p){const s=offroadStatus(m,p);return `Hors route sans ${s.item} : ${s.max} case${s.max>1?'s':''} maximum aujourd’hui.`;}
 // « En suivant une route » : en mode Plateau, le côté traversé doit porter une route (routes-data.js).
@@ -156,6 +158,7 @@ function eventRouteCheck(m,route){const p=player(m);if(m.pendingAttack||!Array.i
   if(p.blockedFirst===key&&i===0)return {ok:false,reason:'Route barrée : choisis une autre première case.'};
   if(!offroadAllows(m,p,pos,t,m.moved+i,off))return {ok:false,reason:offroadReason(m,p)};off=off||!roadStep(m,pos,t);
   if(snowBlocked(m,p,t))return {ok:false,reason:'Neige au sommet : montagne et cols interdits aujourd’hui.'};
+  {const b=immBlocked(m,t);if(b)return {ok:false,reason:'Imprévu : '+b+'. Il faut contourner la zone.'};}
   const free=freeKind(m,pos,t,general,road,tail);if(!free&&normalUsed>=normalMax)return {ok:false,reason:'Ces cases supplémentaires exigent une route autorisée pour le covoiturage.'};
   const spent=eventStepCost(m,t,i+(m.cardWindow?.resolving?(m.cardWindow.stepIndex||0):0),free,lightUsed)+weatherExtra(m,p,pos,t,m.moved+i);energy-=spent;if(energy<0)return {ok:false,reason:'Énergie insuffisante pour ce parcours.'};
   if(C.hasBonusEffect(m,p,'light_bike')&&!lightUsed&&!free&&!p.shortcutActive&&p.frostTurn!==m.turn&&!routeWeather(m).some(w=>w.kind==='frost')&&terrainSurcharge(m,p,t))lightUsed=true;
@@ -188,7 +191,7 @@ export function move(m,k){const p=player(m),t=m.board[k];if(C.isEventGame(m)&&m.
  const eventGame=C.isEventGame(m),step=m.cardWindow?.resolving?(m.cardWindow.stepIndex||0):0,free=eventGame?freeKind(m,p.pos,t):'',normalMax=Math.max(0,Math.min(5,m.rules.distance+m.rules.bikes[p.bike].extraDistance)-(p.turnModifiers?.distancePenalty||0));
  if(eventGame&&!free&&m.moved-(p.bonusDistanceUsed||0)>=normalMax)return false;
  if(!offroadAllows(m,p,p.pos,t,m.moved,offroadToday(m,p)))return false;
- if(snowBlocked(m,p,t))return false;
+ if(snowBlocked(m,p,t)||immBlocked(m,t))return false;
  const onRoad=roadStep(m,p.pos,t);
  const spent=(eventGame?eventStepCost(m,t,step,free):cost(m,t)+extra)+weatherExtra(m,p,p.pos,t,m.moved);
  if(p.energy<spent)return false;
@@ -204,7 +207,7 @@ export function move(m,k){const p=player(m),t=m.board[k];if(C.isEventGame(m)&&m.
  adventureStep(m,p,k,t,first);
  if(eventGame&&t.type==='ville')C.onCityVisit(m,p,k);
  if(!p.completed&&t.name===v.to&&progress(view(m)).ready)completeVoyage(m,p,v);
- record(m,'move','Déplacement : '+(t.name||E.terrains[t.type].name)+' (−'+spent+' énergie).',{terrain:t.type,energy:spent});if(eventGame&&!m.cardWindow)p.shortcutActive=false;return true;
+ record(m,'move','Déplacement : '+(t.name||E.terrains[t.type].name)+' (−'+spent+' énergie).',{terrain:t.type,energy:spent});if(eventGame&&!m.cardWindow)p.shortcutActive=false;immersionStep(m,p,k,t,onRoad);return true;
 }
 // Énergie rendue par un repas (même calcul que eat), pour l'affichage.
 export function eatGain(m,p=player(m)){const base=C.isEventGame(m)?C.hasBonusEffect(m,p,'efficient_stove')?3:m.rules.cardBalance.foodEnergy:m.rules.food.energy;return base+(p.items.includes('rechaud')?m.rules.food.stoveBonus:0);}
@@ -214,7 +217,7 @@ export function restaurant(m){const p=player(m),r=m.rules.food;if(m.pendingAttac
 export function buy(m,id){const p=player(m),e=m.rules.equipment[id];if(!e||m.pendingAttack||m.done||!['move','place'].includes(m.phase)||m.board[p.pos].type!=='ville'||p.items.includes(id)||p.money<e.price||inventorySpace(m)+e.space>m.rules.bikes[p.bike].capacity)return false;p.money-=e.price;p.items.push(id);p.food+=e.foodBonus||0;m.stats.moneySpent+=e.price;record(m,'buy','Équipement acheté : '+e.name);return true;}
 export function discard(m,id){const p=player(m);if(m.pendingAttack||m.done||!['move','place'].includes(m.phase)||!p.items.includes(id))return false;p.items=p.items.filter(i=>i!==id);record(m,'equipment','Équipement déposé : '+m.rules.equipment[id].name);return true;}
 export function work(m){const p=player(m);if(!m.rules.workEnabled||m.pendingAttack||m.done||!['move','place'].includes(m.phase)||m.moved||m.placed||(m.rules.workCityOnly&&m.board[p.pos].type!=='ville'))return false;p.money+=m.rules.salary;p.stats.work++;m.stats.work++;m.turnKind='work';m.actionDays=m.rules.workDays;record(m,'work','Travail : +'+m.rules.salary+' pièces, '+m.actionDays+' jour(s) sans déplacement.');endTurn(m);return true;}
-export function rest(m,id){const p=player(m),r=m.rules.rest[id],free=id==='bivouac'&&p.turnModifiers?.freeBivouac;if(!r||m.pendingAttack||m.done||!['move','place'].includes(m.phase)||m.moved||m.placed||(!free&&(p.money<r.price||(r.tent&&!p.items.includes('tente'))))||(r.cityOnly&&m.board[p.pos].type!=='ville'))return false;if(!free){p.money-=r.price;m.stats.moneySpent+=r.price;const bonus=p.items.reduce((n,i)=>n+(m.rules.equipment[i]?.energyBonus||0),0);const restEnergy=C.isEventGame(m)&&id==='bivouac'?C.hasBonusEffect(m,p,'comfortable_tent')?2:m.rules.cardBalance.bivouacEnergy:r.energy;p.energy=Math.min(energyCap(m,p),p.energy+restEnergy+bonus);}if(id!=='bivouac')p.fatigue=0;p.stats.rest++;m.stats.rest++;m.turnKind='rest';m.actionDays=r.days;record(m,'rest',(free?'Bivouac gratuit grâce à Abri trouvé':r.name)+' : '+r.days+' jour(s) sans déplacement.');endTurn(m);return true;}
+export function rest(m,id){if(id==='demander')return demander(m);const p=player(m),r=restRule(m,p,id),free=id==='bivouac'&&p.turnModifiers?.freeBivouac;if(!r||r.blocked||m.pendingAttack||m.done||!['move','place'].includes(m.phase)||m.moved||m.placed||(!free&&(p.money<r.price||(r.tent&&!p.items.includes('tente'))))||(r.cityOnly&&m.board[p.pos].type!=='ville'))return false;if(!free){p.money-=r.price;m.stats.moneySpent+=r.price;const bonus=p.items.reduce((n,i)=>n+(m.rules.equipment[i]?.energyBonus||0),0);const restEnergy=C.isEventGame(m)&&id==='bivouac'?C.hasBonusEffect(m,p,'comfortable_tent')?2:m.rules.cardBalance.bivouacEnergy:r.energy;p.energy=Math.min(energyCap(m,p),p.energy+restEnergy+bonus);}if(id!=='bivouac')p.fatigue=0;p.stats.rest++;m.stats.rest++;m.turnKind='rest';m.actionDays=r.days;record(m,'rest',(free?'Bivouac gratuit grâce à Abri trouvé':r.name)+' : '+r.days+' jour(s) sans déplacement.');endTurn(m);return true;}
 function random(m){return E.random(m);}
 function weighted(m,list){let n=random(m)*list.reduce((s,e)=>s+e.weight,0);return list.find(e=>(n-=e.weight)<0)||list.at(-1);}
 export function drawEvent(m){let n=random(m)*100,category='challenge';for(const [k,value]of Object.entries(m.rules.probabilities)){n-=value;if(n<0){category=k;break;}}
@@ -225,7 +228,7 @@ export function drawEvent(m){let n=random(m)*100,category='challenge';for(const 
 export function drawCard(m){if(C.isEventGame(m))return C.draw(m);const pool=effectiveCards(m).filter(c=>c.weight>0&&(!c.legacy)&&(m.players.length>1||c.target==='self'));let n=E.random(m)*pool.reduce((sum,c)=>sum+c.weight,0);return (pool.find(c=>(n-=c.weight)<0)||pool.at(-1)).id;}
 export function endTurn(m){if(m.pendingAttack||m.done||!['move','place'].includes(m.phase))return false;
  const rider=player(m),fatigue=m.rules.fatigue;
- if(fatigue?.enabled&&m.moved>0&&m.turnKind!=='rest'){const was=isExhausted(m,rider);rider.fatigue=Math.min(fatigue.days,(rider.fatigue||0)+1+(rider.dayCols?fatigue.colExtra:0));
+ if(fatigue?.enabled&&m.moved>0&&m.turnKind!=='rest'){const was=isExhausted(m,rider);rider.fatigue=Math.min(fatigue.days,(rider.fatigue||0)+rideGain(m,rider,1+(rider.dayCols?fatigue.colExtra:0)));
   if(!was&&isExhausted(m,rider)){rider.energy=Math.min(rider.energy,energyCap(m,rider));record(m,'fatigue',`${rider.name} est fourbu : énergie maximale −${fatigue.maxEnergyPenalty} jusqu’à une vraie nuit (camping ou hôtel).`);}}
  rider.dayCols=0;
  record(m,'end','Fin du tour sur '+(m.board[player(m).pos].name||E.terrains[m.board[player(m).pos].type].name)+'.',{distance:m.moved,action:m.turnKind});
@@ -262,20 +265,24 @@ export const encountersOn=m=>Boolean(m.encounters&&m.mode==='plateau');
 function encounterPlace(m,p){const t=m.board[p.pos],type=['moyenne_montagne','montagne','col'].includes(t?.type)?'montagne':t?.type;return {type,region:regionOf(t)};}
 export function encounterOptions(m,p=player(m)){const {type,region}=encounterPlace(m,p),seen=p.encountersSeen||[];
  const fits=ENCOUNTERS.filter(e=>e.where==='partout'||e.where===type||e.where===region);const fresh=fits.filter(e=>!seen.includes(e.id));return fresh.length?fresh:fits;}
-function beginEncounter(m){const p=player(m),options=encounterOptions(m,p);if(!options.length){advance(m);return;}
+function beginEncounter(m){if(m.immersion){immersionEvening(m);return;}const p=player(m),options=encounterOptions(m,p);if(!options.length){advance(m);return;}
  let h=(m.seed^Math.imul(m.turn+1,0x9e3779b1))>>>0;h=Math.imul(h^(h>>>15),0x2c1b3c6d)>>>0;const e=options[h%options.length];
  m.encounter={id:e.id,playerId:p.id};m.phase='encounter';}
-export const currentEncounter=m=>m.encounter?ENCOUNTERS.find(e=>e.id===m.encounter.id):null;
+export const currentEncounter=m=>m.encounter?m.encounter.scene||ENCOUNTERS.find(e=>e.id===m.encounter.id):null;
 export function canChooseEncounter(m,index){const e=currentEncounter(m),c=e?.choices[index],p=player(m);if(!c||m.phase!=='encounter')return false;return Object.entries(c.need||{}).every(([k,v])=>(p[k]||0)>=v);}
-export function resolveEncounter(m,index){if(!canChooseEncounter(m,index))return false;const e=currentEncounter(m),c=e.choices[index],p=player(m),fx=c.effect||{};
+export function resolveEncounter(m,index){if(!canChooseEncounter(m,index))return false;const e=currentEncounter(m),c=e.choices[index],p=player(m),road=Boolean(m.encounter.road);
+ let fx=c.effect||{},text=c.text||'';if(c.chance){const ok=irand(m)<c.chance.odds,o=ok?c.chance.ok:c.chance.ko;fx=o.effect||{};text=o.text;m.immOutcome={turn:m.turn,ok,text};}
  if(fx.energy)p.energy=Math.max(0,Math.min(energyCap(m,p),p.energy+fx.energy));
  for(const k of ['food','money','points'])if(fx[k])p[k]=Math.max(0,p[k]+fx[k]);
  if(fx.food)p.food=Math.min(p.food,C.foodCapacity(m,p));
  if(fx.fatigue&&m.rules.fatigue?.enabled){const was=isExhausted(m,p);p.fatigue=Math.max(0,Math.min(m.rules.fatigue.days,(p.fatigue||0)+fx.fatigue));if(!was&&isExhausted(m,p))p.energy=Math.min(p.energy,energyCap(m,p));}
- if(fx.tomorrow)p.nextDay={tomorrow:fx.tomorrow};
+ if(fx.tomorrow)p.nextDay={...(p.nextDay||{}),tomorrow:(p.nextDay?.tomorrow||0)+fx.tomorrow};
+ if(fx.restDay)p.nextDay={...(p.nextDay||{}),rest:true};
+ if(fx.stopToday)p.turnModifiers={...p.turnModifiers,skipMove:true};
+ if(m.immersion)immersionAfterChoice(m,p,e,fx,road);
  p.encountersSeen=[...(p.encountersSeen||[]),e.id];
- record(m,'encounter',`${e.title} : ${c.label}. ${c.text}`,{encounterId:e.id,choice:index});
- m.encounter=null;m.phase='move';advance(m);return true;}
+ record(m,'encounter',`${e.title} : ${c.label}. ${text}`,{encounterId:e.id,choice:index,road});
+ m.encounter=null;m.phase='move';if(!road)advance(m);return true;}
 function advance(m){player(m).turns++;m.stats.turns++;const r=m.rules.victory,budget=m.rules.budget,rider=player(m);
  if(budget?.amount>0&&rider.turns%budget.every===0){rider.money+=budget.amount;record(m,'budget',`Budget du voyage : +${budget.amount} pièces pour ${rider.name} (tous les ${budget.every} tours).`);}
  if(multiVictory(m)){if(checkMultiVictory(m))return;}
@@ -291,20 +298,21 @@ function advance(m){player(m).turns++;m.stats.turns++;const r=m.rules.victory,bu
  if(C.isEventGame(m)){
   nextPlayer.freeSteps=0;nextPlayer.freeGeneralSteps=0;nextPlayer.freeRoadSteps=0;nextPlayer.freeTailwindSteps=0;nextPlayer.bonusDistanceUsed=0;nextPlayer.shortcutActive=false;nextPlayer.blockedFirst=null;
   // Rencontre de la veille : une case de plus (cases offertes) ou de moins aujourd'hui.
-  const nd=nextPlayer.nextDay;if(nd){if(nd.tomorrow>0){nextPlayer.freeSteps+=nd.tomorrow;nextPlayer.freeGeneralSteps+=nd.tomorrow;}else if(nd.tomorrow<0)nextPlayer.turnModifiers.distancePenalty=-nd.tomorrow;nextPlayer.nextDay=null;}
+  const nd=nextPlayer.nextDay;if(nd){if(nd.rest)nextPlayer.turnModifiers.skipMove=true;if(nd.tomorrow>0){nextPlayer.freeSteps+=nd.tomorrow;nextPlayer.freeGeneralSteps+=nd.tomorrow;}else if(nd.tomorrow<0)nextPlayer.turnModifiers.distancePenalty=-nd.tomorrow;nextPlayer.nextDay=null;}
   for(const effect of [...(nextPlayer.pendingEffects||[])])if(['skip_move','short_move','no_mountain'].includes(effect.kind)){
    if(effect.kind==='no_mountain')nextPlayer.turnModifiers.noMountain=true;else if(effect.kind==='skip_move')nextPlayer.turnModifiers.skipMove=true;else nextPlayer.turnModifiers.distancePenalty=(nextPlayer.turnModifiers.distancePenalty||0)+effect.value;
    C.discard(m,effect.cardId);nextPlayer.pendingEffects.splice(nextPlayer.pendingEffects.indexOf(effect),1);
   }
   m.phase=nextPlayer.voyageChoices?.length?'voyage-choice':nextPlayer.flat?'puncture':m.mode==='tuiles'&&m.hand.length?'place':'move';
  }else m.phase=nextPlayer.voyageChoices?.length?'voyage-choice':nextPlayer.pendingCards?.length?'card-resolution':nextPlayer.flat?'puncture':m.mode==='tuiles'&&m.hand.length?'place':'move';
+ if(m.immersion)immersionDayStart(m);
 }
 export const ranking=m=>[...m.players].sort((a,b)=>(m.winner?Number(b.id===m.winner)-Number(a.id===m.winner):0)||b.points-a.points||(b.voyagesDone?.length||0)-(a.voyagesDone?.length||0)||Number(b.completed)-Number(a.completed));
 export function serialize(m){return JSON.stringify(m);}
 export function load(text){
  const raw=JSON.parse(text);if(raw?.version===1)return migrate(raw);
  const count=n=>Number.isInteger(n)&&n>=0;
- if(raw?.version!==2||!Array.isArray(raw.players)||raw.players.length<1||raw.players.length>6||!raw.board||!count(raw.activeIndex)||!raw.players[raw.activeIndex]||!['plateau','tuiles'].includes(raw.mode)||!['move','place','event','card-choice','card-discard','card-intervention','card-resolution','puncture','encounter','voyage-choice','finished'].includes(raw.phase)||raw.phase==='encounter'&&!ENCOUNTERS.some(e=>e.id===raw.encounter?.id)||!count(raw.round)||raw.round<1||!count(raw.turn)||!count(raw.moved)||raw.moved>(raw.cardVersion===3?40:5)||!Array.isArray(raw.history)||!Array.isArray(raw.deck)||!Array.isArray(raw.hand)||!raw.stats||!raw.stats.categories||!raw.stats.terrain)throw Error('Sauvegarde invalide.');
+ if(raw?.version!==2||!Array.isArray(raw.players)||raw.players.length<1||raw.players.length>6||!raw.board||!count(raw.activeIndex)||!raw.players[raw.activeIndex]||!['plateau','tuiles'].includes(raw.mode)||!['move','place','event','card-choice','card-discard','card-intervention','card-resolution','puncture','encounter','voyage-choice','finished'].includes(raw.phase)||raw.phase==='encounter'&&!raw.encounter?.scene&&!ENCOUNTERS.some(e=>e.id===raw.encounter?.id)||!count(raw.round)||raw.round<1||!count(raw.turn)||!count(raw.moved)||raw.moved>(raw.cardVersion===3?40:5)||!Array.isArray(raw.history)||!Array.isArray(raw.deck)||!Array.isArray(raw.hand)||!raw.stats||!raw.stats.categories||!raw.stats.terrain)throw Error('Sauvegarde invalide.');
   raw.rules=validateRules(raw.rules);
   if(raw.cardVersion===3)raw.eventCardEdits=normalizeEventEdits(raw.eventCardEdits||[]);
  raw.customCards=normalizeCustomCards(raw.customCards||[]);
@@ -326,3 +334,102 @@ export function load(text){
  return raw;
 }
 export function migrate(old){E.upgradePlateau(old);const v=findVoyage(old.voyage)||voyages[0];const fresh=createMatch([{name:'Joueur 1',bike:old.bike,voyage:v.id}],old.mode||'tuiles',CLASSIC,old.seed);Object.assign(fresh,{board:old.board,deck:old.deck,hand:old.hand,edges:old.edges||[],mapVersion:old.mapVersion,phase:old.event?'event':old.phase,round:old.turn,turn:old.turn,done:old.done,event:old.event?{...old.event,category:Object.values(old.event.effect).some(v=>v<0)?'negative':'positive',protect:old.event.protect||'',consume:false}:null});const p=player(fresh);for(const k of ['pos','energy','food','money','points','items','visited','steps','cols','cities','discoveries','log','travel','travelHistory','legacyVisitOffset'])if(old[k]!==undefined)p[k]=clone(old[k]);if(!old.travelHistory)p.travelHistory=(old.travel||[]).map(k=>({key:k,boardKey:k,type:old.board[k]?.type,endpoint:old.board[k]?.name===v.from||old.board[k]?.name===v.to})).filter(h=>h.type);p.availableDay=old.turn;p.stats.steps=p.steps;p.completed=!!old.voyageWon;p.voyageWon=!!old.voyageWon;record(fresh,'migration','Ancienne partie solo convertie, ressources conservées.');return fresh;}
+
+// ---------- Mode Immersion (immersion.js) : un voyage plein d'imprévus, conseillé en solo ----------
+// Pas de cartes : des scènes en route (environ un jour sur deux) et le soir, des imprévus qui durent sur
+// des zones de la carte, « Demander » l'hospitalité, des compagnons de route et un carnet du soir.
+export const immersionOn=m=>Boolean(m?.immersion&&m.mode==='plateau');
+function irand(m){let s=m.imm.rng>>>0;s=(Math.imul(s,1664525)+1013904223)>>>0;m.imm.rng=s;return s/4294967296;}
+function pim(p){return p.imm||={seen:{},planTurn:0,planStep:0,last:'',companions:{},ride:null,zones:[],sitDone:[],demand:null};}
+export const situationTemplate=id=>SITUATIONS.find(s=>s.id===id);
+export const activeSituations=m=>immersionOn(m)?(m.imm.situations||[]).filter(s=>s.until>=m.round):[];
+const sitsAt=(m,key)=>activeSituations(m).filter(s=>s.keys.includes(key));
+export const situationsAt=sitsAt;
+function immExtra(m,p,from,t,movedBefore){if(!immersionOn(m)||!t)return 0;let n=0;
+ for(const s of sitsAt(m,t.key)){const e=situationTemplate(s.id)?.effects||{};if(e.every2&&movedBefore%2===1)n=Math.max(n,1);if(e.entry&&!s.keys.includes(from))n+=e.entry;}return n;}
+function immBlocked(m,t){if(!immersionOn(m)||!t)return '';for(const s of sitsAt(m,t.key)){const tpl=situationTemplate(s.id),e=tpl?.effects||{};if(e.block||e.blockCols&&t.type==='col')return tpl.title;}return '';}
+export function restRule(m,p,id){const base=m.rules.rest[id];if(!base||!immersionOn(m))return base;let price=base.price,blocked='';
+ for(const s of sitsAt(m,p.pos)){const tpl=situationTemplate(s.id),e=tpl?.effects||{};if(id==='camping'&&e.campingPrice!=null)price=e.campingPrice;if(id==='bivouac'&&e.noBivouac)blocked=tpl.title;}
+ return {...base,price,blocked};}
+function rideGain(m,p,gain){const ride=immersionOn(m)&&p.imm?.ride;if(!ride||ride.until<m.round)return gain;ride.n=(ride.n||0)+1;return ride.n%2===1?Math.max(0,gain-1):gain;}
+const MOUNTAIN=['moyenne_montagne','montagne','col'];
+const OLD_ENCOUNTERS=ENCOUNTERS.map(e=>({...e,when:'soir',kind:'belle',rarity:'courante',...(e.where==='partout'?{}:['ville','cote','plaine'].includes(e.where)?{terrain:[e.where]}:e.where==='montagne'?{terrain:MOUNTAIN}:{region:[e.where]})}));
+function immContext(m,p,key,onRoad=true){const t=m.board[key],region=regionOf(t),weather=forecastOn(m)?weatherOn(m.seed,m.round,region):'beau';return {t,type:t.type,region,weather,offroad:!onRoad,city:t.type==='ville'};}
+function sceneFits(m,p,s,ctx){const im=pim(p);
+ if(s.terrain&&!s.terrain.includes(ctx.type))return false;if(s.region&&!s.region.includes(ctx.region))return false;if(s.weather&&!s.weather.includes(ctx.weather))return false;
+ if(s.offroad&&!ctx.offroad)return false;if(s.notCity&&ctx.city)return false;if(s.item&&!p.items.includes(s.item))return false;
+ const seen=im.seen[s.id];if(seen&&(s.rarity==='unique'||m.round-seen<SCENE_COOLDOWN))return false;return true;}
+function pickScene(m,list){const total=list.reduce((n,s)=>n+(RARITY_WEIGHT[s.rarity]||1),0);if(!total)return null;let n=irand(m)*total;return list.find(s=>(n-=RARITY_WEIGHT[s.rarity]||1)<0)||list.at(-1);}
+function beginScene(m,p,s,road,ctx,extra={}){const rnd=()=>irand(m);
+ const scene={id:s.id,title:s.title,scene:s.scene||'plaine',kind:s.kind||'belle',quote:fillVariants(s.quote||'',ctx?.region||'ouest',rnd),choices:JSON.parse(JSON.stringify(s.choices))};
+ m.encounter={id:s.id,playerId:p.id,road,scene,...extra};m.phase='encounter';}
+// En route : environ un jour sur deux, une scène s'ouvre sur la 1re, 2e ou 3e case de la journée.
+function immersionStep(m,p,k,t,onRoad){if(!immersionOn(m)||m.done||m.phase!=='move')return;const im=pim(p);
+ for(const s of sitsAt(m,k))if(!im.zones.includes(s.uid)){im.zones.push(s.uid);const tpl=situationTemplate(s.id);record(m,'situation',`${tpl.title} : ${tpl.rules.join(' · ')}.`,{key:k});}
+ if(im.planTurn!==m.turn){im.planTurn=m.turn;im.planStep=irand(m)<ROAD_CHANCE?1+Math.floor(irand(m)*3):0;}
+ if(!im.planStep||m.moved!==im.planStep)return;im.planStep=0;
+ const ctx=immContext(m,p,k,onRoad),list=SCENES.filter(s=>s.when==='route'&&!(im.last==='galere'&&s.kind==='galere')&&sceneFits(m,p,s,ctx)),s=pickScene(m,list);
+ if(s)beginScene(m,p,s,true,ctx);}
+function immersionAfterChoice(m,p,e,fx,road){const im=pim(p);im.seen[e.id]=m.round;if(road)im.last=e.kind||'belle';
+ if(fx.meet)im.companions[fx.meet]={met:m.round,stage:'met'};
+ if(fx.reunion){const c=im.companions[fx.reunion];if(c)c.stage='done';}
+ if(fx.ride)im.ride={until:m.round+fx.ride-1,n:0};
+ if(fx.sitDone&&!im.sitDone.includes(fx.sitDone))im.sitDone.push(fx.sitDone);}
+const CALM=['Le silence, les étoiles, et le bruit lointain d’une rivière.','Une nuit sans histoire : exactement ce qu’il fallait.','Les jambes lourdes, la tête pleine d’images. Tu t’endors tout de suite.','Un chien aboie au loin, puis plus rien. Bonne nuit.'];
+const NUM=['Zéro','Une','Deux','Trois','Quatre','Cinq','Six','Sept','Huit'];
+const SKY={beau:'sous le soleil',vent:'face au vent',pluie:'sous la pluie',orage:'avec l’orage qui gronde',neige:'dans le froid et la neige'};
+export function carnetDay(m,p){const today=m.history.filter(h=>h.turn===m.turn&&h.player===p.id),moves=today.filter(h=>h.kind==='move'),here=m.board[p.pos],region=regionOf(here),out=[];
+ const w=forecastOn(m)?weatherOn(m.seed,m.round,region):'beau',place=here.name||E.terrains[here.type]?.name?.toLowerCase()||'la campagne';
+ if(moves.length){const kinds=[...new Set(moves.map(h=>E.terrains[h.terrain]?.name?.toLowerCase()).filter(Boolean))];out.push(`${NUM[moves.length]||moves.length} case${moves.length>1?'s':''} ${SKY[w]||''}${kinds.length?', entre '+kinds.slice(0,3).join(', '):''}.`);}
+ else if(today.some(h=>h.kind==='rest'))out.push(`Journée sans rouler, ${SKY[w]||''}.`);
+ for(const h of today){if(h.kind==='encounter'&&h.road)out.push('En route : '+h.text.split(' : ')[0].toLowerCase()+'.');else if(h.kind==='col')out.push(h.text.split(' :')[0]+'.');else if(h.kind==='landmark')out.push('Découverte : '+(m.landmarks?.[h.key]?.name||'un lieu caché').toLowerCase()+'.');else if(h.kind==='situation')out.push(h.text.split(' :')[0]+'.');}
+ out.push(here.name?`Le soir, ${here.name}.`:`Le soir, quelque part ${{plaine:'dans la plaine',cote:'au bord de la mer',moyenne_montagne:'dans les collines',montagne:'en montagne',col:'au pied du col'}[here.type]||'en chemin'}.`);
+ return `Jour ${m.round} · ${REGIONS[region]?.name||''}. ${out.join(' ')}`;}
+// Le soir : résultat de « Demander », compagnon, imprévu, rencontre ou nuit calme. Toujours une scène, avec le carnet du jour.
+function immersionEvening(m){const p=player(m),im=pim(p),carnet=carnetDay(m,p),ctx=immContext(m,p,p.pos);record(m,'carnet',carnet);
+ for(const s of sitsAt(m,p.pos)){const e=situationTemplate(s.id)?.effects||{};if(e.eveningEnergy)p.energy=Math.min(energyCap(m,p),p.energy+e.eveningEnergy);}
+ const extra={carnet};
+ if(im.demand?.turn===m.turn){const d=im.demand;beginScene(m,p,{id:'im-demande-'+d.kind,title:d.title,scene:ctx.city?'ville':'plaine',kind:d.kind==='refus'?'galere':'belle',quote:d.text,choices:[{label:'Bonne nuit',text:'À demain, la route.',effect:{}}]},false,ctx,extra);return;}
+ const due=Object.entries(im.companions).filter(([,c])=>c.stage==='met'&&m.round-c.met>=4);
+ if(due.length&&irand(m)<.4){const [id]=due[Math.floor(irand(m)*due.length)],c=COMPANIONS.find(x=>x.id===id);
+  beginScene(m,p,{id:'im-retrouvailles-'+id,title:'Les retrouvailles',scene:'plaine',kind:'belle',quote:c.again,choices:[
+   {label:'Rouler ensemble trois jours',text:'À deux, la fatigue monte moins vite.',effect:{points:3,ride:3,reunion:id}},
+   {label:'Une soirée ensemble, puis chacun sa route',text:'On se raconte tout depuis la dernière fois.',effect:{points:3,energy:2,reunion:id}}]},false,ctx,extra);return;}
+ for(const s of sitsAt(m,p.pos)){const e=situationTemplate(s.id)?.effects||{};if(e.evening&&!im.sitDone.includes(s.uid)){const sc=SITUATION_SCENES[e.evening];
+  beginScene(m,p,{...sc,choices:sc.choices.map(c=>({...c,effect:{...c.effect,sitDone:s.uid}}))},false,ctx,extra);return;}}
+ const unmet=COMPANIONS.filter(c=>!im.companions[c.id]);
+ if(unmet.length&&!ctx.city&&m.moved>0&&irand(m)<.12){const c=unmet[Math.floor(irand(m)*unmet.length)];
+  beginScene(m,p,{id:'im-rencontre-'+c.id,title:c.name,scene:'montagne',kind:'belle',quote:c.meet,choices:[
+   {label:'Partager la soirée',text:'Vous échangez vos numéros : « À bientôt sur la route ! »',effect:{points:1,meet:c.id}},
+   {label:'Dormir tôt',text:'Un salut amical, et chacun sa nuit.',effect:{energy:1,meet:c.id}}]},false,ctx,extra);return;}
+ // Rencontres du soir seulement après une journée de route : rester sur place ne rapporte pas de points.
+ const pool=[...SCENES.filter(s=>s.when==='soir'),...OLD_ENCOUNTERS].filter(s=>sceneFits(m,p,s,ctx)),s=m.moved>0&&irand(m)<.8?pickScene(m,pool):null;
+ if(s){beginScene(m,p,s,false,ctx,extra);return;}
+ beginScene(m,p,{id:'im-nuit-calme',title:'Nuit calme',scene:ctx.city?'ville':ctx.type==='cote'?'cote':MOUNTAIN.includes(ctx.type)?'montagne':'plaine',kind:'belle',quote:CALM[Math.floor(irand(m)*CALM.length)],choices:[{label:'Bonne nuit',text:'À demain, la route.',effect:{}}]},false,ctx,extra);}
+// Début de journée : les imprévus s'effacent ou apparaissent (au plus 2 à la fois), annoncés au cycliste concerné.
+function immersionDayStart(m){if(!immersionOn(m)||m.done)return;m.imm.situations=(m.imm.situations||[]).filter(s=>s.until>=m.round);
+ if(m.phase!=='move'||m.imm.situations.length>=2||irand(m)>=.35)return;const p=player(m),s=spawnSituation(m,p);if(!s)return;
+ const tpl=situationTemplate(s.id),days=s.until-m.round+1;
+ beginScene(m,p,{id:'im-imprevu-'+s.id,title:(tpl.kind==='neg'?'Imprévu en vue : ':'Bonne nouvelle : ')+tpl.title,scene:tpl.seed.includes('cote')?'cote':tpl.seed.some(x=>MOUNTAIN.includes(x))?'montagne':tpl.seed.includes('ville')?'ville':'plaine',kind:tpl.kind==='neg'?'galere':'belle',
+  quote:`${tpl.text} Zone ${tpl.kind==='neg'?'hachurée':'colorée'} sur la carte, pendant ${days} jour${days>1?'s':''} : ${tpl.rules.join(' · ')}. ${tpl.advice}`,
+  choices:[{label:'Voir la carte et choisir ma route',text:'La zone apparaît sur la carte.',effect:{}}]},true,immContext(m,p,p.pos),{situation:s.uid});}
+export function spawnSituation(m,p=player(m),forceId=''){const here=m.board[p.pos],v=findVoyage(p.voyage),dest=v&&m.board['city-'+v.to],taken=new Set(activeSituations(m).flatMap(s=>s.keys));
+ const tpls=forceId?SITUATIONS.filter(s=>s.id===forceId):[...SITUATIONS];for(let i=tpls.length-1;i>0;i--){const j=Math.floor(irand(m)*(i+1));[tpls[i],tpls[j]]=[tpls[j],tpls[i]];}
+ for(const tpl of tpls){if(activeSituations(m).some(s=>s.id===tpl.id))continue;
+  const cands=Object.values(m.board).filter(t=>tpl.seed.includes(t.type)&&(!tpl.region||tpl.region.includes(regionOf(t)))&&!taken.has(t.key)&&t.key!==p.pos&&axialDistance(here,t)>=3&&axialDistance(here,t)<=9);
+  const ahead=dest?cands.filter(t=>axialDistance(t,dest)<axialDistance(here,dest)):[],list=ahead.length?ahead:cands;if(!list.length)continue;
+  const seed=list[Math.floor(irand(m)*list.length)],block=tpl.effects.block||tpl.effects.blockCols,keys=[],queue=[seed.key],seen=new Set();
+  while(queue.length&&keys.length<tpl.size){const k=queue.shift();if(seen.has(k))continue;seen.add(k);const t=m.board[k];
+   if(!t||!tpl.zone.includes(t.type)||taken.has(k)||k===p.pos||block&&(t.type==='ville'||k===dest?.key))continue;keys.push(k);for(const n of t.links||[])if(!seen.has(n))queue.push(n);}
+  if(keys.length<3)continue;const s={uid:++m.imm.seq,id:tpl.id,keys,from:m.round,until:m.round+tpl.days-1};m.imm.situations.push(s);return s;}
+ return null;}
+// « Demander » l'hospitalité : une journée de repos, un pari (grand accueil, jardin, ou refus → camping de dernière minute).
+export function demandInfo(m,p=player(m)){const t=m.board[p.pos];return demandOdds({city:t.type==='ville',exhausted:isExhausted(m,p),region:regionOf(t)});}
+function demander(m){const p=player(m);if(!immersionOn(m)||m.pendingAttack||m.done||!['move','place'].includes(m.phase)||m.moved||m.placed)return false;
+ const odds=demandInfo(m,p),roll=irand(m)*100,kind=roll<odds.grand?'grand':roll<odds.grand+odds.jardin?'jardin':'refus',im=pim(p),late=DEMAND.lateCampingPrice;let title,text;
+ const rest=()=>{p.fatigue=0;p.energy=Math.min(energyCap(m,p),p.energy+5);};
+ if(kind==='grand'){rest();p.food=Math.min(C.foodCapacity(m,p),p.food+1);p.points+=2;title='Grand accueil';text='On t’installe, puis on t’invite à table. Nuit gratuite, repas offert, et des histoires plein la tête.';}
+ else if(kind==='jardin'){rest();title='Oui, le jardin';text='« Mettez la tente au fond du jardin, il y a un robinet. » Nuit gratuite et tranquille.';}
+ else if(p.money>=late){p.money-=late;m.stats.moneySpent+=late;rest();title='Refus poli';text=`« Désolé, pas ce soir. » Il fait nuit : camping de dernière minute, ${late} pièces.`;}
+ else{if(m.rules.fatigue?.enabled)p.fatigue=Math.min(m.rules.fatigue.days,(p.fatigue||0)+1);p.energy=Math.min(p.energy,energyCap(m,p));title='Refus poli';text='« Désolé, pas ce soir. » Plus une pièce en poche : nuit dehors, sans vrai repos.';}
+ im.demand={turn:m.turn,kind,title,text};p.stats.rest++;m.stats.rest++;m.turnKind='rest';m.actionDays=1;record(m,'rest','Demander l’hospitalité : '+title.toLowerCase()+'.');endTurn(m);return true;}

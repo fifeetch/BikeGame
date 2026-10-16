@@ -10,7 +10,7 @@ import {voyages,progress} from '../../dist/voyages.js';
 
 const GAMES=Number(process.argv[2]||20),MAX_ROUNDS=150;
 // Options : FORECAST=1 (météo annoncée au lieu des cartes météo) ; RENCONTRES=1 (rencontres au lieu des cartes Événement) ; SAVE=fichier.json STOP_ROUND=8 (arrête la 1re partie au jour 8 et l'enregistre, pour la tester dans le navigateur).
-const RULES=(()=>{const r=JSON.parse(JSON.stringify(CLASSIC));if(process.env.FORECAST==='1')r.weather.forecast=true;if(process.env.RENCONTRES==='1')r.encounters.enabled=true;return r;})();
+const RULES=(()=>{const r=JSON.parse(JSON.stringify(CLASSIC));if(process.env.FORECAST==='1')r.weather.forecast=true;if(process.env.RENCONTRES==='1')r.encounters.enabled=true;if(process.env.IMMERSION==='1')r.immersion.enabled=true;return r;})();
 const LOADOUTS=[
  {bike:'gravel',items:['tente','gps']},          // 5+2+3 = 10 pièces
  {bike:'randonneur',items:['tente','kit','rechaud']},// sans GPS
@@ -79,7 +79,7 @@ function playTurn(m,rand,ctx,stat){
  if(p.energy<=cap-3)S.eat(m)||(city&&S.restaurant(m));
  if(city&&p.food<2)S.buyFood(m);
  // Repos si l'énergie est trop basse (ou si fourbu).
- if(p.energy<4||p.fatigue>=m.rules.fatigue.days){for(const id of city?['hotel','camping','bivouac']:['camping','bivouac'])if(S.rest(m,id)){stat.rests[id]=(stat.rests[id]||0)+1;check(m,'repos',ctx);return;}}
+ if(p.energy<4||p.fatigue>=m.rules.fatigue.days){for(const id of [...(S.immersionOn(m)&&m.round%2?['demander']:[]),...(city?['hotel','camping','bivouac']:['camping','bivouac'])])if(S.rest(m,id)){stat.rests[id]=(stat.rests[id]||0)+1;check(m,'repos',ctx);return;}}
  // Route vers l'objectif (plusieurs objectifs à la suite tant qu'il reste des cases et de l'énergie).
  for(let leg=0;leg<5&&!m.done&&m.phase==='move'&&S.player(m)===p&&m.moved<S.distance(m);leg++){const movedBefore=m.moved,posBefore=p.pos;
  const g=goal(m,p),path=pathTo(m,p,g.key);

@@ -1702,3 +1702,22 @@ header.in-game~.game>.player-order,header.in-game~.game>.topbar,header.in-game~.
 @keyframes tuto-glow{50%{outline-color:#f6e7c1}}
 @media (prefers-reduced-motion:reduce){.tuto-target{animation:none}.guide-ring{animation:none}}
 @media (max-width:719px){.tuto-bubble[data-side="dock"]{bottom:auto;top:12px}}
+
+/* ---------- Mode Immersion ---------- */
+.mc-mode-note{margin:12px 0 6px;padding:14px 18px;border-radius:14px;background:rgba(242,165,65,.12);border:2px solid rgba(242,165,65,.45);color:#f6e7c1;font-size:17px;line-height:1.45}
+.encounter-carnet{margin:6px 0 10px;padding:10px 14px;border-radius:10px;background:#fbf1d6;color:#2b2214;font-family:'Fraunces',Georgia,serif;font-style:italic;font-size:15px;line-height:1.5;background-image:repeating-linear-gradient(transparent 0 22px,rgba(38,123,145,.16) 22px 23px)}
+.encounter-carnet span{display:block;font-family:'Barlow Condensed',system-ui,sans-serif;font-style:normal;font-weight:700;letter-spacing:.12em;text-transform:uppercase;font-size:11px;color:#b74732}
+.encounter-body.galere .eyebrow{color:#b74732}
+.fiche-tile.demander{border-color:#f2a541;background:rgba(242,165,65,.14)}
+.fiche-tile.demander b{color:#8a5a14}
+.imm-sits{display:grid;gap:8px;margin-bottom:8px}
+.imm-sit{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-radius:12px;border:2px solid #e2cf9f;background:#fff7df;color:#1b1406}
+.imm-sit.neg{border-left:6px solid #b74732}
+.imm-sit.pos{border-left:6px solid #2c7a5b}
+.imm-sit b{font-family:'Fraunces',Georgia,serif;color:#1b3b38}
+.imm-sit small{color:#5a4a2c}
+.imm-zone{stroke-width:calc(1.2px * var(--sym,1));pointer-events:none}
+.imm-zone.neg{stroke:#f2a541;stroke-opacity:.85}
+.imm-zone.pos{stroke:#2c7a5b;stroke-opacity:.85}
+body .modal.encounter-modal .encounter-carnet{color:#2b2214}
+body .modal.encounter-modal .encounter-carnet span{color:#b74732}

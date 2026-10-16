@@ -23,6 +23,7 @@ import * as CARNET from './carnet-data.js';
 import {variantsFor,validVariant} from './terrain-variants.js';
 import * as TUTO from './tutorial.js';
 import {drawVariantPreview} from './terrain-dynamic.js';
+import {oddsLabel,DEMAND} from './immersion.js';
 const app=document.querySelector('#app');
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let artPref=readArtPreference(),displayPrefs=readDisplayPrefs(),sheetDrawer=false;
@@ -102,7 +103,7 @@ function render(){
  let page=screen==='card-editor'?renderCardEditor(customCards,cardDraft,message,eventEdits,eventDraft):screen==='map-editor'?editorScreen():screen==='game'&&m?game():screen==='voyages'?choices():screen==='equipment'?equipmentSetup():screen==='setup'?setup():screen==='modes'?modes():screen==='online'?onlineView():screen==='parties'?partiesView():home();
  if(screen==='game'&&splitView)page=page.replace('<main class="game">',`<main class="game game-split" style="--sheet-width:${splitWidth}%">`);
  const splitControls=screen==='game'&&m?`<button type="button" class="light split-toggle" data-action="split-view" aria-pressed="${splitView}">${splitView?'▤ Vue verticale':'◧ Vue côte à côte'}</button>${splitView?`<label class="split-size" for="split-width">Fiche <output id="split-width-value">${splitWidth}%</output><input id="split-width" type="range" min="30" max="50" step="5" value="${splitWidth}" aria-label="Largeur de la fiche joueur"/></label>`:''}`:'';
-  app.innerHTML=`<header class="${screen==='game'?'in-game':''}"><div class="brand"><b>🚲 L’Aventure à Vélo</b>${screen==='game'&&m?`<span class="active-player" style="--player-color:${S.player(m).color}"><i aria-hidden="true"></i>${esc(S.player(m).name)}</span>`:''}</div>${screen==='game'&&m?.cardVersion===3?eventPiles():''}<nav>${splitControls}${btn('📖 Règles','help','light help-btn')+btn('⚙️ Réglages','rules','light')}${btn('Paramètres','settings','light')}${['game','map-editor','card-editor'].includes(screen)?btn('Accueil','home','light'):''}</nav></header>`+page+overlay();
+  app.innerHTML=`<header class="${screen==='game'?'in-game':''}"><div class="brand"><b>🚲 L’Aventure à Vélo</b>${screen==='game'&&m?`<span class="active-player" style="--player-color:${S.player(m).color}"><i aria-hidden="true"></i>${esc(S.player(m).name)}</span>`:''}</div>${screen==='game'&&m?.cardVersion===3&&!S.immersionOn(m)?eventPiles():''}<nav>${splitControls}${btn('📖 Règles','help','light help-btn')+btn('⚙️ Réglages','rules','light')}${btn('Paramètres','settings','light')}${['game','map-editor','card-editor'].includes(screen)?btn('Accueil','home','light'):''}</nav></header>`+page+overlay();
  mountBoard();bind();if(scroll){const map=document.querySelector('.map');if(map){map.scrollLeft=sx;map.scrollTop=sy;}}
  if(boardFocusKey&&boardElement){const target=[...boardElement.querySelectorAll('[data-board-key][tabindex]')].find(el=>el.getAttribute('data-board-key')===boardFocusKey);target?.focus({preventScroll:true});}
  const sheet=document.querySelector('.player-sheet-mount');if(sheet)sheet.scrollTop=sheetScroll||0;
@@ -295,7 +296,8 @@ function act(a){
  else if(a.startsWith('card-')){cardIndex=Number(a.slice(5));const card=cardById(S.player(m).cardHand[cardIndex]);if(card?.choice==='food-energy')modal='card-effect-choice';else if(card?.target==='self'){if(S.playCard(m,cardIndex,S.player(m).id))modal='';}else modal='card-target';}
  else if(a==='ravito-food'||a==='ravito-energy'){if(S.playCard(m,cardIndex,S.player(m).id,a==='ravito-food'?'food':'energy'))modal='';}
  else if(a.startsWith('target-')){if(!S.playCard(m,cardIndex,a.slice(7)))message='Cette carte ne peut pas être jouée sur cette cible.';else modal='';}
- else if(/^enc-\d$/.test(a)){if(!S.resolveEncounter(m,+a.slice(4)))message='Choix impossible : il te manque de quoi le payer.';}
+ else if(/^enc-\d$/.test(a)){if(!S.resolveEncounter(m,+a.slice(4)))message='Choix impossible : il te manque de quoi le payer.';else if(m.immOutcome){message=(m.immOutcome.ok?'Pari réussi : ':'Pari perdu : ')+m.immOutcome.text;m.immOutcome=null;}}
+ else if(a==='mode-original'||a==='mode-immersion'){readRoster();setupRules.immersion={...(setupRules.immersion||{}),enabled:a==='mode-immersion'};try{localStorage.setItem('velo-setup-rules',JSON.stringify(setupRules));}catch{}}
  else if(a==='events-cards'||a==='events-encounters'){readRoster();setupRules.encounters={...(setupRules.encounters||{}),enabled:a==='events-encounters'};localStorage.setItem('velo-setup-rules',JSON.stringify(setupRules));}
  else if(a.startsWith('pending-')){const choice={ 'pending-tube':'tube','pending-lose':'lose','pending-kit':'kit','pending-energy':'energy','pending-food':'food','pending-auto':'auto'}[a];if(!S.resolvePendingCard(m,choice))message='Cette résolution n’est pas disponible.';}
  else if(a==='eat'){if(!S.eat(m))message='Repas indisponible.';}
@@ -471,7 +473,8 @@ function carnetSouvenirs(p){const out=[],pick=(list,key)=>list[[...String(key)].
   else if(h.kind==='col')out.push({day:h.round,tag:'Col mythique',title:t?.colName||'Col',text:CARNET.COL,kind:'col'});
   else if(h.kind==='col-first'){const last=out.findLast(s=>s.kind==='col');if(last){last.tag+=' · premier de cordée';last.text=CARNET.PREMIER_DE_CORDEE;}}
   else if(h.kind==='climber')out.push({day:h.round,tag:'Bonus',title:'Trois cols franchis',text:CARNET.GRIMPEUR,kind:'titre'});
-  else if(h.kind==='encounter'){const [title,...rest]=h.text.split(' : ');out.push({day:h.round,tag:'Rencontre',title,text:rest.join(' : '),kind:'rencontre'});}}
+  else if(h.kind==='encounter'){const [title,...rest]=h.text.split(' : ');out.push({day:h.round,tag:h.road?'En route':'Rencontre',title,text:rest.join(' : '),kind:'rencontre'});}
+  else if(h.kind==='carnet')out.push({day:h.round,tag:'Carnet du soir',title:'Jour '+h.round,text:h.text.replace(/^Jour \d+ · /,''),kind:'rencontre'});}
  const seen=new Set();for(const step of p.travelHistory||[]){const t=m.board[step.boardKey||step.key];if(!t?.name||t.type!=='ville'||seen.has(t.key))continue;seen.add(t.key);
   out.push({day:step.day,tag:'Ville',title:t.name,text:CARNET.VILLES[t.name]||pick(CARNET.VILLE_GENERIQUE,t.name),kind:'ville'});}
  return out.sort((a,b)=>(a.day??0)-(b.day??0));}
@@ -504,10 +507,12 @@ function encounterEffectText(c){const fx=c.effect||{},out=[],sign=n=>(n>0?'+':'�
  if(fx.tomorrow)out.push(fx.tomorrow>0?'+'+fx.tomorrow+' case demain':'−'+(-fx.tomorrow)+' case demain');
  if(fx.energy)out.push(sign(fx.energy)+' énergie');if(fx.food)out.push(sign(fx.food)+' repas');if(fx.money)out.push(sign(fx.money)+' pièce'+(Math.abs(fx.money)>1?'s':''));
  if(fx.points)out.push(sign(fx.points)+' point'+(Math.abs(fx.points)>1?'s':'')+' d’aventure');if(fx.fatigue)out.push(fx.fatigue<0?'repose (fatigue −1)':'fatigue +1');
- return out.join(' · ')||'rien ne change';}
-function encounterModal(){const e=S.currentEncounter(m),p=S.player(m);if(!e)return '';const region=REGIONS[S.regionAt(m,p.pos)]?.name||'';
- return `<div class="encounter"><div class="encounter-art"><svg viewBox="0 0 520 180" role="img" aria-label="${esc(e.title)}">${ENCOUNTER_SCENES[e.scene]||ENCOUNTER_SCENES.plaine}</svg><span>Rencontre · ${esc(region)}</span></div>
- <div class="encounter-body"><span class="eyebrow">LE SOIR · ${esc(p.name)}</span><h2>${esc(e.title)}</h2><p class="encounter-quote">${esc(e.quote)}</p>
+ if(fx.stopToday)out.push('fin de la route pour aujourd’hui');if(fx.restDay)out.push('demain : repos forcé');if(fx.ride)out.push('rouler ensemble '+fx.ride+' jours');
+ if(c.chance)return 'Un pari : ça marche '+oddsLabel(Math.round(c.chance.odds*100))+(c.text?' · '+c.text:'');
+ return out.join(' · ')||(c.text||'rien ne change');}
+function encounterModal(){const e=S.currentEncounter(m),p=S.player(m);if(!e)return '';const region=REGIONS[S.regionAt(m,p.pos)]?.name||'',road=Boolean(m.encounter?.road),imm=S.immersionOn(m),carnet=m.encounter?.carnet||'',sit=Boolean(m.encounter?.situation);
+ return `<div class="encounter"><div class="encounter-art"><svg viewBox="0 0 520 180" role="img" aria-label="${esc(e.title)}">${ENCOUNTER_SCENES[e.scene]||ENCOUNTER_SCENES.plaine}</svg><span>${imm?(sit?'Imprévu':road?'En route':'Le soir'):'Rencontre'} · ${esc(region)}</span></div>
+ <div class="encounter-body${imm&&e.kind==='galere'?' galere':''}"><span class="eyebrow">${sit?'IMPRÉVU · ':road?'EN ROUTE · ':'LE SOIR · '}JOUR ${m.round} · ${esc(p.name)}</span><h2>${esc(e.title)}</h2>${carnet?`<p class="encounter-carnet"><span>Carnet du soir</span>${esc(carnet)}</p>`:''}<p class="encounter-quote">${esc(e.quote)}</p>
  <div class="encounter-choices">${e.choices.map((c,i)=>{const ok=S.canChooseEncounter(m,i),need=Object.entries(c.need||{}).map(([k,v])=>v+' '+({money:'pièce',food:'repas',energy:'énergie'}[k]||k)+(k==='money'&&v>1?'s':'')).join(', ');
   return `<button type="button" class="encounter-choice${Object.keys(c.effect||{}).length?'':' quiet'}" data-action="enc-${i}" ${ok?'':'disabled'}><b>${esc(c.label)}</b><small>${esc(encounterEffectText(c))}</small>${!ok?`<em>Il faut ${esc(need)}</em>`:''}</button>`;}).join('')}</div></div></div>`;}
 // ---------- Météo annoncée : bloc de la fiche Journée et bulletin du lendemain ----------
@@ -550,9 +555,9 @@ function ficheJournee(p){const r=m.rules,here=m.board[p.pos],atCity=here?.type==
  const eatWhy=why([!p.food,'plus de nourriture'],[!canEat,'réchaud, ville ou auberge'],[p.energy>=cap,'énergie pleine'],[m.ate>=r.food.maxPerTurn,'déjà mangé']);
  const foodWhy=why([r.food.cityOnly&&!atCity,'en ville seulement'],[p.money<r.food.price,'pas assez de pièces']);
  const restoWhy=why([!atCity,'en ville seulement'],[p.money<r.food.restaurantPrice,'pas assez de pièces'],[p.energy>=cap,'énergie pleine'],[m.ate>=r.food.maxPerTurn,'déjà mangé']);
- const sleep=Object.entries(r.rest).map(([id,a])=>{const free=id==='bivouac'&&p.turnModifiers?.freeBivouac,no=why([rode,'déjà roulé aujourd’hui'],[a.cityOnly&&!atCity,'en ville seulement'],[!free&&a.tent&&!p.items.includes('tente'),'tente nécessaire'],[!free&&p.money<a.price,'pas assez de pièces']);
+ const sleep=Object.entries(r.rest).map(([id,a0])=>{const a=S.restRule(m,p,id)||a0,free=id==='bivouac'&&p.turnModifiers?.freeBivouac,no=why([a.blocked,'interdit ici (imprévu)'],[rode,'déjà roulé aujourd’hui'],[a.cityOnly&&!atCity,'en ville seulement'],[!free&&a.tent&&!p.items.includes('tente'),'tente nécessaire'],[!free&&p.money<a.price,'pas assez de pièces']);
   const sub=no||(free?'gratuit':(a.price?a.price+' pièce'+(a.price>1?'s':''):'gratuit')+(a.tent?' · tente':'')+(id!=='bivouac'&&r.fatigue.enabled?' · repose':''));
-  return ficheTile(a.name,sub,'rest-'+id,blocked||Boolean(no),id!=='bivouac'&&tired&&!no?'conseil':'');}).join('');
+  return ficheTile(a.name,sub,'rest-'+id,blocked||Boolean(no),id!=='bivouac'&&tired&&!no?'conseil':'');}).join('')+(S.immersionOn(m)?demandTile(p,blocked,rode):'');
  const ferries=S.ferryOptions(m).map(t=>ficheTile('Bateau · '+esc(t.name||t.key),r.ferryPrice+' pièces · fin de journée','',blocked||p.money<r.ferryPrice,'ferry',`data-ferry="${esc(t.key)}"`)).join('');
  const work=r.workEnabled?ficheTile('Travailler','+'+r.salary+' pièces','work',blocked||rode||(r.workCityOnly&&!atCity)):'';
  const note=m.phase==='card-resolution'?'Résous d’abord la carte reçue.':m.phase==='puncture'?'Crevaison : répare ou retourne en ville.':m.phase==='voyage-choice'?'Choisis d’abord ton nouveau voyage.':'';
@@ -563,7 +568,7 @@ function ficheJournee(p){const r=m.rules,here=m.board[p.pos],atCity=here?.type==
  const hint=off.enabled&&!off.gps&&!off.off?`Sans ${esc(off.item)}, quitter la route limite la journée à ${off.max} case${off.max>1?'s':''}.`:off.enabled&&off.gps&&off.off?`Hors route avec ${esc(off.item)} : aucune limite.`:'';
  return `${meteoHere(p)}<section class="fiche-route-card"><div class="fiche-route-head"><b>Route du jour</b><span>${place?'depuis '+esc(place):''}</span></div><div class="fiche-rings"><span aria-hidden="true">${rings}</span><b>${m.moved} / ${dist} case${dist>1?'s':''}</b></div>${explain||hint?`<p>${esc(explain)}${explain&&hint?' ':''}${hint}</p>`:''}</section>${note?`<p class="fiche-note">${esc(note)}</p>`:''}
  <p class="fiche-label">Se ravitailler</p><div class="fiche-tiles">${ficheTile('Manger',eatWhy||'+'+eatGain+' énergie','eat',blocked||Boolean(eatWhy))}${ficheTile('Provisions',foodWhy||r.food.quantity+' repas · '+r.food.price+' pièce'+(r.food.price>1?'s':''),'food',blocked||Boolean(foodWhy))}${ficheTile('Restaurant',restoWhy||'+'+r.food.restaurantEnergy+' énergie · '+r.food.restaurantPrice+' pièce'+(r.food.restaurantPrice>1?'s':''),'restaurant',blocked||Boolean(restoWhy))}${work}</div>
- <p class="fiche-label">Dormir · termine la journée</p><div class="fiche-tiles">${sleep}</div>${ferries?`<p class="fiche-label">Traversée</p><div class="fiche-tiles">${ferries}</div>`:''}
+ <p class="fiche-label">Dormir · termine la journée</p><div class="fiche-tiles">${sleep}</div>${immersionPanel(p)}${ferries?`<p class="fiche-label">Traversée</p><div class="fiche-tiles">${ferries}</div>`:''}
 `;}
 function ficheSacoches(p){const r=m.rules,b=r.bikes[p.bike],used=S.inventorySpace(m),atCity=m.board[p.pos]?.type==='ville',blocked=m.done||!['move','place'].includes(m.phase),free=Math.max(0,b.capacity-used),off=S.offroadStatus(m,p);
  const owned=p.items.filter(id=>r.equipment[id]),shop=Object.keys(r.equipment).filter(id=>!owned.includes(id)),cols=Math.min(b.capacity,4);
@@ -721,7 +726,7 @@ function lobbyRules(g){try{return validateRules(JSON.parse(g.rules));}catch{retu
 function lobbySeats(g){const r=lobbyRules(g),me=NET.clientId();
  return NET.seatIds(g.count||2).map((id,i)=>{const s=g.lobby?.[id];if(!s?.client)return {id,num:i+1,state:'free'};
   const v=findVoyage(s.voyage);return {id,num:i+1,name:s.name||'Cycliste',mine:s.client===me,state:s.ready?'ready':'prep',detail:s.ready?`${r.bikes[s.bike]?.name||s.bike} · ${v?v.title+' ('+v.from+' → '+v.to+')':''}`:''};});}
-function lobbyRulesLine(g){const r=lobbyRules(g);return `Météo : ${r.weather?.forecast?'annoncée':'cartes météo'} · Événements : ${r.encounters?.enabled?'rencontres':'cartes'} · ${r.distance} cases/jour · ${r.startMoney} pièces`;}
+function lobbyRulesLine(g){const r=lobbyRules(g);return r.immersion?.enabled?`Mode Immersion · météo annoncée · ${r.distance} cases/jour · ${r.startMoney} pièces`:`Météo : ${r.weather?.forecast?'annoncée':'cartes météo'} · Événements : ${r.encounters?.enabled?'rencontres':'cartes'} · ${r.distance} cases/jour · ${r.startMoney} pièces`;}
 function showLobby(g){net={...net,view:'lobby',code:lobby.code,game:g,seats:lobbySeats(g),host:g.host===NET.clientId(),rulesLine:lobbyRulesLine(g),busy:false};}
 async function enterLobby(code,seat){
  lobby={code,seat};saveLobby();lobbyUnlisten?.();lobbyUnlisten=null;net={view:'lobby',code,seats:[],busy:true};screen='online';render();
@@ -764,8 +769,8 @@ async function lobbyAction(a){
 {const priorAct=act;act=a=>{
  if(a.startsWith('net-lobby-'))return lobbyAction(a);
  if(screen==='online'){readNetForm();if(a==='victory-standard'){setupRules.victory={...setupRules.victory,mode:'multi',points:35,voyages:3,days:40};try{localStorage.setItem('velo-setup-rules',JSON.stringify(setupRules));}catch{}render();return;}
-  if(['weather-cards','weather-forecast','events-cards','events-encounters'].includes(a)){
-  if(a.startsWith('weather'))setupRules.weather={...(setupRules.weather||{}),forecast:a==='weather-forecast'};else setupRules.encounters={...(setupRules.encounters||{}),enabled:a==='events-encounters'};
+  if(['weather-cards','weather-forecast','events-cards','events-encounters','mode-original','mode-immersion'].includes(a)){
+  if(a.startsWith('mode-'))setupRules.immersion={...(setupRules.immersion||{}),enabled:a==='mode-immersion'};else if(a.startsWith('weather'))setupRules.weather={...(setupRules.weather||{}),forecast:a==='weather-forecast'};else setupRules.encounters={...(setupRules.encounters||{}),enabled:a==='events-encounters'};
   try{localStorage.setItem('velo-setup-rules',JSON.stringify(setupRules));}catch{}render();return;}}
  // Pendant la préparation en ligne : « ← Cyclistes » ramène à la salle d'attente.
  if(lobbyPrep&&(a==='setup'||a==='home'||a==='online')){endPrep();if(lobby){showLobbyAgain();return;}}
@@ -966,3 +971,12 @@ function tutoPlace(){const b=document.querySelector('.tuto-layer .tuto-bubble');
  if(m&&a==='tuto-continue'){TUTO.endTutorial(m);message='À toi de jouer : finis ta journée, puis choisis ton prochain voyage !';render();return;}
  if(m&&a==='tuto-menu'){TUTO.endTutorial(m);modal='';screen='home';render();return;}
  return priorAct(a);};}
+
+// ---------- Mode Immersion : « Demander » l'hospitalité et imprévus en vue (fiche Journée) ----------
+function demandTile(p,blocked,rode){const o=S.demandInfo(m,p),sub=rode?'déjà roulé aujourd’hui':`un pari · refus ${oddsLabel(o.refus)} · sinon camping ${DEMAND.lateCampingPrice} pièces`;
+ return ficheTile('Demander l’hospitalité',sub,'rest-demander',blocked||rode,'demander');}
+function immersionPanel(p){if(!S.immersionOn(m))return '';const list=S.activeSituations(m);if(!list.length)return '';
+ return `<p class="fiche-label">Imprévus en vue</p><div class="imm-sits">${list.map(s=>{const t=S.situationTemplate(s.id),days=s.until-m.round+1,inside=s.keys.includes(p.pos);
+  return `<div class="imm-sit ${t.kind}"><b>${esc(t.title)}</b><small>${esc(t.rules.join(' · '))} · encore ${days} jour${days>1?'s':''}${inside?' · tu es dans la zone':''}</small></div>`;}).join('')}</div>`;}
+// La carte montre les zones des imprévus (hachures orange pour les galères, vert pour les bonnes nouvelles).
+{const prior=boardSurfaceMarkup;boardSurfaceMarkup=state=>prior(screen==='game'&&m&&S.immersionOn(m)?{...state,zones:S.activeSituations(m).map(s=>({keys:s.keys,kind:S.situationTemplate(s.id)?.kind||'neg'}))}:state);}

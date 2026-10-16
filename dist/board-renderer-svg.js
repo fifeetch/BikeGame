@@ -31,9 +31,9 @@ export function createSVGBoardRenderer(container,options={}){
  const ocean=make('rect',{class:'map-ocean',width:MAP_WIDTH,height:MAP_HEIGHT}),sea=make('path',{class:'board-sea-face',fill:'url(#board-sea-pattern)'});
  const lands=make('g',{class:'hex-cells'}),cities=make('g',{class:'city-names','aria-hidden':true}),numbers=make('g',{class:'route-numbers','aria-hidden':true}),tokens=make('g',{class:'map-symbols','aria-hidden':true}),seaCursor=make('g',{class:'board-sea-cursor','aria-hidden':true});
  // Étape 5 : décor (sous la grille), routes et ferries (au-dessus) ; étape 6 : tracé d'itinéraire et halos.
- const decor=make('g',{class:'board-decor','aria-hidden':true}),roads=make('g',{class:'board-roads','aria-hidden':true}),ferries=make('g',{class:'board-ferries'}),trail=make('g',{class:'route-trail','aria-hidden':true}),guide=make('g',{class:'board-guide','aria-hidden':true}),halos=make('g',{class:'board-halos','aria-hidden':true}),adventure=make('g',{class:'board-adventure'});
+ const decor=make('g',{class:'board-decor','aria-hidden':true}),roads=make('g',{class:'board-roads','aria-hidden':true}),ferries=make('g',{class:'board-ferries'}),trail=make('g',{class:'route-trail','aria-hidden':true}),guide=make('g',{class:'board-guide','aria-hidden':true}),zones=make('g',{class:'board-zones','aria-hidden':true}),halos=make('g',{class:'board-halos','aria-hidden':true}),adventure=make('g',{class:'board-adventure'});
  const trailCase=make('path',{class:'route-trail-case'}),trailLine=make('path',{class:'route-trail-line'});trail.append(trailCase,trailLine);
- svg.append(ocean,sea,decor,lands,roads,ferries,guide,trail,halos,adventure,cities,numbers,tokens,seaCursor);container.append(svg);
+ svg.append(ocean,sea,decor,lands,zones,roads,ferries,guide,trail,halos,adventure,cities,numbers,tokens,seaCursor);container.append(svg);
  let artWanted=options.art!==false&&readArtPreference(),artLayer=options.art===false?null:createTerrainLayer(container),artReady=false;
  const artOn=()=>Boolean(artLayer&&artWanted&&artReady);
  artLayer?.onStatus(ok=>{artReady=ok;if(state)update(state);});
@@ -171,6 +171,14 @@ export function createSVGBoardRenderer(container,options={}){
   const f=g.board[focus];if(f){const ring=make('g',{class:'guide-focus',transform:`translate(${f1(f.x)} ${f1(f.y)})`}),inner=make('g',{class:'guide-focus-inner'});inner.append(make('circle',{class:'guide-ring',r:14}),make('circle',{class:'guide-ring late',r:14}));ring.append(inner);guide.append(ring);}
  }
 
+ // ---------- Mode Immersion : zones des imprévus qui durent (hachures) ----------
+ let zonesSig='';
+ function drawZones(g,list){
+  const sig=list.map(z=>z.kind+':'+z.keys.join(',')).join('|');if(sig===zonesSig)return;zonesSig=sig;zones.replaceChildren();if(!list.length)return;
+  const defs=make('defs');for(const [kind,a,b] of [['neg','#b74732','#f2a541'],['pos','#2c7a5b','#bfe3a8']]){const pat=make('pattern',{id:'imm-hatch-'+kind,width:6,height:6,patternUnits:'userSpaceOnUse',patternTransform:'rotate(45)'});pat.append(make('rect',{width:6,height:6,fill:a,'fill-opacity':.42}),make('rect',{width:2.4,height:6,fill:b,'fill-opacity':.6}));defs.append(pat);}zones.append(defs);
+  for(const z of list)for(const k of z.keys){const t=g.board[k];if(t)zones.append(make('polygon',{points:polygonPoints(t),class:'imm-zone '+z.kind,fill:`url(#imm-hatch-${z.kind})`}));}
+ }
+
  // ---------- Halos : sélection et ville d'arrivée ----------
  let haloKey='',destKey='';
  function drawHalos(g,selected,editMode){
@@ -293,6 +301,7 @@ export function createSVGBoardRenderer(container,options={}){
   drawFerries(g,editMode?[]:ferryTargets);
   drawTrail(g,editMode?[]:route);
   drawGuide(g,editMode?[]:(state.guidePath||[]),editMode?'':(state.guideFocus||''));
+  drawZones(g,editMode?[]:(state.zones||[]));
   drawHalos(g,selected,editMode);
   drawAdventure(g,editMode);
   const moveMs=drawTokens(g,previous);

@@ -126,7 +126,12 @@ export function playersScreen({btn,roster,colors,rules}){
   <header class="mc-head"><div><p class="mc-kicker">Autour de la table</p><h1>Qui part à l’aventure ?</h1></div>
    <label class="mc-count">Nombre de cyclistes <select id="player-count">${Array.from({length:6},(_,i)=>`<option value="${i+1}" ${roster.length===i+1?'selected':''}>${i+1}</option>`).join('')}</select></label></header>
   <div class="mc-players">${cards}</div>
-  <section class="mc-weather" aria-label="Météo de la partie"><div><p class="mc-kicker">Météo de la partie</p><p>Choisis une seule des deux façons de jouer la météo.</p></div>
+  <section class="mc-weather mc-mode" aria-label="Mode de jeu"><div><p class="mc-kicker">Mode de jeu</p><p>Le jeu de plateau original, ou un voyage plein d’imprévus.</p></div>
+   <div class="mc-weather-choices" role="group" aria-label="Choix du mode">
+    <button type="button" data-action="mode-original" aria-pressed="${!rules.immersion?.enabled}" class="${!rules.immersion?.enabled?'on':''}"><b>Mode original</b><small>Le jeu de plateau et ses cartes à se jouer. Conseillé à plusieurs.</small></button>
+    <button type="button" data-action="mode-immersion" aria-pressed="${!!rules.immersion?.enabled}" class="${rules.immersion?.enabled?'on':''}"><b>Mode Immersion · conseillé en solo</b><small>Plus de cartes : la route décide. Scènes en route et le soir, imprévus sur la carte, « Demander » l’hospitalité, compagnons de route.</small></button>
+   </div></section>
+  ${rules.immersion?.enabled?`<p class="mc-mode-note">En mode Immersion, la météo est annoncée par zones et il n’y a plus de cartes Événement : ce qui arrive dépend du terrain, de la zone, de la météo et de ta fatigue.</p>`:`  <section class="mc-weather" aria-label="Météo de la partie"><div><p class="mc-kicker">Météo de la partie</p><p>Choisis une seule des deux façons de jouer la météo.</p></div>
    <div class="mc-weather-choices" role="group" aria-label="Choix de la météo">
     <button type="button" data-action="weather-cards" aria-pressed="${!rules.weather?.forecast}" class="${!rules.weather?.forecast?'on':''}"><b>Cartes météo</b><small>Les cartes Événement climatiques (pluie, neige, vent…) se jouent entre cyclistes.</small></button>
     <button type="button" data-action="weather-forecast" aria-pressed="${!!rules.weather?.forecast}" class="${rules.weather?.forecast?'on':''}"><b>Météo annoncée</b><small>Chaque soir, le bulletin du lendemain pour 5 régions. Les cartes climatiques sont retirées.</small></button>
@@ -136,6 +141,7 @@ export function playersScreen({btn,roster,colors,rules}){
     <button type="button" data-action="events-cards" aria-pressed="${!rules.encounters?.enabled}" class="${!rules.encounters?.enabled?'on':''}"><b>Cartes Événement</b><small>On pioche, on garde, on joue ses cartes et on en donne aux autres.</small></button>
     <button type="button" data-action="events-encounters" aria-pressed="${!!rules.encounters?.enabled}" class="${rules.encounters?.enabled?'on':''}"><b>Rencontres · idéal en solo</b><small>Plus de cartes : chaque soir, une rencontre liée à l’endroit propose un choix.</small></button>
    </div></section>
+`}
   ${victoryBlock(rules,btn)}
   <footer class="mc-foot">${btn('← Plateau','modes','mc-ghost')}<span>Règles : ${esc(rules.name)} · ${Object.values(rules.bikes).map(b=>`${esc(b.name)} ${Math.min(5,Math.max(1,rules.distance+(b.extraDistance||0)))}`).join(' / ')} cases/jour · ${rules.startEnergy} énergie · ${rules.startMoney} pièces · ${btn('Modifier','rules','mc-link')}</span>${btn('Au garage →','start','mc-go')}</footer>
  </main>`;
@@ -214,12 +220,13 @@ export function onlineScreen({btn,net={},local=null,current=null,message='',rule
    <div class="mc-online-pick">${(net.players||[]).map(p=>`<button type="button" data-action="net-seat-${esc(p.id)}" ${p.taken?'disabled':''}><b>${esc(p.name)}</b><small>${p.mine?'déjà sur cet appareil':p.taken?'déjà pris':'libre'}</small></button>`).join('')}</div>
    ${btn('← Retour','net-back','mc-ghost')}`,'wide');
  else{
-  const forecast=Boolean(rules.weather?.forecast),enc=Boolean(rules.encounters?.enabled);
+  const forecast=Boolean(rules.weather?.forecast),enc=Boolean(rules.encounters?.enabled),imm=Boolean(rules.immersion?.enabled);
   const create=card(`<p class="mc-kicker">Créer</p><h2>Créer une partie en ligne</h2><p>Chacun choisira son vélo, ses sacoches et son voyage sur son propre appareil.</p>
     <label class="mc-online-label">Ton nom <input id="net-name" maxlength="40" autocomplete="off" value="${esc(net.name||'')}" placeholder="Fi"/></label>
     <label class="mc-online-label">Nombre de cyclistes <select id="net-count">${[2,3,4,5,6].map(n=>`<option value="${n}" ${(net.count||2)===n?'selected':''}>${n}</option>`).join('')}</select></label>
-    <div class="mc-weather-choices mc-online-opts" role="group" aria-label="Météo">${toggle(!forecast,'weather-cards','Cartes météo','Pluie, neige, vent… en cartes.')}${toggle(forecast,'weather-forecast','Météo annoncée','Bulletin chaque soir, sans cartes climatiques.')}</div>
-    <div class="mc-weather-choices mc-online-opts" role="group" aria-label="Événements">${toggle(!enc,'events-cards','Cartes Événement','On joue des cartes aux autres.')}${toggle(enc,'events-encounters','Rencontres','Une rencontre chaque soir.')}</div>
+    <div class="mc-weather-choices mc-online-opts" role="group" aria-label="Mode">${toggle(!imm,'mode-original','Mode original','Les cartes qu’on se joue.')}${toggle(imm,'mode-immersion','Mode Immersion','La route décide (conseillé en solo).')}</div>
+    ${imm?'':`    <div class="mc-weather-choices mc-online-opts" role="group" aria-label="Météo">${toggle(!forecast,'weather-cards','Cartes météo','Pluie, neige, vent… en cartes.')}${toggle(forecast,'weather-forecast','Météo annoncée','Bulletin chaque soir, sans cartes climatiques.')}</div>
+    <div class="mc-weather-choices mc-online-opts" role="group" aria-label="Événements">${toggle(!enc,'events-cards','Cartes Événement','On joue des cartes aux autres.')}${toggle(enc,'events-encounters','Rencontres','Une rencontre chaque soir.')}</div>`}
     ${victoryBlock(rules,btn)}
     ${btn('Créer la partie en ligne','net-lobby-create','mc-go')}`);
   const upload=local?card(`<p class="mc-kicker">Ou bien</p><h2>Mettre ma partie en cours en ligne</h2><p>Partie préparée sur cet appareil : ${esc(local.title)}. Choisis le cycliste que tu joues ici ; les autres se joueront sur l’appareil de tes amis.</p>
@@ -242,7 +249,7 @@ export function partiesScreen({btn,list=[],filter='all',currentId='',message='',
  const shown=list.filter(r=>filter==='run'?!r.summary?.done:filter==='done'?r.summary?.done:true);
  const tab=(id,label)=>`<button type="button" data-action="parties-filter-${id}" class="${filter===id?'on':''}" aria-pressed="${filter===id}">${label} (${counts[id]})</button>`;
  const card=r=>{const s=r.summary||{},ps=s.players||[],badge=(t,cls='')=>`<span class="pt-badge ${cls}">${t}</span>`;
-  const badges=[s.online?badge('En ligne','online'):'',badge(ps.length>1?ps.length+' joueurs':'Solo','dark'),s.encounters?badge('Rencontres','soft'):'',s.forecast?badge('Météo annoncée','soft'):'',s.done?badge('Terminée 🏆','done'):badge('En cours','run')].join('');
+  const badges=[s.online?badge('En ligne','online'):'',badge(ps.length>1?ps.length+' joueurs':'Solo','dark'),s.immersion?badge('Immersion','soft'):s.encounters?badge('Rencontres','soft'):'',s.forecast?badge('Météo annoncée','soft'):'',s.done?badge('Terminée 🏆','done'):badge('En cours','run')].join('');
   const voyages=[...new Set(ps.map(p=>p.from&&p.to?`${p.from} → ${p.to}`:''))].filter(Boolean).join(' · ');
   const name=r.id===renaming?`<label class="pt-rename"><input id="party-name" maxlength="60" value="${esc(r.name)}"/>${btn('OK','party-rename-ok-'+r.id,'pt-ok')}</label>`:`<h2>${esc(r.name)}</h2>`;
   return `<article class="pt-card ${r.id===currentId?'current':''}"><div class="pt-map">${miniMap(ps[0]?.voyage)}</div>
