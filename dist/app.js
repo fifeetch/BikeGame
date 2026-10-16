@@ -1076,5 +1076,11 @@ function betModal(){const b=betResult;if(!b)return '';const fx=fxList(b.fx||{});
 {const priorRender=render;render=(...a)=>{priorRender(...a);try{document.querySelector('.bet-layer')?.remove();if(betResult&&screen==='game'){const d=document.createElement('div');d.className='bet-layer';d.innerHTML=betModal();document.body.appendChild(d);const go=d.querySelector('[data-bet-ok]');go.onclick=()=>{betResult=null;d.remove();};go.focus();}}catch(err){console.error(err);}};}
 
 // ---------- Carte : trace du voyage, nuits posées sur la carte, et le soir qui tombe (planches « En selle » et « Le pion du cycliste ») ----------
-{const prior=boardSurfaceMarkup;boardSurfaceMarkup=state=>prior(screen==='game'&&m?{...state,today:m.round,journeys:m.players.map(p=>({color:p.color,start:p.visited?.[0],steps:p.travelHistory||[],nights:p.nights||[]}))}:state);}
-{const priorRender=render;render=(...a)=>{priorRender(...a);try{const evening=screen==='game'&&m&&(modal==='night'||m.phase==='encounter'&&m.encounter&&!m.encounter.road&&S.immersionOn(m));document.body?.classList?.toggle('soir',Boolean(evening));}catch{}};}
+function eveningNow(){return Boolean(screen==='game'&&m&&(modal==='night'||m.phase==='encounter'&&m.encounter&&!m.encounter.road&&S.immersionOn(m)));}
+// Ce que le pion montre : assis quand ce n'est pas à lui (ou le soir, tente montée), cape sous la pluie, fanion au vent, fatigue.
+function riderInfo(){const out={},ev=eveningNow(),act=S.player(m);for(const p of m.players){const w=S.forecastOn(m)?S.weatherToday(m,p.pos):'beau',f=p.fatigue||0;
+ const tired=S.immersionOn(m)?(f>=5?2:f>=3?1:0):m.rules.fatigue?.enabled?(f>=m.rules.fatigue.days?2:f>=2?1:0):0,lastNight=(p.nights||[]).at(-1);
+ out[p.id]={weather:w,cape:w==='pluie'||w==='orage',windy:w==='vent',tired,sit:p.id!==act.id||ev,tent:(p.id===act.id&&ev)||(p.id!==act.id&&lastNight?.key===p.pos)};}return out;}
+{const prior=boardSurfaceMarkup;boardSurfaceMarkup=state=>prior(screen==='game'&&m?{...state,riders:riderInfo(),today:m.round,journeys:m.players.map(p=>({color:p.color,start:p.visited?.[0],steps:p.travelHistory||[],nights:p.nights||[]}))}:state);}
+let lastEvening=false;
+{const priorRender=render;render=(...a)=>{priorRender(...a);try{const evening=eveningNow();document.body?.classList?.toggle('soir',evening);if(evening!==lastEvening){lastEvening=evening;boardRenderer?.spotlight?.(evening);}}catch{}};}

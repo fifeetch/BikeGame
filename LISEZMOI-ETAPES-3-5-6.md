@@ -285,3 +285,13 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - **Nuits sur la carte** : `p.nights` (moteur) ; icône par case (tente, camping, lit, maison chez l'habitant, lune pour la nuit dehors), info-bulle « Jour N · … ».
 - **Le soir qui tombe** : classe `soir` sur la page pendant « Où dormir ce soir ? » et les scènes du soir (Immersion) : la carte passe à une lumière orangée et sombre, les noms de villes s'allument.
 - Cache : `aventure-velo-v83-pion`, `?v=pion`.
+
+## Le pion vivant et le zoom sur le cycliste (16 octobre 2026)
+- Planche « Le pion vivant » (https://claude.ai/artifact/H8mqijgMYAkQP2BmwNNGS5) : les quatre animations validées par Fi.
+- **Pose au repos** : quand ce n'est pas à lui de jouer, le cycliste est assis à côté de son vélo (avec sa tente s'il a dormi là) ; le soir, le cycliste actif s'assoit et sa tente est montée.
+- **Danseuse** : en montée (moyenne montagne, montagne, col), debout sur les pédales et plus lent ; en descente, couché sur le guidon, roue libre, fanion qui claque, plus rapide.
+- **Météo sur le pion** : cape jaune et gouttes sous la pluie ou l'orage, fanion qui claque au vent, flocons sous la neige (météo de la zone du cycliste).
+- **Fatigue** : tête basse, goutte de sueur, pédalage plus lent ; fourbu : petits nuages de souffle. Immersion : dès « Épuisé » ; mode original : dès 2 de fatigue.
+- **Zoom sur le cycliste** : quand il roule, la caméra se rapproche et le suit, puis revient à la vue d'avant ; le soir (« Où dormir ce soir ? » et scènes du soir), zoom sur lui, retour au matin (renderer.spotlight). Rien de tout ça avec « animations réduites ».
+- Code : riderFree, riderSitting, idleDraw, flagPath (`dist/board-renderer-svg.js`) ; riderInfo, eveningNow (fin de `dist/app.js`).
+- Cache : `aventure-velo-v84-vivant`, `?v=vivant`.

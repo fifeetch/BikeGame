@@ -216,15 +216,21 @@ export function createSVGBoardRenderer(container,options={}){
  function animateToken(record,points,stepMs){
   record.anim&&(record.anim.cancelled=true);
   const anim={cancelled:false};record.anim=anim;
-  const lens=[];let total=0;for(let i=1;i<points.length;i++){const l=Math.hypot(points[i].x-points[i-1].x,points[i].y-points[i-1].y);lens.push(l);total+=l;}
-  const duration=Math.min(2600,stepMs*(points.length-1)),start=clock();
+  // Pente : on monte lentement (danseuse), on descend vite ; fatigué, tout va plus lentement.
+  const info=record.info||{},slope=points.slice(1).map((b,i)=>{const ra=MOUNT_RANK[points[i].type]||0,rb=MOUNT_RANK[b.type]||0;return rb>ra||(rb&&rb===ra)?'up':rb<ra?'down':'flat';});
+  const lens=[];let total=0;for(let i=1;i<points.length;i++){const l=Math.hypot(points[i].x-points[i-1].x,points[i].y-points[i-1].y)*(slope[i-1]==='up'?1.6:slope[i-1]==='down'?.6:1);lens.push(l);total+=l;}
+  const duration=Math.min(3200,stepMs*(points.length-1)*(info.tired?1.3:1)),start=clock();
+  const follow=record.follow&&!reduced();let camS=camera.scale;const backTo=camera.scale;
   const step=()=>{if(anim.cancelled||destroyed)return;const k=Math.min(1,(clock()-start)/duration),e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
    let dist=e*total,i=0;while(i<lens.length-1&&dist>lens[i]){dist-=lens[i];i++;}
    const a=points[i],b=points[i+1]||a,t=lens[i]?Math.min(1,dist/lens[i]):1;
    const bob=Math.abs(Math.sin(clock()*.012))*1.1;attrsTo(record.el,{transform:`translate(${f1(a.x+(b.x-a.x)*t)} ${f1(a.y+(b.y-a.y)*t-bob)})`});
    if(record.flip&&Math.abs(b.x-a.x)>1){const face=b.x<a.x?-1:1;if(face!==record.facing){record.facing=face;attrsTo(record.flip,{transform:face<0?'scale(-1 1)':''});}}
-   if(record.flip)record.flip.innerHTML=riderFree(clock()*.012);
-   if(k<1)raf(step);else{record.anim=null;record.el.classList?.remove('moving');if(record.flip)record.flip.innerHTML=riderFree(.6);}};
+   const sl=slope[i]||'flat',speed=(sl==='down'?0:sl==='up'?.007:.012)*(info.tired?.55:1);record.crank=(record.crank||0)+speed*16;
+   if(record.flip)record.flip.innerHTML=riderFree(record.crank,{stand:sl==='up',tuck:sl==='down',low:info.tired,sweat:info.tired?1:0,cape:info.cape});
+   if(record.flag)attrsTo(record.flag,{d:flagPath(sl==='down'||info.windy?2.4:.7,clock()/1000)});
+   if(follow){camS+=(ZOOM_FOLLOW-camS)*.08;camera.focus(a.x+(b.x-a.x)*t,a.y+(b.y-a.y)*t,{scale:Math.max(backTo,camS),animate:false});}
+   if(k<1)raf(step);else{record.anim=null;record.el.classList?.remove('moving');record.follow=false;if(follow){clearTimeout(glideTimer);glideTimer=setTimeout(()=>{if(!destroyed)camera.focus(b.x,b.y,{scale:backTo,duration:800});},650);}idleDraw(record,clock()/1000);}};
   record.el.classList?.add('moving');raf(step);
   return duration;
  }
@@ -237,14 +243,40 @@ export function createSVGBoardRenderer(container,options={}){
   return out;
  }
 // Pion B : cycliste chargé vu de profil (vers la droite) ; a = angle du pédalier (les roues et les jambes tournent).
- function riderFree(a){const W=(cx,r)=>{let o=`<circle class="rider-wheel" cx="${cx}" cy="5.6" r="${r}"/>`;for(let i=0;i<2;i++){const t=a+i*Math.PI/2,dx=(Math.cos(t)*r).toFixed(2),dy=(Math.sin(t)*r).toFixed(2);o+=`<line class="rider-spoke" x1="${(cx+ +dx).toFixed(2)}" y1="${(5.6+ +dy).toFixed(2)}" x2="${(cx-dx).toFixed(2)}" y2="${(5.6-dy).toFixed(2)}"/>`;}return o;};
-  const f=(x,y)=>`${x.toFixed(2)} ${y.toFixed(2)}`,p1=f(Math.cos(a)*2.8,2+Math.sin(a)*2.8),p2=f(-Math.cos(a)*2.8,2-Math.sin(a)*2.8);
-  return W(-8,5.4)+W(8,5.4)
-  +'<path class="rider-frame" d="M-8 5.6 L-3 -1 L6 -1 L8 5.6 M-3 -1 L0 5.6 L6 -1 M0 5.6 L-8 5.6 M6 -1 L7 -5 L9.4 -5.3"/>'
-  +'<rect class="rider-pannier" x="-13.4" y="-1.6" width="6.2" height="6.2" rx="1.3"/><rect class="rider-tent" x="-12.8" y="-5.2" width="9" height="3.6" rx="1.8"/>'
-  +`<path class="rider-leg back" d="M-2.6 -3.5 L${p2}"/><path class="rider-leg" d="M-2.6 -3.5 L${p1}"/>`
-  +'<path class="rider-body" d="M-3 -3.5 L2 -10"/><path class="rider-arm" d="M2 -9.5 L7.6 -5"/>'
-  +'<circle class="rider-head" cx="4" cy="-12.6" r="2.6"/><path class="rider-helmet" d="M1.3 -12.8 A2.8 2.8 0 0 1 6.7 -13 Z"/>';}
+ const MOUNT_RANK={moyenne_montagne:1,montagne:2,col:3},ZOOM_FOLLOW=2.6;
+ // Pion B : cycliste chargé vu de profil (vers la droite). a = angle du pédalier ; o = pose (danseuse, descente, tête basse, cape, sueur).
+ function riderFree(a,o={}){const f=(x,y)=>`${x.toFixed(2)} ${y.toFixed(2)}`;
+  const W=cx=>{let s=`<circle class="rider-wheel" cx="${cx}" cy="5.6" r="5.4"/>`;for(let i=0;i<2;i++){const t=a+i*Math.PI/2,dx=Math.cos(t)*5.4,dy=Math.sin(t)*5.4;s+=`<line class="rider-spoke" x1="${(cx+dx).toFixed(2)}" y1="${(5.6+dy).toFixed(2)}" x2="${(cx-dx).toFixed(2)}" y2="${(5.6-dy).toFixed(2)}"/>`;}return s;};
+  const stand=o.stand?1:0,tuck=o.tuck?1:0,low=o.low?1:0,hipX=-2.6+stand*2.4+tuck*.5,hipY=-3.5-stand*3.2+tuck,p1=f(Math.cos(a)*2.8,2+Math.sin(a)*2.8),p2=f(-Math.cos(a)*2.8,2-Math.sin(a)*2.8);
+  const shX=2+stand*2.6+tuck*3,shY=-10-stand*2.2+tuck*4+low*1.2,hx=shX+2+tuck*1.6+low*1.4,hy=shY-2.6+low*2.4;
+  let s=W(-8)+W(8)+'<path class="rider-frame" d="M-8 5.6 L-3 -1 L6 -1 L8 5.6 M-3 -1 L0 5.6 L6 -1 M0 5.6 L-8 5.6 M6 -1 L7 -5 L9.4 -5.3"/>'
+   +'<rect class="rider-pannier" x="-13.4" y="-1.6" width="6.2" height="6.2" rx="1.3"/><rect class="rider-tent" x="-12.8" y="-5.2" width="9" height="3.6" rx="1.8"/>';
+  if(o.noRider)return s;
+  s+=`<path class="rider-leg back" d="M${f(hipX,hipY)} L${p2}"/><path class="rider-leg" d="M${f(hipX,hipY)} L${p1}"/>`;
+  s+=o.cape?`<path class="rider-cape" d="M${f(hipX-3,hipY+1)} Q${f(shX-4,shY-1)} ${f(shX+1,shY-1)} L${f(shX+2,shY+3)} Q${f(hipX+2,hipY)} ${f(hipX-3,hipY+1)}Z"/>`:`<path class="rider-body" d="M${f(hipX-.4,hipY)} L${f(shX,shY)}"/>`;
+  s+=`<path class="rider-arm" d="M${f(shX,shY+.5)} L7.6 -5"/><circle class="rider-head" cx="${hx.toFixed(2)}" cy="${hy.toFixed(2)}" r="2.6"/><path class="rider-helmet${o.cape?' cape':''}" d="M${f(hx-2.7,hy-.2)} A2.8 2.8 0 0 1 ${f(hx+2.7,hy-.4)} Z"/>`;
+  if(o.sweat)s+=`<path class="rider-sweat" d="M${f(hx+3.6,hy-1)} q1 2 0 2.6 q-1 -.6 0 -2.6Z" style="opacity:${o.sweat}"/>`;
+  return s;}
+ // Pose au repos : le vélo debout, le cycliste assis à côté ; le soir, la tente montée.
+ function riderSitting(t,o={}){const b=Math.sin(t*2)*.3,f=(x,y)=>`${x.toFixed(2)} ${y.toFixed(2)}`;
+  let s=riderFree(.6,{noRider:true});
+  s+=`<g transform="translate(15 4)"><path class="rider-leg" d="M-3 4 L3 4 L5 8"/><path class="rider-body" d="M-3 ${(3.6+b).toFixed(2)} L-2 -3"/><path class="rider-arm" d="M-2 -2 L3 1"/><circle class="rider-head" cx="-1.4" cy="${(-5.6+b).toFixed(2)}" r="2.6"/><path class="rider-helmet" d="M${f(-4.1,-5.8+b)} A2.8 2.8 0 0 1 ${f(1.3,-6+b)} Z"/>${o.sweat?`<path class="rider-sweat" d="M2 -7 q1 2 0 2.6 q-1 -.6 0 -2.6Z" style="opacity:${o.sweat}"/>`:''}</g>`;
+  if(o.tent)s=`<g class="rider-camp" transform="translate(-24 8)"><path class="camp-tent" d="M-12 0 L0 -13 L12 0Z"/><path class="camp-door" d="M-3 0 L0 -6 L3 0Z"/></g>`+s;
+  return s;}
+ function flagPath(amp,t){const w=Math.sin(t*(amp>1?14:4))*amp;return `M-12 -2 L-12 -25 M-12 -25 Q-6 ${(-24+w).toFixed(2)} ${(Math.abs(w)*.3).toFixed(2)} ${(-21.5+w*.6).toFixed(2)} Q-6 ${(-19+w).toFixed(2)} -12 -17.5 Z`;}
+ // Animation au repos (environ 12 images par seconde) : fanion, respiration, sueur, pluie et neige autour du cycliste.
+ function idleDraw(record,t){const o=record.info||{};if(!record.flip||record.anim)return;
+  const sweat=o.tired?((Math.sin(t*1.6)+1)/2).toFixed(2):0;
+  record.flip.innerHTML=o.sit?riderSitting(t,{tent:o.tent,sweat}):riderFree(.6,{low:o.tired,cape:o.cape,sweat});
+  if(record.flag)attrsTo(record.flag,{d:flagPath(o.windy?2.4:o.tired?.25:.6,t)});
+  if(record.fx){let fx='';
+   if(o.cape)for(let i=0;i<5;i++){const x=-16+i*8,y=((t*40+i*13)%30)-22;fx+=`<path class="fx-rain" d="M${x} ${y.toFixed(1)} l-1.4 4"/>`;}
+   if(o.weather==='neige')for(let i=0;i<5;i++){const x=-16+i*8+Math.sin(t+i)*2,y=((t*8+i*9)%30)-22;fx+=`<circle class="fx-snow" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="1"/>`;}
+   if(o.tired>1&&!o.sit){const k=(t*1.2)%1;fx+=`<circle class="fx-puff" cx="${(12+k*5).toFixed(1)}" cy="${(-10-k*2).toFixed(1)}" r="${(1+k*1.6).toFixed(2)}" style="opacity:${(1-k).toFixed(2)}"/>`;}
+   record.fx.innerHTML=fx;}}
+ let idleRaf=0,idleLast=0,spotSaved=null;
+ function startIdle(){if(idleRaf||destroyed||!browser())return;const loop=()=>{idleRaf=0;if(destroyed)return;const t=clock();if(!reduced()&&t-idleLast>80){idleLast=t;for(const r of playerNodes.values())idleDraw(r,t/1000);}idleRaf=raf(loop);};idleRaf=raf(loop);}
+ const followingNow=()=>[...playerNodes.values()].some(r=>r.anim&&r.follow);
  // Trace du voyage : pointillés crème d'une case à l'autre (les jours passés plus pâles), et les nuits posées sur la carte.
  let journeySig='';
  const NIGHT_MARKS={bivouac:['Bivouac','<path d="M-4 3 L0 -4 L4 3Z" class="nm-tent"/>'],camping:['Camping','<path d="M0 -4.5 L-3.6 0.6 L3.6 0.6Z M0 -1.8 L-4.4 3.4 L4.4 3.4Z" class="nm-tree"/>'],hotel:['Hôtel','<rect x="-4.4" y="-0.6" width="8.8" height="3.2" class="nm-bed"/><rect x="-4.4" y="-3.4" width="3" height="2.6" class="nm-pillow"/>'],demander:['Chez l’habitant','<rect x="-3.2" y="-1" width="6.4" height="4.4" class="nm-bed"/><path d="M-4.4 -1 L0 -4.8 L4.4 -1Z" class="nm-roof"/>'],dehors:['Nuit dehors','<path d="M1.8 -3.6 A3.6 3.6 0 1 0 2.6 2.8 A2.8 2.8 0 1 1 1.8 -3.6Z" class="nm-moon"/>']};
@@ -269,9 +301,9 @@ export function createSVGBoardRenderer(container,options={}){
     // Pion : un médaillon crème avec un cycliste sur son vélo (couleur du joueur), et le numéro du joueur dans une pastille.
     // Pion « cycliste libre » (planche « Le pion du cycliste », choix B) : le cycliste chargé posé sur la carte, avec un fanion à sa couleur.
     record={el:make('g',{class:'rider-token free'}),inner:make('g',{class:'rider-inner'}),shadow:make('ellipse',{class:'rider-shadow',cx:0,cy:10,rx:13,ry:3.4}),dust:make('g',{class:'rider-dust'}),flip:make('g',{class:'rider-flip'}),flag:make('path',{class:'rider-flag',d:'M-12 -2 L-12 -25 M-12 -25 Q-5 -24 0 -21.5 Q-5 -19 -12 -17.5 Z'}),text:make('text',{class:'player-number',x:-6.6,y:-19}),pos:p.pos,facing:1};
-    record.dust.innerHTML='<circle cx="-14" cy="8" r="2.2"/><circle cx="-19" cy="6" r="1.4"/>';record.flip.innerHTML=riderFree(.6);record.inner.append(record.shadow,record.dust,record.flip,record.flag,record.text);record.el.append(record.inner);tokens.append(record.el);playerNodes.set(p.id,record);}
-   attrsTo(record.el,{class:`rider-token${p.id===g.id?' active':''}${record.anim?' moving':''}`,'aria-label':p.name});
-   attrsTo(record.flip,{style:`--rider:${p.color}`});attrsTo(record.flag,{style:`fill:${p.color}`});if(record.text.textContent!==p.id.slice(1))record.text.textContent=p.id.slice(1);
+    record.dust.innerHTML='<circle cx="-14" cy="8" r="2.2"/><circle cx="-19" cy="6" r="1.4"/>';record.flip.innerHTML=riderFree(.6);record.fx=make('g',{class:'rider-fx'});record.inner.append(record.shadow,record.dust,record.flip,record.flag,record.text,record.fx);record.el.append(record.inner);tokens.append(record.el);playerNodes.set(p.id,record);}
+   attrsTo(record.el,{class:`rider-token free${p.id===g.id?' active':''}${record.anim?' moving':''}`,'aria-label':p.name});
+   attrsTo(record.flip,{style:`--rider:${p.color}`});attrsTo(record.flag,{style:`fill:${p.color}`});record.info=(state?.riders||{})[p.id]||{};if(record.text.textContent!==p.id.slice(1))record.text.textContent=p.id.slice(1);
    const moved=record.pos!==p.pos,from=g.board[record.pos];record.pos=p.pos;
    if(moved&&from&&Math.abs(target.x-from.x)>1){record.facing=target.x<from.x?-1:1;attrsTo(record.flip,{transform:record.facing<0?'scale(-1 1)':''});}// le cycliste regarde dans le sens de la route
    if(moved&&from&&prev&&!reduced()&&browser()){
@@ -279,18 +311,18 @@ export function createSVGBoardRenderer(container,options={}){
     const r=prev.route||[],ferry=(g.edges||[]).find(e=>e.ferry&&((e.a===from.key&&e.b===p.pos)||(e.b===from.key&&e.a===p.pos)));
     let pts,stepMs=STEP_MS;
     const steps=travelTail(g,p,from);
-    if(steps)pts=[from,...steps].map(t=>({x:t.x,y:t.y}));
-    else if(prev.activeId===p.id&&r.length&&r.at(-1)===p.pos)pts=[from,...r.map(k=>g.board[k]).filter(Boolean)].map(t=>({x:t.x,y:t.y}));
+    if(steps)pts=[from,...steps].map(t=>({x:t.x,y:t.y,type:t.type}));
+    else if(prev.activeId===p.id&&r.length&&r.at(-1)===p.pos)pts=[from,...r.map(k=>g.board[k]).filter(Boolean)].map(t=>({x:t.x,y:t.y,type:t.type}));
     else if(ferry){const arc=ferryArc(g.board[ferry.a],g.board[ferry.b]),fwd=ferry.a===from.key;pts=Array.from({length:17},(_,i)=>arc.point(fwd?i/16:1-i/16));stepMs=90;}
     else pts=[{x:from.x,y:from.y},{x:target.x,y:target.y}];
-    pts[pts.length-1]={x:target.x,y:target.y};
+    pts[pts.length-1]={x:target.x,y:target.y,type:pts[pts.length-1].type};record.follow=p.id===g.id&&!ferry&&pts.length>2;
     if(pts.length>1){longest=Math.max(longest,animateToken(record,pts,pts.length===2?Math.min(520,Math.max(STEP_MS,Math.hypot(pts[1].x-pts[0].x,pts[1].y-pts[0].y)*6)):stepMs));continue;}
    }
    if(record.anim&&!moved)continue;// une animation en cours garde la main jusqu'au bout
    record.anim&&(record.anim.cancelled=true);record.anim=null;
-   attrsTo(record.el,{transform:`translate(${f1(target.x)} ${f1(target.y)})`});
+   attrsTo(record.el,{transform:`translate(${f1(target.x)} ${f1(target.y)})`});idleDraw(record,clock()/1000);
   }
-  prune(playerNodes,playerKeys);
+  prune(playerNodes,playerKeys);startIdle();
   return longest;
  }
 
@@ -343,7 +375,7 @@ export function createSVGBoardRenderer(container,options={}){
   const activePos=g.board[g.pos];
   if(firstView&&activePos){firstView=false;if(editMode)camera.fit({animate:false});else camera.center(activePos.x,activePos.y,1.7);}
   else if(previous&&previous.activeId!==g.id&&activePos&&!editMode){clearTimeout(glideTimer);glideTimer=setTimeout(()=>{if(!destroyed)camera.focus(activePos.x,activePos.y,{scale:Math.max(camera.scale,1.25),duration:700});},moveMs?moveMs+120:60);}
-  else if(moveMs&&activePos&&!camera.isVisible(activePos.x,activePos.y,60)){clearTimeout(glideTimer);glideTimer=setTimeout(()=>{if(!destroyed)camera.focus(activePos.x,activePos.y,{duration:600});},Math.min(moveMs,500));}
+  else if(moveMs&&activePos&&!followingNow()&&!camera.isVisible(activePos.x,activePos.y,60)){clearTimeout(glideTimer);glideTimer=setTimeout(()=>{if(!destroyed)camera.focus(activePos.x,activePos.y,{duration:600});},Math.min(moveMs,500));}
   previous={activeId:g.id,route:[...route],pos:g.pos};
   diagnostics.lastUpdateMs=clock()-started;
  }
@@ -364,6 +396,10 @@ export function createSVGBoardRenderer(container,options={}){
   // Recentrage animé sur un point (le cycliste actif) ; on rapproche un peu la vue si elle est très éloignée.
   focusOn(x,y,{minScale=1.5,animate=true}={}){camera.focus(x,y,{scale:Math.max(camera.scale,minScale),animate});},
   fitView(){camera.fit();},
+  // Zoom sur le cycliste pendant une action (le soir, la nuit) puis retour à la vue d'avant.
+  spotlight(on){if(reduced()||!state)return;const g=state.g,t=g?.board?.[g.pos];if(!t)return;
+   if(on&&spotSaved==null){spotSaved=camera.scale;camera.focus(t.x,t.y,{scale:Math.max(camera.scale,2.4),duration:750});}
+   else if(!on&&spotSaved!=null){const back=spotSaved;spotSaved=null;camera.focus(t.x,t.y,{scale:back,duration:750});}},
   getCamera(){return camera.view();},
   setDisplayPrefs(next={}){for(const [k,v]of Object.entries(next))prefs=writeDisplayPref(k,v);drawWeatherState();drawMinimapState();if(state&&!destroyed)update(state);return {...prefs};},
   getDisplayPrefs(){return {...prefs};},

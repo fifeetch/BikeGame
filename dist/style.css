@@ -1943,3 +1943,12 @@ body .player-mat.fiche.imm-fiche .night-note{margin:0;padding:4px 10px;font-size
 body.soir .europe-world{filter:sepia(.35) saturate(1.15) hue-rotate(-12deg) brightness(.72)}
 body.soir .playable-europe .city-names{filter:drop-shadow(0 0 4px #ffd27a)}
 @media (prefers-reduced-motion: reduce){.europe-world{transition:none}}
+/* Pion vivant : cape, sueur, tente du soir, météo autour du cycliste */
+.rider-token.free .rider-cape{fill:#f2c94c;stroke:#8a5a14;stroke-width:.5}
+.rider-token.free .rider-helmet.cape{fill:#f2c94c}
+.rider-token.free .rider-sweat{fill:#7fc0e8}
+.rider-token.free .camp-tent{fill:#f2a541;stroke:#8a5a14;stroke-width:.8}
+.rider-token.free .camp-door{fill:#7a4a1a}
+.rider-token.free .fx-rain{stroke:#d6ecf7;stroke-width:1;stroke-linecap:round}
+.rider-token.free .fx-snow{fill:#fff}
+.rider-token.free .fx-puff{fill:#fff}
