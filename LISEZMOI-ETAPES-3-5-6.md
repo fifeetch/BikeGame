@@ -311,3 +311,9 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - **Animations validées par Fi** : col franchi (drapeau planté, « +2 » doré qui s'envole) ; jeton « ? » (carte qui se retourne, étincelles, nom du lieu) ; voyage réussi (confettis, cycliste bras levés) ; ferry (bateau et vague sous le cycliste) ; voyage rapide (petit train) ; scène en route (bulle : clé panne, gouttes météo, cœur belle rencontre, « ! » autre galère) ; manger (le cycliste croque une pomme, les cases d'énergie se remplissent une à une sur la fiche).
 - Code : playFx, boatArt, trainArt, bubbleArt, renderer.effect / gesture (`dist/board-renderer-svg.js`) ; détection des événements de l'historique, sceneBubble (fin de `dist/app.js`) ; `cause` ajoutée aux scènes (simulator.js).
 - Cache : `aventure-velo-v87-anim`, `?v=anim`.
+
+## Alerte des messages en ligne (16 octobre 2026)
+- Signalé par Fi : en partie en ligne, pas d'alerte quand on reçoit un message.
+- Causes probables : le bandeau disparaissait au premier rafraîchissement de l'écran (fréquent pendant le tour de l'autre) et était caché sous les fenêtres ; au-delà de 50 messages, les nouveaux n'étaient plus repérés (comptage par nombre).
+- Correction : nouveaux messages repérés par leur heure ; bandeau en haut, au-dessus de tout, 9 secondes, qui survit aux rafraîchissements (« Marion t'écrit… · Ouvrir ») ; petit « ding » ; bouton 💬 qui clignote et titre de l'onglet « 💬 (n) » tant qu'il y a du non-lu.
+- Cache : `aventure-velo-v88-messages`, `?v=messages`.

@@ -881,21 +881,25 @@ const receivedFor=()=>{if(!m||m.done||screen!=='game'||m.pendingAttack)return nu
 // ==========================================================================
 // Petits messages en partie en ligne : bouton 💬 avec pastille, petit tiroir, phrases rapides, bandeau à l'arrivée.
 // ==========================================================================
-let chat=[],chatOpen=false,chatUnlisten=null,chatCode='',chatSeenAt=0,chatToastTimer=null;
+let chat=[],chatOpen=false,chatUnlisten=null,chatCode='',chatSeenAt=0,chatToastTimer=null,chatToastedAt=0,chatToastNow=null;
 const CHAT_QUICK=['À toi !','Bien joué 👏','Je reviens dans 5 min','😅','🚴💨'];
 const chatSeenKey=()=>'velo-chat-seen-'+(online?.code||'');
 const chatUnread=()=>chat.filter(c=>c.from!==online?.seat&&c.at>chatSeenAt).length;
 function chatMarkSeen(){chatSeenAt=Math.max(chatSeenAt,...chat.map(c=>c.at||0),0);try{localStorage.setItem(chatSeenKey(),String(chatSeenAt));}catch{}}
 async function chatListen(){if(!online||chatCode===online.code)return;chatUnlisten?.();chatCode=online.code;chat=[];try{chatSeenAt=Number(localStorage.getItem(chatSeenKey())||0);}catch{chatSeenAt=0;}
  if(typeof NET.listenChat!=='function'){message='Messages indisponibles : recharge la page (Ctrl + Maj + R) pour avoir la dernière version du jeu.';chatCode='';return;}
- try{chatUnlisten=await NET.listenChat(online.code,list=>{const before=chat.length;chat=Array.isArray(list)?list.filter(c=>c&&c.text):[];
-  const fresh=chat.slice(before).filter(c=>c.from!==online?.seat&&c.at>chatSeenAt);
-  if(chatOpen)chatMarkSeen();else if(fresh.length)chatToast(fresh.at(-1));
+ try{chatUnlisten=await NET.listenChat(online.code,list=>{const first=!chat.length&&!chatToastedAt;chat=Array.isArray(list)?list.filter(c=>c&&c.text):[];
+  // Nouveaux messages : repérés par leur heure (et non par le nombre, plafonné à 50).
+  const fresh=chat.filter(c=>c.from!==online?.seat&&(c.at||0)>Math.max(chatSeenAt,chatToastedAt));chatToastedAt=Math.max(chatToastedAt,...chat.map(c=>c.at||0),0);
+  if(chatOpen)chatMarkSeen();else if(fresh.length){chatToast(fresh.at(-1));if(!first)chatDing();}
   if(screen==='game')chatRefresh();});}catch(e){chatCode='';message='Messages : connexion impossible ('+e.message+').';}}
 const chatBind=()=>document.querySelectorAll('.chat-drawer [data-action],.chat-toast,.chat-btn').forEach(el=>el.onclick=()=>act(el.dataset.action));
-function chatToast(c){const old=document.querySelector('.chat-toast');old?.remove();clearTimeout(chatToastTimer);
- document.body?.insertAdjacentHTML('beforeend',`<button type="button" class="chat-toast" data-action="chat-toggle">💬 <b>${esc(c.name||'')}</b> : ${esc(c.text)}</button>`);chatBind();
- chatToastTimer=setTimeout(()=>document.querySelector('.chat-toast')?.remove(),4000);}
+function chatToast(c){chatToastNow={c,until:Date.now()+9000};chatToastShow();clearTimeout(chatToastTimer);chatToastTimer=setTimeout(()=>{chatToastNow=null;document.querySelector('.chat-toast')?.remove();},9000);}
+// Le bandeau survit aux rafraîchissements de l'écran (le jeu se redessine souvent quand l'autre joue).
+function chatToastShow(){if(!chatToastNow||chatToastNow.until<Date.now()||chatOpen){document.querySelector('.chat-toast')?.remove();return;}if(document.querySelector('.chat-toast'))return;const c=chatToastNow.c;
+ document.body?.insertAdjacentHTML('beforeend',`<button type="button" class="chat-toast" data-action="chat-toggle"><span class="ct-ico">💬</span><span><b>${esc(c.name||'')}</b> t’écrit<br>${esc(c.text)}</span><small>Ouvrir</small></button>`);chatBind();}
+// Petit « ding » discret à l'arrivée d'un message (le navigateur l'autorise après un premier clic dans la page).
+let chatAudio=null;function chatDing(){try{chatAudio||=new (window.AudioContext||window.webkitAudioContext)();const a=chatAudio,t=a.currentTime;for(const [f,d] of [[880,0],[1320,.12]]){const o=a.createOscillator(),g=a.createGain();o.frequency.value=f;o.type='sine';g.gain.setValueAtTime(0,t+d);g.gain.linearRampToValueAtTime(.12,t+d+.02);g.gain.exponentialRampToValueAtTime(.001,t+d+.35);o.connect(g).connect(a.destination);o.start(t+d);o.stop(t+d+.4);}}catch{}}
 function chatDrawer(){const me=online?.seat;return `<aside class="chat-drawer" aria-label="Messages"><div class="cd-head"><b>💬 Messages</b><button type="button" data-action="chat-toggle" aria-label="Fermer">✕</button></div>
  <div class="cd-list">${chat.length?chat.slice(-30).map(c=>`<p class="${c.from===me?'me':''}"><small>${esc(c.from===me?'Toi':c.name||'')}</small>${esc(c.text)}</p>`).join(''):'<p class="cd-empty">Pas encore de message.</p>'}</div>
  <div class="cd-quick">${CHAT_QUICK.map((t,i)=>`<button type="button" data-action="chat-quick-${i}">${esc(t)}</button>`).join('')}</div>
@@ -906,7 +910,7 @@ function chatRefresh(){const n=chatUnread(),b=document.querySelector('.chat-btn'
 async function chatSend(text){text=String(text||'').trim();if(!text||!online)return;const me=m?.players.find(p=>p.id===online.seat);
  try{await NET.sendChat(online.code,{from:online.seat,name:me?.name||'',text});}catch(e){message='Message non envoyé : '+e.message;render();}}
 {const priorAct=act;act=a=>{
- if(a==='chat-toggle'){chatOpen=!chatOpen;if(chatOpen)chatMarkSeen();document.querySelector('.chat-toast')?.remove();render();if(chatOpen)setTimeout(()=>{document.querySelector('.cd-list')&&(document.querySelector('.cd-list').scrollTop=1e6);document.querySelector('#chat-input')?.focus();},30);return;}
+ if(a==='chat-toggle'){chatOpen=!chatOpen;if(chatOpen)chatMarkSeen();chatToastNow=null;document.querySelector('.chat-toast')?.remove();render();if(chatOpen)setTimeout(()=>{document.querySelector('.cd-list')&&(document.querySelector('.cd-list').scrollTop=1e6);document.querySelector('#chat-input')?.focus();},30);return;}
  if(a==='chat-send'){const i=document.querySelector('#chat-input');chatSend(i?.value);if(i)i.value='';return;}
  if(a.startsWith('chat-quick-')){chatSend(CHAT_QUICK[+a.slice(11)]);return;}
  return priorAct(a);};}
@@ -1114,3 +1118,8 @@ function sceneBubble(){const e=m.encounter;if(m.phase!=='encounter'||!e?.road||!
  if(energySeen.key===key&&p.energy>energySeen.energy){const cells=[...document.querySelectorAll('.imm-band .fiche-energy i, .fiche-energy-box .fiche-energy i')];cells.forEach((c,i)=>{if(i>=energySeen.energy&&i<p.energy){c.classList.add('gain');c.style.setProperty('--i',String(i-energySeen.energy));}});}
  energySeen={key,energy:p.energy};
 }catch(err){console.error(err);}};}
+
+// Messages en ligne : bandeau persistant, bouton qui clignote et titre de l'onglet tant qu'il y a des messages non lus.
+{const priorRender=render;render=(...a)=>{priorRender(...a);try{if(!(typeof onlineGame==='function'&&onlineGame())||screen!=='game')return;chatToastShow();const n=chatUnread();
+ document.querySelector('.chat-btn')?.classList.toggle('has-new',n>0&&!chatOpen);const base=document.title.replace(/^💬 \(\d+\) /,'');document.title=n&&!chatOpen?`💬 (${n}) ${base}`:base;}catch{}};}
+{const priorRefresh=chatRefresh;chatRefresh=()=>{priorRefresh();try{const n=chatUnread();document.querySelector('.chat-btn')?.classList.toggle('has-new',n>0&&!chatOpen);const base=document.title.replace(/^💬 \(\d+\) /,'');document.title=n&&!chatOpen?`💬 (${n}) ${base}`:base;}catch{}};}

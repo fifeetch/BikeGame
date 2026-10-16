@@ -1995,3 +1995,11 @@ body.soir .playable-europe .city-names{filter:drop-shadow(0 0 4px #ffd27a)}
 .fiche-energy i.gain{animation:energy-fill .5s ease-out both;animation-delay:calc(var(--i,0) * .18s)}
 @keyframes energy-fill{0%{transform:scaleY(.2);background:#fff3c4}60%{transform:scaleY(1.25)}100%{transform:scaleY(1)}}
 @media (prefers-reduced-motion: reduce){.fx-gain,.fx-landmark .fx-card,.fx-spark,.fx-confetti,.fx-col .fx-flag,.fiche-energy i.gain{animation:none}}
+/* Messages en ligne : bandeau bien visible, au-dessus de tout, et bouton qui clignote tant qu'il y a du non-lu */
+.chat-toast{top:76px;bottom:auto;z-index:10050;display:flex;align-items:center;gap:12px;animation:chat-in .35s ease-out}
+.chat-toast .ct-ico{font-size:26px}
+.chat-toast small{margin-left:8px;background:#f2a541;color:#102226;border-radius:8px;padding:3px 9px;font-weight:700}
+@keyframes chat-in{from{opacity:0;transform:translate(-50%,-14px)}to{opacity:1;transform:translate(-50%,0)}}
+.chat-btn.has-new{animation:chat-pulse 1.4s ease-in-out infinite;border-color:#f2a541}
+@keyframes chat-pulse{0%,100%{box-shadow:0 0 0 0 rgba(242,165,65,.0)}50%{box-shadow:0 0 0 6px rgba(242,165,65,.45)}}
+@media (prefers-reduced-motion: reduce){.chat-toast,.chat-btn.has-new{animation:none}}
