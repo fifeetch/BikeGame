@@ -49,7 +49,7 @@ export function validateRules(input){
  if(![r.workDays,...Object.values(r.rest).map(a=>a.days)].every(n=>Number.isInteger(n)&&n>=1&&n<=30))throw Error('Durée des actions : de 1 à 30 jours.');
  if(![r.startFood,r.maxFood,r.food.quantity,r.food.maxPerTurn,...Object.values(r.bikes).flatMap(b=>[b.capacity,b.extraDistance,b.extraFood]),...Object.values(r.equipment).map(e=>e.space)].every(Number.isInteger)||r.maxFood<r.startFood)throw Error('Quantités, capacités et distances : nombres entiers ; capacité nourriture ≥ départ.');
  if(Object.values(r.adventure.landmarkOdds).reduce((a,b)=>a+b,0)!==100||!Number.isInteger(r.adventure.landmarks)||r.adventure.landmarks>60)throw Error('Lieux cachés : de 0 à 60 jetons, chances totalisant 100 %.');
- if(!Number.isInteger(r.budget.every)||r.budget.every<1||!Number.isInteger(r.fatigue.days)||r.fatigue.days<1||r.fatigue.maxEnergyPenalty>=r.maxEnergy)throw Error('Budget : versement tous les 1 jour ou plus ; fatigue : au moins 1 jour, pénalité inférieure à l’énergie maximale.');
+ if(!Number.isInteger(r.budget.every)||r.budget.every<1||!Number.isInteger(r.fatigue.days)||r.fatigue.days<1||r.fatigue.maxEnergyPenalty*r.fatigue.days>=r.maxEnergy)throw Error('Budget : versement tous les 1 jour ou plus ; fatigue : au moins 1 jour, et (pénalité × jours) inférieur à l’énergie maximale.');
  if((r.offroad.item&&!r.equipment[r.offroad.item])||!Object.values(r.offroad.maxDistance).every(n=>Number.isInteger(n)&&n>=1&&n<=5))throw Error('Hors route : objet protecteur connu, et distance maximale hors route entière de 1 à 5 cases.');
  if(Object.values(r.probabilities).reduce((a,b)=>a+b,0)!==100)throw Error('Les probabilités doivent totaliser 100 %.');
  if(r.victory.mode==='multi'){const v=r.victory;for(const k of ['points','voyages','days']){v[k]=Number(v[k]??0);if(!Number.isInteger(v[k])||v[k]<0||v[k]>999)throw Error('Fin de partie : des nombres entiers de 0 à 999 (0 = pas utilisé).');}if(!v.points&&!v.voyages&&!v.days)throw Error('Fin de partie : choisis au moins une condition (points, voyages ou jours).');}
@@ -64,5 +64,6 @@ export const IMM_FATIGUE_MAX=5;
 const immFatigue=m=>Boolean(m?.immersion&&m.mode==='plateau'&&m.rules.fatigue?.enabled);
 export const fatigueMax=m=>immFatigue(m)?IMM_FATIGUE_MAX:m.rules.fatigue?.days||0;
 export const isExhausted=(m,p)=>Boolean(m.rules.fatigue?.enabled&&(p.fatigue||0)>=fatigueMax(m));
-export const energyCap=(m,p)=>immFatigue(m)?m.rules.maxEnergy-Math.min(IMM_FATIGUE_MAX,p.fatigue||0):m.rules.maxEnergy-(isExhausted(m,p)?m.rules.fatigue.maxEnergyPenalty:0);
+// Mode original et en ligne (règle de Fi, 16 octobre) : chaque niveau de fatigue enlève maxEnergyPenalty (2) à l'énergie maximale : 1 → −2, 2 → −4, 3 (fourbu) → −6.
+export const energyCap=(m,p)=>immFatigue(m)?m.rules.maxEnergy-Math.min(IMM_FATIGUE_MAX,p.fatigue||0):Math.max(1,m.rules.maxEnergy-(m.rules.fatigue?.enabled?m.rules.fatigue.maxEnergyPenalty*Math.min(m.rules.fatigue.days,p.fatigue||0):0));
 export function setPath(object,path,value){const keys=path.split('.');let o=object;for(const k of keys.slice(0,-1))o=o[k];o[keys.at(-1)]=value;}

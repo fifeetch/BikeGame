@@ -297,7 +297,7 @@ function act(a){
  else if(a.startsWith('card-')){cardIndex=Number(a.slice(5));const card=cardById(S.player(m).cardHand[cardIndex]);if(card?.choice==='food-energy')modal='card-effect-choice';else if(card?.target==='self'){if(S.playCard(m,cardIndex,S.player(m).id))modal='';}else modal='card-target';}
  else if(a==='ravito-food'||a==='ravito-energy'){if(S.playCard(m,cardIndex,S.player(m).id,a==='ravito-food'?'food':'energy'))modal='';}
  else if(a.startsWith('target-')){if(!S.playCard(m,cardIndex,a.slice(7)))message='Cette carte ne peut pas être jouée sur cette cible.';else modal='';}
- else if(/^enc-\d$/.test(a)){if(!S.resolveEncounter(m,+a.slice(4)))message='Choix impossible : il te manque de quoi le payer.';else if(m.immOutcome){message=(m.immOutcome.ok?'Pari réussi : ':'Pari perdu : ')+m.immOutcome.text;m.immOutcome=null;}}
+ else if(/^enc-\d$/.test(a)){if(!S.resolveEncounter(m,+a.slice(4)))message='Choix impossible : il te manque de quoi le payer.';else if(m.immOutcome){betResult={...m.immOutcome,energy:S.player(m).energy};m.immOutcome=null;}}
  else if(a==='mode-original'||a==='mode-immersion'){readRoster();setupRules.immersion={...(setupRules.immersion||{}),enabled:a==='mode-immersion'};try{localStorage.setItem('velo-setup-rules',JSON.stringify(setupRules));}catch{}}
  else if(a==='events-cards'||a==='events-encounters'){readRoster();setupRules.encounters={...(setupRules.encounters||{}),enabled:a==='events-encounters'};localStorage.setItem('velo-setup-rules',JSON.stringify(setupRules));}
  else if(a.startsWith('pending-')){const choice={ 'pending-tube':'tube','pending-lose':'lose','pending-kit':'kit','pending-energy':'energy','pending-food':'food','pending-auto':'auto'}[a];if(!S.resolvePendingCard(m,choice))message='Cette résolution n’est pas disponible.';}
@@ -385,7 +385,7 @@ function dayAction(blocked){const p=S.player(m),left=Math.max(0,S.distance(m)-m.
   center=dockPlan(c)+dayMain('🚴',c.ok?'Rouler →':'Impossible','','route-go',!c.ok);
   icons=dockIcon('✕','Effacer','route-clear')+cards;}
  else if(!m.moved&&p.turnModifiers?.skipMove){step=2;center=dayMain('⏭','Finir ma journée','pas de déplacement aujourd’hui','endturn');icons=dockIcon('🌙','Me reposer','rest-open')+cards;}
- else if(!m.moved){step=0;center=`<div class="dock-hint"><span aria-hidden="true">🗺️</span><span><b>Trace ton étape</b> · clique les cases entourées sur la carte · ${left} case${left>1?'s':''} · ${p.energy} ⚡${dockWarnings()}</span></div>`;
+ else if(!m.moved){step=0;center=`<div class="dock-hint"><span aria-hidden="true">🗺️</span><span><b>Trace ton étape</b> · ${left} case${left>1?'s':''} · ${p.energy} ⚡${dockWarnings()}</span></div>`;
   icons=dockIcon('🌙','Me reposer','rest-open')+dockIcon('⏭','Passer','endturn-ask','','dim')+cards;}
  else{step=2;center=dayMain('🌙','Finir ma journée',left&&S.moves(m).length?`${left} case${left>1?'s':''} restante${left>1?'s':''}`:'','endturn-ask');
   const eat=S.eatGain(m,p);icons=dockIcon('🍎','Manger','eat',!(p.food>0&&m.ate<m.rules.food.maxPerTurn&&p.energy<energyCap(m,p)&&(p.items.includes('rechaud')||['ville','auberge'].includes(m.board[p.pos]?.type))))+cards;}
@@ -517,7 +517,7 @@ function encounterModal(){const e=S.currentEncounter(m),p=S.player(m);if(!e)retu
  return `<div class="encounter"><div class="encounter-art"><svg viewBox="0 0 520 180" role="img" aria-label="${esc(e.title)}">${ENCOUNTER_SCENES[e.scene]||ENCOUNTER_SCENES.plaine}</svg><span>${imm?(sit?'Imprévu':road?'En route':'Le soir'):'Rencontre'} · ${esc(region)}</span></div>
  <div class="encounter-body${imm&&e.kind==='galere'?' galere':''}"><span class="eyebrow">${sit?'IMPRÉVU · ':road?'EN ROUTE · ':'LE SOIR · '}JOUR ${m.round} · ${esc(p.name)}</span><h2>${esc(e.title)}</h2>${carnet?`<p class="encounter-carnet"><span>Carnet du soir</span>${esc(carnet)}</p>`:''}${m.encounter?.nightLine?`<p class="encounter-night">${esc(m.encounter.nightLine)}</p>`:''}<p class="encounter-quote">${esc(e.quote)}</p>
  <div class="encounter-choices">${e.choices.map((c,i)=>{const ok=S.canChooseEncounter(m,i),need=Object.entries(c.need||{}).map(([k,v])=>v+' '+({money:'pièce',food:'repas',energy:'énergie'}[k]||k)+(k==='money'&&v>1?'s':'')).join(', ');
-  return `<button type="button" class="encounter-choice${Object.keys(c.effect||{}).length?'':' quiet'}" data-action="enc-${i}" ${ok?'':'disabled'}><b>${esc(c.label)}</b><small>${esc(encounterEffectText(c))}</small>${!ok?`<em>Il faut ${esc(need)}</em>`:''}</button>`;}).join('')}</div></div></div>`;}
+  return `<button type="button" class="encounter-choice${Object.keys(c.effect||{}).length?'':' quiet'}" data-action="enc-${i}" ${ok?'':'disabled'}><b>${esc(c.label)}</b>${imm&&c.chance?betChoiceBody(c):`<small>${esc(encounterEffectText(c))}</small>`}${!ok?`<em>Il faut ${esc(need)}</em>`:''}</button>`;}).join('')}</div></div></div>`;}
 // ---------- Météo annoncée : bloc de la fiche Journée et bulletin du lendemain ----------
 const regionPhrase=name=>({Ouest:'l’Ouest',Est:'l’Est',Nord:'le Nord'}[name]||'les '+name);
 function meteoHere(p){if(!S.forecastOn(m))return '';const w=S.weatherToday(m,p.pos),info=WEATHER[w],id=S.regionAt(m,p.pos),region=REGIONS[id].name,next=WEATHER[S.weatherBulletin(m,m.round+1).find(b=>b.region===id)?.weather||'beau'];
@@ -558,7 +558,7 @@ function ficheJournee(p){const r=m.rules,here=m.board[p.pos],atCity=here?.type==
  const eatWhy=why([!p.food,'plus de nourriture'],[!canEat,'réchaud, ville ou auberge'],[p.energy>=cap,'énergie pleine'],[m.ate>=r.food.maxPerTurn,'déjà mangé']);
  const foodWhy=why([r.food.cityOnly&&!atCity,'en ville seulement'],[p.money<r.food.price,'pas assez de pièces']);
  const restoWhy=why([!atCity,'en ville seulement'],[p.money<r.food.restaurantPrice,'pas assez de pièces'],[p.energy>=cap,'énergie pleine'],[m.ate>=r.food.maxPerTurn,'déjà mangé']);
- const sleep=S.immersionOn(m)?immersionSleepTiles(p,blocked):Object.entries(r.rest).map(([id,a0])=>{const a=S.restRule(m,p,id)||a0,free=id==='bivouac'&&p.turnModifiers?.freeBivouac,no=why([a.blocked,'interdit ici (imprévu)'],[rode,'déjà roulé aujourd’hui'],[a.cityOnly&&!atCity,'en ville seulement'],[!free&&a.tent&&!p.items.includes('tente'),'tente nécessaire'],[!free&&p.money<a.price,'pas assez de pièces']);
+ const sleep=S.immersionOn(m)?immersionSleepTiles(p,blocked):origSleepRows(p,blocked,rode,atCity);const sleepOld=()=>Object.entries(r.rest).map(([id,a0])=>{const a=S.restRule(m,p,id)||a0,free=id==='bivouac'&&p.turnModifiers?.freeBivouac,no=why([a.blocked,'interdit ici (imprévu)'],[rode,'déjà roulé aujourd’hui'],[a.cityOnly&&!atCity,'en ville seulement'],[!free&&a.tent&&!p.items.includes('tente'),'tente nécessaire'],[!free&&p.money<a.price,'pas assez de pièces']);
   const sub=no||(free?'gratuit':(a.price?a.price+' pièce'+(a.price>1?'s':''):'gratuit')+(a.tent?' · tente':'')+(id!=='bivouac'&&r.fatigue.enabled?' · repose':''));
   return ficheTile(a.name,sub,'rest-'+id,blocked||Boolean(no),id!=='bivouac'&&tired&&!no?'conseil':'');}).join('')+(S.immersionOn(m)?demandTile(p,blocked,rode):'');
  const ferries=S.ferryOptions(m).map(t=>ficheTile('Bateau · '+esc(t.name||t.key),r.ferryPrice+' pièces · fin de journée','',blocked||p.money<r.ferryPrice,'ferry',`data-ferry="${esc(t.key)}"`)).join('');
@@ -590,7 +590,7 @@ function ficheCartes(){const previous=sheetTab;sheetTab='cartes';const html=play
 function ficheGauges(p){const r=m.rules,cap=energyCap(m,p),fourbu=isExhausted(m,p),days=r.fatigue.days,f=p.fatigue||0;
  const cells=Array.from({length:r.maxEnergy},(_,i)=>`<i class="${i<p.energy?'on':i>=cap?(S.immersionOn(m)?'lock imm':'lock'):''}"></i>`).join('');
  const fatigue=r.fatigue.enabled?(fourbu?`<small class="fourbu">Fourbu : énergie max −${r.fatigue.maxEnergyPenalty} jusqu’au camping ou à l’hôtel</small>`:`<small>Fatigue ${f} / ${days} · ${f===0?'en forme':days-f===1?'encore 1 jour avant d’être fourbu':'ça tire un peu'}</small>`):'';
- const fi=S.fatigueInfo(m,p);const fatigueBox=fi?'':fatigue;
+ const fi=S.fatigueInfo(m,p)||origFatigue(p);const fatigueBox=fi?'':fatigue;
  if(fi)return immGauges(p,fi,cells,cap);
  const box=(cls,icon,n,label)=>`<div class="fiche-count ${cls}">${svgI(icon,26)}<b>${n}</b><small>${label}</small></div>`;
  return `<section class="fiche-gauges${fi?' imm':''}" aria-label="Jauges de ${esc(p.name)}"><div class="fiche-energy-box"><div class="fiche-gauge-head"><span>Énergie</span><b>${p.energy}<small> / ${cap}</small></b></div><div class="fiche-energy" style="--cells:${r.maxEnergy}" aria-hidden="true">${cells}</div>${fatigueBox}${fi?'<small class="imm-fat-legend">orange : ton énergie · hachuré : bloqué par la fatigue</small>':''}</div>${fi?immFatigueBlock(fi):''}
@@ -1025,12 +1025,13 @@ function immFatigueChips(fi,p){const out=[];
 
 // ---------- Maquette A « Fiche compacte » : énergie et fatigue sur une bande, repas/pièces/aventure en ligne, nuits en tableau ----------
 function immGauges(p,fi,cells,cap){const dots=Array.from({length:fi.max},(_,i)=>`<i class="${i<fi.level?'on':''}"></i>`).join('');
+ if(fi.orig)fi={...fi,galereLabel:'0 sur 1',effects:[],risk:''};
  const [k,n]=fi.galereLabel.split(' sur ').map(Number),risk=Array.from({length:n||1},(_,i)=>`<i class="${i<k?'on':''}"></i>`).join('');
- const extra=fi.effects.slice(1).filter(e=>e!=='paris plus difficiles'),txt=fi.level>=5?'demain : repos forcé':`galère ${fi.galereLabel}${extra.length?' · '+extra.join(' · '):fi.level===0?' · météo et mécanique':''}`;
- const tip=`${fi.name} (fatigue ${fi.level}/${fi.max}) : énergie max ${fi.cap}. Événement en route ${fi.roadLabel} jours, galère ${fi.galereLabel} : ${fi.risk}.${fi.level>=3?' Paris plus difficiles.':''}`;
+ const extra=fi.effects.slice(1).filter(e=>e!=='paris plus difficiles'),txt=fi.orig?fi.text:fi.level>=5?'demain : repos forcé':`galère ${fi.galereLabel}${extra.length?' · '+extra.join(' · '):fi.level===0?' · météo et mécanique':''}`;
+ const tip=fi.orig?`${fi.name} (fatigue ${fi.level}/${fi.max}) : énergie max ${fi.cap}. Chaque niveau de fatigue enlève ${m.rules.fatigue.maxEnergyPenalty} à l’énergie maximale.`:`${fi.name} (fatigue ${fi.level}/${fi.max}) : énergie max ${fi.cap}. Événement en route ${fi.roadLabel} jours, galère ${fi.galereLabel} : ${fi.risk}.${fi.level>=3?' Paris plus difficiles.':''}`;
  return `<section class="fiche-gauges imm-gauges" aria-label="Jauges de ${esc(p.name)}"><div class="imm-band" title="${esc(tip)}">
   <div class="imm-nrg"><span class="imm-lab">ÉNERGIE</span><span class="fiche-energy" style="--cells:${m.rules.maxEnergy}" aria-hidden="true">${cells}</span><b>${p.energy}<small>/${cap}</small></b></div>
-  <div class="imm-fatl"><span class="imm-niv lvl${fi.level}">${esc(fi.name)} <span class="imm-dots" aria-label="fatigue ${fi.level} sur ${fi.max}">${dots}</span></span>${fi.level<5?`<span class="imm-risk-bar" aria-hidden="true">${risk}</span>`:''}<span class="imm-risk-txt">${esc(txt)}</span></div></div>
+  <div class="imm-fatl"><span class="imm-niv lvl${fi.orig?(fi.level>=fi.max?5:fi.level):fi.level}">${esc(fi.name)} <span class="imm-dots" aria-label="fatigue ${fi.level} sur ${fi.max}">${dots}</span></span>${fi.level<5&&!fi.orig?`<span class="imm-risk-bar" aria-hidden="true">${risk}</span>`:''}<span class="imm-risk-txt${fi.orig?' orig':''}">${esc(txt)}</span></div></div>
   <div class="imm-counts"><span><b>${p.food}</b>repas</span><span><b>${p.money}</b>pièces</span><span><b>${p.points}</b>aventure</span></div></section>`;}
 const NIGHT_ICON={bivouac:'⛺',camping:'🏕',hotel:'🏨',demander:'🚪'};
 function immSleepRows(p,blocked,info){const lvl=p.fatigue||0,pill=(cls,t)=>`<span class="imm-pill ${cls}">${t}</span>`;
@@ -1043,4 +1044,33 @@ function immSleepRows(p,blocked,info){const lvl=p.fatigue||0,pill=(cls,t)=>`<spa
   const tip=d?`Grand accueil ${oddsLabel(o.odds.grand)} · jardin ${oddsLabel(o.odds.jardin)} · refus ${oddsLabel(o.odds.refus)}`:'';
   return `<button class="imm-night${off?' off':''}${o.id==='hotel'&&lvl>=3&&!o.why?' conseil':''}" data-action="rest-${o.id}" ${off?'disabled':''} ${tip?`title="${esc(tip)}"`:''}><span class="ic" aria-hidden="true">${NIGHT_ICON[o.id]||''}</span><span class="n">${esc(d?'Demander':o.name)} <span class="p">· ${o.price?o.price+' pièce'+(o.price>1?'s':''):'gratuit'}</span></span><span class="e">${e}</span>${f}${odds}${sub?`<span class="sub">${sub}</span>`:''}</button>`;}).join('');
  return `<div class="imm-nights">${rows}</div>`+(info.restDay?`<p class="night-note">Sans rouler aujourd’hui : la nuit rend ${info.factor} fois plus d’énergie.</p>`:'')+(info.stormy?'<p class="night-note storm">Pluie ou orage cette nuit : le bivouac devient risqué.</p>':'');}
-{const priorSheet2=playerSheet;playerSheet=(inline=false)=>{const h=priorSheet2(inline);return m&&S.immersionOn(m)?h.replace('player-mat fiche','player-mat fiche imm-fiche'):h;};}
+{const priorSheet2=playerSheet;playerSheet=(inline=false)=>{const h=priorSheet2(inline);return m?h.replace('player-mat fiche','player-mat fiche imm-fiche'):h;};}
+
+// ---------- Fiche compacte dans le mode original et en ligne : même visuel, règles d'origine ----------
+const ORIG_FAT_NAMES=['En forme','Un peu las','Fatigué','Fourbu'];
+function origFatigue(p){const r=m.rules.fatigue;if(!r?.enabled)return null;const f=Math.min(r.days,p.fatigue||0),cap=energyCap(m,p);
+ const name=f>=r.days?'Fourbu':ORIG_FAT_NAMES[Math.min(f,ORIG_FAT_NAMES.length-2)];
+ return {orig:true,level:f,max:r.days,name,cap,text:f===0?'reposé':`énergie max ${cap} · camping ou hôtel pour récupérer`};}
+function origSleepRows(p,blocked,rode,atCity){const r=m.rules,f=p.fatigue||0,fat=r.fatigue?.enabled;
+ const rows=Object.entries(r.rest).map(([id,a0])=>{const a=S.restRule(m,p,id)||a0,free=id==='bivouac'&&p.turnModifiers?.freeBivouac;
+  const why=[[a.blocked,'interdit ici (imprévu)'],[rode,'déjà roulé aujourd’hui'],[a.cityOnly&&!atCity,'en ville seulement'],[!free&&a.tent&&!p.items.includes('tente'),'tente nécessaire'],[!free&&p.money<a.price,'pas assez de pièces']].find(([bad])=>bad)?.[1]||'';
+  const bonus=p.items.reduce((n,i)=>n+(r.equipment[i]?.energyBonus||0),0),gain=(id==='bivouac'&&m.cardVersion===3?r.cardBalance?.bivouacEnergy??a.energy:a.energy)+bonus;
+  const pill=!fat?'':id==='bivouac'?`<span class="imm-pill ${f?'r':'z'}">${f?'fatigue gardée':'reposé'}</span>`:`<span class="imm-pill ${f?'f':'z'}">${f?'fatigue effacée':'reposé'}</span>`;
+  const off=blocked||Boolean(why),price=free?'gratuit':a.price?a.price+' pièce'+(a.price>1?'s':''):'gratuit';
+  return `<button class="imm-night orig${off?' off':''}${id!=='bivouac'&&f>=(r.fatigue?.days||3)-1&&!why?' conseil':''}" data-action="rest-${id}" ${off?'disabled':''}><span class="ic" aria-hidden="true">${NIGHT_ICON[id]||''}</span><span class="n">${esc(a.name)} <span class="p">· ${price}${a.tent&&!free?' · tente':''}</span></span><span class="e">+${gain} ⚡</span>${pill}${why?`<span class="sub">${esc(why)}</span>`:''}</button>`;}).join('');
+ return `<div class="imm-nights">${rows}</div>`;}
+// ---------- Mode Immersion : les paris (maquette « Paris et fiche standard ») ----------
+let betResult=null;
+function fxList(fx){const sign=n=>(n>0?'+':'−')+Math.abs(n),out=[];
+ if(fx.energy)out.push([fx.energy>0?'pos':'neg',sign(fx.energy)+' énergie']);if(fx.food)out.push([fx.food>0?'pos':'neg',sign(fx.food)+' repas']);
+ if(fx.money)out.push([fx.money>0?'pos':'neg',sign(fx.money)+' pièce'+(Math.abs(fx.money)>1?'s':'')]);if(fx.points)out.push([fx.points>0?'pos':'neg',sign(fx.points)+' point'+(Math.abs(fx.points)>1?'s':'')]);
+ if(fx.fatigue)out.push([fx.fatigue<0?'pos':'neg','fatigue '+sign(fx.fatigue)]);if(fx.tomorrow)out.push([fx.tomorrow>0?'pos':'neg',sign(fx.tomorrow)+' case demain']);
+ if(fx.stopToday)out.push(['neg','fin de la route aujourd’hui']);if(fx.restDay)out.push(['neg','demain : repos forcé']);return out;}
+const fxText=fx=>fxList(fx).map(x=>x[1]).join(' · ')||'rien ne change';
+function betChoiceBody(c){const base=c.chance.odds,odds=S.betOdds(m,base),pct=Math.round(odds*100),tired=odds<base;
+ return `<span class="bet-odds">🎲 Un pari · ${oddsLabel(pct)}<i style="--w:${pct}%"></i></span>${tired?`<span class="bet-tired">Fatigue : −${Math.round((base-odds)*100)} %</span>`:''}<span class="bet-issues"><span class="ok"><strong>✓ Si ça marche</strong>${esc(c.chance.ok.text)} · ${esc(fxText(c.chance.ok.effect||{}))}</span><span class="ko"><strong>✗ Si ça rate</strong>${esc(c.chance.ko.text)} · ${esc(fxText(c.chance.ko.effect||{}))}</span></span>`;}
+function betModal(){const b=betResult;if(!b)return '';const fx=fxList(b.fx||{});
+ return `<div class="bet-pop ${b.ok?'ok':'ko'}" role="dialog" aria-modal="true" aria-label="${b.ok?'Pari réussi':'Pari raté'}"><div class="bet-die" aria-hidden="true">${b.ok?'✓':'✗'}</div><h2>${b.ok?'Pari réussi !':'Pari raté…'}</h2><p class="bet-what">${esc(b.label||'')}</p><p>${esc(b.text)}</p>
+ <div class="bet-fx">${fx.length?fx.map(([c,t])=>`<span class="${c}">${esc(t)}</span>`).join(''):'<span class="pos">Rien ne change</span>'}${b.fx?.energy?`<span>il t’en reste ${b.energy}</span>`:''}</div>
+ <button type="button" class="bet-ok" data-bet-ok>Continuer</button><small>Chance : ${oddsLabel(Math.round((b.odds||.5)*100))}</small></div>`;}
+{const priorRender=render;render=(...a)=>{priorRender(...a);try{document.querySelector('.bet-layer')?.remove();if(betResult&&screen==='game'){const d=document.createElement('div');d.className='bet-layer';d.innerHTML=betModal();document.body.appendChild(d);const go=d.querySelector('[data-bet-ok]');go.onclick=()=>{betResult=null;d.remove();};go.focus();}}catch(err){console.error(err);}};}

@@ -45,11 +45,11 @@ test('col nommé : 2 points, +3 au 3e col franchi',()=>{
  assert.equal(q.points-before,2,'le second au col ne gagne que les points du col');
 });
 
-test('fatigue : +1 par jour de route, +1 avec un col, fourbu à 3 (énergie max −2), camping ou hôtel la remet à 0',()=>{
+test('fatigue : +1 par jour de route, +1 avec un col, −2 d’énergie max par niveau (fourbu à 3 : max 4), camping ou hôtel la remet à 0',()=>{
  const m=match(1),p=S.player(m);
  const ride=()=>{const t=near(m,p.pos,t=>t.type==='plaine'||t.type==='cote'||t.type==='ville');p.energy=Math.max(p.energy,5);assert(S.move(m,t.key));assert(S.endTurn(m));if(m.phase==='card-choice')S.chooseCard(m,0);if(m.phase==='event')S.resolve(m,'decline');};
  ride();assert.equal(p.fatigue,1);ride();assert.equal(p.fatigue,2);assert(!isExhausted(m,p));
- ride();assert.equal(p.fatigue,3);assert(isExhausted(m,p));assert.equal(energyCap(m,p),8);assert(p.energy<=8);
+ ride();assert.equal(p.fatigue,3);assert(isExhausted(m,p));assert.equal(energyCap(m,p),4);assert(p.energy<=4);
  p.items.push('tente');assert(S.rest(m,'bivouac'));if(m.phase==='card-choice')S.chooseCard(m,0);assert.equal(p.fatigue,3,'le bivouac ne repose pas vraiment');
  assert(S.rest(m,'camping'));assert.equal(p.fatigue,0);assert.equal(energyCap(m,p),10);
  const m2=match(1),p2=S.player(m2),col=Object.values(m2.board).find(t=>t.type==='col');p2.pos=col.links[0];p2.energy=10;assert(S.move(m2,col.key));assert(S.endTurn(m2));assert.equal(p2.fatigue,2,'un col fatigue deux fois plus');

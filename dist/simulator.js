@@ -229,8 +229,8 @@ export function drawCard(m){if(C.isEventGame(m))return C.draw(m);const pool=effe
 export function endTurn(m){if(m.pendingAttack||m.done||!['move','place'].includes(m.phase))return false;
  const rider=player(m),fatigue=m.rules.fatigue;
  if(immersionOn(m))immersionRideFatigue(m,rider);
- else if(fatigue?.enabled&&m.moved>0&&m.turnKind!=='rest'){const was=isExhausted(m,rider);rider.fatigue=Math.min(fatigue.days,(rider.fatigue||0)+rideGain(m,rider,1+(rider.dayCols?fatigue.colExtra:0)));
-  if(!was&&isExhausted(m,rider)){rider.energy=Math.min(rider.energy,energyCap(m,rider));record(m,'fatigue',`${rider.name} est fourbu : énergie maximale −${fatigue.maxEnergyPenalty} jusqu’à une vraie nuit (camping ou hôtel).`);}}
+ else if(fatigue?.enabled&&m.moved>0&&m.turnKind!=='rest'){const before=rider.fatigue||0;rider.fatigue=Math.min(fatigue.days,before+rideGain(m,rider,1+(rider.dayCols?fatigue.colExtra:0)));rider.energy=Math.min(rider.energy,energyCap(m,rider));
+  if(rider.fatigue>before)record(m,'fatigue',isExhausted(m,rider)?`${rider.name} est fourbu : énergie maximale ${energyCap(m,rider)} jusqu’à une vraie nuit (camping ou hôtel).`:`${rider.name} : fatigue ${rider.fatigue}/${fatigue.days}, énergie maximale ${energyCap(m,rider)}.`);}
  rider.dayCols=0;
  record(m,'end','Fin du tour sur '+(m.board[player(m).pos].name||E.terrains[m.board[player(m).pos].type].name)+'.',{distance:m.moved,action:m.turnKind});
  if(C.isEventGame(m)){const p=player(m);C.onTurnEnd(m,p);if(p.blockedFirst){for(const effect of (p.pendingEffects||[]).filter(e=>e.kind==='road_closed'))C.discard(m,effect.cardId);p.pendingEffects=(p.pendingEffects||[]).filter(e=>e.kind!=='road_closed');p.blockedFirst=null;}p.freeSteps=0;p.freeGeneralSteps=0;p.freeRoadSteps=0;p.freeTailwindSteps=0;p.bonusDistanceUsed=0;p.shortcutActive=false;if(m.encounters){beginEncounter(m);return true;}C.drawChoices(m);if(!m.cardChoices.length&&!m.pendingAttack)advance(m);return true;}
@@ -272,7 +272,7 @@ function beginEncounter(m){if(m.immersion){immersionEvening(m);return;}const p=p
 export const currentEncounter=m=>m.encounter?m.encounter.scene||ENCOUNTERS.find(e=>e.id===m.encounter.id):null;
 export function canChooseEncounter(m,index){const e=currentEncounter(m),c=e?.choices[index],p=player(m);if(!c||m.phase!=='encounter')return false;if(c.item&&!p.items.includes(c.item))return false;return Object.entries(c.need||{}).every(([k,v])=>(p[k]||0)>=v);}
 export function resolveEncounter(m,index){if(!canChooseEncounter(m,index))return false;const e=currentEncounter(m),c=e.choices[index],p=player(m),road=Boolean(m.encounter.road);
- let fx=c.effect||{},text=c.text||'';if(c.chance){const ok=irand(m)<chanceOdds(m,p,c.chance.odds),o=ok?c.chance.ok:c.chance.ko;fx=o.effect||{};text=o.text;m.immOutcome={turn:m.turn,ok,text};}
+ let fx=c.effect||{},text=c.text||'';if(c.chance){const odds=chanceOdds(m,p,c.chance.odds),ok=irand(m)<odds,o=ok?c.chance.ok:c.chance.ko;fx=o.effect||{};text=o.text;m.immOutcome={turn:m.turn,ok,text,odds,fx:{...fx},title:e.title,label:c.label};}
  if(fx.energy)p.energy=Math.max(0,Math.min(energyCap(m,p),p.energy+fx.energy));
  for(const k of ['food','money','points'])if(fx[k])p[k]=Math.max(0,p[k]+fx[k]);
  if(fx.food)p.food=Math.min(p.food,C.foodCapacity(m,p));
@@ -462,6 +462,7 @@ export const fatigueLevel=(m,p=player(m))=>FATIGUE[Math.max(0,Math.min(IMM_FATIG
 function immOn(m){return immersionOn(m)&&Boolean(m.rules.fatigue?.enabled);}
 function immLessDistance(m,p){return immOn(m)?fatigueLevel(m,p).less||0:0;}
 function immMealPenalty(m,p){return immOn(m)?fatigueLevel(m,p).meal||0:0;}
+export function betOdds(m,odds,p=player(m)){return chanceOdds(m,p,odds);}
 function chanceOdds(m,p,odds){return immOn(m)?Math.max(.1,odds-(fatigueLevel(m,p).bet||0)):odds;}
 // Ce que la nuit enlève à la fatigue : la nuit elle-même, ou −3 (−4 en ville) après une journée sans rouler si la nuit est une vraie nuit.
 function nightFatigue(r,restDay,city){const f=r.fatigue==='reset'?-IMM_FATIGUE_MAX:r.fatigue||0;return restDay&&f<=0?Math.min(f,city?FATIGUE_REST_DAY.city:FATIGUE_REST_DAY.plain):f;}

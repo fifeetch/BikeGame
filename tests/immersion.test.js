@@ -162,7 +162,7 @@ test('Fatigue Immersion : 6 niveaux, chaque niveau bloque une case d’énergie'
  const m=solo(3),p=S.player(m);assert.equal(fatigueMax(m),5);assert.equal(FATIGUE.length,6);
  for(let f=0;f<=5;f++){p.fatigue=f;assert.equal(energyCap(m,p),10-f);}
  assert.deepEqual(FATIGUE.map(l=>l.name),['En forme','Un peu las','Fatigué','Épuisé','À bout','Fourbu']);
- const o=S.createMatch([{name:'A',bike:'gravel',voyage:voyages[0].id,items:[]}],'plateau',CLASSIC,3),q=S.player(o);q.fatigue=2;assert.equal(energyCap(o,q),10,'mode original inchangé');
+ const o=S.createMatch([{name:'A',bike:'gravel',voyage:voyages[0].id,items:[]}],'plateau',CLASSIC,3),q=S.player(o);q.fatigue=2;assert.equal(energyCap(o,q),6,'mode original : −2 par niveau');q.fatigue=1;assert.equal(energyCap(o,q),8);
 });
 
 test('Fatigue : +1 par journée de route, rien au bivouac, −1 camping, −2 hôtel', ()=>{

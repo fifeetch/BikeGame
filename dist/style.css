@@ -1885,3 +1885,29 @@ body .player-mat.fiche.imm-fiche .fiche-tabs button svg{display:none}
 body .player-mat.fiche.imm-fiche .fiche-tabs button span{text-overflow:clip}
 body .imm-nights .imm-night{min-height:0;border-radius:0;box-shadow:none;margin:0;width:100%}
 body .player-mat.fiche.imm-fiche .night-note{margin:0;padding:4px 10px;font-size:12.5px;border-radius:8px}
+
+/* Fiche compacte, mode original : rangées de nuit sans colonne « calme » */
+.imm-night.orig{grid-template-columns:20px minmax(0,1fr) auto auto}
+/* Mode Immersion : paris */
+.bet-odds{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;color:#5a4a2c;margin-top:3px}
+.bet-odds i{flex:1;min-width:60px;height:7px;border-radius:4px;background:#e8a58f;position:relative;overflow:hidden}
+.bet-odds i::before{content:"";position:absolute;inset:0 auto 0 0;width:var(--w);background:#3f8a52}
+.bet-tired{font-size:12px;font-weight:700;color:#8c2f1a}
+.bet-issues{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px;text-align:left}
+.bet-issues>span{border-radius:8px;padding:5px 8px;font-size:12.5px;line-height:1.3;font-weight:500}
+.bet-issues strong{display:block;font:700 13px 'Barlow Condensed',system-ui,sans-serif;letter-spacing:.04em;text-transform:uppercase}
+.bet-issues .ok{background:#dcefe0;color:#1f4a2c}.bet-issues .ko{background:#fbe1d6;color:#7a2c16}
+.bet-layer{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;background:rgba(10,24,26,.55);padding:16px}
+.bet-pop{width:360px;max-width:100%;border-radius:20px;padding:22px 20px;display:flex;flex-direction:column;align-items:center;gap:9px;text-align:center;color:#1b1406;box-shadow:0 20px 50px rgba(0,0,0,.45);font-family:'Barlow',system-ui,sans-serif}
+.bet-pop.ok{background:linear-gradient(#e7f4e3,#fbf1d8 60%)}.bet-pop.ko{background:linear-gradient(#fbe1d6,#fbf1d8 60%)}
+.bet-die{width:64px;height:64px;border-radius:16px;display:grid;place-items:center;font-size:34px;font-weight:800;color:#fff}
+.bet-pop.ok .bet-die{background:#3f8a52}.bet-pop.ko .bet-die{background:#b8432e}
+.bet-pop h2{font:900 26px 'Fraunces',Georgia,serif;margin:0}
+.bet-pop p{margin:0;font-size:15px;line-height:1.4;color:#5a4a2c}.bet-pop .bet-what{font-weight:700;color:#1b1406}
+.bet-fx{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.bet-fx span{border-radius:999px;padding:2px 10px;font-weight:700;font-size:13.5px;background:#fff7df;border:1px solid #e2cf9f}
+.bet-fx span.neg{background:#fbe1d6;border-color:#e8a58f;color:#7a2c16}.bet-fx span.pos{background:#dcefe0;border-color:#9fcaa9;color:#1f4a2c}
+.bet-ok{background:#f2a541;color:#102226;border:0;border-radius:12px;padding:9px 26px;font:700 17px 'Barlow Condensed',system-ui,sans-serif;letter-spacing:.04em;text-transform:uppercase;cursor:pointer}
+.bet-ok:focus-visible{outline:3px solid #1b3b38;outline-offset:2px}
+.bet-pop small{font-size:12px;color:#5a4a2c}
+.imm-risk-txt.orig{color:#5a4a2c}

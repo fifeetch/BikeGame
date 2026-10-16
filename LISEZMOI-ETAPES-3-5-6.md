@@ -271,3 +271,9 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - Barre d'action : comme avant (effets des cases choisies), sans étiquettes de fatigue ; « clique les cases entourées » retiré en Immersion.
 - Code : immGauges, immSleepRows à la fin de `dist/app.js` ; classe `imm-fiche`.
 - Cache : `aventure-velo-v81-fiche`, `?v=fiche`.
+
+## Fatigue du mode original, fiche compacte partout, paris en Immersion (16 octobre 2026)
+- **Nouvelle règle (Fi), mode original et en ligne** : chaque niveau de fatigue enlève 2 à l'énergie maximale (1 → 8, 2 → 6, 3 fourbu → 4). Camping ou hôtel efface la fatigue, le bivouac non (inchangé). `energyCap` dans `dist/rules.js` (maxEnergyPenalty × fatigue). Didacticiel et règles mis à jour.
+- **Fiche compacte (maquette A) dans tous les modes** : mêmes visuels, règles propres à chaque mode (3 ronds en mode original, onglet Cartes gardé). Nuits en tableau (origSleepRows). Barre d'action : « clique les cases entourées » retiré partout.
+- **Paris (Immersion seulement)**, planche https://claude.ai/artifact/UsPdo1u9xUyhbcyqGAKisG : chaque pari montre sa chance (jauge), les deux issues et leurs effets, et « Fatigue : −15 % » quand on est épuisé ; le résultat s'affiche dans une fenêtre « Pari réussi ! / Pari raté… » jusqu'à « Continuer » (betChoiceBody, betModal à la fin de `dist/app.js` ; betOdds dans `dist/simulator.js`).
+- Cache : `aventure-velo-v82-paris`, `?v=paris`.
