@@ -2054,3 +2054,17 @@ body.soir .playable-europe .city-names{filter:drop-shadow(0 0 4px #ffd27a)}
 .mk-list button{font:700 13px 'Barlow',system-ui,sans-serif;border-radius:8px;padding:5px 10px;border:2px solid #1b3b38;background:#f2a541;color:#102226;cursor:pointer;min-height:0}
 .mk-list button:disabled{background:transparent;border-style:dashed;color:#8a7a5a;cursor:default}
 @media (max-width:520px){.mk-list li{grid-template-columns:26px minmax(0,1fr) auto}.mk-list li em{display:none}}
+
+/* Photo au sommet du col */
+.colphoto-back{position:fixed;inset:0;z-index:9000;display:grid;place-items:center;padding:16px;background:rgba(8,20,22,.72);animation:cp-in .25s ease-out}
+.colphoto-back.out{opacity:0;transition:opacity .25s}
+.colphoto{background:#102226;color:#f6e7c1;border:3px solid #fbf1d8;border-radius:18px;padding:16px 18px 18px;width:min(680px,100%);max-height:calc(100vh - 32px);overflow:auto;box-shadow:0 18px 50px rgba(0,0,0,.5);display:flex;flex-direction:column;gap:8px}
+.colphoto .eyebrow{font-family:"Barlow Condensed","Arial Narrow",sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#f2a541;font-weight:700;font-size:13px}
+.colphoto h2{font-family:Fraunces,Georgia,serif;margin:0;font-size:clamp(22px,3.4vw,30px);line-height:1.1}
+.colphoto h2 small{font-family:Barlow,sans-serif;font-size:.55em;color:#d8ccb0;font-weight:600}
+.colphoto-stage{border-radius:12px;overflow:hidden;border:3px solid #fbf1d8}
+.colphoto-stage svg{display:block;width:100%;height:auto;max-height:52vh}
+.colphoto p{margin:0;color:#d8ccb0}.colphoto p b{color:#f2a541}
+.colphoto button{align-self:flex-end}
+@keyframes cp-in{from{opacity:0}to{opacity:1}}
+.colphoto button{background:#f2a541;color:#1b1406;border:0;border-radius:999px;padding:10px 18px;font-weight:700;font-family:Barlow,sans-serif;cursor:pointer}

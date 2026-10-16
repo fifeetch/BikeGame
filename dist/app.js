@@ -475,7 +475,7 @@ const ficheTabs=()=>FICHE_TABS.filter(([id])=>id!=='cartes'||!(m&&S.encountersOn
 function carnetSouvenirs(p){const out=[],pick=(list,key)=>list[[...String(key)].reduce((n,c)=>n+c.charCodeAt(0),0)%list.length];
  for(const h of m.history.filter(h=>h.player===p.id)){const t=m.board[h.key];
   if(h.kind==='landmark'){const l=m.landmarks?.[h.key];out.push({day:h.round,tag:'Lieu caché · +'+(h.value||l?.value||1),title:l?.name||'Lieu remarquable',text:CARNET.LIEU_CACHE,kind:'lieu'});}
-  else if(h.kind==='col')out.push({day:h.round,tag:'Col mythique',title:t?.colName||'Col',text:CARNET.COL,kind:'col'});
+  else if(h.kind==='col')out.push({day:h.round,tag:'📸 Col mythique',title:t?.colName||'Col',text:CARNET.COL,kind:'col'});
   else if(h.kind==='col-first'){const last=out.findLast(s=>s.kind==='col');if(last){last.tag+=' · premier de cordée';last.text=CARNET.PREMIER_DE_CORDEE;}}
   else if(h.kind==='climber')out.push({day:h.round,tag:'Bonus',title:'Trois cols franchis',text:CARNET.GRIMPEUR,kind:'titre'});
   else if(h.kind==='encounter'){const [title,...rest]=h.text.split(' : ');out.push({day:h.round,tag:h.road?'En route':'Rencontre',title,text:rest.join(' : '),kind:'rencontre'});}
@@ -1115,7 +1115,7 @@ function riderPose(){if(m.phase==='puncture')return S.player(m).flatKind==='fall
  const fresh=m.history.slice(fxSeen.len);fxSeen.len=m.history.length;
  const wait=(boardRenderer.busyFor?.()||0)+150;
  for(const h of fresh){const p=m.players.find(q=>q.id===h.player),gain=(String(h.text||'').match(/\+(\d+)/)||[])[0];
-  if(h.kind==='col'&&h.key)setTimeout(()=>boardRenderer?.effect?.('col',h.key,{text:gain||'+2'}),wait);
+  if(h.kind==='col'&&h.key)setTimeout(()=>colPhoto(h.key,gain||'+2'),wait);
   if(h.kind==='landmark'&&h.key)setTimeout(()=>boardRenderer?.effect?.('landmark',h.key,{text:gain||'',label:(String(h.text).split(':')[1]||'').split(',')[0].trim()}),wait);
   if(h.kind==='objective'&&p)setTimeout(()=>{boardRenderer?.effect?.('voyage',p.pos,{text:gain||''});boardRenderer?.gesture?.(p.id,'cheer',3000);},wait);
   if(h.kind==='food'&&p)boardRenderer?.gesture?.(p.id,'eat',1900);}
@@ -1187,3 +1187,31 @@ let poseHeld='',poseUntil=0;
 }catch(err){console.error(err);}};}
 
 const ITEM_EMOJI={tente:'⛺',rechaud:'🔥',chambre:'🛞',kit:'🧰',gps:'🧭',duvet:'🛏',secours:'🩹',sacoches:'🎒'};
+
+// ---------- La photo au sommet du col (validée par Fi le 16 octobre) : une fenêtre montre la petite scène ----------
+const COL_ALT={'Col du Tourmalet':'2 115 m','Col du Galibier':'2 642 m','Mont Ventoux':'1 910 m','Col du Stelvio':'2 757 m','Grossglockner':'2 504 m','Transfăgărășan':'2 042 m','Trollstigen':'858 m','Alto de l’Angliru':'1 573 m'};
+function colPhotoScene(t,name,alt,gain,color){const C=color||'#b8432e',k=Math.min(t,6.4);
+ const ride=k<1.4,lean=!ride,back=Math.min(1,Math.max(0,(k-1.8)/.6)),raise=k>=2.4,flash=k>=3.2&&k<3.55,photo=Math.max(0,(k-3.4)/2.2);
+ const wheel=(cx,cy,r)=>`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#1b1406" stroke-width="1.5"/>`;
+ const bike=wheel(-8,5.6,5.4)+wheel(8,5.6,5.4)+`<path d="M-8 5.6 L-3 -1 L6 -1 L8 5.6 M-3 -1 L0 5.6 L6 -1 M0 5.6 L-8 5.6 M6 -1 L7 -5 L9.4 -5.3" fill="none" stroke="${C}" stroke-width="1.7" stroke-linejoin="round"/><rect x="-13.4" y="-1.6" width="6.2" height="6.2" rx="1.3" fill="#b8432e" stroke="#1b1406" stroke-width=".5"/><rect x="-12.8" y="-5.2" width="9" height="3.6" rx="1.8" fill="#5f8a6a" stroke="#1b1406" stroke-width=".5"/>`;
+ const person=x=>`<g transform="translate(${x.toFixed(2)} 0)"><path d="M0 -3 L-2 10 M0 -3 L2 10" stroke="#26343c" stroke-width="2" stroke-linecap="round"/><path d="M0 -3 L0 -11" stroke="${C}" stroke-width="3.4" stroke-linecap="round"/><path d="M0 -10 L${raise?-5:-3} ${raise?-13:-5}" stroke="#d9a37f" stroke-width="1.6" stroke-linecap="round"/>${raise?`<rect x="-8.5" y="-16" width="5" height="3.6" rx=".8" fill="#2b2f33"/><circle cx="-6" cy="-14.2" r="1" fill="#7fc0e8"/>`:''}<circle cx="0" cy="-13.6" r="2.6" fill="#f2d1a8" stroke="#1b1406" stroke-width=".5"/><path d="M-2.7 -13.8 A2.8 2.8 0 0 1 2.7 -14 Z" fill="#f6e7c1" stroke="#1b1406" stroke-width=".5"/></g>`;
+ const bx=ride?-60+k*50:10,px=10+16+back*26,fs=name.length>16?3:3.6;
+ let s=`<defs><linearGradient id="cp-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8cc0e0"/><stop offset="1" stop-color="#dce9ee"/></linearGradient></defs><rect width="640" height="300" fill="url(#cp-sky)"/>`;
+ s+=`<path d="M0 190 L80 90 L150 160 L240 60 L330 150 L420 80 L520 160 L640 100 L640 300 L0 300Z" fill="#8d8f8a"/><path d="M228 78 L240 60 L252 78Z M408 96 L420 80 L432 96Z" fill="#fff"/><rect y="210" width="640" height="100" fill="#7f9a62"/>`;
+ s+=`<g transform="translate(290 210) scale(4.2)"><g transform="translate(-14 0)"><rect x="-1" y="-30" width="2" height="34" fill="#5b4228"/><rect x="-19" y="-36" width="38" height="12" rx="2" fill="#f6e7c1" stroke="#1b3b38" stroke-width=".8"/><text x="0" y="-29.5" text-anchor="middle" font-size="${fs}" font-weight="800" fill="#1b3b38" font-family="Barlow, sans-serif">${esc(name.toUpperCase())}</text><text x="0" y="-25.8" text-anchor="middle" font-size="3" fill="#8a5a14" font-family="Barlow, sans-serif">${esc(alt)}</text></g>`;
+ s+=`<ellipse cx="${(bx-14).toFixed(2)}" cy="10" rx="13" ry="2.6" fill="rgba(0,0,0,.18)"/><g transform="translate(${(bx-14).toFixed(2)} 0) ${lean?'rotate(-8 -8 5.6)':''}">${bike}${ride?`<path d="M-2.6 -3.5 L1 3" stroke="#26343c" stroke-width="2" stroke-linecap="round"/><path d="M-3 -3.5 L2 -10" stroke="${C}" stroke-width="3.4" stroke-linecap="round"/><circle cx="4" cy="-12.6" r="2.6" fill="#f2d1a8" stroke="#1b1406" stroke-width=".5"/><path d="M1.3 -12.8 A2.8 2.8 0 0 1 6.7 -13 Z" fill="#f6e7c1"/>`:''}</g>${lean?person(px-14):''}</g>`;
+ if(flash)s+=`<rect width="640" height="300" fill="#fff" opacity="${(1-(k-3.2)/.35).toFixed(2)}"/>`;
+ if(photo>0){const q=Math.min(1,photo),py=150-q*95,rot=-6+q*10;
+  s+=`<g transform="translate(470 ${py.toFixed(1)}) rotate(${rot.toFixed(1)})"><rect x="-38" y="-42" width="76" height="86" rx="3" fill="#fffdf6" stroke="#c9b78a"/><rect x="-32" y="-36" width="64" height="56" fill="#8cc0e0"/><path d="M-32 6 L-12 -18 L4 2 L18 -14 L32 4 L32 20 L-32 20Z" fill="#8d8f8a"/><rect x="-6" y="-8" width="8" height="5" rx="1" fill="#f6e7c1"/><text x="0" y="36" text-anchor="middle" font-size="16" font-weight="900" fill="#c46f0e" font-family="Fraunces, serif">${esc(gain)}</text></g>`;}
+ return s;}
+let colPhotoOpen=null;
+function colPhoto(key,gain){try{const t=m?.board?.[key];if(!t)return;const name=t.colName||'Col mythique',alt=COL_ALT[name]||'',who=m.players.find(q=>q.pos===key)||S.player(m);
+ colPhotoClose();const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+ const el=document.createElement('div');el.className='colphoto-back';el.innerHTML=`<section class="colphoto" role="dialog" aria-label="Photo au sommet du col"><span class="eyebrow">📸 Col franchi · ${esc(who?.name||'')}</span><h2>${esc(name)}${alt?` <small>${esc(alt)}</small>`:''}</h2><div class="colphoto-stage"><svg viewBox="0 0 640 300" role="img" aria-label="Le cycliste photographie son vélo devant le panneau du col"></svg></div><p>La photo est rangée dans ton carnet · <b>${esc(gain)} points d’aventure</b></p><button class="primary" data-colphoto-close>Continuer ma route</button></section>`;
+ document.body.append(el);const svg=el.querySelector('svg'),t0=performance.now();let raf=0;
+ const frame=now=>{const tt=reduce?6:(now-t0)/1000;svg.innerHTML=colPhotoScene(tt,name,alt,gain,who?.color);if(!reduce&&tt<6.4)raf=requestAnimationFrame(frame);};raf=requestAnimationFrame(frame);
+ el.querySelector('[data-colphoto-close]').onclick=colPhotoClose;el.addEventListener('click',e=>{if(e.target===el)colPhotoClose();});
+ colPhotoOpen={el,stop:()=>cancelAnimationFrame(raf),timer:setTimeout(colPhotoClose,reduce?4000:8500)};
+ el.querySelector('[data-colphoto-close]').focus({preventScroll:true});}catch(err){console.error(err);}}
+function colPhotoClose(){if(!colPhotoOpen)return;const {el,stop,timer}=colPhotoOpen;colPhotoOpen=null;stop();clearTimeout(timer);el.classList.add('out');setTimeout(()=>el.remove(),250);}
+document.addEventListener('keydown',e=>{if(colPhotoOpen&&(e.key==='Escape'||e.key==='Enter')){e.preventDefault();colPhotoClose();}},true);
