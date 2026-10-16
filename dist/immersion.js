@@ -4,7 +4,8 @@
 //
 // Une scène :
 //  when    : 'route' (pendant l'étape, en entrant sur une case) ou 'soir' (en fin de journée)
-//  kind    : 'galere' ou 'belle' (jamais deux galères de suite en route)
+//  kind    : 'galere' ou 'belle' (reposé, fatigue 0 ou 1 : jamais deux galères de suite en route)
+//  cause   : pour une galère en route : 'meteo', 'meca', 'route' ou 'inattention' (voir FATIGUE plus bas)
 //  rarity  : 'courante' (souvent), 'rare' (parfois), 'unique' (une fois par partie)
 //  terrain : types de case où elle peut arriver (absent = partout) ; region : zones météo (absent = partout)
 //  weather : temps du jour dans la zone (beau, vent, pluie, orage, neige) ; offroad : seulement hors route
@@ -17,58 +18,76 @@
 
 export const SCENES=[
  // ---------- En route : galères ----------
- {id:'im-rayon',when:'route',kind:'galere',rarity:'courante',terrain:['plaine','moyenne_montagne','montagne','cote'],title:'Le rayon qui casse',scene:'plaine',
+ {id:'im-rayon',when:'route',kind:'galere',cause:'meca',rarity:'courante',terrain:['plaine','moyenne_montagne','montagne','cote'],title:'Le rayon qui casse',scene:'plaine',
   quote:'Un petit « tac » sec dans la roue arrière. Un rayon pend, deux autres se sont dévissés.',choices:[
   {label:'Scotcher le rayon et continuer',text:'Ruban adhésif et prudence.',chance:{odds:.67,ok:{text:'La roue tient jusqu’au soir.',effect:{energy:-1}},ko:{text:'Il recasse : demain, tu pars après la réparation.',effect:{energy:-1,tomorrow:-1}}}},
   {label:'Finir l’étape à l’atelier le plus proche',text:'Un détour, mais tu repars tranquille.',need:{money:1},effect:{money:-1,stopToday:true}}]},
- {id:'im-crevaison',when:'route',kind:'galere',rarity:'courante',notCity:true,title:'Pschhh…',scene:'plaine',
+ {id:'im-crevaison',when:'route',kind:'galere',cause:'meca',rarity:'courante',notCity:true,title:'Pschhh…',scene:'plaine',
   quote:'Le pneu avant se vide doucement sur le bas-côté.',choices:[
   {label:'Changer la chambre à air',text:'Deux minutes, et c’est reparti.',item:'chambre',effect:{}},
   {label:'Réparer avec le kit',text:'Démonte-pneu, rustine, pompe.',item:'kit',effect:{energy:-1}},
   {label:'Regonfler et croiser les doigts',text:'Ça passe ou ça casse.',chance:{odds:.5,ok:{text:'Ça tient jusqu’au soir.',effect:{}},ko:{text:'Deuxième crevaison deux kilomètres plus loin.',effect:{energy:-2}}}}]},
- {id:'im-chiens',when:'route',kind:'galere',rarity:'courante',terrain:['plaine','moyenne_montagne'],region:['balkans','est'],title:'Les chiens de la ferme',scene:'plaine',
+ {id:'im-chiens',when:'route',kind:'galere',cause:'route',rarity:'courante',terrain:['plaine','moyenne_montagne'],region:['balkans','est'],title:'Les chiens de la ferme',scene:'plaine',
   quote:'{lieu}, trois chiens jaillissent d’une cour et foncent sur tes mollets.',choices:[
   {label:'Sprinter',text:'Tu les sèmes, mais ça pique.',effect:{energy:-2}},
   {label:'Descendre et leur parler doucement',text:'Pas de geste brusque.',chance:{odds:.6,ok:{text:'Ils reniflent le vélo, puis s’en vont.',effect:{}},ko:{text:'Ils te suivent en aboyant sur deux kilomètres.',effect:{energy:-1}}}}]},
- {id:'im-canicule',when:'route',kind:'galere',rarity:'courante',terrain:['plaine','cote'],weather:['beau'],region:['balkans','ouest','est'],title:'39 °C sans ombre',scene:'plaine',
+ {id:'im-canicule',when:'route',kind:'galere',cause:'meteo',rarity:'courante',terrain:['plaine','cote'],weather:['beau'],region:['balkans','ouest','est'],title:'39 °C sans ombre',scene:'plaine',
   quote:'Pas un arbre à l’horizon. L’eau de la gourde est tiède en une heure.',choices:[
   {label:'Serrer les dents',text:'Tu avances, lentement.',effect:{energy:-2}},
   {label:'Sieste à l’ombre jusqu’au soir',text:'La route attendra demain.',effect:{stopToday:true,energy:2}}]},
- {id:'im-orage-col',when:'route',kind:'galere',rarity:'courante',terrain:['col','montagne','moyenne_montagne'],weather:['orage'],title:'L’orage sur le col',scene:'montagne',
+ {id:'im-orage-col',when:'route',kind:'galere',cause:'meteo',rarity:'courante',terrain:['col','montagne','moyenne_montagne'],weather:['orage'],title:'L’orage sur le col',scene:'montagne',
   quote:'Le ciel devient noir au-dessus du col. Les premiers grondements résonnent dans la vallée.',choices:[
   {label:'Attendre au refuge',text:'Au sec, avec un thé chaud.',effect:{stopToday:true,energy:2}},
   {label:'Tenter le passage',text:'Vite, avant le déluge.',chance:{odds:.5,ok:{text:'Tu passes juste avant la pluie.',effect:{points:2,energy:-1}},ko:{text:'Trempé jusqu’aux os, frigorifié dans la descente.',effect:{energy:-3,fatigue:1}}}}]},
- {id:'im-drache',when:'route',kind:'galere',rarity:'courante',weather:['pluie'],title:'La drache',scene:'plaine',
+ {id:'im-drache',when:'route',kind:'galere',cause:'meteo',rarity:'courante',weather:['pluie'],title:'La drache',scene:'plaine',
   quote:'Il pleut depuis le matin. L’eau ruisselle dans les chaussures.',choices:[
   {label:'Serrer les dents',text:'Cinquante kilomètres sous l’eau, ça se raconte.',effect:{energy:-2}},
   {label:'S’abriter dans un petit appartement',text:'Douche chaude et vêtements secs.',need:{money:2},effect:{money:-2,fatigue:-1,stopToday:true}}]},
- {id:'im-vent',when:'route',kind:'galere',rarity:'courante',weather:['vent'],terrain:['plaine','cote'],title:'Vent de face',scene:'cote',
+ {id:'im-vent',when:'route',kind:'galere',cause:'meteo',rarity:'courante',weather:['vent'],terrain:['plaine','cote'],title:'Vent de face',scene:'cote',
   quote:'Un vent à couper le souffle. Tu pédales en descente et tu fais du surplace.',choices:[
   {label:'Baisser la tête',text:'Petit braquet, mâchoire serrée.',effect:{energy:-1}},
   {label:'S’arrêter au café du village',text:'On t’offre un café, on parle météo.',effect:{stopToday:true,energy:1}}]},
- {id:'im-bagages',when:'route',kind:'galere',rarity:'unique',terrain:['col','montagne','moyenne_montagne'],title:'Trop de bagages',scene:'montagne',
+ {id:'im-bagages',when:'route',kind:'galere',cause:'route',rarity:'unique',terrain:['col','montagne','moyenne_montagne'],title:'Trop de bagages',scene:'montagne',
   quote:'Premier vrai col : chaque sacoche pèse une tonne. Tout ce que tu emportes, il faut le monter.',choices:[
   {label:'Trier et renvoyer par la poste',text:'Plus léger pour la suite.',need:{money:1},effect:{money:-1,tomorrow:1}},
   {label:'Tout garder',text:'On ne sait jamais…',effect:{energy:-1}}]},
- {id:'im-guepe',when:'route',kind:'galere',rarity:'rare',terrain:['plaine','moyenne_montagne'],weather:['beau'],title:'La guêpe',scene:'plaine',
+ {id:'im-guepe',when:'route',kind:'galere',cause:'route',rarity:'rare',terrain:['plaine','moyenne_montagne'],weather:['beau'],title:'La guêpe',scene:'plaine',
   quote:'Une guêpe se cogne contre ton front et pique. Le visage gonfle à vue d’œil.',choices:[
   {label:'Pharmacie, puis repos forcé demain',text:'Impossible d’ouvrir les yeux correctement.',effect:{stopToday:true,restDay:true}}]},
- {id:'im-chute',when:'route',kind:'galere',rarity:'rare',terrain:['col','montagne'],title:'Les gravillons',scene:'montagne',
+ {id:'im-chute',when:'route',kind:'galere',cause:'inattention',rarity:'rare',terrain:['col','montagne'],title:'Les gravillons',scene:'montagne',
   quote:'Dans la descente, une plaque de gravillons… et la glissade.',choices:[
   {label:'Soigner les écorchures',text:'Plus de peur que de mal.',effect:{energy:-1,fatigue:1}}]},
- {id:'im-travaux',when:'route',kind:'galere',rarity:'courante',terrain:['plaine','moyenne_montagne'],title:'Route barrée',scene:'plaine',
+ // Galères d'inattention : elles n'arrivent qu'à partir de la fatigue 2 (un cycliste reposé reste attentif).
+ {id:'im-nid-de-poule',when:'route',kind:'galere',cause:'inattention',rarity:'courante',notCity:true,title:'Le nid-de-poule',scene:'plaine',
+  quote:'Les yeux dans le vague, tu ne vois pas le trou. Bang ! Le pneu avant se vide aussitôt.',choices:[
+  {label:'Changer la chambre à air',text:'Deux minutes, et c’est reparti.',item:'chambre',effect:{}},
+  {label:'Réparer avec le kit',text:'Rustine, pompe, et on repart.',item:'kit',effect:{energy:-1}},
+  {label:'Pousser jusqu’au village',text:'À pied, à côté du vélo.',effect:{energy:-2,tomorrow:-1}}]},
+ {id:'im-erreur-route',when:'route',kind:'galere',cause:'inattention',rarity:'courante',terrain:['plaine','moyenne_montagne','cote','montagne'],title:'La mauvaise bifurcation',scene:'plaine',
+  quote:'Depuis une heure, le soleil est du mauvais côté. Tu as raté l’embranchement sans t’en rendre compte.',choices:[
+  {label:'Faire demi-tour',text:'Les mêmes kilomètres, dans l’autre sens.',effect:{energy:-2}},
+  {label:'Chercher un raccourci',text:'Il doit bien y avoir un chemin…',chance:{odds:.5,ok:{text:'Une petite route rejoint la bonne. Ouf.',effect:{energy:-1}},ko:{text:'Cul-de-sac. Demain, tu repars avec du retard.',effect:{energy:-1,tomorrow:-1}}}}]},
+ {id:'im-oubli',when:'route',kind:'galere',cause:'inattention',rarity:'courante',title:'Les affaires oubliées',scene:'plaine',
+  quote:'Dix kilomètres après la pause, la poche est vide : le porte-monnaie est resté sur le muret.',choices:[
+  {label:'Retourner le chercher',text:'Il est toujours là… mais l’aller-retour coûte cher.',effect:{energy:-2}},
+  {label:'Tant pis, on continue',text:'Quelques pièces de moins.',effect:{money:-1}}]},
+ {id:'im-chute-bete',when:'route',kind:'galere',cause:'inattention',rarity:'rare',terrain:['ville','plaine','cote'],title:'La chute à l’arrêt',scene:'ville',
+  quote:'Au feu rouge, le pied reste coincé. Tu tombes sur le côté, lentement, avec tout le chargement.',choices:[
+  {label:'Se relever en riant',text:'Un genou écorché, et l’amour-propre aussi.',effect:{energy:-1,fatigue:1}},
+  {label:'Faire une vraie pause',text:'Un café, une rustine sur le genou, et la journée s’arrête là.',effect:{stopToday:true,energy:1}}]},
+ {id:'im-travaux',when:'route',kind:'galere',cause:'route',rarity:'courante',terrain:['plaine','moyenne_montagne'],title:'Route barrée',scene:'plaine',
   quote:'Panneau « Travaux » : la déviation part sur une piste caillouteuse.',choices:[
   {label:'Prendre la déviation',text:'Des cailloux plein les pneus.',effect:{energy:-1}},
   {label:'Passer quand même',text:'Avec un grand sourire aux ouvriers.',chance:{odds:.5,ok:{text:'Ils te font signe de passer.',effect:{points:1}},ko:{text:'Demi-tour forcé.',effect:{energy:-2}}}}]},
- {id:'im-perdu',when:'route',kind:'galere',rarity:'courante',offroad:true,title:'Où est passé le chemin ?',scene:'plaine',
+ {id:'im-perdu',when:'route',kind:'galere',cause:'route',rarity:'courante',offroad:true,title:'Où est passé le chemin ?',scene:'plaine',
   quote:'La trace disparaît dans les champs. Devant toi : des ronces et une clôture.',choices:[
   {label:'Revenir sur tes pas',text:'Sage décision.',effect:{energy:-1}},
   {label:'Couper à travers',text:'Ça doit bien passer quelque part.',chance:{odds:.5,ok:{text:'Un raccourci magnifique !',effect:{points:1}},ko:{text:'Ronces, clôtures et vélo poussé.',effect:{energy:-2,fatigue:1}}}}]},
- {id:'im-derailleur',when:'route',kind:'galere',rarity:'rare',title:'Le dérailleur capricieux',scene:'ville',
+ {id:'im-derailleur',when:'route',kind:'galere',cause:'meca',rarity:'rare',title:'Le dérailleur capricieux',scene:'ville',
   quote:'La chaîne saute à chaque coup de pédale. Le dérailleur arrière fait des siennes.',choices:[
   {label:'Régler toi-même',text:'Tournevis et patience.',chance:{odds:.5,ok:{text:'Tout tourne rond.',effect:{}},ko:{text:'Pire qu’avant : demain, réparation.',effect:{tomorrow:-1}}}},
   {label:'Finir à l’atelier',text:'Un ami du patron répare pour presque rien.',need:{money:1},effect:{money:-1,stopToday:true}}]},
- {id:'im-heure',when:'route',kind:'galere',rarity:'unique',region:['balkans'],terrain:['plaine','ville'],title:'Le changement d’heure',scene:'ville',
+ {id:'im-heure',when:'route',kind:'galere',cause:'route',rarity:'unique',region:['balkans'],terrain:['plaine','ville'],title:'Le changement d’heure',scene:'ville',
   quote:'En passant la frontière, une heure de décalage : le train que tu visais n’existe même pas.',choices:[
   {label:'Demander autour de toi',text:'Un chauffeur de bus scolaire embarque ton vélo.',effect:{tomorrow:1}},
   {label:'Pédaler',text:'Tant pis pour le train.',effect:{energy:-2}}]},
@@ -275,17 +294,37 @@ export function oddsLabel(pct){const list=[[10,'1 sur 10'],[15,'1 sur 7'],[20,'1
 
 export const RARITY_WEIGHT={courante:3,rare:1,unique:1};
 export const SCENE_COOLDOWN=10;// jours avant de revoir une même scène
-export const ROAD_CHANCE=.5;// un événement en route environ un jour sur deux
+export const ROAD_CHANCE=.5;// (ancien réglage ; en Immersion, la chance d'un événement dépend de la fatigue : voir FATIGUE)
+
+// ---------- La fatigue (mode Immersion) : l'énergie, c'est la journée ; la fatigue, c'est la semaine ----------
+// 6 niveaux, de 0 à 5. Chaque niveau bloque une case en haut de la barre d'énergie (10, 9, 8, 7, 6, 5).
+//  road    : chance d'un événement en route dans la journée ; galere : part de galères parmi ces événements
+//  causes  : galères possibles ('inattention' = chute, erreur d'itinéraire, nid-de-poule, affaires oubliées)
+//  meal    : énergie en moins par repas ; bet : chance en moins sur les paris ; less : cases en moins par jour
+//  forced  : le lendemain, repos forcé
+export const FATIGUE=[
+ {name:'En forme',road:1/3,galere:1/5,causes:['meteo','meca'],risk:'seulement météo et mécanique'},
+ {name:'Un peu las',road:2/5,galere:1/3,causes:['meteo','meca','route'],risk:'météo, mécanique, imprévus de la route'},
+ {name:'Fatigué',road:1/2,galere:1/2,causes:['meteo','meca','route','inattention'],risk:'chute et erreur d’itinéraire possibles'},
+ {name:'Épuisé',road:3/5,galere:2/3,causes:['meteo','meca','route','inattention'],meal:1,bet:.15,risk:'chute, erreur d’itinéraire, crevaison sur un nid-de-poule, affaires oubliées…'},
+ {name:'À bout',road:2/3,galere:3/4,causes:['meteo','meca','route','inattention'],meal:1,bet:.15,less:1,risk:'chute, erreur d’itinéraire, crevaison sur un nid-de-poule, affaires oubliées…'},
+ {name:'Fourbu',road:2/3,galere:3/4,causes:['meteo','meca','route','inattention'],meal:1,bet:.15,less:1,forced:true,risk:'demain : repos forcé'}
+];
+// Ce qui fatigue : +1 par journée de route, +1 de plus avec un col ou 5 cases ; la mauvaise nuit est dans la nuit elle-même
+// (nuit dehors +1, galères de nuit comme les moustiques +1).
+export const FATIGUE_GAIN={day:1,hard:1,hardCases:5};
+// Ce qui repose : la nuit (NIGHT) ; une journée sans rouler suivie d'une vraie nuit : −3, ou −4 en ville.
+export const FATIGUE_REST_DAY={plain:-3,city:-4};
 
 // ---------- La nuit (mode Immersion) : dormir termine toujours la journée ----------
-// energy : énergie rendue ; fatigue : 'reset' (remise à 0), -1, 0 ou +1 ; calm/galere/belle : chances (en %) du pari de la nuit.
+// energy : énergie rendue ; fatigue : ce que la nuit enlève (−2, −1, 0) ou ajoute (+1) ; calm/galere/belle : chances (en %) du pari de la nuit.
 // Une journée sans rouler : la nuit qui suit rend deux fois plus d'énergie (REST_DAY_FACTOR).
 export const NIGHT={
  bivouac:{name:'Bivouac',energy:1,fatigue:0,odds:{calm:45,galere:35,belle:20},stormy:{calm:30,galere:55,belle:15}},
  camping:{name:'Camping',energy:2,fatigue:-1,odds:{calm:60,galere:20,belle:20},stormy:{calm:50,galere:30,belle:20}},
- hotel:{name:'Hôtel',energy:3,fatigue:'reset',odds:{calm:80,galere:5,belle:15},stormy:{calm:80,galere:5,belle:15}},
+ hotel:{name:'Hôtel',energy:3,fatigue:-2,odds:{calm:80,galere:5,belle:15},stormy:{calm:80,galere:5,belle:15}},
  dehors:{name:'Nuit dehors',energy:0,fatigue:1,odds:{calm:40,galere:50,belle:10},stormy:{calm:25,galere:65,belle:10}}
 };
 export const REST_DAY_FACTOR=2;
 // « Demander » : ce que donne chaque réponse (la nuit compte comme un hôtel, un camping, ou un refus).
-export const DEMAND_NIGHT={grand:{energy:3,fatigue:'reset',food:1,points:1},jardin:{energy:2,fatigue:-1},refusCamping:{energy:2,fatigue:-1},refusDehors:{energy:0,fatigue:1}};
+export const DEMAND_NIGHT={grand:{energy:3,fatigue:-2,food:1,points:1},jardin:{energy:2,fatigue:-1},refusCamping:{energy:2,fatigue:-1},refusDehors:{energy:0,fatigue:1}};

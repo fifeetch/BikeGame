@@ -59,6 +59,10 @@ export function validateRules(input){
  return r;
 }
 // Énergie maximale du cycliste : réduite quand il est fourbu (fatigue au maximum).
-export const isExhausted=(m,p)=>Boolean(m.rules.fatigue?.enabled&&(p.fatigue||0)>=m.rules.fatigue.days);
-export const energyCap=(m,p)=>m.rules.maxEnergy-(isExhausted(m,p)?m.rules.fatigue.maxEnergyPenalty:0);
+// Mode Immersion : la fatigue va de 0 à 5 et chaque niveau bloque une case en haut de la barre d'énergie (10, 9, 8, 7, 6, 5).
+export const IMM_FATIGUE_MAX=5;
+const immFatigue=m=>Boolean(m?.immersion&&m.mode==='plateau'&&m.rules.fatigue?.enabled);
+export const fatigueMax=m=>immFatigue(m)?IMM_FATIGUE_MAX:m.rules.fatigue?.days||0;
+export const isExhausted=(m,p)=>Boolean(m.rules.fatigue?.enabled&&(p.fatigue||0)>=fatigueMax(m));
+export const energyCap=(m,p)=>immFatigue(m)?m.rules.maxEnergy-Math.min(IMM_FATIGUE_MAX,p.fatigue||0):m.rules.maxEnergy-(isExhausted(m,p)?m.rules.fatigue.maxEnergyPenalty:0);
 export function setPath(object,path,value){const keys=path.split('.');let o=object;for(const k of keys.slice(0,-1))o=o[k];o[keys.at(-1)]=value;}
