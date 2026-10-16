@@ -238,3 +238,10 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - Règles détaillées : onglet « Immersion » ; résumé de départ adapté ; pioche de cartes masquée en Immersion.
 - Tests : `tests/immersion.test.js` (15 tests). Robots : `IMMERSION=1 node tools/simulation/parties-auto.mjs`.
 - Nom du cache `dist/sw.js` **non changé** : Fi s'en occupe.
+
+## Page Éditeur et barre d'action compacte (16 octobre 2026, demande de Fi ; maquette A de la planche « Partie action »)
+- **Accueil** : un seul bouton **« Éditeur »** remplace « Cartes Événement » et « Créer une carte ». La liste « Mes cartes » et l'import ne sont plus sur l'accueil.
+- **Page Éditeur** (`editorHubScreen` dans `dist/menus.js`) : le seul endroit pour créer ou modifier — Atelier de carte, Mes cartes (« Modifier » + import .json), Cartes Événement. Les éditeurs reviennent à cette page (« ← Éditeur »).
+- **« Où roulera-t-on ? »** : seulement des choix pour jouer. Tes cartes restent avec « Jouer → » ; plus d'atelier, d'import ni de « Modifier ». « Jouer avec les tuiles » est caché (mode non développé).
+- **Barre d'action compacte** : le bandeau « Planifier l'étape » est intégré à la barre (ton étape, chemin, coût en énergie, avertissements hors route / météo / bateau en pastilles) ; le bouton « Rouler → » est sur la même ligne. Sur un écran 1900 × 1056, la carte passe d'environ 510 à 830 pixels de haut. Sur téléphone, la barre s'empile.
+- Cache : `aventure-velo-v77-immersion`, `?v=immersion` ; `immersion.js` ajouté aux fichiers gardés hors ligne.

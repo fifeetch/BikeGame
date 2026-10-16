@@ -92,7 +92,7 @@ test('menu editor saves, imports and resets event variants in local storage',asy
  };
  await import('../dist/app.js?event-editor-test');
  const action=id=>elements.get('data-action').find(el=>el.dataset.action===id).onclick();
- action('card-editor-open');assert(app.innerHTML.includes('Les 40 cartes Événement'));
+ action('editor-hub');action('card-editor-open');assert(app.innerHTML.includes('Les 40 cartes Événement'));
  controls['#event-editor-effect'].value='evt-05';controls['#event-editor-name'].value='Mon trésor';
  controls['#event-editor-description'].value='Une trouvaille sur la route.';
  action('event-editor-save');

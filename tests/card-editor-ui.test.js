@@ -10,6 +10,7 @@ test('menu opens the catalogue and a negative effect can be saved',async()=>{
   createElement(){return {click(){}};}
  };
  await import('../dist/app.js');
+ elements.get('data-action').find(el=>el.dataset.action==='editor-hub').onclick();
  elements.get('data-action').find(el=>el.dataset.action==='card-editor-open').onclick();
  assert(app.innerHTML.includes('Catalogue des cartes'));
  assert(app.innerHTML.includes('Anciennes cartes conservées'));

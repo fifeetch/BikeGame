@@ -81,11 +81,8 @@ export function titleScreen({btn,saveLine='',hasSave=false,message='',reduced=fa
     ${btn('🎓 Apprendre à jouer','tuto-start','mc-sign tuto-sign')}
     ${hasSave?btn(`Reprendre${saveLine?` <small>${esc(saveLine)}</small>`:''}`,'continue','mc-sign'):''}
     ${btn('Jouer en ligne','online','mc-sign')}
-    ${btn('Cartes Événement','card-editor-open','mc-sign small')}
-    ${btn('Créer une carte','editor-new','mc-sign small')}
+    ${btn('Éditeur','editor-hub','mc-sign small')}
    </nav>
-   ${maps.length?`<div class="mc-mymaps"><span>Mes cartes</span>${maps.map(map=>`<button class="mc-ghost" data-edit-map="${esc(map.id)}">${esc(map.name)}</button>`).join('')}</div>`:''}
-   <label class="mc-import">Importer une carte (.json) <input id="import-map" type="file" accept="application/json,.json"/></label>
    <p class="toast" role="status">${esc(message)}</p>
   </section>
  </main>`;
@@ -99,10 +96,7 @@ export function plateauScreen({btn,maps=[],message=''}){
    <button class="mc-board-card" data-map-choice=""><img src="${MAP_IMG}" alt="Aperçu du plateau Europe"/><span class="mc-tag">Carte officielle</span><span class="mc-board-copy"><strong>Europe</strong><small>${MAP_CELLS.filter(c=>c.name).length} villes · 6 ferries · des Pyrénées à l’Oural</small></span><span class="mc-cta">Rouler ici →</span></button>
    <aside class="mc-side">
     <h2>Mes cartes</h2>
-    ${maps.length?maps.map(map=>`<div class="mc-saved"><div><strong>${esc(map.name)}</strong><small>${Object.keys(map.cells).length} case(s) modifiée(s)</small></div><button data-map-choice="${esc(map.id)}">Jouer →</button><button class="mc-ghost" data-edit-map="${esc(map.id)}">Modifier</button></div>`).join(''):`<div class="mc-empty"><strong>Aucune carte pour l’instant</strong><p>Dessine ta propre Europe dans l’atelier : déplace les montagnes, ouvre un col, ajoute un port.</p></div>`}
-    ${btn('Ouvrir l’atelier de carte','editor-new','mc-ghost wide')}
-    <label class="mc-import">Importer une carte (.json) <input id="import-map" type="file" accept="application/json,.json"/></label>
-    <button class="mc-ghost wide" data-mode="tuiles">Jouer avec les tuiles (mode libre)</button>
+    ${maps.length?maps.map(map=>`<div class="mc-saved"><div><strong>${esc(map.name)}</strong><small>${Object.keys(map.cells).length} case(s) modifiée(s)</small></div><button data-map-choice="${esc(map.id)}">Jouer →</button></div>`).join(''):`<div class="mc-empty"><strong>Aucune carte perso pour l’instant</strong><p>Pour dessiner ta propre Europe, passe par le bouton « Éditeur » de l’accueil.</p></div>`}
    </aside>
   </div>
   <p class="toast" role="status">${esc(message)}</p>
@@ -265,4 +259,19 @@ export function partiesScreen({btn,list=[],filter='all',currentId='',message='',
     <div class="pt-help"><b>Comment ça marche</b><span>• Chaque partie s’enregistre <b>toute seule</b>, dans sa propre place.</span><span>• La dernière partie jouée est en haut, encadrée d’orange.</span><span>• Jusqu’à 20 parties sur cet appareil. « ⬇️ Fichier » pour en garder une ailleurs ou l’envoyer.</span><span>• Les parties en ligne apparaissent aussi : on peut aussi les reprendre sur un autre appareil avec leur code.</span></div>
     <label class="pt-import">⬆️ Importer une partie (fichier) <input id="import-party" type="file" accept="application/json,.json"/></label></aside></div>
   <footer class="mc-foot">${btn('← Accueil','home','mc-ghost')}</footer><p class="toast" role="status">${esc(message)}</p></main>`;
+}
+
+// ---------- Éditeur : le seul endroit pour créer ou modifier (cartes du plateau, cartes Événement) ----------
+export function editorHubScreen({btn,maps=[],message=''}){
+ return `<main class="menu-c mc-page">${backdrop()}
+  <header class="mc-head"><div><p class="mc-kicker">Atelier</p><h1>Éditeur</h1><p class="mc-lead">Dessine tes plateaux et modifie les cartes Événement. Pour jouer, reviens à l’accueil.</p></div>${btn('← Accueil','home','mc-ghost')}</header>
+  <div class="mc-editor">
+   <section class="mc-editor-card"><p class="mc-kicker">Plateau</p><h2>Atelier de carte</h2><p>Dessine ta propre Europe : déplace les montagnes, ouvre un col, ajoute un port.</p>${btn('Créer une nouvelle carte','editor-new','mc-go')}</section>
+   <section class="mc-editor-card"><p class="mc-kicker">Plateau</p><h2>Mes cartes</h2>
+    ${maps.length?`<div class="mc-editor-maps">${maps.map(map=>`<div class="mc-saved"><div><strong>${esc(map.name)}</strong><small>${Object.keys(map.cells).length} case(s) modifiée(s)</small></div><button class="mc-ghost" data-edit-map="${esc(map.id)}">Modifier</button></div>`).join('')}</div>`:`<div class="mc-empty"><strong>Aucune carte pour l’instant</strong><p>Crée-en une avec l’atelier, ou importe un fichier.</p></div>`}
+    <label class="mc-import">Importer une carte (.json) <input id="import-map" type="file" accept="application/json,.json"/></label></section>
+   <section class="mc-editor-card"><p class="mc-kicker">Événements</p><h2>Cartes Événement</h2><p>Modifie les 40 cartes officielles ou crée tes propres cartes pour les prochaines parties.</p>${btn('Ouvrir l’éditeur de cartes','card-editor-open','mc-go')}</section>
+  </div>
+  <p class="toast" role="status">${esc(message)}</p>
+ </main>`;
 }

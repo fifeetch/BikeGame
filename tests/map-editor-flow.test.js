@@ -25,7 +25,7 @@ test('menu editor saves and exports a col map, choice starts on it, and later ed
  const click=(attr,value)=>{const el=elements.get(attr)?.find(el=>Object.values(el.dataset).includes(value));assert(el,attr+' '+value);el.onclick();};
  try{
   await import('../dist/app.js');
-  assert(app.innerHTML.includes('Créer une carte'));
+  assert(app.innerHTML.includes('Éditeur'));click('data-action','editor-hub');
   click('data-action','editor-new');assert(app.innerHTML.includes('ÉDITEUR DE CARTE'));
   const original=Object.values(europeBoard('Paris','Istanbul').board).find(t=>!t.name&&t.type==='montagne');assert(original);
   click('data-move',original.key);assert(app.innerHTML.includes('Col mythique'));
@@ -48,7 +48,7 @@ test('menu editor saves and exports a col map, choice starts on it, and later ed
   assert(!lastSheet.includes('data-action="work"'),'le travail ne fait plus partie des actions');
   for(const tab of ['journee','sacoches','voyage','cartes'])assert(lastSheet.includes(`data-sheet-tab="${tab}"`),'onglet '+tab);
   let game=JSON.parse(storage.get('velo-save'));assert.equal(game.mapChoice,saved[0].id);assert.equal(game.rules.terrain.col,5);assert.equal(game.board[original.key].type,'col');assert.equal(S.cost(game,game.board[original.key]),5);
-  click('data-action','home');controls.type='plaine';click('data-edit-map',saved[0].id);click('data-move',original.key);click('data-action','map-save');click('data-action','map-save-project');click('data-action','home');click('data-action','continue');
+  click('data-action','home');controls.type='plaine';click('data-action','editor-hub');click('data-edit-map',saved[0].id);click('data-move',original.key);click('data-action','map-save');click('data-action','map-save-project');click('data-action','home');click('data-action','continue');
   game=JSON.parse(storage.get('velo-save'));assert.equal(game.board[original.key].type,'col');
   // Depuis « Mes parties » (15 octobre 2026), « Nouveau voyage » ne remplace plus la partie en cours : on va directement au choix du plateau.
   click('data-action','home');click('data-action','new');click('data-map-choice','');click('data-action','start');click('data-action','equipment-next');click('data-voyage',elements.get('data-voyage')[0].dataset.voyage);

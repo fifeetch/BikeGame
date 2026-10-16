@@ -1721,3 +1721,37 @@ header.in-game~.game>.player-order,header.in-game~.game>.topbar,header.in-game~.
 .imm-zone.pos{stroke:#2c7a5b;stroke-opacity:.85}
 body .modal.encounter-modal .encounter-carnet{color:#2b2214}
 body .modal.encounter-modal .encounter-carnet span{color:#b74732}
+
+/* ---------- Page Éditeur (seul accès aux éditeurs) ---------- */
+.mc-editor{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-top:22px}
+.mc-editor-card{display:flex;flex-direction:column;gap:12px;padding:22px;border-radius:20px;background:var(--mc-panel);border:2px solid rgba(246,231,193,.25)}
+.mc-editor-card h2{margin:0;font:900 30px/1.05 'Fraunces',Georgia,serif;color:#f6e7c1}
+.mc-editor-card p{margin:0}
+.mc-editor-card .mc-go{margin-top:auto;align-self:flex-start}
+.mc-editor-maps{display:grid;gap:8px}
+@media (max-width:900px){.mc-editor{grid-template-columns:1fr}}
+
+/* ---------- Barre d'action compacte (maquette A, 16 octobre) : plus de place pour la carte ---------- */
+body .game .cell-details.route-planner{display:none}
+body .game .player-sheet-dock{padding:8px 12px}
+body .game .player-sheet-dock .dock-day{flex-wrap:nowrap;gap:12px;align-items:center}
+body .game .player-sheet-dock .dock-steps{flex:0 0 auto;transform:scale(.82);transform-origin:left center;margin:0 -14px 0 0}
+body .game .player-sheet-dock .dock-center{flex:1 1 auto;min-width:0;display:flex;align-items:center;gap:12px}
+body .game .player-sheet-dock .dock-day .dock-hint{flex:1 1 auto;padding:8px 12px;font-size:15px;line-height:1.35}
+body .game .player-sheet-dock .dock-day .dock-hint>span:first-child{font-size:22px}
+body .game .player-sheet-dock .dock-day .dock-main{flex:0 0 auto;min-height:52px;padding:8px 20px;font-size:21px}
+body .game .player-sheet-dock .dock-icons{flex:0 0 auto}
+.dock-plan{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:4px}
+.dock-plan>b{font:900 19px/1.1 'Fraunces',Georgia,serif;color:#1b3b38}
+.dock-path{display:flex;flex-wrap:wrap;align-items:center;gap:4px;font-weight:600;font-size:15px}
+.dock-path i{font-style:normal;opacity:.6}
+.dock-path .off{text-decoration:underline dotted;text-underline-offset:3px}
+.dock-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:3px}
+.dock-chips em{font-style:normal;padding:2px 9px;border-radius:999px;background:#fff7df;border:1px solid #e2cf9f;color:#5a4a2c;font-size:13px;font-weight:600;white-space:nowrap}
+.dock-chips em.cost{background:#f2a541;border-color:#f2a541;color:#1b1406}
+.dock-chips em.bad{background:#fbe1d6;border-color:#e8a58f;color:#7a2c16}
+.dock-hint .dock-chips{display:flex}
+@media (max-width:760px){body .game .player-sheet-dock .dock-day{flex-wrap:wrap}body .game .player-sheet-dock .dock-center{flex:1 1 100%;flex-wrap:wrap}.dock-chips em{white-space:normal}}
+@media (min-width:761px){body .game .player-sheet-dock .dock-center{flex-wrap:nowrap}body .game .player-sheet-dock .dock-center .dock-main{flex:0 0 auto;width:auto;max-width:300px}body .game .player-sheet-dock .dock-steps{margin-right:-6px}}
+@media (min-width:761px){body .game .player-sheet-dock .dock-center{flex-direction:row;align-items:center}}
+@media (min-width:761px){body .game .player-sheet-dock .dock-steps{transform:none;zoom:.82;margin:0}body .game .player-sheet-dock .dock-center .dock-main{max-width:none;flex-shrink:0;white-space:nowrap}}

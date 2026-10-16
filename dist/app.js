@@ -9,7 +9,7 @@ import {CARD_PRESETS,cardById as findCard,effectiveCards,makeCustomCard,normaliz
 import {renderCardEditor} from './card-editor.js';
 import {readArtPreference} from './terrain-art.js';
 import {readDisplayPrefs,writeDisplayPref} from './display-prefs.js';
-import {titleScreen,plateauScreen,playersScreen,garageScreen,voyagesScreen,onlineScreen} from './menus.js';
+import {titleScreen,plateauScreen,playersScreen,garageScreen,voyagesScreen,onlineScreen,editorHubScreen} from './menus.js';
 import {rulesIntro,rulesHelp,HELP_TABS} from './rules-help.js';
 import * as SAVES from './saves.js';
 import {partiesScreen} from './menus.js';
@@ -100,7 +100,7 @@ function render(){
  if(boardElement?.parentElement)boardElement.remove();boardRenderState=null;
  const sheetTurn=screen==='game'&&m?S.player(m).id+':'+m.turn:'';
  const sheetScroll=sheetTurn===renderedSheetTurn?document.querySelector('.player-sheet-mount')?.scrollTop:0;
- let page=screen==='card-editor'?renderCardEditor(customCards,cardDraft,message,eventEdits,eventDraft):screen==='map-editor'?editorScreen():screen==='game'&&m?game():screen==='voyages'?choices():screen==='equipment'?equipmentSetup():screen==='setup'?setup():screen==='modes'?modes():screen==='online'?onlineView():screen==='parties'?partiesView():home();
+ let page=screen==='card-editor'?renderCardEditor(customCards,cardDraft,message,eventEdits,eventDraft):screen==='map-editor'?editorScreen():screen==='game'&&m?game():screen==='voyages'?choices():screen==='equipment'?equipmentSetup():screen==='setup'?setup():screen==='modes'?modes():screen==='online'?onlineView():screen==='parties'?partiesView():screen==='editor-hub'?editorHubScreen({btn,maps,message}):home();
  if(screen==='game'&&splitView)page=page.replace('<main class="game">',`<main class="game game-split" style="--sheet-width:${splitWidth}%">`);
  const splitControls=screen==='game'&&m?`<button type="button" class="light split-toggle" data-action="split-view" aria-pressed="${splitView}">${splitView?'▤ Vue verticale':'◧ Vue côte à côte'}</button>${splitView?`<label class="split-size" for="split-width">Fiche <output id="split-width-value">${splitWidth}%</output><input id="split-width" type="range" min="30" max="50" step="5" value="${splitWidth}" aria-label="Largeur de la fiche joueur"/></label>`:''}`:'';
   app.innerHTML=`<header class="${screen==='game'?'in-game':''}"><div class="brand"><b>🚲 L’Aventure à Vélo</b>${screen==='game'&&m?`<span class="active-player" style="--player-color:${S.player(m).color}"><i aria-hidden="true"></i>${esc(S.player(m).name)}</span>`:''}</div>${screen==='game'&&m?.cardVersion===3&&!S.immersionOn(m)?eventPiles():''}<nav>${splitControls}${btn('📖 Règles','help','light help-btn')+btn('⚙️ Réglages','rules','light')}${btn('Paramètres','settings','light')}${['game','map-editor','card-editor'].includes(screen)?btn('Accueil','home','light'):''}</nav></header>`+page+overlay();
@@ -112,7 +112,7 @@ function render(){
 function journeySteps(active){return `<nav class="journey-steps" aria-label="Étapes de préparation"><span class="${active==='map'?'current':''}"><i>1</i> Plateau</span><b aria-hidden="true"></b><span class="${active==='players'?'current':''}"><i>2</i> Cyclistes</span><b aria-hidden="true"></b><span class="${active==='gear'?'current':''}"><i>3</i> Équipement</span><b aria-hidden="true"></b><span class="${active==='goal'?'current':''}"><i>4</i> Voyages</span></nav>`;}
 function home(){const n=typeof partiesList!=='undefined'?partiesList.length:0;return titleScreen({btn,hasSave:Boolean(m)||n>0,saveLine:n>1?`${n} parties enregistrées`:m?`Jour ${m.round} · ${S.player(m).name}`:'',message,reduced:Boolean(displayPrefs.reduced),maps});}
 function modes(){return plateauScreen({btn,maps,message});}
-function editorScreen(){return `<main class="game map-editor-page"><div class="topbar"><div><span class="eyebrow">ÉDITEUR DE CARTE</span><h1>Créer une carte Europe</h1><p>Choisis une case pour changer son terrain. Les villes des voyages restent fixes.</p></div></div><div class="editor-controls"><label>Nom de la carte <input id="editor-map-name" maxlength="60" value="${esc(editorName)}"/></label><span>Col mythique : ${editorColEffort} énergie</span>${btn('💾 Enregistrer la carte','map-save-project')}${btn('⬇️ Enregistrer en fichier','map-export-file','light')}${btn('Choisir ce plateau','map-play','light')}</div><div class="map-wrap"><div class="map">${boardSurfaceMarkup({g:editorGame,reachable:[],cost:()=>editorColEffort,selected:mapEditKey,route:[],nextSteps:[],editMode:true})}</div><div class="maptools">${btn('−','zoomout')}${btn('+','zoomin')}${btn('◎','center')}${artButton()}</div></div><p class="muted">Les changements sont conservés sur cet appareil après « Enregistrer la carte ». Le fichier .json permet de les garder ou de les importer ailleurs.</p><p class="toast" role="status">${esc(message)}</p>${btn('Retour au menu','home','light')}</main>`;}
+function editorScreen(){return `<main class="game map-editor-page"><div class="topbar"><div><span class="eyebrow">ÉDITEUR DE CARTE</span><h1>Créer une carte Europe</h1><p>Choisis une case pour changer son terrain. Les villes des voyages restent fixes.</p></div></div><div class="editor-controls"><label>Nom de la carte <input id="editor-map-name" maxlength="60" value="${esc(editorName)}"/></label><span>Col mythique : ${editorColEffort} énergie</span>${btn('💾 Enregistrer la carte','map-save-project')}${btn('⬇️ Enregistrer en fichier','map-export-file','light')}${btn('Choisir ce plateau','map-play','light')}</div><div class="map-wrap"><div class="map">${boardSurfaceMarkup({g:editorGame,reachable:[],cost:()=>editorColEffort,selected:mapEditKey,route:[],nextSteps:[],editMode:true})}</div><div class="maptools">${btn('−','zoomout')}${btn('+','zoomin')}${btn('◎','center')}${artButton()}</div></div><p class="muted">Les changements sont conservés sur cet appareil après « Enregistrer la carte ». Le fichier .json permet de les garder ou de les importer ailleurs.</p><p class="toast" role="status">${esc(message)}</p>${btn('← Éditeur','editor-hub','light')}</main>`;}
 function setup(){return playersScreen({btn,roster,colors:COLORS,rules:setupRules});}
 function equipmentSetup(){
  const p=roster[choosing],items=p.items||[],spent=items.reduce((n,id)=>n+setupRules.equipment[id].price,0);
@@ -237,6 +237,7 @@ function act(a){
  else if(a==='event-editor-reset')try{const slotId=document.querySelector('#event-editor-slot')?.value||eventDraft.slotId;storeEventEdits(eventEdits.filter(edit=>edit.slotId!==slotId));resetEventDraft(slotId);message='Carte officielle rétablie pour les prochaines parties.';}catch(e){message=e.message;}
  else if(a==='event-editor-export')try{downloadEventEdits();message='Variantes Événement téléchargées.';}catch(e){message='Export impossible : '+e.message;}
  else if(a==='editor-new'){openEditor();}
+ else if(a==='editor-hub'){screen='editor-hub';modal='';}
  else if(a==='mapedit'){openEditor(m?.mapChoice||'');}
  else if(a==='map-save'){
   const t=editorGame?.board[mapEditKey],type=document.querySelector('#map-tile-type')?.value,name=(document.querySelector('#map-tile-name')?.value||'').trim(),effort=Number(document.querySelector('#map-col-effort')?.value);
@@ -380,10 +381,10 @@ function dayAction(blocked){const p=S.player(m),left=Math.max(0,S.distance(m)-m.
   if(typeof onlineGame==='function'&&onlineGame()&&!myTurn()){const a=m.players.find(q=>q.id===NET.actorId(m));center=`<div class="dock-wait"><span aria-hidden="true">⏳</span><span><b>${esc(a?.name||'L’autre joueur')} ${m.pendingAttack?'répond à une carte…':'roule…'}</b><br>Tes boutons se réveillent dès que c’est ton tour. En attendant, regarde ta fiche.</span></div>`;icons=dockIcon('🔄','Recharger','net-resync');}
   else{center=dayMain('⏳','Patiente…','','endturn',true);icons=cards;}}
  else if(route.length){const c=S.routeCheck(m,route),n=route.length;step=1;
-  center=dayMain('🚴',c.ok?`Rouler ${n} case${n>1?'s':''}`:'Parcours impossible',c.ok?`−${c.energyUsed} ⚡`:'','route-go',!c.ok)+(c.ok?'':`<p class="dock-why">${esc(c.reason||'')}</p>`);
+  center=dockPlan(c)+dayMain('🚴',c.ok?'Rouler →':'Impossible','','route-go',!c.ok);
   icons=dockIcon('✕','Effacer','route-clear')+cards;}
  else if(!m.moved&&p.turnModifiers?.skipMove){step=2;center=dayMain('⏭','Finir ma journée','pas de déplacement aujourd’hui','endturn');icons=dockIcon('🌙','Me reposer','rest-open')+cards;}
- else if(!m.moved){step=0;center=`<div class="dock-hint"><span aria-hidden="true">🗺️</span><span><b>Trace ton étape</b><br>Clique les cases entourées sur la carte · ${left} case${left>1?'s':''} · ${p.energy} ⚡</span></div>`;
+ else if(!m.moved){step=0;center=`<div class="dock-hint"><span aria-hidden="true">🗺️</span><span><b>Trace ton étape</b> · clique les cases entourées sur la carte · ${left} case${left>1?'s':''} · ${p.energy} ⚡${dockWarnings()}</span></div>`;
   icons=dockIcon('🌙','Me reposer','rest-open')+dockIcon('⏭','Passer','endturn-ask','','dim')+cards;}
  else{step=2;center=dayMain('🌙','Finir ma journée',left&&S.moves(m).length?`${left} case${left>1?'s':''} restante${left>1?'s':''}`:'','endturn-ask');
   const eat=S.eatGain(m,p);icons=dockIcon('🍎','Manger','eat',!(p.food>0&&m.ate<m.rules.food.maxPerTurn&&p.energy<energyCap(m,p)&&(p.items.includes('rechaud')||['ville','auberge'].includes(m.board[p.pos]?.type))))+cards;}
@@ -980,3 +981,12 @@ function immersionPanel(p){if(!S.immersionOn(m))return '';const list=S.activeSit
   return `<div class="imm-sit ${t.kind}"><b>${esc(t.title)}</b><small>${esc(t.rules.join(' · '))} · encore ${days} jour${days>1?'s':''}${inside?' · tu es dans la zone':''}</small></div>`;}).join('')}</div>`;}
 // La carte montre les zones des imprévus (hachures orange pour les galères, vert pour les bonnes nouvelles).
 {const prior=boardSurfaceMarkup;boardSurfaceMarkup=state=>prior(screen==='game'&&m&&S.immersionOn(m)?{...state,zones:S.activeSituations(m).map(s=>({keys:s.keys,kind:S.situationTemplate(s.id)?.kind||'neg'}))}:state);}
+
+// ---------- Barre d'action compacte (maquette A) : le bandeau « Planifier l'étape » entre dans la barre ----------
+function dockWarnings(){const out=[],s=S.offroadStatus(m),p=S.player(m);
+ if(s.enabled&&!s.gps)out.push(`Sans ${s.item} : ${s.max} case${s.max>1?'s':''} max hors route`);
+ if(S.forecastOn(m)){const seen=new Set();for(const k of [p.pos,...route]){const id=S.regionAt(m,k);if(seen.has(id))continue;seen.add(id);const w=S.weatherToday(m,k);if(w!=='beau')out.push(`${WEATHER[w].icon} ${REGIONS[id].name} : ${WEATHER[w].name.toLowerCase()} (${WEATHER[w].effect})`);}}
+ const ferries=S.ferryOptions(m);if(ferries.length)out.push(`⛴ Bateau : ${ferries.map(f=>f.name||f.key).join(', ')} · ${m.rules.ferryPrice} pièces`);
+ return out.length?`<span class="dock-chips">${out.map(t=>`<em>${esc(t)}</em>`).join('')}</span>`:'';}
+function dockPlan(c){const p=S.player(m),tags=routeTags(),path=route.map((k,i)=>{const t=m.board[k];return `<span class="${tags[i]?'':'off'}">${esc(t.name||E.terrains[t.type].name)}</span>`;}).join('<i>→</i>');
+ return `<div class="dock-plan"><b>Ton étape : ${route.length} case${route.length>1?'s':''}</b><span class="dock-path">${path}</span><span class="dock-chips">${c.ok?`<em class="cost">−${c.energyUsed} ⚡ · il t’en restera ${p.energy-c.energyUsed}</em>`:`<em class="bad">${esc(c.reason||'Parcours impossible')}</em>`}${dockWarnings().replace(/^<span class="dock-chips">|<\/span>$/g,'')}</span></div>`;}
