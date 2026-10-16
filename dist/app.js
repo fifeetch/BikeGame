@@ -591,6 +591,7 @@ function ficheGauges(p){const r=m.rules,cap=energyCap(m,p),fourbu=isExhausted(m,
  const cells=Array.from({length:r.maxEnergy},(_,i)=>`<i class="${i<p.energy?'on':i>=cap?(S.immersionOn(m)?'lock imm':'lock'):''}"></i>`).join('');
  const fatigue=r.fatigue.enabled?(fourbu?`<small class="fourbu">Fourbu : énergie max −${r.fatigue.maxEnergyPenalty} jusqu’au camping ou à l’hôtel</small>`:`<small>Fatigue ${f} / ${days} · ${f===0?'en forme':days-f===1?'encore 1 jour avant d’être fourbu':'ça tire un peu'}</small>`):'';
  const fi=S.fatigueInfo(m,p);const fatigueBox=fi?'':fatigue;
+ if(fi)return immGauges(p,fi,cells,cap);
  const box=(cls,icon,n,label)=>`<div class="fiche-count ${cls}">${svgI(icon,26)}<b>${n}</b><small>${label}</small></div>`;
  return `<section class="fiche-gauges${fi?' imm':''}" aria-label="Jauges de ${esc(p.name)}"><div class="fiche-energy-box"><div class="fiche-gauge-head"><span>Énergie</span><b>${p.energy}<small> / ${cap}</small></b></div><div class="fiche-energy" style="--cells:${r.maxEnergy}" aria-hidden="true">${cells}</div>${fatigueBox}${fi?'<small class="imm-fat-legend">orange : ton énergie · hachuré : bloqué par la fatigue</small>':''}</div>${fi?immFatigueBlock(fi):''}
  ${box('food','<path d="M12 7c-4 0-6 3-6 7s3 7 6 7 6-3 6-7-2-7-6-7Z"/><path d="M12 7c0-2 1-4 3-4"/>',p.food,'repas')}${box('money','<circle cx="12" cy="12" r="8"/><path d="M12 8v8M9.5 10h4a1.5 1.5 0 0 1 0 3h-3a1.5 1.5 0 0 0 0 3h4"/>',p.money,'pièces')}${box('points','<path d="M12 3l2.6 5.6 6 .7-4.5 4 1.3 6L12 16.4 6.6 19.3l1.3-6-4.5-4 6-.7Z"/>',p.points,'aventure')}</section>`;}
@@ -989,14 +990,14 @@ function immersionPanel(p){if(!S.immersionOn(m))return '';const list=S.activeSit
 function dockWarnings(){const out=[],s=S.offroadStatus(m),p=S.player(m);
  if(s.enabled&&!s.gps)out.push(`Sans ${s.item} : ${s.max} case${s.max>1?'s':''} max hors route`);
  if(S.forecastOn(m)){const seen=new Set();for(const k of [p.pos,...route]){const id=S.regionAt(m,k);if(seen.has(id))continue;seen.add(id);const w=S.weatherToday(m,k);if(w!=='beau')out.push(`${WEATHER[w].icon} ${REGIONS[id].name} : ${WEATHER[w].name.toLowerCase()} (${WEATHER[w].effect})`);}}
- if(S.immersionOn(m)){const fi=S.fatigueInfo(m,p);if(fi)out.unshift(...immFatigueChips(fi,p));}
  const ferries=S.ferryOptions(m);if(ferries.length)out.push(`⛴ Bateau : ${ferries.map(f=>f.name||f.key).join(', ')} · ${m.rules.ferryPrice} pièces`);
- return out.length?`<span class="dock-chips">${out.map(t=>typeof t==='object'?`<em class="${t.cls}">${esc(t.text)}</em>`:`<em>${esc(t)}</em>`).join('')}</span>`:'';}
+ return out.length?`<span class="dock-chips">${out.map(t=>`<em>${esc(t)}</em>`).join('')}</span>`:'';}
 function dockPlan(c){const p=S.player(m),tags=routeTags(),path=route.map((k,i)=>{const t=m.board[k];return `<span class="${tags[i]?'':'off'}">${esc(t.name||E.terrains[t.type].name)}</span>`;}).join('<i>→</i>');
  return `<div class="dock-plan"><b>Ton étape : ${route.length} case${route.length>1?'s':''}</b><span class="dock-path">${path}</span><span class="dock-chips">${c.ok?`<em class="cost">−${c.energyUsed} ⚡ · il t’en restera ${p.energy-c.energyUsed}</em>`:`<em class="bad">${esc(c.reason||'Parcours impossible')}</em>`}${dockWarnings().replace(/^<span class="dock-chips">|<\/span>$/g,'')}</span></div>`;}
 
 // ---------- Mode Immersion : « Où dormir ce soir ? » — dormir termine toujours la journée ----------
 function immersionSleepTiles(p,blocked){const info=S.sleepOptions(m,p);
+ if(S.fatigueInfo(m,p))return immSleepRows(p,blocked,info);
  return info.options.map(o=>{if(o.id==='demander')return ficheTile('Demander l’hospitalité',`gratuit · un pari · refus ${oddsLabel(o.odds.refus)}${o.odds.streak?` (déjà demandé ${o.odds.streak>1?o.odds.streak+' soirs de suite':'hier'})`:''} · sinon camping ${o.lateCamping} pièces`,'rest-demander',blocked,'demander').replace('sinon camping','accueil fatigue −'+(-o.fatigue.grand)+' · jardin −'+(-o.fatigue.jardin)+' · sinon camping');
   const cut=typeof o.fatigue==='number'&&o.fatigue<0?Math.min(-o.fatigue,p.fatigue||0):0,fat=typeof o.fatigue!=='number'?'':o.fatigue>0?` · fatigue +${o.fatigue}`:cut?` · fatigue −${cut}`:(p.fatigue||0)?' · fatigue inchangée':'';
   return ficheTile(esc(o.name),o.why||`${o.price?o.price+' pièce'+(o.price>1?'s':''):'gratuit'} · +${o.energy} ⚡${fat} · nuit calme ${oddsLabel(o.calm)}`,'rest-'+o.id,blocked||Boolean(o.why),o.id==='hotel'&&(p.fatigue||0)>=3&&!o.why?'conseil':'');}).join('')
@@ -1006,7 +1007,7 @@ function nightModal(){const p=S.player(m),blocked=m.done||!['move','place'].incl
  <p class="night-sub">Dormir termine ta journée. Chaque nuit est un pari : plus c’est cher, plus c’est sûr.${m.moved&&left&&S.moves(m).length?` Tu peux encore rouler ${left} case${left>1?'s':''}.`:''}</p>
  <div class="fiche-tiles night-tiles">${immersionSleepTiles(p,blocked)}</div>
  <div class="night-actions">${btn('Continuer la journée','close','light')}</div></div>`;}
-{const prior=dayAction;dayAction=b=>{const h=prior(b);return m&&S.immersionOn(m)?h.replace(/data-action="(endturn-ask|endturn|rest-open)"/g,'data-action="night-open"').replace(/>Me reposer</g,'>Dormir<').replace(/>Passer</g,'>Dormir ici<'):h;};}
+{const prior=dayAction;dayAction=b=>{const h=prior(b);return m&&S.immersionOn(m)?h.replace(/data-action="(endturn-ask|endturn|rest-open)"/g,'data-action="night-open"').replace(/>Me reposer</g,'>Dormir<').replace(/>Passer</g,'>Dormir ici<').replace(' · clique les cases entourées sur la carte',''):h;};}
 
 // ---------- Mode Immersion : la fatigue sur la fiche et dans la barre d'action (maquette « Fatigue — mode Immersion ») ----------
 function immRiskBar(label){const [k,n]=label.split(' sur ').map(Number);return `<span class="imm-risk-bar" aria-hidden="true">${Array.from({length:n||1},(_,i)=>`<i class="${i<k?'on':''}"></i>`).join('')}</span>`;}
@@ -1021,3 +1022,25 @@ function immFatigueChips(fi,p){const out=[];
  const info=S.sleepOptions(m,p),opts=info.options.filter(o=>!o.why&&typeof o.fatigue==='number'),best=opts.sort((a,b)=>a.fatigue-b.fatigue)[0];
  if(best&&best.fatigue<0&&fi.level>0)out.push({cls:'rest',text:info.restDay?`Repos ici : fatigue −${Math.min(-best.fatigue,fi.level)}`:`${best.name} : fatigue −${Math.min(-best.fatigue,fi.level)}`});
  return out;}
+
+// ---------- Maquette A « Fiche compacte » : énergie et fatigue sur une bande, repas/pièces/aventure en ligne, nuits en tableau ----------
+function immGauges(p,fi,cells,cap){const dots=Array.from({length:fi.max},(_,i)=>`<i class="${i<fi.level?'on':''}"></i>`).join('');
+ const [k,n]=fi.galereLabel.split(' sur ').map(Number),risk=Array.from({length:n||1},(_,i)=>`<i class="${i<k?'on':''}"></i>`).join('');
+ const extra=fi.effects.slice(1).filter(e=>e!=='paris plus difficiles'),txt=fi.level>=5?'demain : repos forcé':`galère ${fi.galereLabel}${extra.length?' · '+extra.join(' · '):fi.level===0?' · météo et mécanique':''}`;
+ const tip=`${fi.name} (fatigue ${fi.level}/${fi.max}) : énergie max ${fi.cap}. Événement en route ${fi.roadLabel} jours, galère ${fi.galereLabel} : ${fi.risk}.${fi.level>=3?' Paris plus difficiles.':''}`;
+ return `<section class="fiche-gauges imm-gauges" aria-label="Jauges de ${esc(p.name)}"><div class="imm-band" title="${esc(tip)}">
+  <div class="imm-nrg"><span class="imm-lab">ÉNERGIE</span><span class="fiche-energy" style="--cells:${m.rules.maxEnergy}" aria-hidden="true">${cells}</span><b>${p.energy}<small>/${cap}</small></b></div>
+  <div class="imm-fatl"><span class="imm-niv lvl${fi.level}">${esc(fi.name)} <span class="imm-dots" aria-label="fatigue ${fi.level} sur ${fi.max}">${dots}</span></span>${fi.level<5?`<span class="imm-risk-bar" aria-hidden="true">${risk}</span>`:''}<span class="imm-risk-txt">${esc(txt)}</span></div></div>
+  <div class="imm-counts"><span><b>${p.food}</b>repas</span><span><b>${p.money}</b>pièces</span><span><b>${p.points}</b>aventure</span></div></section>`;}
+const NIGHT_ICON={bivouac:'⛺',camping:'🏕',hotel:'🏨',demander:'🚪'};
+function immSleepRows(p,blocked,info){const lvl=p.fatigue||0,pill=(cls,t)=>`<span class="imm-pill ${cls}">${t}</span>`;
+ const fat=f=>{if(f>0)return pill('r','fatigue +'+f);const cut=Math.min(-f,lvl);return cut?pill('f','fatigue −'+cut):pill('z',lvl?'fatigue 0':'reposé');};
+ const rows=info.options.map(o=>{const off=blocked||Boolean(o.why),d=o.id==='demander';
+  const e=d?'+2/+3':'+'+o.energy+' ⚡',cut=d?Math.min(2,lvl):0;
+  const f=d?(cut?pill('f',cut>1?'−1 à −2':'fatigue −1'):pill('z',lvl?'fatigue 0':'reposé')):fat(o.fatigue);
+  const odds=d?pill('r','refus '+oddsLabel(o.odds.refus)):pill(o.calm<50?'r':'z','calme '+oddsLabel(o.calm).replace(' sur ','/'));
+  const sub=o.why?esc(o.why):d?`Un pari · si refus : camping ${o.lateCamping} pièces${o.odds.streak?` · déjà demandé ${o.odds.streak>1?o.odds.streak+' soirs de suite':'hier'}`:''}`:'';
+  const tip=d?`Grand accueil ${oddsLabel(o.odds.grand)} · jardin ${oddsLabel(o.odds.jardin)} · refus ${oddsLabel(o.odds.refus)}`:'';
+  return `<button class="imm-night${off?' off':''}${o.id==='hotel'&&lvl>=3&&!o.why?' conseil':''}" data-action="rest-${o.id}" ${off?'disabled':''} ${tip?`title="${esc(tip)}"`:''}><span class="ic" aria-hidden="true">${NIGHT_ICON[o.id]||''}</span><span class="n">${esc(d?'Demander':o.name)} <span class="p">· ${o.price?o.price+' pièce'+(o.price>1?'s':''):'gratuit'}</span></span><span class="e">${e}</span>${f}${odds}${sub?`<span class="sub">${sub}</span>`:''}</button>`;}).join('');
+ return `<div class="imm-nights">${rows}</div>`+(info.restDay?`<p class="night-note">Sans rouler aujourd’hui : la nuit rend ${info.factor} fois plus d’énergie.</p>`:'')+(info.stormy?'<p class="night-note storm">Pluie ou orage cette nuit : le bivouac devient risqué.</p>':'');}
+{const priorSheet2=playerSheet;playerSheet=(inline=false)=>{const h=priorSheet2(inline);return m&&S.immersionOn(m)?h.replace('player-mat fiche','player-mat fiche imm-fiche'):h;};}
