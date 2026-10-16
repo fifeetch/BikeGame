@@ -23,11 +23,12 @@ export const SCENES=[
   {label:'Finir l’étape à l’atelier le plus proche',text:'Un détour, mais tu repars tranquille.',need:{money:1},effect:{money:-1,stopToday:true}}]},
  {id:'im-crevaison',when:'route',kind:'galere',rarity:'courante',notCity:true,title:'Pschhh…',scene:'plaine',
   quote:'Le pneu avant se vide doucement sur le bas-côté.',choices:[
-  {label:'Réparer au bord de la route',text:'Démonte-pneu, rustine, pompe.',effect:{energy:-1}},
+  {label:'Changer la chambre à air',text:'Deux minutes, et c’est reparti.',item:'chambre',effect:{}},
+  {label:'Réparer avec le kit',text:'Démonte-pneu, rustine, pompe.',item:'kit',effect:{energy:-1}},
   {label:'Regonfler et croiser les doigts',text:'Ça passe ou ça casse.',chance:{odds:.5,ok:{text:'Ça tient jusqu’au soir.',effect:{}},ko:{text:'Deuxième crevaison deux kilomètres plus loin.',effect:{energy:-2}}}}]},
  {id:'im-chiens',when:'route',kind:'galere',rarity:'courante',terrain:['plaine','moyenne_montagne'],region:['balkans','est'],title:'Les chiens de la ferme',scene:'plaine',
   quote:'{lieu}, trois chiens jaillissent d’une cour et foncent sur tes mollets.',choices:[
-  {label:'Sprinter',text:'Tu les sèmes, mais ça pique.',effect:{energy:-2,points:1}},
+  {label:'Sprinter',text:'Tu les sèmes, mais ça pique.',effect:{energy:-2}},
   {label:'Descendre et leur parler doucement',text:'Pas de geste brusque.',chance:{odds:.6,ok:{text:'Ils reniflent le vélo, puis s’en vont.',effect:{}},ko:{text:'Ils te suivent en aboyant sur deux kilomètres.',effect:{energy:-1}}}}]},
  {id:'im-canicule',when:'route',kind:'galere',rarity:'courante',terrain:['plaine','cote'],weather:['beau'],region:['balkans','ouest','est'],title:'39 °C sans ombre',scene:'plaine',
   quote:'Pas un arbre à l’horizon. L’eau de la gourde est tiède en une heure.',choices:[
@@ -36,15 +37,15 @@ export const SCENES=[
  {id:'im-orage-col',when:'route',kind:'galere',rarity:'courante',terrain:['col','montagne','moyenne_montagne'],weather:['orage'],title:'L’orage sur le col',scene:'montagne',
   quote:'Le ciel devient noir au-dessus du col. Les premiers grondements résonnent dans la vallée.',choices:[
   {label:'Attendre au refuge',text:'Au sec, avec un thé chaud.',effect:{stopToday:true,energy:2}},
-  {label:'Tenter le passage',text:'Vite, avant le déluge.',chance:{odds:.5,ok:{text:'Tu passes juste avant la pluie.',effect:{points:3,energy:-1}},ko:{text:'Trempé jusqu’aux os, frigorifié dans la descente.',effect:{energy:-3,fatigue:1}}}}]},
+  {label:'Tenter le passage',text:'Vite, avant le déluge.',chance:{odds:.5,ok:{text:'Tu passes juste avant la pluie.',effect:{points:2,energy:-1}},ko:{text:'Trempé jusqu’aux os, frigorifié dans la descente.',effect:{energy:-3,fatigue:1}}}}]},
  {id:'im-drache',when:'route',kind:'galere',rarity:'courante',weather:['pluie'],title:'La drache',scene:'plaine',
   quote:'Il pleut depuis le matin. L’eau ruisselle dans les chaussures.',choices:[
-  {label:'Serrer les dents',text:'Cinquante kilomètres sous l’eau, ça se raconte.',effect:{energy:-2,points:1}},
+  {label:'Serrer les dents',text:'Cinquante kilomètres sous l’eau, ça se raconte.',effect:{energy:-2}},
   {label:'S’abriter dans un petit appartement',text:'Douche chaude et vêtements secs.',need:{money:2},effect:{money:-2,fatigue:-1,stopToday:true}}]},
  {id:'im-vent',when:'route',kind:'galere',rarity:'courante',weather:['vent'],terrain:['plaine','cote'],title:'Vent de face',scene:'cote',
   quote:'Un vent à couper le souffle. Tu pédales en descente et tu fais du surplace.',choices:[
   {label:'Baisser la tête',text:'Petit braquet, mâchoire serrée.',effect:{energy:-1}},
-  {label:'S’arrêter au café du village',text:'On t’offre un café, on parle météo.',effect:{stopToday:true,energy:1,points:1}}]},
+  {label:'S’arrêter au café du village',text:'On t’offre un café, on parle météo.',effect:{stopToday:true,energy:1}}]},
  {id:'im-bagages',when:'route',kind:'galere',rarity:'unique',terrain:['col','montagne','moyenne_montagne'],title:'Trop de bagages',scene:'montagne',
   quote:'Premier vrai col : chaque sacoche pèse une tonne. Tout ce que tu emportes, il faut le monter.',choices:[
   {label:'Trier et renvoyer par la poste',text:'Plus léger pour la suite.',need:{money:1},effect:{money:-1,tomorrow:1}},
@@ -62,31 +63,31 @@ export const SCENES=[
  {id:'im-perdu',when:'route',kind:'galere',rarity:'courante',offroad:true,title:'Où est passé le chemin ?',scene:'plaine',
   quote:'La trace disparaît dans les champs. Devant toi : des ronces et une clôture.',choices:[
   {label:'Revenir sur tes pas',text:'Sage décision.',effect:{energy:-1}},
-  {label:'Couper à travers',text:'Ça doit bien passer quelque part.',chance:{odds:.5,ok:{text:'Un raccourci magnifique !',effect:{points:2}},ko:{text:'Ronces, clôtures et vélo poussé.',effect:{energy:-2,fatigue:1}}}}]},
+  {label:'Couper à travers',text:'Ça doit bien passer quelque part.',chance:{odds:.5,ok:{text:'Un raccourci magnifique !',effect:{points:1}},ko:{text:'Ronces, clôtures et vélo poussé.',effect:{energy:-2,fatigue:1}}}}]},
  {id:'im-derailleur',when:'route',kind:'galere',rarity:'rare',title:'Le dérailleur capricieux',scene:'ville',
   quote:'La chaîne saute à chaque coup de pédale. Le dérailleur arrière fait des siennes.',choices:[
   {label:'Régler toi-même',text:'Tournevis et patience.',chance:{odds:.5,ok:{text:'Tout tourne rond.',effect:{}},ko:{text:'Pire qu’avant : demain, réparation.',effect:{tomorrow:-1}}}},
   {label:'Finir à l’atelier',text:'Un ami du patron répare pour presque rien.',need:{money:1},effect:{money:-1,stopToday:true}}]},
  {id:'im-heure',when:'route',kind:'galere',rarity:'unique',region:['balkans'],terrain:['plaine','ville'],title:'Le changement d’heure',scene:'ville',
   quote:'En passant la frontière, une heure de décalage : le train que tu visais n’existe même pas.',choices:[
-  {label:'Demander autour de toi',text:'Un chauffeur de bus scolaire embarque ton vélo.',effect:{tomorrow:1,points:1}},
+  {label:'Demander autour de toi',text:'Un chauffeur de bus scolaire embarque ton vélo.',effect:{tomorrow:1}},
   {label:'Pédaler',text:'Tant pis pour le train.',effect:{energy:-2}}]},
  {id:'im-camion',when:'route',kind:'belle',rarity:'rare',terrain:['plaine'],title:'« On t’avance ? »',scene:'plaine',
   quote:'Sur une route trop fréquentée, un pick-up s’arrête : « On t’avance de trente kilomètres ? »',choices:[
-  {label:'Monter avec eux',text:'Le vélo dans la benne, la vitre ouverte.',effect:{tomorrow:1,points:1}},
-  {label:'Refuser poliment',text:'Tu tiens à tes kilomètres.',effect:{points:1}}]},
+  {label:'Monter avec eux',text:'Le vélo dans la benne, la vitre ouverte.',effect:{tomorrow:1}},
+  {label:'Refuser poliment',text:'Tu tiens à tes kilomètres.',effect:{}}]},
  // ---------- En route : belles surprises ----------
  {id:'im-riviere',when:'route',kind:'belle',rarity:'courante',terrain:['moyenne_montagne','montagne'],weather:['beau','vent'],title:'La rivière glacée',scene:'montagne',
   quote:'Une rivière à 12 degrés coule juste sous la route.',choices:[
   {label:'Tremper les jambes',text:'Les muscles revivent.',effect:{energy:2}},
-  {label:'Remplir les gourdes et repartir',text:'L’eau la plus fraîche du voyage.',effect:{points:1}}]},
+  {label:'Remplir les gourdes et repartir',text:'L’eau la plus fraîche du voyage.',effect:{}}]},
  {id:'im-offrande',when:'route',kind:'belle',rarity:'courante',terrain:['plaine','cote','moyenne_montagne'],notCity:true,title:'Une halte imprévue',scene:'plaine',
   quote:'{qui} t’arrête {lieu} et t’offre {offrande}. Vous ne parlez pas la même langue, mais vous riez beaucoup.',choices:[
-  {label:'Accepter et discuter',text:'Un vrai moment de voyage.',effect:{food:1,points:1}},
+  {label:'Accepter et discuter',text:'Un vrai moment de voyage.',effect:{food:1}},
   {label:'Remercier et repartir',text:'Le ventre plein de gentillesse.',effect:{energy:1}}]},
  {id:'im-cycliste',when:'route',kind:'belle',rarity:'courante',title:'Le cycliste du coin',scene:'plaine',
   quote:'Un cycliste du coin te rattrape, te tend {offrande} et repart aussi vite qu’il est venu.',choices:[
-  {label:'Le suivre un bout',text:'Il connaît toutes les petites routes.',effect:{energy:-1,points:2}},
+  {label:'Le suivre un bout',text:'Il connaît toutes les petites routes.',effect:{energy:-1,points:1}},
   {label:'Le remercier',text:'Une provision de plus.',effect:{food:1}}]},
  {id:'im-paysage',when:'route',kind:'belle',rarity:'rare',terrain:['cote','montagne','col','moyenne_montagne'],weather:['beau'],title:'Paysage exceptionnel',scene:'montagne',
   quote:'Au détour d’un virage, la vue s’ouvre d’un coup. Tu poses le vélo sans réfléchir.',choices:[
@@ -97,89 +98,104 @@ export const SCENES=[
   {label:'Pique-nique au bord',text:'Pain, fromage, soleil.',effect:{energy:2}}]},
  {id:'im-bac',when:'route',kind:'belle',rarity:'rare',terrain:['plaine'],region:['balkans','est','alpes'],title:'Le petit bac',scene:'cote',
   quote:'Le petit bac pour traverser le fleuve se fait attendre. D’autres voyageurs patientent avec toi.',choices:[
-  {label:'Attendre en discutant',text:'Chacun raconte d’où il vient.',effect:{points:1,energy:1}}]},
+  {label:'Attendre en discutant',text:'Chacun raconte d’où il vient.',effect:{energy:1}}]},
  {id:'im-gorges',when:'route',kind:'belle',rarity:'rare',terrain:['montagne','moyenne_montagne'],region:['balkans','alpes'],title:'Les gorges',scene:'montagne',
   quote:'La route se faufile entre la roche et l’eau. Des gorges grandioses.',choices:[
   {label:'Rouler lentement pour tout voir',text:'Paysage exceptionnel.',effect:{points:2}}]},
  {id:'im-addition',when:'route',kind:'belle',rarity:'rare',terrain:['ville'],region:['balkans'],title:'L’addition',scene:'ville',
   quote:'En terrasse, des inconnus curieux de ton voyage. Au moment de payer : ils ont déjà réglé ta note.',choices:[
-  {label:'Les remercier chaleureusement',text:'Une belle leçon d’hospitalité.',effect:{money:2,points:1}}]},
+  {label:'Les remercier chaleureusement',text:'Une belle leçon d’hospitalité.',effect:{money:1}}]},
  {id:'im-marche',when:'route',kind:'belle',rarity:'courante',terrain:['ville'],title:'Le marché',scene:'ville',
   quote:'Le marché déborde : {offrande}, des épices, des cris, des couleurs.',choices:[
   {label:'Faire le plein',text:'Pour trois fois rien.',need:{money:1},effect:{money:-1,food:2}},
-  {label:'Flâner entre les étals',text:'Une de tes activités préférées.',effect:{points:1}}]},
+  {label:'Flâner entre les étals',text:'Les couleurs, les voix, les odeurs.',effect:{}}]},
  {id:'im-enfants',when:'route',kind:'belle',rarity:'courante',terrain:['plaine','moyenne_montagne'],region:['balkans','est'],title:'« Hello ! »',scene:'plaine',
   quote:'Les enfants du village courent à côté du vélo en criant « Hello ! ».',choices:[
-  {label:'Faire la course',text:'Tu laisses gagner le plus petit.',effect:{energy:-1,points:2}},
-  {label:'Saluer de la main',text:'Ça donne des ailes.',effect:{points:1}}]},
+  {label:'Faire la course',text:'Tu laisses gagner le plus petit.',effect:{energy:-1,points:1}},
+  {label:'Saluer de la main',text:'Ça donne des ailes.',effect:{}}]},
  {id:'im-cyclos',when:'route',kind:'belle',rarity:'courante',title:'D’autres voyageurs à vélo',scene:'plaine',
   quote:'Des voyageurs à vélo arrivent en face. Arrêt immédiat : on compare les itinéraires.',choices:[
   {label:'Échanger les bons plans',text:'Ils connaissent une route plus douce.',effect:{tomorrow:1}},
-  {label:'Partager le goûter',text:'Biscuits, histoires et rires.',effect:{energy:1,points:1}}]},
+  {label:'Partager le goûter',text:'Biscuits, histoires et rires.',effect:{energy:1}}]},
 
- // ---------- Le soir : galères ----------
- {id:'im-gaz',when:'soir',kind:'galere',rarity:'courante',notCity:true,item:'rechaud',title:'La mauvaise bouteille de gaz',scene:'plaine',
-  quote:'Le réchaud refuse de s’allumer : la bouteille de gaz n’est pas la bonne.',choices:[
-  {label:'Demander aux voisins',text:'Ils te dépannent… et racontent leur propre voyage.',effect:{energy:2,points:1}},
-  {label:'Manger froid',text:'Pain sec et fromage.',effect:{energy:-1}}]},
- {id:'im-arceau',when:'soir',kind:'galere',rarity:'rare',weather:['orage','pluie'],item:'tente',title:'L’arceau cassé',scene:'plaine',
+ // ---------- La nuit : un pari selon l'endroit où l'on dort (night = bivouac, camping, hotel, dehors) ----------
+ // Galères
+ {id:'im-moustiques',when:'soir',night:['bivouac','dehors','camping'],kind:'galere',rarity:'courante',terrain:['plaine','cote'],title:'Les moustiques',scene:'plaine',
+  quote:'Des nuées de moustiques autour de la tente. Impossible de fermer l’œil.',choices:[
+  {label:'Allumer un feu qui fume',text:'Ça peut marcher.',chance:{odds:.5,ok:{text:'Ils s’en vont. Nuit tranquille.',effect:{}},ko:{text:'Les yeux qui piquent, et toujours les moustiques.',effect:{fatigue:1}}}},
+  {label:'S’enfermer et transpirer',text:'Longue nuit.',effect:{fatigue:1}}]},
+ {id:'im-bruit',when:'soir',night:['bivouac','dehors'],kind:'galere',rarity:'courante',notCity:true,title:'C’était quoi ce bruit ?',scene:'montagne',
+  quote:'Un craquement dans les buissons. Puis un autre. La moindre branche devient énorme une fois la tente fermée.',choices:[
+  {label:'Sortir avec la frontale',text:'Il faut en avoir le cœur net.',chance:{odds:.7,ok:{text:'Une biche ! Elle te regarde, puis file.',effect:{}},ko:{text:'Rien vu, mal dormi.',effect:{fatigue:1}}}},
+  {label:'Se boucher les oreilles',text:'Demain, tout ira bien.',effect:{energy:-1}}]},
+ {id:'im-patrouille',when:'soir',night:['bivouac','dehors'],kind:'galere',rarity:'courante',terrain:['cote','plaine'],notCity:true,title:'La patrouille',scene:'cote',
+  quote:'À la nuit tombée, un pick-up de la police s’arrête près de la tente.',choices:[
+  {label:'Expliquer ton voyage',text:'D’où tu viens, où tu vas.',chance:{odds:.6,ok:{text:'« Bonne nuit, bon voyage ! »',effect:{}},ko:{text:'Il faut plier la tente et aller plus loin, en pleine nuit.',effect:{energy:-1,fatigue:1}}}}]},
+ {id:'im-arceau',when:'soir',night:['bivouac','camping'],kind:'galere',rarity:'rare',weather:['orage','pluie'],item:'tente',title:'L’arceau cassé',scene:'plaine',
   quote:'En plongeant dans la tente pour fuir l’orage, crac : l’arceau casse net.',choices:[
   {label:'Bricoler une attelle',text:'Ça tient, à peu près. Mauvaise nuit.',effect:{fatigue:1}},
   {label:'Échanger la tente en ville demain',text:'Une matinée de perdue.',need:{money:1},effect:{money:-1,tomorrow:-1}}]},
- {id:'im-telephone',when:'soir',kind:'galere',rarity:'rare',terrain:['ville'],title:'Le téléphone oublié',scene:'ville',
-  quote:'Le téléphone est resté sur un banc de la gare !',choices:[
-  {label:'Retourner le chercher',text:'Une serveuse l’a gardé… et t’indique un campement gratuit plein de voyageurs.',effect:{tomorrow:-1,points:2,fatigue:-1}}]},
- {id:'im-moustiques',when:'soir',kind:'galere',rarity:'courante',terrain:['plaine','cote'],notCity:true,title:'Les moustiques',scene:'plaine',
-  quote:'Des nuées de moustiques autour de la tente. Impossible de fermer l’œil.',choices:[
-  {label:'Allumer un feu qui fume',text:'Ça peut marcher.',chance:{odds:.5,ok:{text:'Ils s’en vont. Nuit tranquille.',effect:{}},ko:{text:'Les yeux qui piquent et toujours les moustiques.',effect:{fatigue:1}}}},
-  {label:'S’enfermer et transpirer',text:'Longue nuit.',effect:{fatigue:1}}]},
- {id:'im-bruit',when:'soir',kind:'galere',rarity:'courante',terrain:['plaine','moyenne_montagne','montagne'],notCity:true,title:'C’était quoi ce bruit ?',scene:'montagne',
-  quote:'Un craquement dans les buissons. Puis un autre. La moindre branche devient énorme une fois la tente fermée.',choices:[
-  {label:'Sortir avec la frontale',text:'Il faut en avoir le cœur net.',chance:{odds:.7,ok:{text:'Une biche ! Elle te regarde, puis file.',effect:{points:1}},ko:{text:'Rien vu, mal dormi.',effect:{fatigue:1}}}},
-  {label:'Se boucher les oreilles',text:'Demain, tout ira bien.',effect:{energy:-1}}]},
- {id:'im-ventre',when:'soir',kind:'galere',rarity:'rare',terrain:['ville'],title:'Le repas qui passe mal',scene:'ville',
-  quote:'Le repas de midi passe mal. Très mal.',choices:[
-  {label:'Rester au lit demain',text:'La route attendra.',effect:{restDay:true,fatigue:-1}},
+ {id:'im-deluge',when:'soir',night:['bivouac','dehors'],kind:'galere',rarity:'courante',weather:['orage','pluie'],title:'Le déluge',scene:'plaine',
+  quote:'Toute la nuit, la pluie tambourine. Au matin, une flaque s’est invitée sous le matelas.',choices:[
+  {label:'Tout faire sécher au soleil',text:'Départ tardif.',effect:{tomorrow:-1}},
+  {label:'Repartir mouillé',text:'Ça finira par sécher en roulant.',effect:{fatigue:1}}]},
+ {id:'im-froid',when:'soir',night:['bivouac','dehors'],kind:'galere',rarity:'courante',terrain:['montagne','col','moyenne_montagne'],title:'La nuit glacée',scene:'montagne',
+  quote:'En altitude, la température tombe sous zéro. Le duvet ne suffit pas.',choices:[
+  {label:'Enfiler toutes tes affaires',text:'Tu grelottes jusqu’au matin.',effect:{fatigue:1}}]},
+ {id:'im-gaz',when:'soir',night:['bivouac','camping'],kind:'galere',rarity:'courante',item:'rechaud',title:'La mauvaise bouteille de gaz',scene:'plaine',
+  quote:'Le réchaud refuse de s’allumer : la bouteille de gaz n’est pas la bonne.',choices:[
+  {label:'Demander aux voisins',text:'Ils te dépannent… ou pas.',chance:{odds:.6,ok:{text:'Dîner chaud et bonne humeur.',effect:{}},ko:{text:'Personne autour : pain sec et fromage.',effect:{energy:-1}}}},
+  {label:'Manger froid',text:'Pain sec et fromage.',effect:{energy:-1}}]},
+ {id:'im-complet',when:'soir',night:['camping'],kind:'galere',rarity:'courante',title:'Camping complet',scene:'cote',
+  quote:'« Complet, désolé. » Le suivant est à dix kilomètres… ou il reste un coin de pelouse, à prix d’or.',choices:[
+  {label:'Payer le coin de pelouse',text:'Une pièce de plus.',need:{money:1},effect:{money:-1}},
+  {label:'Pédaler jusqu’au suivant',text:'Dix kilomètres de nuit.',effect:{energy:-2}}]},
+ {id:'im-voisins-bruyants',when:'soir',night:['camping'],kind:'galere',rarity:'courante',title:'Les voisins bruyants',scene:'cote',
+  quote:'Barbecue, musique et rires jusqu’à deux heures du matin, juste à côté de ta tente.',choices:[
+  {label:'Les rejoindre',text:'Autant en profiter.',effect:{fatigue:1,points:1}},
+  {label:'Bouchons d’oreilles',text:'Nuit courte.',effect:{energy:-1}}]},
+ {id:'im-punaises',when:'soir',night:['hotel'],kind:'galere',rarity:'rare',title:'Les punaises',scene:'ville',
+  quote:'Au milieu de la nuit, ça gratte. Beaucoup trop.',choices:[
+  {label:'Changer de chambre',text:'Le réceptionniste est désolé.',effect:{fatigue:1}}]},
+ {id:'im-ventre',when:'soir',night:['hotel','camping'],kind:'galere',rarity:'rare',terrain:['ville'],title:'Le repas qui passe mal',scene:'ville',
+  quote:'Le repas du soir passe mal. Très mal.',choices:[
+  {label:'Rester au lit demain',text:'La route attendra.',effect:{restDay:true}},
   {label:'Repartir quand même',text:'Pâle comme un linge.',effect:{energy:-3}}]},
- // ---------- Le soir : belles surprises ----------
- {id:'im-bieres',when:'soir',kind:'belle',rarity:'courante',notCity:true,title:'Les bières de l’inconnu',scene:'montagne',
+ {id:'im-telephone',when:'soir',night:['hotel','camping'],kind:'galere',rarity:'rare',terrain:['ville'],title:'Le téléphone oublié',scene:'ville',
+  quote:'Le téléphone est resté sur un banc de la gare !',choices:[
+  {label:'Retourner le chercher',text:'Une serveuse l’a gardé. Ouf, mais la matinée y passe.',effect:{tomorrow:-1}}]},
+ // Belles surprises (rares et modestes)
+ {id:'im-etoiles',when:'soir',night:['bivouac','dehors'],kind:'belle',rarity:'courante',weather:['beau','vent'],notCity:true,title:'La nuit étoilée',scene:'montagne',
+  quote:'Pas un nuage. La Voie lactée au-dessus de la tente.',choices:[
+  {label:'Veiller pour regarder',text:'Une étoile filante. Tu dors moins.',effect:{points:1,fatigue:1}},
+  {label:'Dormir tout de suite',text:'Bercé par le silence.',effect:{}}]},
+ {id:'im-bieres',when:'soir',night:['bivouac'],kind:'belle',rarity:'rare',notCity:true,title:'Les bières de l’inconnu',scene:'montagne',
   quote:'Un habitant arrive au bivouac avec des bières : ses amis ne sont pas venus, alors il te les offre.',choices:[
-  {label:'Partager la soirée',text:'Un personnage qu’on n’oublie pas.',effect:{points:2,fatigue:1}},
-  {label:'Une bière, puis dodo',text:'Il comprend, il te souhaite bon voyage.',effect:{points:1,energy:1}}]},
- {id:'im-accordeon',when:'soir',kind:'belle',rarity:'rare',terrain:['ville'],title:'Le concert d’accordéon',scene:'ville',
-  quote:'Ton hôte sort l’accordéon : polka, country, fausses notes. Le concert va durer quarante-cinq minutes.',choices:[
-  {label:'Garder ton sérieux',text:'Quarante-cinq très longues minutes.',effect:{points:2,energy:-1}},
-  {label:'Chanter avec lui',text:'Ton hôte est ravi.',effect:{points:1,energy:1}}]},
- {id:'im-meute',when:'soir',kind:'belle',rarity:'courante',terrain:['cote','plaine'],region:['balkans','est'],notCity:true,title:'La meute protectrice',scene:'cote',
+  {label:'Partager la soirée',text:'Un personnage qu’on n’oublie pas.',effect:{points:1,fatigue:1}},
+  {label:'Une bière, puis dodo',text:'Il comprend et te souhaite bon voyage.',effect:{}}]},
+ {id:'im-meute',when:'soir',night:['bivouac','dehors'],kind:'belle',rarity:'rare',terrain:['cote','plaine'],region:['balkans','est'],notCity:true,title:'La meute protectrice',scene:'cote',
   quote:'Une meute de chiens du village s’installe autour de la tente et monte la garde toute la nuit.',choices:[
   {label:'Dormir tranquille',text:'Tes gardes du corps veillent.',effect:{fatigue:-1}}]},
- {id:'im-patrouille',when:'soir',kind:'belle',rarity:'rare',terrain:['cote'],notCity:true,title:'La patrouille',scene:'cote',
-  quote:'À la nuit tombée, un pick-up de la police s’arrête près de la tente.',choices:[
-  {label:'Expliquer ton voyage',text:'D’où tu viens, où tu vas.',chance:{odds:.8,ok:{text:'« Bonne nuit, bon voyage ! »',effect:{points:1}},ko:{text:'Il faut plier la tente et aller plus loin.',effect:{energy:-1}}}}]},
- {id:'im-festival',when:'soir',kind:'belle',rarity:'rare',terrain:['ville'],title:'Le festival',scene:'ville',
-  quote:'Concerts et brasseries locales sur la place : la ville est en fête.',choices:[
-  {label:'Faire la fête',text:'Après des semaines de route, ça fait du bien.',effect:{points:3,fatigue:1}},
-  {label:'Rentrer tôt',text:'La musique te berce.',effect:{energy:1}}]},
- {id:'im-voisins',when:'soir',kind:'belle',rarity:'courante',terrain:['plaine','cote','moyenne_montagne'],notCity:true,title:'Le dîner des voisins',scene:'cote',
-  quote:'Tu as demandé à planter la tente dans le champ d’en face. Le soir, les voisins apportent {offrande}.',choices:[
-  {label:'Dîner avec eux',text:'L’hospitalité dont tout le monde parle.',effect:{food:1,points:2}}]},
- {id:'im-hote',when:'soir',kind:'belle',rarity:'courante',terrain:['ville'],title:'L’hôte du réseau cyclo',scene:'ville',
-  quote:'Un hôte du réseau d’accueil des voyageurs à vélo t’ouvre sa porte.',choices:[
-  {label:'Repas partagé',text:'On entre chez des inconnus, on repart avec des amis.',effect:{energy:3,fatigue:-1,points:1}},
-  {label:'Il t’aide à réparer le vélo',text:'Tout est réglé pour demain.',effect:{tomorrow:1}}]},
- {id:'im-fin-camping',when:'soir',kind:'belle',rarity:'rare',notCity:true,title:'Le camping qui ferme',scene:'cote',
-  quote:'Le camping ferme dans deux jours. Tout est vide et presque gratuit.',choices:[
-  {label:'Profiter du calme',text:'Douche chaude et hamac.',effect:{fatigue:-1,energy:1}}]},
- {id:'im-nomades',when:'soir',kind:'belle',rarity:'courante',notCity:true,title:'Les voyageurs au long cours',scene:'montagne',
-  quote:'Un couple qui voyage depuis deux ans plante sa tente à côté de la tienne.',choices:[
-  {label:'Écouter leurs histoires',text:'Le voyage comme manière de vivre.',effect:{points:2}},
-  {label:'Leur demander les bons coins',text:'Ils connaissent la route de demain.',effect:{tomorrow:1}}]},
- {id:'im-lessive',when:'soir',kind:'belle',rarity:'courante',terrain:['cote','ville'],title:'Le jour de lessive',scene:'cote',
-  quote:'Douches de plage et lessive : le linge sèche sur la digue pendant que le soleil se couche.',choices:[
-  {label:'Profiter de la soirée',text:'Propre, enfin.',effect:{energy:1,points:1}}]},
- {id:'im-feu',when:'soir',kind:'belle',rarity:'courante',terrain:['cote','montagne','moyenne_montagne'],weather:['beau','vent'],notCity:true,title:'Le feu de bois',scene:'montagne',
+ {id:'im-feu',when:'soir',night:['bivouac'],kind:'belle',rarity:'courante',terrain:['cote','montagne','moyenne_montagne'],weather:['beau','vent'],notCity:true,title:'Le feu de bois',scene:'montagne',
   quote:'Cuisine au feu de bois, face à la mer ou aux sommets. La vie est douce.',choices:[
-  {label:'Cuisiner tranquillement',text:'Le meilleur repas de la semaine.',effect:{energy:2}}]}
+  {label:'Cuisiner tranquillement',text:'Le meilleur repas de la semaine.',effect:{energy:1}}]},
+ {id:'im-nomades',when:'soir',night:['camping','bivouac'],kind:'belle',rarity:'courante',title:'Les voyageurs au long cours',scene:'montagne',
+  quote:'Un couple qui voyage depuis deux ans plante sa tente à côté de la tienne.',choices:[
+  {label:'Écouter leurs histoires',text:'Le voyage comme manière de vivre.',effect:{points:1}},
+  {label:'Leur demander les bons coins',text:'Ils connaissent la route de demain.',effect:{tomorrow:1}}]},
+ {id:'im-fin-camping',when:'soir',night:['camping'],kind:'belle',rarity:'rare',title:'Le camping qui ferme',scene:'cote',
+  quote:'Le camping ferme dans deux jours : le gérant te rend ta pièce.',choices:[
+  {label:'Profiter du calme',text:'Douche chaude et hamac.',effect:{money:1}}]},
+ {id:'im-lessive',when:'soir',night:['camping','hotel'],kind:'belle',rarity:'courante',title:'Le jour de lessive',scene:'cote',
+  quote:'Machine à laver et linge propre : le luxe.',choices:[
+  {label:'Profiter de la soirée',text:'Propre, enfin.',effect:{fatigue:-1}}]},
+ {id:'im-festival',when:'soir',night:['hotel','camping'],kind:'belle',rarity:'rare',terrain:['ville'],title:'Le festival',scene:'ville',
+  quote:'Concerts et brasseries locales sur la place : la ville est en fête.',choices:[
+  {label:'Faire la fête',text:'Après des jours de route, ça fait du bien.',effect:{points:1,fatigue:1}},
+  {label:'Rentrer tôt',text:'La musique te berce.',effect:{}}]},
+ {id:'im-accordeon',when:'soir',night:['hotel'],kind:'belle',rarity:'rare',terrain:['ville'],title:'Le concert d’accordéon',scene:'ville',
+  quote:'Le patron de l’hôtel sort l’accordéon : polka, country, fausses notes. Quarante-cinq minutes.',choices:[
+  {label:'Garder ton sérieux',text:'Quarante-cinq très longues minutes.',effect:{points:1}}]},
 ];
 
 // Détails tirés au sort selon la zone : la même scène change à chaque fois.
@@ -223,11 +239,11 @@ export const SITUATIONS=[
 ];
 export const SITUATION_SCENES={
  'sit-vendanges':{id:'sit-vendanges',when:'soir',kind:'belle',title:'Les vendanges',scene:'plaine',quote:'« Tu as deux bras ? Viens, on te paie et on dîne ensemble. »',choices:[
-  {label:'Vendanger demain matin',text:'Une journée de paie, des mains violettes.',effect:{money:3,energy:-2}},
-  {label:'Goûter et dormir sur place',text:'Une nuit au milieu des vignes.',effect:{energy:2,points:1}}]},
+  {label:'Vendanger demain matin',text:'Une demi-journée de paie, des mains violettes.',effect:{money:2,tomorrow:-1}},
+  {label:'Goûter et rester dîner',text:'Une soirée au milieu des vignes.',effect:{energy:1,points:1}}]},
  'sit-fete':{id:'sit-fete',when:'soir',kind:'belle',title:'La fête nationale',scene:'ville',quote:'Fanfare, drapeaux, poisson grillé et grandes tablées. On te tire par la manche.',choices:[
-  {label:'Danser jusqu’à minuit',text:'Inoubliable. Les jambes, un peu moins.',effect:{points:3,fatigue:1}},
-  {label:'Manger au banquet',text:'On te sert sans même demander.',effect:{energy:3,food:1}}]}
+  {label:'Danser jusqu’à minuit',text:'Inoubliable. Les jambes, un peu moins.',effect:{points:2,fatigue:1}},
+  {label:'Manger au banquet',text:'On te sert sans même demander.',effect:{energy:2}}]}
 };
 
 // ---------- Compagnons de route : ils reviennent plus loin dans la partie ----------
@@ -251,3 +267,16 @@ export function oddsLabel(pct){const list=[[10,'1 sur 10'],[15,'1 sur 7'],[20,'1
 export const RARITY_WEIGHT={courante:3,rare:1,unique:1};
 export const SCENE_COOLDOWN=10;// jours avant de revoir une même scène
 export const ROAD_CHANCE=.5;// un événement en route environ un jour sur deux
+
+// ---------- La nuit (mode Immersion) : dormir termine toujours la journée ----------
+// energy : énergie rendue ; fatigue : 'reset' (remise à 0), -1, 0 ou +1 ; calm/galere/belle : chances (en %) du pari de la nuit.
+// Une journée sans rouler : la nuit qui suit rend deux fois plus d'énergie (REST_DAY_FACTOR).
+export const NIGHT={
+ bivouac:{name:'Bivouac',energy:1,fatigue:0,odds:{calm:45,galere:35,belle:20},stormy:{calm:30,galere:55,belle:15}},
+ camping:{name:'Camping',energy:2,fatigue:-1,odds:{calm:60,galere:20,belle:20},stormy:{calm:50,galere:30,belle:20}},
+ hotel:{name:'Hôtel',energy:3,fatigue:'reset',odds:{calm:80,galere:5,belle:15},stormy:{calm:80,galere:5,belle:15}},
+ dehors:{name:'Nuit dehors',energy:0,fatigue:1,odds:{calm:40,galere:50,belle:10},stormy:{calm:25,galere:65,belle:10}}
+};
+export const REST_DAY_FACTOR=2;
+// « Demander » : ce que donne chaque réponse (la nuit compte comme un hôtel, un camping, ou un refus).
+export const DEMAND_NIGHT={grand:{energy:3,fatigue:'reset',food:1,points:1},jardin:{energy:2,fatigue:-1},refusCamping:{energy:2,fatigue:-1},refusDehors:{energy:0,fatigue:1}};

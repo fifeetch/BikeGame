@@ -1755,3 +1755,31 @@ body .game .player-sheet-dock .dock-icons{flex:0 0 auto}
 @media (min-width:761px){body .game .player-sheet-dock .dock-center{flex-wrap:nowrap}body .game .player-sheet-dock .dock-center .dock-main{flex:0 0 auto;width:auto;max-width:300px}body .game .player-sheet-dock .dock-steps{margin-right:-6px}}
 @media (min-width:761px){body .game .player-sheet-dock .dock-center{flex-direction:row;align-items:center}}
 @media (min-width:761px){body .game .player-sheet-dock .dock-steps{transform:none;zoom:.82;margin:0}body .game .player-sheet-dock .dock-center .dock-main{max-width:none;flex-shrink:0;white-space:nowrap}}
+
+/* ---------- Mode Immersion : la nuit ---------- */
+.night-modal{display:flex;flex-direction:column;gap:12px}
+.night-modal h2{margin:0;font:900 34px/1.05 'Fraunces',Georgia,serif;color:#1b3b38}
+.night-modal .eyebrow{color:#8a5a14;letter-spacing:.14em}
+.night-sub{margin:0;color:#5a4a2c;font-size:17px}
+.night-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
+.night-tiles .fiche-tile small{white-space:normal}
+.night-note{grid-column:1/-1;margin:0;padding:8px 12px;border-radius:10px;background:#e6f0d6;color:#1f4a2a;font-size:15px}
+.night-note.storm{background:#fbe1d6;color:#7a2c16}
+.night-actions{display:flex;justify-content:flex-end}
+.encounter-night{margin:0;padding:6px 12px;border-radius:999px;align-self:flex-start;background:#1b3b38;color:#f6e7c1;font-weight:700;font-size:14px}
+body .modal.encounter-modal .encounter-night{color:#f6e7c1}
+@media (max-width:640px){.night-tiles{grid-template-columns:1fr}}
+.modal.night-wrap{padding:24px 26px;background:#f6e7c1;color:#1b1406;max-width:760px}
+body .modal.night-wrap .night-modal h2{color:#1b3b38}
+body .modal.night-wrap .night-modal .night-sub{color:#5a4a2c}
+body .modal.night-wrap .night-modal .eyebrow{color:#8a5a14}
+body .modal.night-wrap .fiche-tile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:84px;padding:12px 14px;border-radius:16px;background:#fff7df;border:2px solid #c9b88d;color:#1b1406;text-transform:none;letter-spacing:0;box-shadow:none;cursor:pointer;text-align:center;opacity:1}
+body .modal.night-wrap .fiche-tile b{font:900 21px/1.1 'Fraunces',Georgia,serif;color:#1b3b38;text-transform:none;letter-spacing:0}
+body .modal.night-wrap .fiche-tile small{font:600 15px/1.3 'Barlow Condensed',system-ui,sans-serif;color:#5a4a2c;text-transform:none;letter-spacing:0}
+body .modal.night-wrap .fiche-tile:not(:disabled):hover{border-color:#f2a541;background:#fff1cf}
+body .modal.night-wrap .fiche-tile:disabled{opacity:.55;border-style:dashed;cursor:not-allowed}
+body .modal.night-wrap .fiche-tile.demander{border-color:#f2a541;background:#fbe7c2}
+body .modal.night-wrap .fiche-tile.conseil{border-color:#2f7a3c;background:#e6f0d6}
+body .modal.night-wrap .night-note{color:#1f4a2a;background:#e6f0d6;font-weight:600}
+body .modal.night-wrap .night-note.storm{color:#7a2c16;background:#fbe1d6}
+body .modal.night-wrap .night-actions button{display:inline-flex;min-height:46px;padding:10px 20px;border-radius:12px;border:2px solid #1b3b38;background:#1b3b38;color:#f6e7c1;font:700 17px 'Barlow Condensed',system-ui,sans-serif;opacity:1;visibility:visible}

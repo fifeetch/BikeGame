@@ -245,3 +245,12 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - **« Où roulera-t-on ? »** : seulement des choix pour jouer. Tes cartes restent avec « Jouer → » ; plus d'atelier, d'import ni de « Modifier ». « Jouer avec les tuiles » est caché (mode non développé).
 - **Barre d'action compacte** : le bandeau « Planifier l'étape » est intégré à la barre (ton étape, chemin, coût en énergie, avertissements hors route / météo / bateau en pastilles) ; le bouton « Rouler → » est sur la même ligne. Sur un écran 1900 × 1056, la carte passe d'environ 510 à 830 pixels de haut. Sur téléphone, la barre s'empile.
 - Cache : `aventure-velo-v77-immersion`, `?v=immersion` ; `immersion.js` ajouté aux fichiers gardés hors ligne.
+
+## Mode Immersion : dormir termine la journée (16 octobre 2026, demande de Fi)
+- **Un tour = une journée complète.** « Finir ma journée » (et « Dormir ») ouvre **« Où dormir ce soir ? »** ; on ne peut plus se reposer en début de journée pour recharger. Seulement en mode Immersion.
+- **Nuits** : bivouac (gratuit, tente) +1 énergie, fatigue inchangée ; camping (1 pièce) +2, fatigue −1 ; hôtel (3 pièces, en ville) +3, fatigue effacée ; « Demander » : grand accueil +3, un repas, fatigue effacée, +1 point · jardin +2, fatigue −1 · refus : camping de dernière minute 2 pièces (+2, fatigue −1) ou nuit dehors (+0, fatigue +1). **Journée sans rouler** : la nuit rend deux fois plus.
+- **Chaque nuit est un pari** : nuit tranquille, galère ou belle surprise selon l'endroit (bivouac le plus risqué, surtout sous la pluie ou l'orage ; hôtel le plus sûr). Les chances de nuit calme sont affichées.
+- **Scènes du soir** : les 20 rencontres génériques sont retirées du mode Immersion ; les scènes sont liées au lieu de la nuit, et les cadeaux réduits (le plus souvent +1 point au plus). Les choix vérifient les sacoches (chambre à air, kit, réchaud, tente) ; chaque scène garde un choix toujours possible. Scènes en route aussi moins généreuses.
+- Réglages : `NIGHT`, `REST_DAY_FACTOR`, `DEMAND_NIGHT` dans `dist/immersion.js`. Essai : avec +1/+2/+3, un cycliste parcourt environ 2,1 cases par jour et prend environ 3 jours de repos sur 30 (avec +2/+3/+4 : 2,4 cases et presque jamais de repos).
+- Robots : `robotSleep` choisit où dormir. Tests : 19 tests dans `tests/immersion.test.js`.
+- Cache : `aventure-velo-v78-nuit`, `?v=nuit`.

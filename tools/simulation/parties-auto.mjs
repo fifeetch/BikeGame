@@ -7,6 +7,13 @@ import * as S from '../../dist/simulator.js';
 import * as C from '../../dist/event-card-engine.js';
 import {CLASSIC,energyCap} from '../../dist/rules.js';
 import {voyages,progress} from '../../dist/voyages.js';
+import {NIGHT} from '../../dist/immersion.js';
+// Mode Immersion : NIGHT_ENERGY=2,3,4 essaie une autre récupération (bivouac, camping, hôtel).
+if(process.env.NIGHT_ENERGY){const [b,c,h]=process.env.NIGHT_ENERGY.split(',').map(Number);NIGHT.bivouac.energy=b;NIGHT.camping.energy=c;NIGHT.hotel.energy=h;}
+// Le robot choisit où dormir : hôtel si fourbu en ville, camping s'il a des pièces, sinon bivouac ou « Demander ».
+function robotSleep(m,rand,stat){const p=S.player(m),opts=S.sleepOptions(m,p).options,ok=id=>opts.find(o=>o.id===id&&!o.why),tired=p.fatigue>=m.rules.fatigue.days-1;
+ const order=tired?['hotel','camping','demander','bivouac']:rand()<.3?['demander','bivouac','camping']:p.money>=4?['camping','bivouac','demander']:['bivouac','demander','camping'];
+ for(const id of order)if(ok(id)&&S.rest(m,id)){stat.nights=stat.nights||{};stat.nights[id]=(stat.nights[id]||0)+1;return true;}return false;}
 
 const GAMES=Number(process.argv[2]||20),MAX_ROUNDS=150;
 // Options : FORECAST=1 (météo annoncée au lieu des cartes météo) ; RENCONTRES=1 (rencontres au lieu des cartes Événement) ; SAVE=fichier.json STOP_ROUND=8 (arrête la 1re partie au jour 8 et l'enregistre, pour la tester dans le navigateur).
@@ -107,7 +114,7 @@ function playGame(n,seed,rulesTweak){
   try{playTurn(m,rand,ctx,stat);}catch(e){problem('erreur pendant un tour',e.stack.split('\n').slice(0,2).join(' '),ctx);break;}
   if(m.done)break;if(!handlePhases(m,rand,ctx))break;
   const p=S.player(m);stat.hist=stat.hist||{};const why=m.moved?'m'+m.moved:(p.turnModifiers?.skipMove?'skip':m.turnKind!=='travel'?m.turnKind:(S.distance(m)===0?'dist0':'other'));stat.hist[why]=(stat.hist[why]||0)+1;if(why==='other'&&!stat.sample){const g=goal(m,p),path=pathTo(m,p,g.key);stat.sample={phase:m.phase,energy:p.energy,goal:g,path:path.slice(0,4),check:S.routeCheck(m,path.slice(0,1)),moves:S.moves(m).length,pending:p.pendingEffects};}
-  if(!S.endTurn(m)){if(!handlePhases(m,rand,ctx))break;if(!S.endTurn(m)&&!m.done){problem('impossible de terminer le tour',`phase « ${m.phase} »`,ctx);break;}}
+  if(S.immersionOn(m)&&['move','place'].includes(m.phase)&&!m.pendingAttack&&robotSleep(m,rand,stat)){}else if(!S.endTurn(m)){if(!handlePhases(m,rand,ctx))break;if(!S.endTurn(m)&&!m.done){problem('impossible de terminer le tour',`phase « ${m.phase} »`,ctx);break;}}
   check(m,'fin de tour',ctx);if(guard%15===0)roundTrip(m,ctx);
   const key=m.players.map(q=>q.pos+q.energy).join();if(key===lastKey)stall++;else stall=0;lastKey=key;
   if(stall>12*n){const q=S.player(m),g=goal(m,q),path=pathTo(m,q,g.key);ctx.debug={goal:g,path:path.slice(0,5),check:S.routeCheck(m,path.slice(0,1)),moves:S.moves(m).map(t=>t.key),phase:m.phase,moved:m.moved,dist:S.distance(m),mods:q.turnModifiers,pending:q.pendingEffects,fatigue:q.fatigue,progress:progress(S.view(m,q)).rows.map(r=>r.label+' '+r.value+'/'+r.target).join(' ; ')};
