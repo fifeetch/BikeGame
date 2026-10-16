@@ -211,3 +211,20 @@ test('Fatigue : la fiche et la barre d’action reçoivent les bons textes', ()=
  assert.equal(fi.name,'Épuisé');assert.equal(fi.galereLabel,'2 sur 3');assert.equal(fi.roadLabel,'3 sur 5');assert.equal(fi.cap,7);assert.ok(fi.effects.includes('repas −1'));
  const o=S.createMatch([{name:'A',bike:'gravel',voyage:voyages[0].id,items:[]}],'plateau',CLASSIC,3);assert.equal(S.fatigueInfo(o),null);
 });
+
+// ---------- Niveaux de difficulté (Immersion solo) ----------
+const lvMatch=(level,items=['tente','rechaud'])=>{const r=immRules();r.immersion.level=level;return S.createMatch([{name:'Solo',bike:'gravel',voyage:voyages[0].id,items}],'plateau',r,7);};
+test('Niveaux : départ, jours et repas selon le niveau', ()=>{
+ const b=lvMatch('balade'),v=lvMatch('voyage'),a=lvMatch('aventure'),e=lvMatch('expedition');
+ assert.deepEqual([b,v,a,e].map(m=>S.player(m).energy),[10,8,7,6]);
+ assert.deepEqual([b,v,a,e].map(m=>m.rules.victory.days),[50,40,35,30]);
+ assert.equal(S.player(b).money,S.player(v).money+3);assert.equal(S.player(a).money,Math.max(0,S.player(v).money-2));
+ assert.deepEqual([v,a,e].map(m=>m.rules.food.quantity),[2,1,1],'1 pièce = 1 repas en Aventure et Expédition');
+ assert.equal(S.eatGain(e,S.player(e)),Math.max(1,Math.floor(S.eatGain(v,S.player(v))/2)),'Expédition : un repas rend moitié moins');
+ assert.ok(S.demandInfo(e,S.player(e)).refus>S.demandInfo(v,S.player(v)).refus);assert.ok(S.demandInfo(b,S.player(b)).refus<S.demandInfo(v,S.player(v)).refus);
+ assert.equal(S.immLevelId(lvMatch('inconnu')),'voyage','niveau inconnu → Voyage');
+});
+test('Niveaux : les paris sont plus faciles en Balade, plus durs en Expédition', ()=>{
+ const b=lvMatch('balade'),v=lvMatch('voyage'),e=lvMatch('expedition');for(const m of [b,v,e])S.player(m).fatigue=0;
+ assert.ok(S.betOdds(b,.5)>S.betOdds(v,.5));assert.ok(S.betOdds(e,.5)<S.betOdds(v,.5));
+});

@@ -2003,3 +2003,22 @@ body.soir .playable-europe .city-names{filter:drop-shadow(0 0 4px #ffd27a)}
 .chat-btn.has-new{animation:chat-pulse 1.4s ease-in-out infinite;border-color:#f2a541}
 @keyframes chat-pulse{0%,100%{box-shadow:0 0 0 0 rgba(242,165,65,.0)}50%{box-shadow:0 0 0 6px rgba(242,165,65,.45)}}
 @media (prefers-reduced-motion: reduce){.chat-toast,.chat-btn.has-new{animation:none}}
+
+/* ---------- Niveaux de difficulté (Immersion solo) ---------- */
+.mc-level .mc-level-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+.mc-lvl{display:flex;flex-direction:column;gap:6px;text-align:left;background:#fbf1d8;color:#1b1406;border:3px solid transparent;border-radius:14px;padding:12px;cursor:pointer;font-family:'Barlow',system-ui,sans-serif;position:relative}
+.mc-lvl.on{border-color:#f2a541;box-shadow:0 0 0 4px rgba(242,165,65,.25)}
+.mc-lvl:focus-visible{outline:3px solid #f6e7c1;outline-offset:2px}
+.mc-lvl-top{display:flex;align-items:center;gap:9px}
+.mc-lvl-ico{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;font-size:20px;background:#1b3b38}
+.lvl-balade .mc-lvl-ico{background:#5f8a6a}.lvl-voyage .mc-lvl-ico{background:#4a7fa8}.lvl-aventure .mc-lvl-ico{background:#b8432e}.lvl-expedition .mc-lvl-ico{background:#6b4a8a}
+.mc-lvl small{display:block;font:700 12px 'Barlow Condensed',system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#8a5a14}
+.mc-lvl b{font:900 20px 'Fraunces',Georgia,serif;line-height:1}
+.mc-lvl em{font-style:normal;font-size:13.5px;color:#4a3d24;line-height:1.3}
+.mc-lvl ul{margin:0;padding-left:17px;font-size:13px;line-height:1.4}
+.mc-lvl-pips{display:flex;gap:3px}.mc-lvl-pips i{width:15px;height:6px;border-radius:3px;background:#e2cf9f}.mc-lvl-pips i.on{background:#b8432e}
+.mc-lvl-medal{font-size:12px;font-weight:700;color:#5a4a2c;background:#eee3c7;border-radius:999px;padding:1px 8px;align-self:flex-start}
+.lvl-badge{display:inline-block;margin-left:8px;font:700 13px 'Barlow Condensed',system-ui,sans-serif;letter-spacing:.04em;background:#1b3b38;color:#f6e7c1;border-radius:999px;padding:1px 9px;vertical-align:middle}
+.lvl-badge.lvl-balade{background:#5f8a6a}.lvl-badge.lvl-aventure{background:#b8432e}.lvl-badge.lvl-expedition{background:#6b4a8a}
+.bet-odds.hidden{font-weight:700}
+.end-medal{font-size:17px;background:#fbf1d8;color:#1b1406;border-radius:12px;padding:8px 12px;display:inline-block}

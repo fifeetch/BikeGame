@@ -2,6 +2,7 @@
 // Ce module ne fait que produire du HTML : les règles, la sauvegarde et les clics restent dans app.js.
 // Les attributs data-action, data-map-choice, data-mode, data-equipment, data-voyage… sont ceux qu'app.js écoute déjà.
 import {MAP_CELLS} from './assets/europe/board-data.js';
+import {LEVELS,LEVEL_ORDER} from './immersion.js';
 
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const MAP_IMG='assets/terrain/europe-terrain.webp';
@@ -125,7 +126,7 @@ export function playersScreen({btn,roster,colors,rules}){
     <button type="button" data-action="mode-original" aria-pressed="${!rules.immersion?.enabled}" class="${!rules.immersion?.enabled?'on':''}"><b>Mode original</b><small>Le jeu de plateau et ses cartes à se jouer. Conseillé à plusieurs.</small></button>
     <button type="button" data-action="mode-immersion" aria-pressed="${!!rules.immersion?.enabled}" class="${rules.immersion?.enabled?'on':''}"><b>Mode Immersion · conseillé en solo</b><small>Plus de cartes : la route décide. Scènes en route et le soir, imprévus sur la carte, « Demander » l’hospitalité, compagnons de route.</small></button>
    </div></section>
-  ${rules.immersion?.enabled?`<p class="mc-mode-note">En mode Immersion, la météo est annoncée par zones et il n’y a plus de cartes Événement : ce qui arrive dépend du terrain, de la zone, de la météo et de ta fatigue.</p>`:`  <section class="mc-weather" aria-label="Météo de la partie"><div><p class="mc-kicker">Météo de la partie</p><p>Choisis une seule des deux façons de jouer la météo.</p></div>
+  ${rules.immersion?.enabled?`<p class="mc-mode-note">En mode Immersion, la météo est annoncée par zones et il n’y a plus de cartes Événement : ce qui arrive dépend du terrain, de la zone, de la météo et de ta fatigue.</p>${roster.length===1?levelPicker(rules.immersion.level):''}`:`  <section class="mc-weather" aria-label="Météo de la partie"><div><p class="mc-kicker">Météo de la partie</p><p>Choisis une seule des deux façons de jouer la météo.</p></div>
    <div class="mc-weather-choices" role="group" aria-label="Choix de la météo">
     <button type="button" data-action="weather-cards" aria-pressed="${!rules.weather?.forecast}" class="${!rules.weather?.forecast?'on':''}"><b>Cartes météo</b><small>Les cartes Événement climatiques (pluie, neige, vent…) se jouent entre cyclistes.</small></button>
     <button type="button" data-action="weather-forecast" aria-pressed="${!!rules.weather?.forecast}" class="${rules.weather?.forecast?'on':''}"><b>Météo annoncée</b><small>Chaque soir, le bulletin du lendemain pour 5 régions. Les cartes climatiques sont retirées.</small></button>
@@ -275,3 +276,12 @@ export function editorHubScreen({btn,maps=[],message=''}){
   <p class="toast" role="status">${esc(message)}</p>
  </main>`;
 }
+
+// Mode Immersion en solo : choix du niveau (planche « Difficulté Immersion »).
+const LEVEL_TEXT={balade:['Pour découvrir l’Immersion sans stress.','Plus d’énergie et de pièces','Moins de galères, paris plus faciles','On t’ouvre volontiers la porte','50 jours'],
+ voyage:['Le jeu tel qu’il est : belles surprises et galères.','Départ normal','Galères selon la fatigue','« Demander » : refus 1 sur 3','40 jours'],
+ aventure:['La route ne fait pas de cadeau.','Moins d’énergie et de pièces','Plus de galères, paris plus durs','1 pièce = 1 repas, plus d’imprévus','35 jours'],
+ expedition:['Pour les grands voyageurs.','Départ léger, 1 pièce = 1 repas','Un repas rend moitié moins','Chances cachées, météo du jour seulement','30 jours']};
+function levelPicker(cur='voyage'){if(!LEVELS[cur])cur='voyage';
+ return `<section class="mc-weather mc-level" aria-label="Niveau de difficulté"><div><p class="mc-kicker">Niveau · solo</p><p>Quel voyage veux-tu vivre ? Les règles restent les mêmes, seuls les réglages changent.</p></div>
+ <div class="mc-level-cards" role="group" aria-label="Choix du niveau">${LEVEL_ORDER.map((id,i)=>{const lv=LEVELS[id],t=LEVEL_TEXT[id];return `<button type="button" data-action="level-${id}" aria-pressed="${id===cur}" class="mc-lvl lvl-${id}${id===cur?' on':''}"><span class="mc-lvl-top"><span class="mc-lvl-ico" aria-hidden="true">${lv.icon}</span><span><small>${lv.kind}</small><b>${lv.name}</b></span></span><span class="mc-lvl-pips" aria-hidden="true">${[0,1,2,3].map(k=>`<i class="${k<=i?'on':''}"></i>`).join('')}</span><em>${t[0]}</em><ul>${t.slice(1).map(x=>`<li>${x}</li>`).join('')}</ul><span class="mc-lvl-medal">médaille ${lv.medal}</span></button>`;}).join('')}</div></section>`;}

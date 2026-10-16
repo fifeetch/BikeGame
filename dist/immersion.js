@@ -328,3 +328,18 @@ export const NIGHT={
 export const REST_DAY_FACTOR=2;
 // « Demander » : ce que donne chaque réponse (la nuit compte comme un hôtel, un camping, ou un refus).
 export const DEMAND_NIGHT={grand:{energy:3,fatigue:-2,food:1,points:1},jardin:{energy:2,fatigue:-1},refusCamping:{energy:2,fatigue:-1},refusDehors:{energy:0,fatigue:1}};
+
+// ---------- Niveaux de difficulté (mode Immersion, solo) — planche « Difficulté Immersion », validés par Fi le 16 octobre ----------
+// start : énergie de départ ; money : pièces en plus/en moins ; days : fin de partie ; galere : multiplie la part de galères ;
+// bet : chance en plus/en moins sur les paris ; refus : refus en plus/en moins pour « Demander » ; late : prix du camping de dernière minute ;
+// sit / sitMax : chance d'un imprévu qui dure chaque matin, et combien à la fois ; sitPos : surtout des bonnes nouvelles ;
+// hard : +1 de fatigue avec un col ou 5 cases ; rest : repos en plus (camping, hôtel) ; restDay : journée de repos (campagne, ville) ;
+// foodQty : repas achetés pour 1 pièce ; mealHalf : un repas rend moitié moins ; rainBivouac : +1 fatigue après un bivouac sous la pluie ;
+// hideOdds : chances des paris cachées ; noForecast : seulement la météo du jour.
+export const LEVELS={
+ balade:{name:'Balade',kind:'Facile',icon:'🌿',medal:'bronze',start:10,money:3,days:50,galere:2/3,bet:.15,refus:-10,late:2,sit:.175,sitMax:2,sitPos:true,hard:0,rest:-1,restDay:[-3,-4]},
+ voyage:{name:'Voyage',kind:'Standard',icon:'🚲',medal:'argent',start:8,money:0,days:40,galere:1,bet:0,refus:0,late:2,sit:.35,sitMax:2,hard:1,rest:0,restDay:[-3,-4]},
+ aventure:{name:'Aventure',kind:'Difficile',icon:'⛰️',medal:'or',start:7,money:-2,days:35,galere:1.25,bet:-.10,refus:10,late:2,sit:.4,sitMax:2,hard:1,rest:0,restDay:[-3,-4],foodQty:1},
+ expedition:{name:'Expédition',kind:'Expert',icon:'🧭',medal:'cristal',start:6,money:-3,days:30,galere:1.5,bet:-.15,refus:20,late:3,sit:.5,sitMax:3,hard:1,rest:0,restDay:[-2,-3],foodQty:1,mealHalf:true,rainBivouac:1,hideOdds:true,noForecast:true}
+};
+export const LEVEL_ORDER=['balade','voyage','aventure','expedition'];

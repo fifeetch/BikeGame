@@ -317,3 +317,14 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - Causes probables : le bandeau disparaissait au premier rafraîchissement de l'écran (fréquent pendant le tour de l'autre) et était caché sous les fenêtres ; au-delà de 50 messages, les nouveaux n'étaient plus repérés (comptage par nombre).
 - Correction : nouveaux messages repérés par leur heure ; bandeau en haut, au-dessus de tout, 9 secondes, qui survit aux rafraîchissements (« Marion t'écrit… · Ouvrir ») ; petit « ding » ; bouton 💬 qui clignote et titre de l'onglet « 💬 (n) » tant qu'il y a du non-lu.
 - Cache : `aventure-velo-v88-messages`, `?v=messages`.
+
+## Niveaux de difficulté, mode Immersion solo (16 octobre 2026)
+- Planche « Difficulté Immersion » (https://claude.ai/artifact/PDh7fUSUwwd7Hwi3FEZnrz), validée par Fi avec deux ajouts : en Aventure et Expédition, 1 pièce = 1 repas ; en Expédition, un repas rend moitié moins d'énergie.
+- Choix du niveau sous « Mode Immersion », en solo (rules.immersion.level ; défaut « voyage » = le jeu d'avant).
+- Balade : départ 10 énergie, +3 pièces, 50 jours, galères ×2/3, paris +15 %, refus −10 %, camping −2 et hôtel −3 de fatigue, col et 5 cases sans fatigue en plus, imprévus moitié moins et surtout bons.
+- Voyage : inchangé, 40 jours.
+- Aventure : 7 énergie, −2 pièces, 35 jours, galères ×1,25, paris −10 %, refus +10 %, imprévus 2 jours sur 5, 1 pièce = 1 repas.
+- Expédition : 6 énergie, −3 pièces, 30 jours, galères ×1,5, paris −15 %, refus +20 %, camping de dernière minute 3 pièces, imprévus 1 jour sur 2 (3 à la fois), 1 pièce = 1 repas, repas moitié moins (+2 / +1), journée de repos −2 (−3 en ville), +1 fatigue après un bivouac sous la pluie, chances des paris et des nuits cachées, météo du jour seulement.
+- Badge du niveau sur la fiche, médaille (bronze, argent, or, cristal) sur l'écran de fin.
+- Code : LEVELS dans `dist/immersion.js` ; immLevel / immLevelId dans `dist/simulator.js` ; levelPicker dans `dist/menus.js` ; badge, météo, chances cachées à la fin de `dist/app.js`. 2 tests de plus.
+- Cache : `aventure-velo-v89-niveaux`, `?v=niveaux`.
