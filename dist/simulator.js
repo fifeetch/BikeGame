@@ -367,7 +367,7 @@ function sceneFits(m,p,s,ctx){const im=pim(p);
  const seen=im.seen[s.id];if(seen&&(s.rarity==='unique'||m.round-seen<SCENE_COOLDOWN))return false;return true;}
 function pickScene(m,list){const total=list.reduce((n,s)=>n+(RARITY_WEIGHT[s.rarity]||1),0);if(!total)return null;let n=irand(m)*total;return list.find(s=>(n-=RARITY_WEIGHT[s.rarity]||1)<0)||list.at(-1);}
 function beginScene(m,p,s,road,ctx,extra={}){const rnd=()=>irand(m);
- const scene={id:s.id,title:s.title,scene:s.scene||'plaine',kind:s.kind||'belle',quote:fillVariants(s.quote||'',ctx?.region||'ouest',rnd),choices:JSON.parse(JSON.stringify(s.choices))};
+ const scene={id:s.id,title:s.title,scene:s.scene||'plaine',kind:s.kind||'belle',cause:s.cause||'',quote:fillVariants(s.quote||'',ctx?.region||'ouest',rnd),choices:JSON.parse(JSON.stringify(s.choices))};
  m.encounter={id:s.id,playerId:p.id,road,scene,...extra};m.phase='encounter';}
 // En route : environ un jour sur deux, une scène s'ouvre sur la 1re, 2e ou 3e case de la journée.
 function immersionStep(m,p,k,t,onRoad){if(!immersionOn(m)||m.done||m.phase!=='move')return;const im=pim(p);

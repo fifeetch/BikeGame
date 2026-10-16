@@ -305,3 +305,9 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 ## Carte allégée (16 octobre 2026)
 - À la demande de Fi : la trace du voyage et les icônes des nuits ne s'affichent plus sur la carte (trop chargé à plusieurs joueurs). Le code reste (drawJourneys, `p.nights`) : app.js passe `journeys:[]`. Le pion garde sa tente quand il est assis.
 - Cache : `aventure-velo-v86-carte`, `?v=carte`.
+
+## Bug du voyage et petites animations (16 octobre 2026)
+- **Bug (signalé par Fi, Immersion solo, 2e carte)** : arrivé sur la ville d'arrivée avec tous les objectifs, il a dû ressortir de la ville pour terminer le voyage. Correction : les 3 nouvelles cartes s'affichent dès l'arrivée (plus le lendemain), et filet `arrivalCheck` (simulator.js) : déjà sur la ville d'arrivée avec tout rempli → le voyage se termine (à l'affichage hors ligne et à chaque début de journée).
+- **Animations validées par Fi** : col franchi (drapeau planté, « +2 » doré qui s'envole) ; jeton « ? » (carte qui se retourne, étincelles, nom du lieu) ; voyage réussi (confettis, cycliste bras levés) ; ferry (bateau et vague sous le cycliste) ; voyage rapide (petit train) ; scène en route (bulle : clé panne, gouttes météo, cœur belle rencontre, « ! » autre galère) ; manger (le cycliste croque une pomme, les cases d'énergie se remplissent une à une sur la fiche).
+- Code : playFx, boatArt, trainArt, bubbleArt, renderer.effect / gesture (`dist/board-renderer-svg.js`) ; détection des événements de l'historique, sceneBubble (fin de `dist/app.js`) ; `cause` ajoutée aux scènes (simulator.js).
+- Cache : `aventure-velo-v87-anim`, `?v=anim`.

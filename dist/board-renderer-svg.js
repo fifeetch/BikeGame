@@ -33,8 +33,8 @@ export function createSVGBoardRenderer(container,options={}){
  // Étape 5 : décor (sous la grille), routes et ferries (au-dessus) ; étape 6 : tracé d'itinéraire et halos.
  const decor=make('g',{class:'board-decor','aria-hidden':true}),roads=make('g',{class:'board-roads','aria-hidden':true}),ferries=make('g',{class:'board-ferries'}),trail=make('g',{class:'route-trail','aria-hidden':true}),guide=make('g',{class:'board-guide','aria-hidden':true}),zones=make('g',{class:'board-zones','aria-hidden':true}),halos=make('g',{class:'board-halos','aria-hidden':true}),adventure=make('g',{class:'board-adventure'});
  const trailCase=make('path',{class:'route-trail-case'}),trailLine=make('path',{class:'route-trail-line'});trail.append(trailCase,trailLine);
- const journeys=make('g',{class:'board-journeys','aria-hidden':true}),nightsLayer=make('g',{class:'board-nights'});
- svg.append(ocean,sea,decor,lands,zones,roads,ferries,guide,journeys,trail,halos,adventure,cities,nightsLayer,numbers,tokens,seaCursor);container.append(svg);
+ const fxLayer=make('g',{class:'board-fx','aria-hidden':true}),journeys=make('g',{class:'board-journeys','aria-hidden':true}),nightsLayer=make('g',{class:'board-nights'});
+ svg.append(ocean,sea,decor,lands,zones,roads,ferries,guide,journeys,trail,halos,adventure,cities,nightsLayer,numbers,tokens,fxLayer,seaCursor);container.append(svg);
  let artWanted=options.art!==false&&readArtPreference(),artLayer=options.art===false?null:createTerrainLayer(container),artReady=false;
  const artOn=()=>Boolean(artLayer&&artWanted&&artReady);
  artLayer?.onStatus(ok=>{artReady=ok;if(state)update(state);});
@@ -227,10 +227,10 @@ export function createSVGBoardRenderer(container,options={}){
    const bob=Math.abs(Math.sin(clock()*.012))*1.1;attrsTo(record.el,{transform:`translate(${f1(a.x+(b.x-a.x)*t)} ${f1(a.y+(b.y-a.y)*t-bob)})`});
    if(record.flip&&Math.abs(b.x-a.x)>1){const face=b.x<a.x?-1:1;if(face!==record.facing){record.facing=face;attrsTo(record.flip,{transform:face<0?'scale(-1 1)':''});}}
    const sl=slope[i]||'flat',speed=(sl==='down'?0:sl==='up'?.007:.012)*(info.tired?.55:1);record.crank=(record.crank||0)+speed*16;
-   if(record.flip)record.flip.innerHTML=riderFree(record.crank,{stand:sl==='up',tuck:sl==='down',low:info.tired,sweat:info.tired?1:0,cape:info.cape});
+   if(record.flip)record.flip.innerHTML=record.vehicle==='train'?trainArt(clock()/1000):(record.vehicle==='boat'?boatArt(clock()/1000):'')+riderFree(record.vehicle==='boat'?.6:record.crank,{stand:sl==='up'&&!record.vehicle,tuck:sl==='down'&&!record.vehicle,low:info.tired,sweat:info.tired?1:0,cape:info.cape});
    if(record.flag)attrsTo(record.flag,{d:flagPath(sl==='down'||info.windy?2.4:.7,clock()/1000)});
    if(follow){camS+=(ZOOM_FOLLOW-camS)*.08;camera.focus(a.x+(b.x-a.x)*t,a.y+(b.y-a.y)*t,{scale:Math.max(backTo,camS),animate:false});}
-   if(k<1)raf(step);else{record.anim=null;record.el.classList?.remove('moving');record.follow=false;if(follow){clearTimeout(glideTimer);glideTimer=setTimeout(()=>{if(!destroyed)camera.focus(b.x,b.y,{scale:backTo,duration:1100});},1400);}idleDraw(record,clock()/1000);}};
+   if(k<1)raf(step);else{record.anim=null;record.vehicle='';record.el.classList?.remove('moving');record.follow=false;if(follow){clearTimeout(glideTimer);glideTimer=setTimeout(()=>{if(!destroyed)camera.focus(b.x,b.y,{scale:backTo,duration:1100});},1400);}idleDraw(record,clock()/1000);}};
   record.el.classList?.add('moving');raf(step);
   return duration;
  }
@@ -254,7 +254,10 @@ export function createSVGBoardRenderer(container,options={}){
   if(o.noRider)return s;
   s+=`<path class="rider-leg back" d="M${f(hipX,hipY)} L${p2}"/><path class="rider-leg" d="M${f(hipX,hipY)} L${p1}"/>`;
   s+=o.cape?`<path class="rider-cape" d="M${f(hipX-3,hipY+1)} Q${f(shX-4,shY-1)} ${f(shX+1,shY-1)} L${f(shX+2,shY+3)} Q${f(hipX+2,hipY)} ${f(hipX-3,hipY+1)}Z"/>`:`<path class="rider-body" d="M${f(hipX-.4,hipY)} L${f(shX,shY)}"/>`;
-  s+=`<path class="rider-arm" d="M${f(shX,shY+.5)} L7.6 -5"/><circle class="rider-head" cx="${hx.toFixed(2)}" cy="${hy.toFixed(2)}" r="2.6"/><path class="rider-helmet${o.cape?' cape':''}" d="M${f(hx-2.7,hy-.2)} A2.8 2.8 0 0 1 ${f(hx+2.7,hy-.4)} Z"/>`;
+  if(o.cheer){const w=Math.sin(o.cheer*10)*1.2;s+=`<path class="rider-arm" d="M${f(shX,shY+.5)} L${f(shX-2+w,shY-6)} M${f(shX,shY+.5)} L${f(shX+3-w,shY-6)}"/>`;}
+  else if(o.eat){const up=(Math.sin(o.eat*5)+1)/2;s+=`<path class="rider-arm" d="M${f(shX,shY+.5)} L${f(shX+6,shY-1-up*1.5)}"/><circle class="rider-apple" cx="${(shX+7.6).toFixed(2)}" cy="${(shY-2-up*1.5).toFixed(2)}" r="2.2"/>`;}
+  else s+=`<path class="rider-arm" d="M${f(shX,shY+.5)} L7.6 -5"/>`;
+  s+=`<circle class="rider-head" cx="${hx.toFixed(2)}" cy="${hy.toFixed(2)}" r="2.6"/><path class="rider-helmet${o.cape?' cape':''}" d="M${f(hx-2.7,hy-.2)} A2.8 2.8 0 0 1 ${f(hx+2.7,hy-.4)} Z"/>`;
   if(o.sweat)s+=`<path class="rider-sweat" d="M${f(hx+3.6,hy-1)} q1 2 0 2.6 q-1 -.6 0 -2.6Z" style="opacity:${o.sweat}"/>`;
   return s;}
  // Pose au repos : le vélo debout, le cycliste assis à côté ; le soir, la tente montée.
@@ -263,16 +266,33 @@ export function createSVGBoardRenderer(container,options={}){
   s+=`<g transform="translate(15 4)"><path class="rider-leg" d="M-3 4 L3 4 L5 8"/><path class="rider-body" d="M-3 ${(3.6+b).toFixed(2)} L-2 -3"/><path class="rider-arm" d="M-2 -2 L3 1"/><circle class="rider-head" cx="-1.4" cy="${(-5.6+b).toFixed(2)}" r="2.6"/><path class="rider-helmet" d="M${f(-4.1,-5.8+b)} A2.8 2.8 0 0 1 ${f(1.3,-6+b)} Z"/>${o.sweat?`<path class="rider-sweat" d="M2 -7 q1 2 0 2.6 q-1 -.6 0 -2.6Z" style="opacity:${o.sweat}"/>`:''}</g>`;
   if(o.tent)s=`<g class="rider-camp" transform="translate(-24 8)"><path class="camp-tent" d="M-12 0 L0 -13 L12 0Z"/><path class="camp-door" d="M-3 0 L0 -6 L3 0Z"/></g>`+s;
   return s;}
+ // Ferry : une coque sous le vélo et une petite vague derrière. Voyage rapide : un petit train à la place du vélo.
+ function boatArt(t){const w=Math.sin(t*6)*.8;return `<path class="fx-wake" d="M-26 ${(12+w).toFixed(2)} q4 -2 8 0 t8 0 M-30 ${(15-w).toFixed(2)} q4 -2 8 0 t8 0"/><path class="fx-hull" d="M-17 8 L17 8 L13 14 L-13 14Z"/>`;}
+ function trainArt(t){const b=Math.sin(t*20)*.3,puff=(t*1.5)%1;
+  return `<g transform="translate(0 ${b.toFixed(2)})"><rect class="fx-wagon" x="-24" y="-6" width="16" height="11" rx="2"/><rect class="fx-loco" x="-6" y="-9" width="20" height="14" rx="2.5"/><rect class="fx-window" x="-2" y="-6" width="5" height="4" rx="1"/><rect class="fx-window" x="5" y="-6" width="5" height="4" rx="1"/><rect class="fx-window" x="-21" y="-3" width="4" height="3" rx="1"/><rect class="fx-window" x="-14" y="-3" width="4" height="3" rx="1"/><rect class="fx-chimney" x="9" y="-14" width="3.5" height="5"/>
+   <circle class="fx-wheel" cx="-20" cy="6" r="2.4"/><circle class="fx-wheel" cx="-12" cy="6" r="2.4"/><circle class="fx-wheel" cx="-1" cy="6" r="2.8"/><circle class="fx-wheel" cx="9" cy="6" r="2.8"/></g>
+   <circle class="fx-puff" cx="${(10-puff*8).toFixed(1)}" cy="${(-17-puff*6).toFixed(1)}" r="${(1.6+puff*2.4).toFixed(2)}" style="opacity:${(1-puff).toFixed(2)}"/>`;}
+ // Bulle au-dessus du cycliste pendant une scène en route : clé (panne), gouttes (météo), cœur (belle rencontre), « ! » (autre galère).
+ function bubbleArt(kind,t){const y=-38+Math.sin(t*3)*1.2;const icon={cle:'<path d="M-3.4 2.6 L1.6 -2.4 M1 -4.6 a2.4 2.4 0 1 0 3.4 3.4 l-1.4 -1.4 l-0.8 0.8 l-1 -1 l0.8 -0.8 Z" class="bub-ink"/>',pluie:'<path d="M-2.6 -3.4 q1.4 2.6 0 3.6 q-1.4 -1 0 -3.6Z M2.4 -1 q1.4 2.6 0 3.6 q-1.4 -1 0 -3.6Z" class="bub-rain"/>',coeur:'<path d="M0 3.6 C-5 0 -4.4 -4.4 -1.6 -4 C-.6 -3.8 0 -3 0 -2.4 C0 -3 .6 -3.8 1.6 -4 C4.4 -4.4 5 0 0 3.6Z" class="bub-heart"/>',alerte:'<path d="M0 -4.4 L0 1" class="bub-ink"/><circle cx="0" cy="3.2" r=".9" class="bub-dot"/>'}[kind]||'';
+  return `<g class="rider-bubble" transform="translate(4 ${y.toFixed(2)})"><path class="bub-bg" d="M-8 -7 h16 a3 3 0 0 1 3 3 v8 a3 3 0 0 1 -3 3 h-5 l-3 4 l-1 -4 h-7 a3 3 0 0 1 -3 -3 v-8 a3 3 0 0 1 3 -3Z"/>${icon}</g>`;}
+ // Effets ponctuels : drapeau planté + « +2 » doré (col), jeton qui se retourne (lieu caché), confettis (voyage réussi).
+ function playFx(kind,x,y,o){const g=make('g',{class:'fx fx-'+kind,transform:`translate(${f1(x)} ${f1(y)})`});let html='',life=2600;
+  if(kind==='col'){html=`<g class="fx-flag"><path class="fx-pole" d="M0 2 L0 -26"/><path class="fx-cloth" d="M0 -26 L12 -22 L0 -18Z"/></g><text class="fx-gain" x="6" y="-30">${esc(o.text||'+2')}</text>`;life=2800;}
+  else if(kind==='landmark'){html=`<g class="fx-card"><rect x="-14" y="-12" width="28" height="22" rx="3"/><text class="fx-card-star" y="-1">✦</text><text class="fx-card-gain" y="7">${esc(o.text||'')}</text></g>${[0,1,2,3,4,5].map(i=>`<circle class="fx-spark" style="--a:${i*60}deg" r="1.4"/>`).join('')}${o.label?`<text class="fx-label" y="22">${esc(o.label)}</text>`:''}`;life=3200;}
+  else if(kind==='voyage'){const cols=['#f2a541','#b8432e','#5f8a6a','#f6e7c1','#7fc0e8'];html=Array.from({length:22},(_,i)=>`<rect class="fx-confetti" x="-1.5" y="-1" width="3" height="2" style="fill:${cols[i%5]};--a:${(i*360/22+Math.random()*12).toFixed(0)}deg;--d:${(22+Math.random()*22).toFixed(0)}px;--r:${(Math.random()*540-270).toFixed(0)}deg;animation-delay:${(Math.random()*.25).toFixed(2)}s"/>`).join('')+(o.text?`<text class="fx-gain big" y="-34">${esc(o.text)}</text>`:'');life=3400;}
+  g.innerHTML=html;fxLayer.append(g);setTimeout(()=>g.remove(),life);}
  function flagPath(amp,t){const w=Math.sin(t*(amp>1?14:4))*amp;return `M-12 -2 L-12 -25 M-12 -25 Q-6 ${(-24+w).toFixed(2)} ${(Math.abs(w)*.3).toFixed(2)} ${(-21.5+w*.6).toFixed(2)} Q-6 ${(-19+w).toFixed(2)} -12 -17.5 Z`;}
  // Animation au repos (environ 12 images par seconde) : fanion, respiration, sueur, pluie et neige autour du cycliste.
  function idleDraw(record,t){const o=record.info||{};if(!record.flip||record.anim)return;
   const sweat=o.tired?((Math.sin(t*1.6)+1)/2).toFixed(2):0;
-  record.flip.innerHTML=o.sit?riderSitting(t,{tent:o.tent,sweat}):riderFree(.6,{low:o.tired,cape:o.cape,sweat});
+  const now=clock(),cheer=(record.cheerUntil||0)>now,eat=(record.eatUntil||0)>now;
+  record.flip.innerHTML=o.sit&&!cheer&&!eat?riderSitting(t,{tent:o.tent,sweat}):riderFree(.6,{low:o.tired&&!cheer,cape:o.cape,sweat:cheer?0:sweat,cheer:cheer?t:0,eat:eat?t:0});
   if(record.flag)attrsTo(record.flag,{d:flagPath(o.windy?2.4:o.tired?.25:.6,t)});
   if(record.fx){let fx='';
    if(o.cape)for(let i=0;i<5;i++){const x=-16+i*8,y=((t*40+i*13)%30)-22;fx+=`<path class="fx-rain" d="M${x} ${y.toFixed(1)} l-1.4 4"/>`;}
    if(o.weather==='neige')for(let i=0;i<5;i++){const x=-16+i*8+Math.sin(t+i)*2,y=((t*8+i*9)%30)-22;fx+=`<circle class="fx-snow" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="1"/>`;}
    if(o.tired>1&&!o.sit){const k=(t*1.2)%1;fx+=`<circle class="fx-puff" cx="${(12+k*5).toFixed(1)}" cy="${(-10-k*2).toFixed(1)}" r="${(1+k*1.6).toFixed(2)}" style="opacity:${(1-k).toFixed(2)}"/>`;}
+   if(o.bubble)fx+=bubbleArt(o.bubble,t);
    record.fx.innerHTML=fx;}}
  let idleRaf=0,idleLast=0,spotSaved=null,animEnd=0;
  function startIdle(){if(idleRaf||destroyed||!browser())return;const loop=()=>{idleRaf=0;if(destroyed)return;const t=clock();if(!reduced()&&t-idleLast>80){idleLast=t;for(const r of playerNodes.values())idleDraw(r,t/1000);}idleRaf=raf(loop);};idleRaf=raf(loop);}
@@ -313,10 +333,10 @@ export function createSVGBoardRenderer(container,options={}){
     const steps=travelTail(g,p,from);
     if(steps)pts=[from,...steps].map(t=>({x:t.x,y:t.y,type:t.type}));
     else if(prev.activeId===p.id&&r.length&&r.at(-1)===p.pos)pts=[from,...r.map(k=>g.board[k]).filter(Boolean)].map(t=>({x:t.x,y:t.y,type:t.type}));
-    else if(ferry){const arc=ferryArc(g.board[ferry.a],g.board[ferry.b]),fwd=ferry.a===from.key;pts=Array.from({length:17},(_,i)=>arc.point(fwd?i/16:1-i/16));stepMs=90;}
-    else pts=[{x:from.x,y:from.y},{x:target.x,y:target.y}];
+    else if(ferry){const arc=ferryArc(g.board[ferry.a],g.board[ferry.b]),fwd=ferry.a===from.key;pts=Array.from({length:17},(_,i)=>arc.point(fwd?i/16:1-i/16));stepMs=130;record.vehicle='boat';}
+    else{pts=[{x:from.x,y:from.y},{x:target.x,y:target.y}];if(record.info?.train){record.vehicle='train';stepMs=2600;}}
     pts[pts.length-1]={x:target.x,y:target.y,type:pts[pts.length-1].type};record.follow=p.id===g.id&&!ferry&&pts.length>2;
-    if(pts.length>1){longest=Math.max(longest,animateToken(record,pts,pts.length===2?Math.min(1100,Math.max(STEP_MS,Math.hypot(pts[1].x-pts[0].x,pts[1].y-pts[0].y)*6)):stepMs));continue;}
+    if(pts.length>1){longest=Math.max(longest,animateToken(record,pts,pts.length===2&&record.vehicle!=='train'?Math.min(1100,Math.max(STEP_MS,Math.hypot(pts[1].x-pts[0].x,pts[1].y-pts[0].y)*6)):stepMs));continue;}
    }
    if(record.anim&&!moved)continue;// une animation en cours garde la main jusqu'au bout
    record.anim&&(record.anim.cancelled=true);record.anim=null;
@@ -396,6 +416,9 @@ export function createSVGBoardRenderer(container,options={}){
   // Recentrage animé sur un point (le cycliste actif) ; on rapproche un peu la vue si elle est très éloignée.
   focusOn(x,y,{minScale=1.5,animate=true}={}){camera.focus(x,y,{scale:Math.max(camera.scale,minScale),animate});},
   fitView(){camera.fit();},
+  // Effets ponctuels sur la carte (col franchi, jeton révélé, voyage réussi) et gestes du cycliste (bras levés, pomme).
+  effect(kind,key,opts={}){if(reduced()||!state)return;const t=state.g?.board?.[key];if(!t)return;playFx(kind,t.x,t.y,opts);},
+  gesture(playerId,kind,ms=1800){const r=playerNodes.get(playerId);if(!r||reduced())return;r[kind==='cheer'?'cheerUntil':'eatUntil']=clock()+ms;startIdle();},
   // Temps restant de l'animation du pion (ms) : les fenêtres attendent la fin pour s'ouvrir.
   busyFor(){return Math.max(0,animEnd-clock());},
   // Zoom sur le cycliste pendant une action (le soir, la nuit) puis retour à la vue d'avant.

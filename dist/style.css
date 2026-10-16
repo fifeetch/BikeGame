@@ -1957,3 +1957,41 @@ body.soir .playable-europe .city-names{filter:drop-shadow(0 0 4px #ffd27a)}
 .modal-back,.bet-layer{transition:opacity .45s ease}
 .modal-back.hold,.bet-layer.hold{opacity:0;pointer-events:none}
 @media (prefers-reduced-motion: reduce){.modal-back,.bet-layer{transition:none}}
+
+/* ---------- Petites animations sur la carte ---------- */
+.rider-token.free .rider-apple{fill:#c0392b;stroke:#5a1d14;stroke-width:.4}
+.rider-token.free .fx-hull{fill:#f6e7c1;stroke:#1b3b38;stroke-width:1}
+.rider-token.free .fx-wake{fill:none;stroke:#e9f6fb;stroke-width:1.1;stroke-linecap:round;opacity:.9}
+.rider-token.free .fx-loco{fill:#b8432e;stroke:#1b1406;stroke-width:.7}
+.rider-token.free .fx-wagon{fill:#1b3b38;stroke:#1b1406;stroke-width:.7}
+.rider-token.free .fx-window{fill:#f6e7c1}
+.rider-token.free .fx-chimney{fill:#2b2f33}
+.rider-token.free .fx-wheel{fill:#2b2f33;stroke:#f6e7c1;stroke-width:.5}
+.rider-token.free .bub-bg{fill:#fbf1d8;stroke:#1b3b38;stroke-width:1}
+.rider-token.free .bub-ink{fill:none;stroke:#1b3b38;stroke-width:1.4;stroke-linecap:round}
+.rider-token.free .bub-dot{fill:#b8432e}
+.rider-token.free .bub-rain{fill:#4a9fd0}
+.rider-token.free .bub-heart{fill:#d9534f}
+.board-fx .fx{pointer-events:none}
+.fx-col .fx-flag{transform-origin:0 2px;animation:fx-plant .5s cubic-bezier(.3,1.6,.6,1) both}
+@keyframes fx-plant{from{transform:translateY(-14px) scale(.6);opacity:0}}
+.fx-col .fx-pole{stroke:#2b2f33;stroke-width:1.4}
+.fx-col .fx-cloth{fill:#f2a541;stroke:#8a5a14;stroke-width:.6}
+.fx-gain{font:900 15px 'Fraunces',Georgia,serif;fill:#f2c94c;stroke:#5a3a0a;stroke-width:3;paint-order:stroke;text-anchor:middle;animation:fx-rise 2.4s ease-out .3s both}
+.fx-gain.big{font-size:18px}
+@keyframes fx-rise{0%{opacity:0;transform:translateY(6px)}15%{opacity:1}75%{opacity:1}100%{opacity:0;transform:translateY(-26px)}}
+.fx-landmark .fx-card{transform-box:fill-box;transform-origin:center;animation:fx-flip 1s ease-in-out both,fx-fade 3.2s linear both}
+.fx-landmark rect{fill:#fbf1d8;stroke:#8a5a14;stroke-width:1.2}
+.fx-card-star{font:700 11px 'Barlow',sans-serif;fill:#e08a1e;text-anchor:middle}
+.fx-card-gain{font:800 8px 'Barlow',sans-serif;fill:#1b3b38;text-anchor:middle}
+.fx-label{font:700 8px 'Barlow',sans-serif;fill:#fbf1d8;stroke:#102226;stroke-width:2.5;paint-order:stroke;text-anchor:middle;animation:fx-fade 3.2s linear both}
+@keyframes fx-flip{0%{transform:scaleX(.05)}60%{transform:scaleX(1.12)}100%{transform:scaleX(1)}}
+@keyframes fx-fade{0%,80%{opacity:1}100%{opacity:0}}
+.fx-spark{fill:#f2c94c;animation:fx-spark 1.1s ease-out .6s both}
+@keyframes fx-spark{from{transform:rotate(var(--a)) translateX(4px);opacity:1}to{transform:rotate(var(--a)) translateX(22px);opacity:0}}
+.fx-confetti{transform-box:fill-box;animation:fx-confetti 2.4s cubic-bezier(.2,.7,.4,1) both}
+@keyframes fx-confetti{0%{transform:rotate(var(--a)) translateX(0) rotate(0);opacity:1}70%{opacity:1}100%{transform:rotate(var(--a)) translateX(var(--d)) translateY(14px) rotate(var(--r));opacity:0}}
+/* Énergie qui remonte sur la fiche */
+.fiche-energy i.gain{animation:energy-fill .5s ease-out both;animation-delay:calc(var(--i,0) * .18s)}
+@keyframes energy-fill{0%{transform:scaleY(.2);background:#fff3c4}60%{transform:scaleY(1.25)}100%{transform:scaleY(1)}}
+@media (prefers-reduced-motion: reduce){.fx-gain,.fx-landmark .fx-card,.fx-spark,.fx-confetti,.fx-col .fx-flag,.fiche-energy i.gain{animation:none}}

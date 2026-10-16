@@ -1092,3 +1092,25 @@ let holdTimer=0;
 
 // Voyage déjà rempli sur la ville d'arrivée : on le termine tout de suite (filet de sécurité, voir arrivalCheck).
 {const priorRender=render;render=(...a)=>{try{if(screen==='game'&&m&&!(typeof onlineGame==='function'&&onlineGame())&&!m.tutorial)S.arrivalCheck(m);}catch{}priorRender(...a);};}
+
+// ---------- Petites animations (validées par Fi) : col franchi, jeton révélé, voyage réussi, repas, bulle de scène, train ----------
+let fxSeen={match:null,len:0},energySeen={key:'',energy:0};
+function sceneBubble(){const e=m.encounter;if(m.phase!=='encounter'||!e?.road||!e.scene||!S.immersionOn(m))return '';const sc=e.scene;
+ if(sc.kind!=='galere')return 'coeur';return sc.cause==='meca'?'cle':sc.cause==='meteo'?'pluie':'alerte';}
+{const priorInfo=riderInfo;riderInfo=()=>{const out=priorInfo(),act=S.player(m),bub=sceneBubble();
+ for(const p of m.players){const last=[...m.history].reverse().find(h=>h.player===p.id&&['move','fast-travel','ferry'].includes(h.kind));out[p.id].train=last?.kind==='fast-travel';if(p.id===act.id&&bub){out[p.id].bubble=bub;out[p.id].sit=false;}}return out;};}
+{const priorRender=render;render=(...a)=>{priorRender(...a);try{
+ if(screen!=='game'||!m||!boardRenderer){fxSeen={match:null,len:0};return;}
+ if(fxSeen.match!==m){fxSeen={match:m,len:m.history.length};}
+ const fresh=m.history.slice(fxSeen.len);fxSeen.len=m.history.length;
+ const wait=(boardRenderer.busyFor?.()||0)+150;
+ for(const h of fresh){const p=m.players.find(q=>q.id===h.player),gain=(String(h.text||'').match(/\+(\d+)/)||[])[0];
+  if(h.kind==='col'&&h.key)setTimeout(()=>boardRenderer?.effect?.('col',h.key,{text:gain||'+2'}),wait);
+  if(h.kind==='landmark'&&h.key)setTimeout(()=>boardRenderer?.effect?.('landmark',h.key,{text:gain||'',label:(String(h.text).split(':')[1]||'').split(',')[0].trim()}),wait);
+  if(h.kind==='objective'&&p)setTimeout(()=>{boardRenderer?.effect?.('voyage',p.pos,{text:gain||''});boardRenderer?.gesture?.(p.id,'cheer',3000);},wait);
+  if(h.kind==='food'&&p)boardRenderer?.gesture?.(p.id,'eat',1900);}
+ // Énergie qui remonte : les cases gagnées se remplissent une à une sur la fiche.
+ const p=S.player(m),key=p.id+'|'+m.players.length;
+ if(energySeen.key===key&&p.energy>energySeen.energy){const cells=[...document.querySelectorAll('.imm-band .fiche-energy i, .fiche-energy-box .fiche-energy i')];cells.forEach((c,i)=>{if(i>=energySeen.energy&&i<p.energy){c.classList.add('gain');c.style.setProperty('--i',String(i-energySeen.energy));}});}
+ energySeen={key,energy:p.energy};
+}catch(err){console.error(err);}};}
