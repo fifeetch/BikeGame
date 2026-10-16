@@ -206,7 +206,9 @@ export function move(m,k){const p=player(m),t=m.board[k];if(C.isEventGame(m)&&m.
  const first=!p.visited.includes(k);if(first){p.visited.push(k);p.points+=m.rules.points[t.type];if(t.type==='col')p.cols++;if(t.type==='ville')p.cities++;if(t.type==='decouverte')p.discoveries++;}
  adventureStep(m,p,k,t,first);
  if(eventGame&&t.type==='ville')C.onCityVisit(m,p,k);
- if(!p.completed&&t.name===v.to&&progress(view(m)).ready)completeVoyage(m,p,v);
+ if(!p.completed&&t.name===v.to&&progress(view(m)).ready){completeVoyage(m,p,v);
+  // Voyage réussi (bug signalé par Fi) : les 3 nouvelles cartes s'affichent tout de suite, pas le lendemain ; la journée continue ensuite.
+  if(p.voyageChoices?.length&&m.phase==='move'&&!m.pendingAttack)m.phase='voyage-choice';}
  record(m,'move','Déplacement : '+(t.name||E.terrains[t.type].name)+' (−'+spent+' énergie).',{terrain:t.type,energy:spent});if(eventGame&&!m.cardWindow)p.shortcutActive=false;immersionStep(m,p,k,t,onRoad);return true;
 }
 // Énergie rendue par un repas (même calcul que eat), pour l'affichage.
@@ -306,8 +308,12 @@ function advance(m){player(m).turns++;m.stats.turns++;const r=m.rules.victory,bu
   }
   m.phase=nextPlayer.voyageChoices?.length?'voyage-choice':nextPlayer.flat?'puncture':m.mode==='tuiles'&&m.hand.length?'place':'move';
  }else m.phase=nextPlayer.voyageChoices?.length?'voyage-choice':nextPlayer.pendingCards?.length?'card-resolution':nextPlayer.flat?'puncture':m.mode==='tuiles'&&m.hand.length?'place':'move';
+ arrivalCheck(m);
  if(m.immersion)immersionDayStart(m);
 }
+// Filet de sécurité (bug signalé par Fi) : déjà sur la ville d'arrivée avec tous les objectifs remplis, le voyage se termine sans devoir ressortir de la ville.
+export function arrivalCheck(m,p=player(m)){const v=findVoyage(p.voyage);if(!v||p.completed||m.done||m.pendingAttack||!['move','place'].includes(m.phase)||m.board[p.pos]?.name!==v.to||!progress(view(m,p)).ready)return false;
+ completeVoyage(m,p,v);if(p.voyageChoices?.length)m.phase='voyage-choice';return true;}
 export const ranking=m=>[...m.players].sort((a,b)=>(m.winner?Number(b.id===m.winner)-Number(a.id===m.winner):0)||b.points-a.points||(b.voyagesDone?.length||0)-(a.voyagesDone?.length||0)||Number(b.completed)-Number(a.completed));
 export function serialize(m){return JSON.stringify(m);}
 export function load(text){

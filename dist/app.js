@@ -1089,3 +1089,6 @@ let lastEvening=false;
 // ---------- Les fenêtres attendent que le cycliste ait fini de rouler (demande de Fi : l'animation était cachée) ----------
 let holdTimer=0;
 {const priorRender=render;render=(...a)=>{priorRender(...a);try{const wait=screen==='game'?boardRenderer?.busyFor?.()||0:0;if(wait>0){document.querySelectorAll('.modal-back,.bet-layer').forEach(el=>el.classList.add('hold'));clearTimeout(holdTimer);holdTimer=setTimeout(()=>{document.querySelectorAll('.hold').forEach(el=>el.classList.remove('hold'));},wait+600);}}catch{}};}
+
+// Voyage déjà rempli sur la ville d'arrivée : on le termine tout de suite (filet de sécurité, voir arrivalCheck).
+{const priorRender=render;render=(...a)=>{try{if(screen==='game'&&m&&!(typeof onlineGame==='function'&&onlineGame())&&!m.tutorial)S.arrivalCheck(m);}catch{}priorRender(...a);};}
