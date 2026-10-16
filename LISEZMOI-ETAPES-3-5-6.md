@@ -301,3 +301,7 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - Le cycliste roule une case toutes les 0,65 s (avant 0,26 s), jusqu'à 7 s pour une étape ; la caméra reste sur lui 1,4 s à l'arrivée avant de revenir (STEP_MS dans `dist/board-renderer-svg.js`).
 - Les fenêtres (scènes, cartes, pari…) attendent la fin du trajet puis apparaissent en fondu (renderer.busyFor, classe `hold`, fin de `dist/app.js`).
 - Cache : `aventure-velo-v85-lent`, `?v=lent`.
+
+## Carte allégée (16 octobre 2026)
+- À la demande de Fi : la trace du voyage et les icônes des nuits ne s'affichent plus sur la carte (trop chargé à plusieurs joueurs). Le code reste (drawJourneys, `p.nights`) : app.js passe `journeys:[]`. Le pion garde sa tente quand il est assis.
+- Cache : `aventure-velo-v86-carte`, `?v=carte`.

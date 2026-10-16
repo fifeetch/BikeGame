@@ -1081,7 +1081,8 @@ function eveningNow(){return Boolean(screen==='game'&&m&&(modal==='night'||m.pha
 function riderInfo(){const out={},ev=eveningNow(),act=S.player(m);for(const p of m.players){const w=S.forecastOn(m)?S.weatherToday(m,p.pos):'beau',f=p.fatigue||0;
  const tired=S.immersionOn(m)?(f>=5?2:f>=3?1:0):m.rules.fatigue?.enabled?(f>=m.rules.fatigue.days?2:f>=2?1:0):0,lastNight=(p.nights||[]).at(-1);
  out[p.id]={weather:w,cape:w==='pluie'||w==='orage',windy:w==='vent',tired,sit:p.id!==act.id||ev,tent:(p.id===act.id&&ev)||(p.id!==act.id&&lastNight?.key===p.pos)};}return out;}
-{const prior=boardSurfaceMarkup;boardSurfaceMarkup=state=>prior(screen==='game'&&m?{...state,riders:riderInfo(),today:m.round,journeys:m.players.map(p=>({color:p.color,start:p.visited?.[0],steps:p.travelHistory||[],nights:p.nights||[]}))}:state);}
+// Trace du voyage et nuits sur la carte : retirées à la demande de Fi (la carte devenait chargée à plusieurs joueurs).
+{const prior=boardSurfaceMarkup;boardSurfaceMarkup=state=>prior(screen==='game'&&m?{...state,riders:riderInfo(),today:m.round,journeys:[]}:state);}
 let lastEvening=false;
 {const priorRender=render;render=(...a)=>{priorRender(...a);try{const evening=eveningNow();document.body?.classList?.toggle('soir',evening);if(evening!==lastEvening){lastEvening=evening;boardRenderer?.spotlight?.(evening);}}catch{}};}
 
