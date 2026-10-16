@@ -1786,16 +1786,23 @@ body .modal.night-wrap .night-actions button{display:inline-flex;min-height:46px
 
 /* Mode Immersion : fatigue (6 niveaux) */
 .fiche-energy i.lock.imm{background:repeating-linear-gradient(45deg,#6f7fa8 0 3px,#e9e2cf 3px 6px);outline:1px solid #6f7fa8}
+body .player-mat.fiche .fiche-gauges.imm{grid-template-columns:repeat(3,minmax(0,1fr))}
+body .player-mat.fiche .fiche-gauges.imm .fiche-energy-box,.fiche-gauges.imm .imm-fat-row{grid-column:1/-1}
+.imm-fat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
 .imm-fat{background:#173438;color:#f6e7c1;border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:4px}
 .imm-fat-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .imm-fat-head b{font-family:Fraunces,serif;font-size:20px}
 .imm-fat-head em{margin-left:auto;font-style:normal;font-weight:700;font-size:13px}
-.fiche-energy-box .imm-fat small{color:#d8ccb0;font-size:13px}
+.imm-fat small{color:#d8ccb0;font-size:13px}
 .imm-dots{display:inline-flex;gap:4px}.imm-dots i{width:12px;height:12px;border-radius:50%;border:1.5px solid #c9cde0}.imm-dots i.on{background:#c9cde0}
 .imm-fat.lvl3,.imm-fat.lvl4,.imm-fat.lvl5{box-shadow:inset 0 0 0 2px #b8432e}
 .imm-risk{background:#fbe1d6;border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
 .imm-risk b{font-family:Fraunces,serif;color:#8c2f1a;font-size:16px}
-.fiche-energy-box .imm-risk small{color:#7a2c16;font-size:13px}
+.imm-risk small{color:#7a2c16;font-size:13px;line-height:1.3}
 .imm-risk-bar{display:flex;gap:4px}.imm-risk-bar i{flex:1;height:7px;border-radius:4px;background:#e8a58f}.imm-risk-bar i.on{background:#b8432e}
 .fiche-energy-box small.imm-fat-legend{font-size:12px}
 .dock-chips em.rest{background:#dcefe0;border-color:#9fcaa9;color:#1f4a2c}
+
+/* Barre d'action plus basse : étiquettes plus petites */
+.dock-chips{gap:4px}
+.dock-chips em{font-size:12px;padding:1px 7px;line-height:1.35}

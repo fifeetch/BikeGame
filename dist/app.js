@@ -590,9 +590,9 @@ function ficheCartes(){const previous=sheetTab;sheetTab='cartes';const html=play
 function ficheGauges(p){const r=m.rules,cap=energyCap(m,p),fourbu=isExhausted(m,p),days=r.fatigue.days,f=p.fatigue||0;
  const cells=Array.from({length:r.maxEnergy},(_,i)=>`<i class="${i<p.energy?'on':i>=cap?(S.immersionOn(m)?'lock imm':'lock'):''}"></i>`).join('');
  const fatigue=r.fatigue.enabled?(fourbu?`<small class="fourbu">Fourbu : énergie max −${r.fatigue.maxEnergyPenalty} jusqu’au camping ou à l’hôtel</small>`:`<small>Fatigue ${f} / ${days} · ${f===0?'en forme':days-f===1?'encore 1 jour avant d’être fourbu':'ça tire un peu'}</small>`):'';
- const fi=S.fatigueInfo(m,p);const fatigueBox=fi?immFatigueBlock(fi):fatigue;
+ const fi=S.fatigueInfo(m,p);const fatigueBox=fi?'':fatigue;
  const box=(cls,icon,n,label)=>`<div class="fiche-count ${cls}">${svgI(icon,26)}<b>${n}</b><small>${label}</small></div>`;
- return `<section class="fiche-gauges" aria-label="Jauges de ${esc(p.name)}"><div class="fiche-energy-box"><div class="fiche-gauge-head"><span>Énergie</span><b>${p.energy}<small> / ${cap}</small></b></div><div class="fiche-energy" style="--cells:${r.maxEnergy}" aria-hidden="true">${cells}</div>${fatigueBox}</div>
+ return `<section class="fiche-gauges${fi?' imm':''}" aria-label="Jauges de ${esc(p.name)}"><div class="fiche-energy-box"><div class="fiche-gauge-head"><span>Énergie</span><b>${p.energy}<small> / ${cap}</small></b></div><div class="fiche-energy" style="--cells:${r.maxEnergy}" aria-hidden="true">${cells}</div>${fatigueBox}${fi?'<small class="imm-fat-legend">orange : ton énergie · hachuré : bloqué par la fatigue</small>':''}</div>${fi?immFatigueBlock(fi):''}
  ${box('food','<path d="M12 7c-4 0-6 3-6 7s3 7 6 7 6-3 6-7-2-7-6-7Z"/><path d="M12 7c0-2 1-4 3-4"/>',p.food,'repas')}${box('money','<circle cx="12" cy="12" r="8"/><path d="M12 8v8M9.5 10h4a1.5 1.5 0 0 1 0 3h-3a1.5 1.5 0 0 0 0 3h4"/>',p.money,'pièces')}${box('points','<path d="M12 3l2.6 5.6 6 .7-4.5 4 1.3 6L12 16.4 6.6 19.3l1.3-6-4.5-4 6-.7Z"/>',p.points,'aventure')}</section>`;}
 playerSheet=(inline=false)=>{const p=S.player(m),r=m.rules,v=findVoyage(p.voyage),here=m.board[p.pos],tab=ficheTab(),place=here?.name||E.terrains[here?.type]?.name||'';
  const panels={journee:ficheJournee(p),sacoches:ficheSacoches(p),voyage:ficheVoyage(p),cartes:ficheCartes(),carnet:ficheCarnet(p)};
@@ -998,7 +998,7 @@ function dockPlan(c){const p=S.player(m),tags=routeTags(),path=route.map((k,i)=>
 // ---------- Mode Immersion : « Où dormir ce soir ? » — dormir termine toujours la journée ----------
 function immersionSleepTiles(p,blocked){const info=S.sleepOptions(m,p);
  return info.options.map(o=>{if(o.id==='demander')return ficheTile('Demander l’hospitalité',`gratuit · un pari · refus ${oddsLabel(o.odds.refus)}${o.odds.streak?` (déjà demandé ${o.odds.streak>1?o.odds.streak+' soirs de suite':'hier'})`:''} · sinon camping ${o.lateCamping} pièces`,'rest-demander',blocked,'demander').replace('sinon camping','accueil fatigue −'+(-o.fatigue.grand)+' · jardin −'+(-o.fatigue.jardin)+' · sinon camping');
-  const fat=typeof o.fatigue==='number'?(o.fatigue<0?` · fatigue −${-o.fatigue}`:o.fatigue>0?` · fatigue +${o.fatigue}`:' · fatigue inchangée'):'';
+  const cut=typeof o.fatigue==='number'&&o.fatigue<0?Math.min(-o.fatigue,p.fatigue||0):0,fat=typeof o.fatigue!=='number'?'':o.fatigue>0?` · fatigue +${o.fatigue}`:cut?` · fatigue −${cut}`:(p.fatigue||0)?' · fatigue inchangée':'';
   return ficheTile(esc(o.name),o.why||`${o.price?o.price+' pièce'+(o.price>1?'s':''):'gratuit'} · +${o.energy} ⚡${fat} · nuit calme ${oddsLabel(o.calm)}`,'rest-'+o.id,blocked||Boolean(o.why),o.id==='hotel'&&(p.fatigue||0)>=3&&!o.why?'conseil':'');}).join('')
   +(info.restDay?`<p class="night-note">Sans rouler aujourd’hui : la nuit rend ${info.factor} fois plus d’énergie.</p>`:'')+(info.stormy?'<p class="night-note storm">Pluie ou orage cette nuit : le bivouac devient risqué.</p>':'');}
 function nightModal(){const p=S.player(m),blocked=m.done||!['move','place'].includes(m.phase),left=Math.max(0,S.distance(m)-m.moved);
@@ -1013,11 +1013,11 @@ function immRiskBar(label){const [k,n]=label.split(' sur ').map(Number);return `
 function immFatigueBlock(fi){const dots=Array.from({length:fi.max},(_,i)=>`<i class="${i<fi.level?'on':''}"></i>`).join('');
  const risk=fi.level>=5?`<div class="imm-risk"><b>Fourbu</b><small>Demain : repos forcé. Une journée sans rouler suivie d’une vraie nuit enlève 3 de fatigue (4 en ville).</small></div>`
   :`<div class="imm-risk"><b>Risque de galère sur la route aujourd’hui</b>${immRiskBar(fi.galereLabel)}<small>Événement en route ${fi.roadLabel} jours · galère ${fi.galereLabel} : ${esc(fi.risk)}.</small></div>`;
- return `<div class="imm-fat lvl${fi.level}"><div class="imm-fat-head"><b>${esc(fi.name)}</b><span class="imm-dots" aria-label="fatigue ${fi.level} sur ${fi.max}">${dots}</span><em>fatigue ${fi.level} / ${fi.max}</em></div><small>${esc(fi.effects.join(' · '))}</small></div>${risk}<small class="imm-fat-legend">orange : ton énergie · hachuré : bloqué par la fatigue</small>`;}
+ return `<div class="imm-fat-row"><div class="imm-fat lvl${fi.level}"><div class="imm-fat-head"><b>${esc(fi.name)}</b><span class="imm-dots" aria-label="fatigue ${fi.level} sur ${fi.max}">${dots}</span><em>fatigue ${fi.level} / ${fi.max}</em></div><small>${esc(fi.effects.join(' · '))}</small></div>${risk}</div>`;}
 function immFatigueChips(fi,p){const out=[];
- out.push({cls:fi.level>=3?'bad':'',text:fi.level>=5?'Fourbu : demain, repos forcé':`${fi.name} : événement en route ${fi.roadLabel} jours, galère ${fi.galereLabel}`});
+ out.push({cls:fi.level>=3?'bad':'',text:fi.level>=5?'😴 Fourbu : demain, repos forcé':`😴 ${fi.name} · galère ${fi.galereLabel}`});
  const extra=(p.dayCols||0)>0||m.moved>=5?1:0,next=Math.min(fi.max,fi.level+1+extra);
- if(fi.level<fi.max&&next>fi.level){const n=S.fatigueInfo(m,{...p,fatigue:next});out.push({cls:'',text:`Encore une journée de route : « ${n.name} »${n.effects.length>1?', '+n.effects.slice(1).join(', '):''}`});}
- const opts=S.sleepOptions(m,p).options.filter(o=>!o.why&&typeof o.fatigue==='number'),best=opts.sort((a,b)=>a.fatigue-b.fatigue)[0];
- if(best&&best.fatigue<0)out.push({cls:'rest',text:`${best.name} ce soir : fatigue −${-best.fatigue}`});
+ if(fi.level<fi.max&&next>=3){const n=S.fatigueInfo(m,{...p,fatigue:next});out.push({cls:'',text:`Demain : « ${n.name} »${n.effects.length>1?', '+n.effects.slice(1).join(', '):''}`});}
+ const info=S.sleepOptions(m,p),opts=info.options.filter(o=>!o.why&&typeof o.fatigue==='number'),best=opts.sort((a,b)=>a.fatigue-b.fatigue)[0];
+ if(best&&best.fatigue<0&&fi.level>0)out.push({cls:'rest',text:info.restDay?`Repos ici : fatigue −${Math.min(-best.fatigue,fi.level)}`:`${best.name} : fatigue −${Math.min(-best.fatigue,fi.level)}`});
  return out;}
