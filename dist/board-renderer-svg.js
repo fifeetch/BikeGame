@@ -281,12 +281,21 @@ export function createSVGBoardRenderer(container,options={}){
   else if(kind==='landmark'){html=`<g class="fx-card"><rect x="-14" y="-12" width="28" height="22" rx="3"/><text class="fx-card-star" y="-1">✦</text><text class="fx-card-gain" y="7">${esc(o.text||'')}</text></g>${[0,1,2,3,4,5].map(i=>`<circle class="fx-spark" style="--a:${i*60}deg" r="1.4"/>`).join('')}${o.label?`<text class="fx-label" y="22">${esc(o.label)}</text>`:''}`;life=3200;}
   else if(kind==='voyage'){const cols=['#f2a541','#b8432e','#5f8a6a','#f6e7c1','#7fc0e8'];html=Array.from({length:22},(_,i)=>`<rect class="fx-confetti" x="-1.5" y="-1" width="3" height="2" style="fill:${cols[i%5]};--a:${(i*360/22+Math.random()*12).toFixed(0)}deg;--d:${(22+Math.random()*22).toFixed(0)}px;--r:${(Math.random()*540-270).toFixed(0)}deg;animation-delay:${(Math.random()*.25).toFixed(2)}s"/>`).join('')+(o.text?`<text class="fx-gain big" y="-34">${esc(o.text)}</text>`:'');life=3400;}
   g.innerHTML=html;fxLayer.append(g);setTimeout(()=>g.remove(),life);}
+ // Crevaison ou casse : vélo retourné, la roue tourne, le cycliste à genoux qui pompe. Chute : vélo couché, cycliste assis qui se tient le genou.
+ function riderRepair(t){const pump=(Math.sin(t*6)+1)/2,f=(x,y)=>`${x.toFixed(2)} ${y.toFixed(2)}`,W=(cx,a)=>{let s=`<circle class="rider-wheel" cx="${cx}" cy="5.6" r="5.4"/>`;for(let i=0;i<2;i++){const q=a+i*Math.PI/2,dx=Math.cos(q)*5.4,dy=Math.sin(q)*5.4;s+=`<line class="rider-spoke" x1="${(cx+dx).toFixed(2)}" y1="${(5.6+dy).toFixed(2)}" x2="${(cx-dx).toFixed(2)}" y2="${(5.6-dy).toFixed(2)}"/>`;}return s;};
+  return `<g transform="translate(4 2) rotate(180 0 2)">${W(-8,0)}${W(8,t*8)}<path class="rider-frame" d="M-8 5.6 L-3 -1 L6 -1 L8 5.6 M-3 -1 L0 5.6 L6 -1 M0 5.6 L-8 5.6 M6 -1 L7 -5 L9.4 -5.3"/></g>
+   <rect class="rider-pannier" x="14" y="5" width="6" height="5" rx="1.2"/>
+   <g transform="translate(-14 2)"><path class="rider-leg" d="M0 6 L4 6 L4 10"/><path class="rider-body" d="M0 6 L1 -2"/><path class="rider-arm" d="M1 -1 L${f(6+pump*2,2-pump*3)}"/><rect class="rider-pump" x="${(5.4+pump*2).toFixed(2)}" y="${(2-pump*3).toFixed(2)}" width="1.6" height="7"/><circle class="rider-head" cx="2" cy="-4.6" r="2.6"/><path class="rider-helmet" d="M-.7 -4.8 A2.8 2.8 0 0 1 4.7 -5 Z"/></g>`;}
+ function riderFall(t){const f=(x,y)=>`${x.toFixed(2)} ${y.toFixed(2)}`,stars=[0,1,2].map(i=>{const a=t*3+i*2.1;return `<circle class="fx-star" cx="${(-14+Math.cos(a)*6).toFixed(2)}" cy="${(-9+Math.sin(a)*2).toFixed(2)}" r="1.1"/>`;}).join('');
+  return `<g transform="translate(6 5) rotate(-28 8 5.6)"><circle class="rider-wheel" cx="-8" cy="5.6" r="5.4"/><circle class="rider-wheel" cx="8" cy="5.6" r="5.4"/><path class="rider-frame" d="M-8 5.6 L-3 -1 L6 -1 L8 5.6 M-3 -1 L0 5.6 L6 -1 M0 5.6 L-8 5.6 M6 -1 L7 -5 L9.4 -5.3"/></g>
+   <rect class="rider-pannier" x="16" y="6" width="6" height="5" rx="1.2" transform="rotate(20 19 8)"/>
+   <g transform="translate(-16 2)"><path class="rider-leg" d="M0 8 L6 8 L8 4"/><path class="rider-body" d="M0 8 L-2 0"/><path class="rider-arm" d="M-1 1 L6 4"/><circle class="rider-head" cx="-2" cy="-3" r="2.6"/><path class="rider-helmet" d="M-4.7 -3.2 A2.8 2.8 0 0 1 .7 -3.4 Z"/></g>${stars}`;}
  function flagPath(amp,t){const w=Math.sin(t*(amp>1?14:4))*amp;return `M-12 -2 L-12 -25 M-12 -25 Q-6 ${(-24+w).toFixed(2)} ${(Math.abs(w)*.3).toFixed(2)} ${(-21.5+w*.6).toFixed(2)} Q-6 ${(-19+w).toFixed(2)} -12 -17.5 Z`;}
  // Animation au repos (environ 12 images par seconde) : fanion, respiration, sueur, pluie et neige autour du cycliste.
  function idleDraw(record,t){const o=record.info||{};if(!record.flip||record.anim)return;
   const sweat=o.tired?((Math.sin(t*1.6)+1)/2).toFixed(2):0;
   const now=clock(),cheer=(record.cheerUntil||0)>now,eat=(record.eatUntil||0)>now;
-  record.flip.innerHTML=o.sit&&!cheer&&!eat?riderSitting(t,{tent:o.tent,sweat}):riderFree(.6,{low:o.tired&&!cheer,cape:o.cape,sweat:cheer?0:sweat,cheer:cheer?t:0,eat:eat?t:0});
+  record.flip.innerHTML=o.pose==='repair'?riderRepair(t):o.pose==='fall'?riderFall(t):o.sit&&!cheer&&!eat?riderSitting(t,{tent:o.tent,sweat}):riderFree(.6,{low:o.tired&&!cheer,cape:o.cape,sweat:cheer?0:sweat,cheer:cheer?t:0,eat:eat?t:0});
   if(record.flag)attrsTo(record.flag,{d:flagPath(o.windy?2.4:o.tired?.25:.6,t)});
   if(record.fx){let fx='';
    if(o.cape)for(let i=0;i<5;i++){const x=-16+i*8,y=((t*40+i*13)%30)-22;fx+=`<path class="fx-rain" d="M${x} ${y.toFixed(1)} l-1.4 4"/>`;}

@@ -29,7 +29,7 @@ test('supplied map has one regular hit hex per cell, medium mountain, and city a
  for(const t of cells.filter(t=>t.name))assert(seen.has(t.key),t.name+' is isolated');
 });
 test('setup equipment respects prices, capacity and grants three cards',()=>{
- const m=match(),p=S.player(m);assert.equal(p.money,6);assert.equal(S.inventorySpace(m),4);assert.equal(p.cardHand.length,3);
+ const m=match(),p=S.player(m);assert.equal(p.money,5);/* kit de réparation à 2 pièces depuis le 16 octobre */assert.equal(S.inventorySpace(m),4);assert.equal(p.cardHand.length,3);
  assert.throws(()=>S.createMatch([{...roster[0],items:['tente','duvet','kit']}],'plateau',CLASSIC,1));
 });
 test('a saved Europe game refreshes its click targets without losing the rider',()=>{

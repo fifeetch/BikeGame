@@ -29,7 +29,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 let artPref=readArtPreference(),displayPrefs=readDisplayPrefs(),sheetDrawer=false;
 const btn=(text,action,cls='',disabled=false)=>action==='mapedit'?'':`<button class="${cls}" data-action="${action}" ${disabled?'disabled':''}>${text}</button>`;
 const equipmentIcons={tente:'⛺',rechaud:'🍳',chambre:'🛞',kit:'🧰',gps:'🧭',duvet:'🛏️',secours:'🩹',sacoches:'🎒'};
-const equipmentDescriptions={tente:'Permet le bivouac',rechaud:'Manger hors ville ou auberge',chambre:'Pièce de rechange pour le vélo',kit:'Répare les crevaisons',gps:'Quitter la route sans pénalité',duvet:'Améliore le repos',secours:'Soigne les blessures',sacoches:'Offre des provisions'};
+const equipmentDescriptions={tente:'Permet le bivouac',rechaud:'Manger hors ville ou auberge',chambre:'Répare une crevaison, une seule fois',kit:'Répare crevaisons et casses, se garde',gps:'Quitter la route sans pénalité',duvet:'Améliore le repos',secours:'Soigne les blessures',sacoches:'Offre des provisions'};
 let m=null,screen='home',modal='',mode='plateau',roster=[{name:'Joueur 1',bike:'gravel'}],choosing=0,drawn=[],setupRules=clone(CLASSIC),draft=null,message='',zoom=1,selected=0,mapSelection='',route=[],cardIndex=-1,ferryTarget='',sheetTab='velo',auto=localStorage.getItem('velo-auto')!=='false',profiles={};
 const eventCardById=id=>resolveEventCard(id,m);
 const cardById=id=>m?.cardVersion===3?eventCardById(id):findCard(id,m);
@@ -268,7 +268,7 @@ function act(a){
  else if(a==='route-go'){const check=S.routeCheck(m,route);if(!check.ok)message=check.reason;else if(m.cardVersion===3){const result=S.beginEventRoute(m,route);if(!result.ok)message=result.reason;else{route=[];mapSelection='';modal='';}}else{S.executeRoute(m,route);route=[];mapSelection='';}}
  else if(a==='ferry-confirm'){if(!S.travelFerry(m,ferryTarget))message='Traversée indisponible : port ou argent insuffisant.';else{modal='';route=[];mapSelection='';}}
  else if(a==='ferry-cancel')modal='';
- else if(a==='repair'){if(!S.repairPuncture(m))message='Réparation indisponible.';}
+ else if(a==='repair'||a==='repair-chambre'||a==='repair-kit'){if(!S.repairPuncture(m,a==='repair'?'':a.slice(7)))message='Réparation indisponible.';}
  else if(a==='finish-voyage-early'){if(!S.finishVoyageEarly(m))message='Impossible de terminer le voyage ici.';else message='Voyage terminé (−40 %). Au début de ton prochain tour, tu choisiras un nouveau voyage.';}
  else if(a.startsWith('fasttravel-')){if(!S.fastTravel(m,a.slice(11)))message='Voyage rapide impossible.';else{mapSelection='';route=[];message='En train jusqu’au départ du nouveau voyage : ta journée est passée.';}}
  else if(a.startsWith('newvoyage-')){if(!S.chooseNewVoyage(m,a.slice(10)))message='Choix du voyage impossible.';else{mapSelection='';route=[];}}
@@ -412,7 +412,8 @@ overlay=()=>{let content='';if(!modal&&m&&screen==='game'&&m.phase==='card-choic
  else if(!modal&&m&&screen==='game'&&m.phase==='voyage-choice'){const p=S.player(m),done=(p.voyagesDone||[]).length,r=m.rules.victory;
   content=`<span class="eyebrow">VOYAGE ACCOMPLI · ${esc(p.name)}</span><h2>🎉 Choisis ton prochain voyage</h2><p>${done} voyage${done>1?'s':''} réussi${done>1?'s':''}${r?.voyages?` sur ${r.voyages}`:''} · ${p.points} points d’aventure. </p><p>Choisis ta prochaine carte. Tu pars de la ville où tu es : seules les cases que tu parcours <b>à partir de maintenant</b> comptent pour les objectifs de la nouvelle carte. Ensuite, rejoins sa ville d’arrivée.</p><p class="muted">Si tu arrives sans avoir rempli tous les objectifs, tu peux quand même terminer le voyage, mais il rapporte 40 % de points en moins.</p>
   <div class="newvoyage-grid">${(p.voyageChoices||[]).map(id=>{const v=findVoyage(id),t=voyageTier(v),rows=progress({voyage:id,travelHistory:[],mode:'plateau'}).rows;return `<article class="newvoyage" style="--voyage-color:${v.color}"><div class="newvoyage-art"><div class="voyage-art voyage-art-map">${voyageMiniMap(v)}</div></div><div class="newvoyage-copy"><small>${esc(v.from)} → ${esc(v.to)}</small><h3>${esc(v.title)}</h3><ul>${rows.map(r=>`<li>${r.target} ${esc(r.label.toLowerCase())}</li>`).join('')}</ul><b class="mc-tier">${esc(t.name)} · +${t.points} points</b>${btn('Prendre ce voyage','newvoyage-'+id)}${(()=>{const f=S.fastTravelInfo(m,id,p);return f?btn(`🚆 Train jusqu’à ${esc(f.name)} · ${f.price} pièces`,'fasttravel-'+id,'light nv-train',!f.affordable||p.flat)+`<small class="nv-train-note">${f.cases} cases · prend la journée${f.affordable?'':' · pas assez de pièces'}</small>`:'';})()}</div></article>`;}).join('')}</div>`;}
- else if(!modal&&m&&screen==='game'&&m.phase==='puncture'){const b=S.breakdownOf(S.player(m)),has=S.player(m).items.includes(b.item);content=`<h2>${b.item==='secours'?'🩹':'🚲'} ${esc(b.title)}</h2><p>${has?b.fix:b.none}</p>${btn(has?b.ok:'Retourner à la ville','repair')}`;}
+ else if(!modal&&m&&screen==='game'&&m.phase==='puncture'){const p=S.player(m),b=S.breakdownOf(p),has=p.items.includes(b.item),tube=(p.flatKind||'puncture')==='puncture'&&p.items.includes('chambre');
+  content=tube?`<h2>🚲 ${esc(b.title)}</h2><p>Une chambre à air neuve (elle ne sert qu’une fois)${has?' ou ton kit de réparation (il se garde)':''} : choisis comment réparer.</p><div class="repair-choices">${btn('🛞 Changer la chambre à air · utilisée','repair-chambre')}${has?btn('🔧 Réparer avec le kit · gardé','repair-kit','light'):''}</div>`:`<h2>${b.item==='secours'?'🩹':'🚲'} ${esc(b.title)}</h2><p>${has?b.fix:b.none}</p>${btn(has?b.ok:'Retourner à la ville','repair')}`;}
  else if(modal==='cards'){const p=S.player(m);content=`<h2>🃏 Cartes de jeu de ${esc(p.name)}</h2><p>Les positives se jouent pendant ton tour. Une carte négative se donne à un adversaire et sera résolue au début de son prochain tour.</p><div class="card-choice-list">${p.cardHand.map((id,i)=>{const c=cardById(id);return `<article class="game-card ${c.type||'positive'}"><div class="card-title"><span>${c.icon||'🃏'}</span><div><small>${c.type==='negative'?'Négative · à donner':'Positive · pour toi'}</small><h3>${esc(c.title)}</h3></div></div><p>${esc(c.text)}</p>${btn(c.target==='other'?'Donner à un adversaire':'Jouer','card-'+i,'',c.target==='other'&&m.players.length<2||!S.canPlayCard(m,i))}</article>`;}).join('')||'<p>Aucune carte en main.</p>'}</div>${btn('Fermer','close','light')}`;}
  else if(modal==='card-effect-choice'){const c=cardById(S.player(m).cardHand[cardIndex]);content=`<h2>${c?.icon||'🍎'} ${esc(c?.title||'Bon ravito')}</h2><p>Choisis ton ravitaillement.</p>${btn('+1 nourriture','ravito-food')}${btn('+1 énergie','ravito-energy','',S.player(m).energy>=m.rules.maxEnergy)}${btn('Annuler','cards','light')}`;}
  else if(modal==='card-target'){const c=cardById(S.player(m).cardHand[cardIndex]);content=`<h2>${esc(c.title)} : choisir la cible</h2><p>${esc(c.text)}</p>${m.players.filter(p=>p.id!==S.player(m).id).map(p=>btn(esc(p.name),'target-'+p.id,'',c.id==='crevaison'&&p.flat)).join('')}${btn('Annuler','cards','light')}`;}
@@ -1103,8 +1104,11 @@ let holdTimer=0;
 let fxSeen={match:null,len:0},energySeen={key:'',energy:0};
 function sceneBubble(){const e=m.encounter;if(m.phase!=='encounter'||!e?.road||!e.scene||!S.immersionOn(m))return '';const sc=e.scene;
  if(sc.kind!=='galere')return 'coeur';return sc.cause==='meca'?'cle':sc.cause==='meteo'?'pluie':'alerte';}
+// Pose du cycliste : il répare (crevaison, casse) ou il est tombé (chute) — tous les modes.
+function riderPose(){if(m.phase==='puncture')return S.player(m).flatKind==='fall'?'fall':'repair';const e=m.encounter;if(m.phase!=='encounter'||!e?.road||!e.scene)return '';const id=e.id||'';
+ if(/chute/.test(id))return 'fall';if(/crevaison|nid-de-poule|rayon|derailleur/.test(id))return 'repair';return '';}
 {const priorInfo=riderInfo;riderInfo=()=>{const out=priorInfo(),act=S.player(m),bub=sceneBubble();
- for(const p of m.players){const last=[...m.history].reverse().find(h=>h.player===p.id&&['move','fast-travel','ferry'].includes(h.kind));out[p.id].train=last?.kind==='fast-travel';if(p.id===act.id&&bub){out[p.id].bubble=bub;out[p.id].sit=false;}}return out;};}
+ for(const p of m.players){const last=[...m.history].reverse().find(h=>h.player===p.id&&['move','fast-travel','ferry'].includes(h.kind));out[p.id].train=last?.kind==='fast-travel';if(p.id===act.id&&bub){out[p.id].bubble=bub;out[p.id].sit=false;}if(p.id===act.id){const pose=riderPose();if(pose){out[p.id].pose=pose;out[p.id].sit=false;if(pose==='fall')out[p.id].bubble='';}}}return out;};}
 {const priorRender=render;render=(...a)=>{priorRender(...a);try{
  if(screen!=='game'||!m||!boardRenderer){fxSeen={match:null,len:0};return;}
  if(fxSeen.match!==m){fxSeen={match:m,len:m.history.length};}
@@ -1132,3 +1136,54 @@ function sceneBubble(){const e=m.encounter;if(m.phase!=='encounter'||!e?.road||!
 {const priorMeteo=meteoModal;meteoModal=()=>{if(!m||!S.immLevel(m).noForecast||!S.immersionOn(m))return priorMeteo();meteoDay='today';
  return priorMeteo().replace(/<button type="button" data-action="meteo-day-tomorrow"[^>]*>Demain<\/button>/,'').replace(/<div class="meteo-now next">[\s\S]*?<\/p><\/div><\/div>/,'<div class="meteo-now next"><span aria-hidden="true">❔</span><div><small>DEMAIN ICI</small><b>Inconnu</b><p>En Expédition, seule la météo du jour est connue.</p></div></div>');};}
 {const priorHere=meteoHere;meteoHere=p=>{const h=priorHere(p);return m&&S.immersionOn(m)&&S.immLevel(m).noForecast?h.replace(/<small>Demain : [^<]*<\/small>/,'<small>Demain : inconnu</small>'):h;};}
+
+// ---------- Arrivée en ville : le marché (planche « Marché, crevaison et chute ») ----------
+let marketSeen='',marketView='';const MARKET_OFF='velo-market-off';
+const marketOff=()=>{try{return localStorage.getItem(MARKET_OFF)==='1';}catch{return false;}};
+const MARKET_ROOF={ouest:'#b74732',alpes:'#8a5a14',nord:'#4a7fa8',est:'#6b4a8a',balkans:'#c46f0e'};
+function marketWindow(){const p=S.player(m),r=m.rules,here=m.board[p.pos],region=S.regionAt(m,p.pos),roof=MARKET_ROOF[region]||'#b74732',imm=S.immersionOn(m),cap=energyCap(m,p);
+ const stall=(icon,name,sub,action,why)=>`<button type="button" class="mk-stall" data-action="${action}" ${why?'disabled':''}><span class="mk-ico" aria-hidden="true">${icon}</span><span><b>${name}</b><small>${esc(why||sub)}</small></span></button>`;
+ const foodWhy=p.money<r.food.price?'pas assez de pièces':'';
+ const restoWhy=p.money<r.food.restaurantPrice?'pas assez de pièces':p.energy>=cap?'énergie pleine':m.ate>=r.food.maxPerTurn?'déjà mangé aujourd’hui':'';
+ let hotelWhy='';if(imm){const o=S.sleepOptions(m,p).options.find(x=>x.id==='hotel');hotelWhy=o?.why||'';}else{const a=r.rest.hotel;hotelWhy=m.moved?'déjà roulé aujourd’hui':p.money<a.price?'pas assez de pièces':'';}
+ const scene=`<svg class="mk-scene" viewBox="0 0 620 150" aria-hidden="true"><rect width="620" height="150" fill="#f2c9a0"/><rect y="112" width="620" height="38" fill="#d9c398"/>
+  ${[[20,'#5f8a6a','🚲'],[135,'#f2a541','🛒'],[400,roof,'🍽'],[515,'#4a7fa8','🏨']].map(([x,c,i])=>`<g transform="translate(${x} 0)"><rect y="62" width="90" height="50" fill="#e8dcbc" stroke="#8a5a14"/><path class="mk-awning" d="M-6 62 Q45 52 96 62 L90 48 L0 48Z" fill="${c}"/><text x="45" y="96" text-anchor="middle" font-size="22">${i}</text></g>`).join('')}
+  <g class="mk-rider" transform="translate(300 128) scale(2.4)"><ellipse cx="0" cy="10" rx="14" ry="3" fill="rgba(0,0,0,.2)"/><circle cx="-8" cy="5.6" r="5.4" fill="none" stroke="#1b1406" stroke-width="1.5"/><circle cx="8" cy="5.6" r="5.4" fill="none" stroke="#1b1406" stroke-width="1.5"/><path d="M-8 5.6 L-3 -1 L6 -1 L8 5.6 M-3 -1 L0 5.6 L6 -1 M0 5.6 L-8 5.6 M6 -1 L7 -5 L9.4 -5.3" fill="none" stroke="${p.color}" stroke-width="1.7"/><rect x="-13.4" y="-1.6" width="6.2" height="6.2" rx="1.3" fill="#b8432e"/><path d="M-1 -3.5 L-1 11" stroke="#26343c" stroke-width="2" stroke-linecap="round"/><path d="M-3 -3.5 L1 -10" stroke="${p.color}" stroke-width="3.4" stroke-linecap="round"/><circle cx="3" cy="-12.6" r="2.6" fill="#f2d1a8"/><path d="M.3 -12.8 A2.8 2.8 0 0 1 5.7 -13 Z" fill="#f6e7c1"/></g></svg>`;
+ if(marketView==='velo'||marketView==='superette'){const space=S.inventorySpace(m),capa=r.bikes[p.bike].capacity;let inner='';
+  if(marketView==='velo'){inner=`<p class="mk-wallet">${p.money} pièce${p.money>1?'s':''} · sacoches ${space} / ${capa} places</p><ul class="mk-list">${Object.entries(r.equipment).map(([id,e])=>{const own=p.items.includes(id),why=own?'':p.money<e.price?'pas assez de pièces':space+e.space>capa?'plus de place':'';
+    return `<li class="${own?'own':''}"><span class="mk-ico" aria-hidden="true">${ITEM_EMOJI[id]||'🎒'}</span><span class="mk-what"><b>${esc(e.name)}</b><small>${esc(equipmentDescriptions[id]||'')} · ${e.space} place${e.space>1?'s':''}</small></span><em>${e.price} pièce${e.price>1?'s':''}</em>${own?btn('Déposer','market-drop-'+id,'light'):`<button type="button" data-action="market-buy-${id}" ${why?'disabled':''} title="${esc(why)}">${why?esc(why):'Acheter'}</button>`}</li>`;}).join('')}</ul>`;}
+  else{const full=typeof S.foodCapacity==='function'?p.food>=S.foodCapacity(m,p):false;const why=p.money<r.food.price?'pas assez de pièces':full?'sacoches à provisions pleines':'';
+   inner=`<p class="mk-wallet">${p.money} pièce${p.money>1?'s':''} · ${p.food} repas dans les sacoches</p><ul class="mk-list"><li><span class="mk-ico" aria-hidden="true">🥖</span><span class="mk-what"><b>Provisions</b><small>${r.food.quantity} repas · à manger plus tard (réchaud, ville ou auberge)</small></span><em>${r.food.price} pièce${r.food.price>1?'s':''}</em><button type="button" data-action="market-food" ${why?'disabled':''}>${why?esc(why):'Acheter'}</button></li></ul>`;}
+  return `<div class="market-win">${scene}<div class="mk-body"><span class="eyebrow">${esc((here.name||'').toUpperCase())} · ${marketView==='velo'?'MAGASIN DE VÉLO':'SUPÉRETTE'}</span><h2>${marketView==='velo'?'🚲 Magasin de vélo':'🛒 Supérette'}</h2>${inner}<div class="mk-foot">${btn('← Retour au marché','market-back','light')}${btn('Continuer ma route','market-close')}</div></div></div>`;}
+ return `<div class="market-win">${scene}<div class="mk-body"><span class="eyebrow">ARRIVÉE · JOUR ${m.round} · ${esc((here.name||'').toUpperCase())}</span><h2>Le marché de ${esc(here.name||'la ville')}</h2>
+  <div class="mk-stalls">${stall('🚲','Magasin de vélo','Chambre à air, kit, tente, GPS… · choisir','market-view-velo','')}${stall('🛒','Supérette',`Provisions : ${r.food.quantity} repas pour ${r.food.price} pièce${r.food.price>1?'s':''}`,'market-view-superette','')}${stall('🍽','Restaurant',`+${r.food.restaurantEnergy} énergie · ${r.food.restaurantPrice} pièce${r.food.restaurantPrice>1?'s':''}`,'market-resto',restoWhy)}${stall('🏨','Hôtel',`Dormir ici · ${r.rest.hotel.price} pièces${imm?' · termine la journée':''}`,'market-hotel',hotelWhy)}</div>
+  <div class="mk-foot"><label><input type="checkbox" id="market-off" ${marketOff()?'checked':''}> Ne plus ouvrir à chaque ville</label>${btn('Continuer ma route','market-close')}</div></div></div>`;}
+{const priorOverlay=overlay;overlay=()=>modal==='market'&&m&&screen==='game'?`<div class="modal-back"><section class="modal market-modal" role="dialog" aria-modal="true" aria-label="Le marché">${marketWindow()}</section></div>`:priorOverlay();}
+{const priorAct=act;act=a=>{if(!a?.startsWith?.('market-'))return priorAct(a);
+ const off=document.querySelector('#market-off');if(off){try{localStorage.setItem(MARKET_OFF,off.checked?'1':'0');}catch{}}
+ if(a==='market-close'){modal='';marketView='';render();return;}
+ if(a==='market-view-velo'||a==='market-view-superette'){marketView=a.slice(12);render();return;}
+ if(a==='market-back'){marketView='';render();return;}
+ if(a.startsWith('market-buy-')){if(!S.buy(m,a.slice(11)))message='Achat impossible : argent ou place dans les sacoches.';render();return;}
+ if(a.startsWith('market-drop-')){S.discard(m,a.slice(12));render();return;}
+ if(a==='market-shop'){modal='';return priorAct('shop');}
+ if(a==='market-food'){priorAct('food');if(modal!=='market'){modal='market';render();}return;}
+ if(a==='market-resto')return priorAct('restaurant');
+ if(a==='market-hotel'){modal='';return priorAct('rest-hotel');}};}
+{const priorRender=render;render=(...a)=>{priorRender(...a);try{
+ if(screen!=='game'||!m||m.done||modal||m.tutorial||marketOff()||!['move','place'].includes(m.phase)||!m.moved)return;
+ if(typeof onlineGame==='function'&&onlineGame()&&typeof myTurn==='function'&&!myTurn())return;
+ const p=S.player(m),t=m.board[p.pos],seen=m.turn+'|'+p.id+'|'+p.pos;if(t?.type!=='ville'||marketSeen===seen)return;
+ marketSeen=seen;marketView='';modal='market';setTimeout(()=>{if(modal==='market')render();},0);}catch(err){console.error(err);}};}
+
+// Chute ou crevaison : la fenêtre (carte ou scène) attend que l'on ait vu le cycliste tomber ou réparer (demande de Fi).
+let poseHeld='',poseUntil=0;
+{const priorRender=render;render=(...a)=>{priorRender(...a);try{if(screen!=='game'||!m)return;const pose=riderPose();if(!pose){poseHeld='';return;}
+ const key=m.turn+'|'+m.phase+'|'+(m.encounter?.id||S.player(m).flatKind||'');const wait=(boardRenderer?.busyFor?.()||0)+2200;
+ if(poseHeld===key&&!document.querySelector('.modal-back.hold'))return;
+ if(poseHeld!==key){poseHeld=key;poseUntil=Date.now()+wait;}
+ const left=poseUntil-Date.now();if(left<=0)return;
+ document.querySelectorAll('.modal-back').forEach(el=>el.classList.add('hold'));clearTimeout(holdTimer);holdTimer=setTimeout(()=>document.querySelectorAll('.hold').forEach(el=>el.classList.remove('hold')),left);
+}catch(err){console.error(err);}};}
+
+const ITEM_EMOJI={tente:'⛺',rechaud:'🔥',chambre:'🛞',kit:'🧰',gps:'🧭',duvet:'🛏',secours:'🩹',sacoches:'🎒'};
