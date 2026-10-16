@@ -33,7 +33,8 @@ export function createSVGBoardRenderer(container,options={}){
  // Étape 5 : décor (sous la grille), routes et ferries (au-dessus) ; étape 6 : tracé d'itinéraire et halos.
  const decor=make('g',{class:'board-decor','aria-hidden':true}),roads=make('g',{class:'board-roads','aria-hidden':true}),ferries=make('g',{class:'board-ferries'}),trail=make('g',{class:'route-trail','aria-hidden':true}),guide=make('g',{class:'board-guide','aria-hidden':true}),zones=make('g',{class:'board-zones','aria-hidden':true}),halos=make('g',{class:'board-halos','aria-hidden':true}),adventure=make('g',{class:'board-adventure'});
  const trailCase=make('path',{class:'route-trail-case'}),trailLine=make('path',{class:'route-trail-line'});trail.append(trailCase,trailLine);
- svg.append(ocean,sea,decor,lands,zones,roads,ferries,guide,trail,halos,adventure,cities,numbers,tokens,seaCursor);container.append(svg);
+ const journeys=make('g',{class:'board-journeys','aria-hidden':true}),nightsLayer=make('g',{class:'board-nights'});
+ svg.append(ocean,sea,decor,lands,zones,roads,ferries,guide,journeys,trail,halos,adventure,cities,nightsLayer,numbers,tokens,seaCursor);container.append(svg);
  let artWanted=options.art!==false&&readArtPreference(),artLayer=options.art===false?null:createTerrainLayer(container),artReady=false;
  const artOn=()=>Boolean(artLayer&&artWanted&&artReady);
  artLayer?.onStatus(ok=>{artReady=ok;if(state)update(state);});
@@ -220,8 +221,10 @@ export function createSVGBoardRenderer(container,options={}){
   const step=()=>{if(anim.cancelled||destroyed)return;const k=Math.min(1,(clock()-start)/duration),e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
    let dist=e*total,i=0;while(i<lens.length-1&&dist>lens[i]){dist-=lens[i];i++;}
    const a=points[i],b=points[i+1]||a,t=lens[i]?Math.min(1,dist/lens[i]):1;
-   attrsTo(record.el,{transform:`translate(${f1(a.x+(b.x-a.x)*t)} ${f1(a.y+(b.y-a.y)*t)})`});
-   if(k<1)raf(step);else{record.anim=null;record.el.classList?.remove('moving');}};
+   const bob=Math.abs(Math.sin(clock()*.012))*1.1;attrsTo(record.el,{transform:`translate(${f1(a.x+(b.x-a.x)*t)} ${f1(a.y+(b.y-a.y)*t-bob)})`});
+   if(record.flip&&Math.abs(b.x-a.x)>1){const face=b.x<a.x?-1:1;if(face!==record.facing){record.facing=face;attrsTo(record.flip,{transform:face<0?'scale(-1 1)':''});}}
+   if(record.flip)record.flip.innerHTML=riderFree(clock()*.012);
+   if(k<1)raf(step);else{record.anim=null;record.el.classList?.remove('moving');if(record.flip)record.flip.innerHTML=riderFree(.6);}};
   record.el.classList?.add('moving');raf(step);
   return duration;
  }
@@ -233,7 +236,27 @@ export function createSVGBoardRenderer(container,options={}){
   for(let i=1;i<out.length;i++)if(!(out[i-1].links||[]).includes(out[i].key))return null;
   return out;
  }
-// Cycliste vu de profil, centré sur la case : roues, cadre et maillot à la couleur du joueur (--rider).
+// Pion B : cycliste chargé vu de profil (vers la droite) ; a = angle du pédalier (les roues et les jambes tournent).
+ function riderFree(a){const W=(cx,r)=>{let o=`<circle class="rider-wheel" cx="${cx}" cy="5.6" r="${r}"/>`;for(let i=0;i<2;i++){const t=a+i*Math.PI/2,dx=(Math.cos(t)*r).toFixed(2),dy=(Math.sin(t)*r).toFixed(2);o+=`<line class="rider-spoke" x1="${(cx+ +dx).toFixed(2)}" y1="${(5.6+ +dy).toFixed(2)}" x2="${(cx-dx).toFixed(2)}" y2="${(5.6-dy).toFixed(2)}"/>`;}return o;};
+  const f=(x,y)=>`${x.toFixed(2)} ${y.toFixed(2)}`,p1=f(Math.cos(a)*2.8,2+Math.sin(a)*2.8),p2=f(-Math.cos(a)*2.8,2-Math.sin(a)*2.8);
+  return W(-8,5.4)+W(8,5.4)
+  +'<path class="rider-frame" d="M-8 5.6 L-3 -1 L6 -1 L8 5.6 M-3 -1 L0 5.6 L6 -1 M0 5.6 L-8 5.6 M6 -1 L7 -5 L9.4 -5.3"/>'
+  +'<rect class="rider-pannier" x="-13.4" y="-1.6" width="6.2" height="6.2" rx="1.3"/><rect class="rider-tent" x="-12.8" y="-5.2" width="9" height="3.6" rx="1.8"/>'
+  +`<path class="rider-leg back" d="M-2.6 -3.5 L${p2}"/><path class="rider-leg" d="M-2.6 -3.5 L${p1}"/>`
+  +'<path class="rider-body" d="M-3 -3.5 L2 -10"/><path class="rider-arm" d="M2 -9.5 L7.6 -5"/>'
+  +'<circle class="rider-head" cx="4" cy="-12.6" r="2.6"/><path class="rider-helmet" d="M1.3 -12.8 A2.8 2.8 0 0 1 6.7 -13 Z"/>';}
+ // Trace du voyage : pointillés crème d'une case à l'autre (les jours passés plus pâles), et les nuits posées sur la carte.
+ let journeySig='';
+ const NIGHT_MARKS={bivouac:['Bivouac','<path d="M-4 3 L0 -4 L4 3Z" class="nm-tent"/>'],camping:['Camping','<path d="M0 -4.5 L-3.6 0.6 L3.6 0.6Z M0 -1.8 L-4.4 3.4 L4.4 3.4Z" class="nm-tree"/>'],hotel:['Hôtel','<rect x="-4.4" y="-0.6" width="8.8" height="3.2" class="nm-bed"/><rect x="-4.4" y="-3.4" width="3" height="2.6" class="nm-pillow"/>'],demander:['Chez l’habitant','<rect x="-3.2" y="-1" width="6.4" height="4.4" class="nm-bed"/><path d="M-4.4 -1 L0 -4.8 L4.4 -1Z" class="nm-roof"/>'],dehors:['Nuit dehors','<path d="M1.8 -3.6 A3.6 3.6 0 1 0 2.6 2.8 A2.8 2.8 0 1 1 1.8 -3.6Z" class="nm-moon"/>']};
+ function drawJourneys(g,list,today){const sig=today+'|'+list.map(j=>j.color+':'+(j.steps||[]).length+':'+(j.nights||[]).length+':'+(j.start||'')).join('|');if(sig===journeySig)return;journeySig=sig;
+  journeys.replaceChildren();nightsLayer.replaceChildren();
+  for(const j of list){const steps=j.steps||[];let prev=j.start&&g.board[j.start]?{key:j.start,day:0}:null;let segs=[];
+   for(const h of steps){const t=g.board[h.key];if(!t)continue;const pt=g.board[prev?.key];if(prev&&pt&&(pt.links||[]).includes(h.key))segs.push({a:pt,b:t,old:(h.day||0)<today});prev=h;}
+   const line=(old)=>{const d=segs.filter(s=>s.old===old).map(s=>`M${f1(s.a.x)} ${f1(s.a.y)} L${f1(s.b.x)} ${f1(s.b.y)}`).join(' ');if(d)journeys.append(make('path',{class:'journey-case'+(old?' old':''),d}),make('path',{class:'journey-line'+(old?' old':''),d}));};
+   line(true);line(false);
+   const last=new Map();for(const n of j.nights||[])last.set(n.key,n);
+   for(const n of last.values()){const t=g.board[n.key],mk=NIGHT_MARKS[n.kind];if(!t||!mk)continue;const el=make('g',{class:'night-mark nm-'+n.kind,transform:`translate(${f1(t.x+11)} ${f1(t.y+9)})`});el.innerHTML=`<title>Jour ${n.day} · ${mk[0]}</title><circle r="6.6"/>`+mk[1];nightsLayer.append(el);}}}
+ // Cycliste vu de profil, centré sur la case : roues, cadre et maillot à la couleur du joueur (--rider).
  const RIDER_SVG='<circle class="rider-wheel" cx="-6.6" cy="5" r="4.6"/><circle class="rider-wheel" cx="6.6" cy="5" r="4.6"/>'
   +'<path class="rider-frame" d="M-6.6 5 L-2.4 -1.6 L5 -1.6 L6.6 5 M-2.4 -1.6 L0.6 5 L5 -1.6 M0.6 5 L-6.6 5 M5 -1.6 L5.8 -4.2 L7.6 -4.4"/>'
   +'<path class="rider-leg" d="M-2.6 -3.4 L1.6 0.2 L0.6 5"/><path class="rider-body" d="M-2.8 -3.6 L1.4 -9"/><path class="rider-arm" d="M1.4 -8.6 L5.6 -4.6"/>'
@@ -244,10 +267,11 @@ export function createSVGBoardRenderer(container,options={}){
    let record=playerNodes.get(p.id);
    if(!record){
     // Pion : un médaillon crème avec un cycliste sur son vélo (couleur du joueur), et le numéro du joueur dans une pastille.
-    record={el:make('g',{class:'rider-token'}),inner:make('g',{class:'rider-inner'}),shadow:make('ellipse',{class:'rider-shadow',cx:0,cy:13,rx:11,ry:3}),circle:make('circle',{class:'rider-base',r:13}),flip:make('g',{class:'rider-flip'}),badge:make('circle',{class:'rider-badge',cx:11.5,cy:-11,r:5.4}),text:make('text',{class:'player-number',x:11.5,y:-8.6}),pos:p.pos,facing:1};
-    record.flip.innerHTML=RIDER_SVG;record.inner.append(record.shadow,record.circle,record.flip,record.badge,record.text);record.el.append(record.inner);tokens.append(record.el);playerNodes.set(p.id,record);}
+    // Pion « cycliste libre » (planche « Le pion du cycliste », choix B) : le cycliste chargé posé sur la carte, avec un fanion à sa couleur.
+    record={el:make('g',{class:'rider-token free'}),inner:make('g',{class:'rider-inner'}),shadow:make('ellipse',{class:'rider-shadow',cx:0,cy:10,rx:13,ry:3.4}),dust:make('g',{class:'rider-dust'}),flip:make('g',{class:'rider-flip'}),flag:make('path',{class:'rider-flag',d:'M-12 -2 L-12 -25 M-12 -25 Q-5 -24 0 -21.5 Q-5 -19 -12 -17.5 Z'}),text:make('text',{class:'player-number',x:-6.6,y:-19}),pos:p.pos,facing:1};
+    record.dust.innerHTML='<circle cx="-14" cy="8" r="2.2"/><circle cx="-19" cy="6" r="1.4"/>';record.flip.innerHTML=riderFree(.6);record.inner.append(record.shadow,record.dust,record.flip,record.flag,record.text);record.el.append(record.inner);tokens.append(record.el);playerNodes.set(p.id,record);}
    attrsTo(record.el,{class:`rider-token${p.id===g.id?' active':''}${record.anim?' moving':''}`,'aria-label':p.name});
-   attrsTo(record.circle,{style:`stroke:${p.color}`});attrsTo(record.flip,{style:`--rider:${p.color}`});attrsTo(record.badge,{style:`fill:${p.color}`});if(record.text.textContent!==p.id.slice(1))record.text.textContent=p.id.slice(1);
+   attrsTo(record.flip,{style:`--rider:${p.color}`});attrsTo(record.flag,{style:`fill:${p.color}`});if(record.text.textContent!==p.id.slice(1))record.text.textContent=p.id.slice(1);
    const moved=record.pos!==p.pos,from=g.board[record.pos];record.pos=p.pos;
    if(moved&&from&&Math.abs(target.x-from.x)>1){record.facing=target.x<from.x?-1:1;attrsTo(record.flip,{transform:record.facing<0?'scale(-1 1)':''});}// le cycliste regarde dans le sens de la route
    if(moved&&from&&prev&&!reduced()&&browser()){
@@ -302,6 +326,7 @@ export function createSVGBoardRenderer(container,options={}){
   drawTrail(g,editMode?[]:route);
   drawGuide(g,editMode?[]:(state.guidePath||[]),editMode?'':(state.guideFocus||''));
   drawZones(g,editMode?[]:(state.zones||[]));
+  drawJourneys(g,editMode?[]:(state.journeys||[]),state.today||0);
   drawHalos(g,selected,editMode);
   drawAdventure(g,editMode);
   const moveMs=drawTokens(g,previous);

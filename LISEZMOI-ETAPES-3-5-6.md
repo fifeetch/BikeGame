@@ -277,3 +277,11 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - **Fiche compacte (maquette A) dans tous les modes** : mêmes visuels, règles propres à chaque mode (3 ronds en mode original, onglet Cartes gardé). Nuits en tableau (origSleepRows). Barre d'action : « clique les cases entourées » retiré partout.
 - **Paris (Immersion seulement)**, planche https://claude.ai/artifact/UsPdo1u9xUyhbcyqGAKisG : chaque pari montre sa chance (jauge), les deux issues et leurs effets, et « Fatigue : −15 % » quand on est épuisé ; le résultat s'affiche dans une fenêtre « Pari réussi ! / Pari raté… » jusqu'à « Continuer » (betChoiceBody, betModal à la fin de `dist/app.js` ; betOdds dans `dist/simulator.js`).
 - Cache : `aventure-velo-v82-paris`, `?v=paris`.
+
+## Carte plus vivante : pion « cycliste libre », trace du voyage, nuits, soir (16 octobre 2026)
+- Planches « En selle » (https://claude.ai/artifact/8j2PZ9xQDwvi4BxZJFWhGs) et « Le pion du cycliste » (https://claude.ai/artifact/G7DZQGnSvCXDAnHis4Dd1F, choix B). Pas de fenêtre vidéo (demande de Fi).
+- **Pion B** : le cycliste chargé (sacoches, tente) posé sur la carte, avec ombre et fanion à la couleur du joueur (numéro dessus). En roulant : roues et pédalier qui tournent, il se tourne dans le sens de la route à chaque case, petit nuage de poussière (riderFree dans `dist/board-renderer-svg.js`).
+- **Trace du voyage** : pointillés crème bordés de sombre de case en case (travelHistory), les jours passés plus pâles (drawJourneys).
+- **Nuits sur la carte** : `p.nights` (moteur) ; icône par case (tente, camping, lit, maison chez l'habitant, lune pour la nuit dehors), info-bulle « Jour N · … ».
+- **Le soir qui tombe** : classe `soir` sur la page pendant « Où dormir ce soir ? » et les scènes du soir (Immersion) : la carte passe à une lumière orangée et sombre, les noms de villes s'allument.
+- Cache : `aventure-velo-v83-pion`, `?v=pion`.

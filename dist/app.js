@@ -1074,3 +1074,7 @@ function betModal(){const b=betResult;if(!b)return '';const fx=fxList(b.fx||{});
  <div class="bet-fx">${fx.length?fx.map(([c,t])=>`<span class="${c}">${esc(t)}</span>`).join(''):'<span class="pos">Rien ne change</span>'}${b.fx?.energy?`<span>il t’en reste ${b.energy}</span>`:''}</div>
  <button type="button" class="bet-ok" data-bet-ok>Continuer</button><small>Chance : ${oddsLabel(Math.round((b.odds||.5)*100))}</small></div>`;}
 {const priorRender=render;render=(...a)=>{priorRender(...a);try{document.querySelector('.bet-layer')?.remove();if(betResult&&screen==='game'){const d=document.createElement('div');d.className='bet-layer';d.innerHTML=betModal();document.body.appendChild(d);const go=d.querySelector('[data-bet-ok]');go.onclick=()=>{betResult=null;d.remove();};go.focus();}}catch(err){console.error(err);}};}
+
+// ---------- Carte : trace du voyage, nuits posées sur la carte, et le soir qui tombe (planches « En selle » et « Le pion du cycliste ») ----------
+{const prior=boardSurfaceMarkup;boardSurfaceMarkup=state=>prior(screen==='game'&&m?{...state,today:m.round,journeys:m.players.map(p=>({color:p.color,start:p.visited?.[0],steps:p.travelHistory||[],nights:p.nights||[]}))}:state);}
+{const priorRender=render;render=(...a)=>{priorRender(...a);try{const evening=screen==='game'&&m&&(modal==='night'||m.phase==='encounter'&&m.encounter&&!m.encounter.road&&S.immersionOn(m));document.body?.classList?.toggle('soir',Boolean(evening));}catch{}};}

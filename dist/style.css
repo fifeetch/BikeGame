@@ -1911,3 +1911,35 @@ body .player-mat.fiche.imm-fiche .night-note{margin:0;padding:4px 10px;font-size
 .bet-ok:focus-visible{outline:3px solid #1b3b38;outline-offset:2px}
 .bet-pop small{font-size:12px;color:#5a4a2c}
 .imm-risk-txt.orig{color:#5a4a2c}
+
+/* ---------- Pion « cycliste libre » (choix B) ---------- */
+.rider-token.free .rider-inner{transform:scale(calc(var(--sym,1)*1.25))}
+.rider-token.free .rider-shadow{fill:#0b1a1c;opacity:.28}
+.rider-token.free .rider-wheel{fill:none;stroke:#1b1406;stroke-width:1.5}
+.rider-token.free .rider-spoke{stroke:#6b6458;stroke-width:.5}
+.rider-token.free .rider-pannier{fill:#b8432e;stroke:#1b1406;stroke-width:.5}
+.rider-token.free .rider-tent{fill:#5f8a6a;stroke:#1b1406;stroke-width:.5}
+.rider-token.free .rider-leg{fill:none;stroke:#26343c;stroke-width:2;stroke-linecap:round}
+.rider-token.free .rider-leg.back{stroke:#3d4d55}
+.rider-token.free .rider-body{stroke:var(--rider);stroke-width:3.4;stroke-linecap:round}
+.rider-token.free .rider-arm{stroke:#d9a37f;stroke-width:1.6;stroke-linecap:round}
+.rider-token.free .rider-head{fill:#f2d1a8;stroke:#1b1406;stroke-width:.5}
+.rider-token.free .rider-helmet{fill:#f6e7c1;stroke:#1b1406;stroke-width:.5}
+.rider-token.free .rider-flag{stroke:#2b2f33;stroke-width:1.1;stroke-linejoin:round}
+.rider-token.free .player-number{font:800 7px 'Barlow',system-ui,sans-serif;fill:#fff;text-anchor:middle}
+.rider-token.free .rider-dust{fill:rgba(246,231,193,.7);opacity:0;transition:opacity .2s}
+.rider-token.free.moving .rider-dust{opacity:1;animation:rider-dust .5s linear infinite}
+@keyframes rider-dust{0%{transform:translateX(0);opacity:.8}100%{transform:translateX(-5px);opacity:0}}
+.rider-token.free.active .rider-inner{filter:drop-shadow(0 0 3px #fff8b0)}
+@media (prefers-reduced-motion: reduce){.rider-token.free.moving .rider-dust{animation:none}}
+/* ---------- Trace du voyage et nuits ---------- */
+.journey-case{fill:none;stroke:#173438;stroke-width:5.2;stroke-dasharray:1.5 6;stroke-linecap:round;stroke-opacity:.75}
+.journey-line{fill:none;stroke:#f6e7c1;stroke-width:3;stroke-dasharray:1.5 6;stroke-linecap:round}
+.journey-case.old{stroke-opacity:.35}.journey-line.old{stroke-opacity:.6}
+.night-mark circle{fill:#173438;stroke:#f6e7c1;stroke-width:1.1}
+.night-mark .nm-tent{fill:#f2a541}.night-mark .nm-tree{fill:#7fbf6a}.night-mark .nm-bed{fill:#f6e7c1}.night-mark .nm-pillow{fill:#f2a541}.night-mark .nm-roof{fill:#b8432e}.night-mark .nm-moon{fill:#c9cde0}
+/* ---------- Le soir qui tombe ---------- */
+.europe-world{transition:filter 1.2s ease}
+body.soir .europe-world{filter:sepia(.35) saturate(1.15) hue-rotate(-12deg) brightness(.72)}
+body.soir .playable-europe .city-names{filter:drop-shadow(0 0 4px #ffd27a)}
+@media (prefers-reduced-motion: reduce){.europe-world{transition:none}}
