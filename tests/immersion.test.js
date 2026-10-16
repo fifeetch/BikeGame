@@ -151,3 +151,63 @@ test('« Demander » : jamais trois fois la même réponse, et plus risqué chaq
  assert.ok(S.demandInfo(m,p).refus>o0.refus,'refus plus probable après plusieurs soirs');
  S.rest(m,'camping');while(m.phase==='encounter')S.resolveEncounter(m,pick(m));assert.equal(S.demandInfo(m,p).streak,0,'un soir ailleurs remet à zéro');
 });
+
+// ---------- Fatigue (mode Immersion) ----------
+import {FATIGUE} from '../dist/immersion.js';
+import {energyCap,fatigueMax} from '../dist/rules.js';
+const rideOne=m=>{const mv=S.moves(m);S.move(m,mv[0].key);while(m.phase==='encounter'&&m.encounter.road)S.resolveEncounter(m,pick(m));};
+const finishNight=m=>{while(m.phase==='encounter')S.resolveEncounter(m,pick(m));};
+
+test('Fatigue Immersion : 6 niveaux, chaque niveau bloque une case d’énergie', ()=>{
+ const m=solo(3),p=S.player(m);assert.equal(fatigueMax(m),5);assert.equal(FATIGUE.length,6);
+ for(let f=0;f<=5;f++){p.fatigue=f;assert.equal(energyCap(m,p),10-f);}
+ assert.deepEqual(FATIGUE.map(l=>l.name),['En forme','Un peu las','Fatigué','Épuisé','À bout','Fourbu']);
+ const o=S.createMatch([{name:'A',bike:'gravel',voyage:voyages[0].id,items:[]}],'plateau',CLASSIC,3),q=S.player(o);q.fatigue=2;assert.equal(energyCap(o,q),10,'mode original inchangé');
+});
+
+test('Fatigue : +1 par journée de route, rien au bivouac, −1 camping, −2 hôtel', ()=>{
+ for(const [id,expected] of [['bivouac',1],['camping',0]]){const m=solo(31),p=S.player(m);p.fatigue=0;rideOne(m);p.dayCols=0;S.rest(m,id);finishNight(m);assert.ok(p.fatigue>=expected&&p.fatigue<=expected+1,id+' : '+p.fatigue);}
+ const m=solo(31),p=S.player(m);p.fatigue=4;const info=S.sleepOptions(m,p);
+ assert.equal(info.options.find(o=>o.id==='hotel').fatigue,-4,'journée de repos en ville : −4');
+ rideOne(m);const after=S.sleepOptions(m,p).options;assert.equal(after.find(o=>o.id==='hotel').fatigue,-2);assert.equal(after.find(o=>o.id==='camping').fatigue,-1);assert.equal(after.find(o=>o.id==='bivouac').fatigue,0);
+});
+
+test('Fatigue : un col ou 5 cases ajoutent +1', ()=>{
+ const m=solo(31),p=S.player(m);p.fatigue=0;rideOne(m);p.dayCols=1;S.rest(m,'bivouac');assert.ok(p.fatigue>=2,'col : '+p.fatigue);
+});
+
+test('Fatigue : repas −1 dès « Épuisé », 1 case de moins dès « À bout »', ()=>{
+ const m=solo(31),p=S.player(m);p.fatigue=0;const meal=S.eatGain(m,p),dist=S.distance(m);
+ p.fatigue=3;assert.equal(S.eatGain(m,p),meal-1);assert.equal(S.distance(m),dist);
+ p.fatigue=4;assert.equal(S.distance(m),dist-1);
+});
+
+test('Fatigue : fourbu → repos forcé le lendemain', ()=>{
+ const m=solo(31),p=S.player(m);p.fatigue=5;p.money=0;p.items=p.items.filter(i=>i!=='tente');
+ rideOne(m);const turn=m.turn;S.endTurn(m);while(m.phase==='encounter'&&m.encounter.id!=='im-fourbu')S.resolveEncounter(m,pick(m));
+ assert.ok(m.turn>turn);assert.equal(p.fatigue,5,'nuit dehors : toujours fourbu');assert.equal(m.encounter?.id,'im-fourbu');
+ S.resolveEncounter(m,0);assert.ok(p.turnModifiers.skipMove);assert.equal(S.moves(m).length,0);
+ assert.ok(S.rest(m,'demander'));finishNight(m);assert.ok(p.fatigue<=3,'journée de repos : fatigue '+p.fatigue);
+});
+
+test('Fatigue : les galères d’inattention n’arrivent qu’à partir de la fatigue 2', ()=>{
+ const inatt=SCENES.filter(s=>s.cause==='inattention').map(s=>s.id);assert.ok(inatt.length>=4);
+ for(const lvl of [0,1]){const seen=new Set();for(let seed=1;seed<80;seed++){const m=solo(seed),p=S.player(m);
+  for(let d=0;d<6&&!m.done;d++){p.fatigue=lvl;p.energy=10;const mv=S.moves(m);if(!mv.length)break;S.move(m,mv[0].key);
+   for(let k=0;k<3&&m.phase==='encounter';k++){seen.add(m.encounter.id);S.resolveEncounter(m,pick(m));}if(m.phase==='move'&&S.moves(m).length&&m.moved<3){const n=S.moves(m);S.move(m,n[0].key);while(m.phase==='encounter'){seen.add(m.encounter.id);S.resolveEncounter(m,pick(m));}}
+   S.rest(m,'camping');finishNight(m);}}
+  for(const id of inatt)assert.ok(!seen.has(id),`fatigue ${lvl} : ${id} ne doit pas arriver`);
+  if(lvl===0)for(const id of seen){const s=SCENES.find(x=>x.id===id);if(s?.when==='route'&&s.kind==='galere')assert.ok(['meteo','meca'].includes(s.cause),'reposé : '+id);}}
+});
+
+test('Fatigue : plus on est fatigué, plus il y a de galères en route', ()=>{
+ const count=lvl=>{let gal=0,days=0;for(let seed=1;seed<120;seed++){const m=solo(seed),p=S.player(m);p.fatigue=lvl;p.energy=10;
+  for(let step=0;step<3;step++){const mv=S.moves(m);if(!mv.length)break;S.move(m,mv[0].key);if(m.phase==='encounter'&&m.encounter.road&&!m.encounter.situation){if(m.encounter.scene.kind==='galere')gal++;break;}if(m.phase!=='move')break;}days++;}return gal/days;};
+ const low=count(0),high=count(4);assert.ok(high>low*2,`galères : reposé ${low.toFixed(2)}, à bout ${high.toFixed(2)}`);
+});
+
+test('Fatigue : la fiche et la barre d’action reçoivent les bons textes', ()=>{
+ const m=solo(31),p=S.player(m);p.fatigue=3;const fi=S.fatigueInfo(m,p);
+ assert.equal(fi.name,'Épuisé');assert.equal(fi.galereLabel,'2 sur 3');assert.equal(fi.roadLabel,'3 sur 5');assert.equal(fi.cap,7);assert.ok(fi.effects.includes('repas −1'));
+ const o=S.createMatch([{name:'A',bike:'gravel',voyage:voyages[0].id,items:[]}],'plateau',CLASSIC,3);assert.equal(S.fatigueInfo(o),null);
+});
