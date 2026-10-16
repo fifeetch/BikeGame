@@ -295,3 +295,9 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - **Zoom sur le cycliste** : quand il roule, la caméra se rapproche et le suit, puis revient à la vue d'avant ; le soir (« Où dormir ce soir ? » et scènes du soir), zoom sur lui, retour au matin (renderer.spotlight). Rien de tout ça avec « animations réduites ».
 - Code : riderFree, riderSitting, idleDraw, flagPath (`dist/board-renderer-svg.js`) ; riderInfo, eveningNow (fin de `dist/app.js`).
 - Cache : `aventure-velo-v84-vivant`, `?v=vivant`.
+
+## Pion plus lent, fenêtres qui attendent (16 octobre 2026)
+- Demande de Fi : l'animation allait trop vite et était souvent cachée par une fenêtre.
+- Le cycliste roule une case toutes les 0,65 s (avant 0,26 s), jusqu'à 7 s pour une étape ; la caméra reste sur lui 1,4 s à l'arrivée avant de revenir (STEP_MS dans `dist/board-renderer-svg.js`).
+- Les fenêtres (scènes, cartes, pari…) attendent la fin du trajet puis apparaissent en fondu (renderer.busyFor, classe `hold`, fin de `dist/app.js`).
+- Cache : `aventure-velo-v85-lent`, `?v=lent`.

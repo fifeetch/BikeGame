@@ -1952,3 +1952,8 @@ body.soir .playable-europe .city-names{filter:drop-shadow(0 0 4px #ffd27a)}
 .rider-token.free .fx-rain{stroke:#d6ecf7;stroke-width:1;stroke-linecap:round}
 .rider-token.free .fx-snow{fill:#fff}
 .rider-token.free .fx-puff{fill:#fff}
+
+/* Fenêtre retenue pendant que le pion roule, puis qui apparaît en douceur */
+.modal-back,.bet-layer{transition:opacity .45s ease}
+.modal-back.hold,.bet-layer.hold{opacity:0;pointer-events:none}
+@media (prefers-reduced-motion: reduce){.modal-back,.bet-layer{transition:none}}

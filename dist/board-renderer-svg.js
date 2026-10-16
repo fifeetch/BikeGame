@@ -19,7 +19,7 @@ const symbolScale=s=>Math.min(1.25,Math.max(.42,Math.pow(1.05/s,.65)));
 const labelScale=s=>Math.min(1.3,Math.max(.36,Math.pow(1.05/s,.75)));
 // Seuil à partir duquel le décor et les petits chemins apparaissent (vue rapprochée).
 const DETAIL_SCALE=1.55;
-const STEP_MS=260;
+const STEP_MS=650;// une case toutes les 0,65 s : on a le temps de voir le cycliste rouler
 
 export function createSVGBoardRenderer(container,options={}){
  const doc=container.ownerDocument,make=(tag,attrs={})=>{const el=doc.createElementNS(NS,tag);attrsTo(el,attrs);return el;};
@@ -219,7 +219,7 @@ export function createSVGBoardRenderer(container,options={}){
   // Pente : on monte lentement (danseuse), on descend vite ; fatigué, tout va plus lentement.
   const info=record.info||{},slope=points.slice(1).map((b,i)=>{const ra=MOUNT_RANK[points[i].type]||0,rb=MOUNT_RANK[b.type]||0;return rb>ra||(rb&&rb===ra)?'up':rb<ra?'down':'flat';});
   const lens=[];let total=0;for(let i=1;i<points.length;i++){const l=Math.hypot(points[i].x-points[i-1].x,points[i].y-points[i-1].y)*(slope[i-1]==='up'?1.6:slope[i-1]==='down'?.6:1);lens.push(l);total+=l;}
-  const duration=Math.min(3200,stepMs*(points.length-1)*(info.tired?1.3:1)),start=clock();
+  const duration=Math.min(7000,stepMs*(points.length-1)*(info.tired?1.3:1)),start=clock();
   const follow=record.follow&&!reduced();let camS=camera.scale;const backTo=camera.scale;
   const step=()=>{if(anim.cancelled||destroyed)return;const k=Math.min(1,(clock()-start)/duration),e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
    let dist=e*total,i=0;while(i<lens.length-1&&dist>lens[i]){dist-=lens[i];i++;}
@@ -230,7 +230,7 @@ export function createSVGBoardRenderer(container,options={}){
    if(record.flip)record.flip.innerHTML=riderFree(record.crank,{stand:sl==='up',tuck:sl==='down',low:info.tired,sweat:info.tired?1:0,cape:info.cape});
    if(record.flag)attrsTo(record.flag,{d:flagPath(sl==='down'||info.windy?2.4:.7,clock()/1000)});
    if(follow){camS+=(ZOOM_FOLLOW-camS)*.08;camera.focus(a.x+(b.x-a.x)*t,a.y+(b.y-a.y)*t,{scale:Math.max(backTo,camS),animate:false});}
-   if(k<1)raf(step);else{record.anim=null;record.el.classList?.remove('moving');record.follow=false;if(follow){clearTimeout(glideTimer);glideTimer=setTimeout(()=>{if(!destroyed)camera.focus(b.x,b.y,{scale:backTo,duration:800});},650);}idleDraw(record,clock()/1000);}};
+   if(k<1)raf(step);else{record.anim=null;record.el.classList?.remove('moving');record.follow=false;if(follow){clearTimeout(glideTimer);glideTimer=setTimeout(()=>{if(!destroyed)camera.focus(b.x,b.y,{scale:backTo,duration:1100});},1400);}idleDraw(record,clock()/1000);}};
   record.el.classList?.add('moving');raf(step);
   return duration;
  }
@@ -274,7 +274,7 @@ export function createSVGBoardRenderer(container,options={}){
    if(o.weather==='neige')for(let i=0;i<5;i++){const x=-16+i*8+Math.sin(t+i)*2,y=((t*8+i*9)%30)-22;fx+=`<circle class="fx-snow" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="1"/>`;}
    if(o.tired>1&&!o.sit){const k=(t*1.2)%1;fx+=`<circle class="fx-puff" cx="${(12+k*5).toFixed(1)}" cy="${(-10-k*2).toFixed(1)}" r="${(1+k*1.6).toFixed(2)}" style="opacity:${(1-k).toFixed(2)}"/>`;}
    record.fx.innerHTML=fx;}}
- let idleRaf=0,idleLast=0,spotSaved=null;
+ let idleRaf=0,idleLast=0,spotSaved=null,animEnd=0;
  function startIdle(){if(idleRaf||destroyed||!browser())return;const loop=()=>{idleRaf=0;if(destroyed)return;const t=clock();if(!reduced()&&t-idleLast>80){idleLast=t;for(const r of playerNodes.values())idleDraw(r,t/1000);}idleRaf=raf(loop);};idleRaf=raf(loop);}
  const followingNow=()=>[...playerNodes.values()].some(r=>r.anim&&r.follow);
  // Trace du voyage : pointillés crème d'une case à l'autre (les jours passés plus pâles), et les nuits posées sur la carte.
@@ -316,7 +316,7 @@ export function createSVGBoardRenderer(container,options={}){
     else if(ferry){const arc=ferryArc(g.board[ferry.a],g.board[ferry.b]),fwd=ferry.a===from.key;pts=Array.from({length:17},(_,i)=>arc.point(fwd?i/16:1-i/16));stepMs=90;}
     else pts=[{x:from.x,y:from.y},{x:target.x,y:target.y}];
     pts[pts.length-1]={x:target.x,y:target.y,type:pts[pts.length-1].type};record.follow=p.id===g.id&&!ferry&&pts.length>2;
-    if(pts.length>1){longest=Math.max(longest,animateToken(record,pts,pts.length===2?Math.min(520,Math.max(STEP_MS,Math.hypot(pts[1].x-pts[0].x,pts[1].y-pts[0].y)*6)):stepMs));continue;}
+    if(pts.length>1){longest=Math.max(longest,animateToken(record,pts,pts.length===2?Math.min(1100,Math.max(STEP_MS,Math.hypot(pts[1].x-pts[0].x,pts[1].y-pts[0].y)*6)):stepMs));continue;}
    }
    if(record.anim&&!moved)continue;// une animation en cours garde la main jusqu'au bout
    record.anim&&(record.anim.cancelled=true);record.anim=null;
@@ -361,7 +361,7 @@ export function createSVGBoardRenderer(container,options={}){
   drawJourneys(g,editMode?[]:(state.journeys||[]),state.today||0);
   drawHalos(g,selected,editMode);
   drawAdventure(g,editMode);
-  const moveMs=drawTokens(g,previous);
+  const moveMs=drawTokens(g,previous);if(moveMs)animEnd=Math.max(animEnd,clock()+moveMs);
   picker.hidden=!editMode;
   const owner=container.closest('.map-wrap')||container.parentElement;
   if(editMode){const wrap=container.closest('.map-wrap')||container;if(picker.parentElement!==wrap)wrap.append(picker);showSeaCursor(hoverKey);}else if(picker.parentElement)picker.remove();
@@ -396,6 +396,8 @@ export function createSVGBoardRenderer(container,options={}){
   // Recentrage animé sur un point (le cycliste actif) ; on rapproche un peu la vue si elle est très éloignée.
   focusOn(x,y,{minScale=1.5,animate=true}={}){camera.focus(x,y,{scale:Math.max(camera.scale,minScale),animate});},
   fitView(){camera.fit();},
+  // Temps restant de l'animation du pion (ms) : les fenêtres attendent la fin pour s'ouvrir.
+  busyFor(){return Math.max(0,animEnd-clock());},
   // Zoom sur le cycliste pendant une action (le soir, la nuit) puis retour à la vue d'avant.
   spotlight(on){if(reduced()||!state)return;const g=state.g,t=g?.board?.[g.pos];if(!t)return;
    if(on&&spotSaved==null){spotSaved=camera.scale;camera.focus(t.x,t.y,{scale:Math.max(camera.scale,2.4),duration:750});}

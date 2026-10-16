@@ -1084,3 +1084,7 @@ function riderInfo(){const out={},ev=eveningNow(),act=S.player(m);for(const p of
 {const prior=boardSurfaceMarkup;boardSurfaceMarkup=state=>prior(screen==='game'&&m?{...state,riders:riderInfo(),today:m.round,journeys:m.players.map(p=>({color:p.color,start:p.visited?.[0],steps:p.travelHistory||[],nights:p.nights||[]}))}:state);}
 let lastEvening=false;
 {const priorRender=render;render=(...a)=>{priorRender(...a);try{const evening=eveningNow();document.body?.classList?.toggle('soir',evening);if(evening!==lastEvening){lastEvening=evening;boardRenderer?.spotlight?.(evening);}}catch{}};}
+
+// ---------- Les fenêtres attendent que le cycliste ait fini de rouler (demande de Fi : l'animation était cachée) ----------
+let holdTimer=0;
+{const priorRender=render;render=(...a)=>{priorRender(...a);try{const wait=screen==='game'?boardRenderer?.busyFor?.()||0:0;if(wait>0){document.querySelectorAll('.modal-back,.bet-layer').forEach(el=>el.classList.add('hold'));clearTimeout(holdTimer);holdTimer=setTimeout(()=>{document.querySelectorAll('.hold').forEach(el=>el.classList.remove('hold'));},wait+600);}}catch{}};}
