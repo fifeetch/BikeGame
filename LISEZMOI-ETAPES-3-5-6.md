@@ -264,3 +264,10 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - Affichage : fiche (cases hachurées, niveau, 5 ronds, « Risque de galère »), barre d'action (avertissement, journée de plus, meilleure nuit), « Où dormir ce soir ? » (fatigue enlevée par chaque nuit).
 - Réglages : `FATIGUE`, `FATIGUE_GAIN`, `FATIGUE_REST_DAY` dans `dist/immersion.js` ; `fatigueMax`, `energyCap` dans `dist/rules.js` ; `fatigueInfo` à la fin de `dist/simulator.js`. Tests : 8 tests de plus dans `tests/immersion.test.js`.
 - Cache : `aventure-velo-v79-fatigue`, `?v=fatigue`.
+
+## Mode Immersion — fiche compacte (maquette A, 16 octobre 2026)
+- Planche « Fiche compacte — mode Immersion » (https://claude.ai/artifact/QZHBiAo7n9Y189dcGGNXjG), choix A.
+- Énergie et fatigue sur une seule bande (niveau, 5 ronds, risque de galère), repas/pièces/aventure en ligne, onglets, météo et route du jour resserrés, nuits en tableau (une ligne par nuit, seulement la fatigue vraiment enlevée). Encore plus serré quand la fenêtre fait moins de 950 points de haut (Legion 5, Mac M1).
+- Barre d'action : comme avant (effets des cases choisies), sans étiquettes de fatigue ; « clique les cases entourées » retiré en Immersion.
+- Code : immGauges, immSleepRows à la fin de `dist/app.js` ; classe `imm-fiche`.
+- Cache : `aventure-velo-v81-fiche`, `?v=fiche`.
