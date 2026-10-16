@@ -254,3 +254,13 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - Réglages : `NIGHT`, `REST_DAY_FACTOR`, `DEMAND_NIGHT` dans `dist/immersion.js`. Essai : avec +1/+2/+3, un cycliste parcourt environ 2,1 cases par jour et prend environ 3 jours de repos sur 30 (avec +2/+3/+4 : 2,4 cases et presque jamais de repos).
 - Robots : `robotSleep` choisit où dormir. Tests : 19 tests dans `tests/immersion.test.js`.
 - Cache : `aventure-velo-v78-nuit`, `?v=nuit`.
+
+## Mode Immersion — la fatigue (16 octobre 2026)
+- Seulement en mode Immersion ; le mode original ne change pas. L'énergie, c'est la journée ; la fatigue, c'est la semaine (manger ne l'efface pas).
+- **6 niveaux (0 à 5)** : En forme (énergie max 10), Un peu las (9), Fatigué (8), Épuisé (7 · repas −1 · paris −15 %), À bout (6 · 1 case de moins), Fourbu (5 · repos forcé le lendemain, scène « Fourbu »).
+- **Ce qui fatigue** : +1 par journée de route, +1 de plus avec un col ou 5 cases ; nuit dehors et galères de nuit +1 (déjà dans les scènes).
+- **Ce qui repose** : bivouac 0, camping −1, hôtel −2 (avant : remise à 0), « Demander » grand accueil −2 / jardin −1 ; journée sans rouler suivie d'une vraie nuit −3, −4 en ville.
+- **La fatigue cause les galères** : événement en route 1/3 · 2/5 · 1/2 · 3/5 · 2/3, part de galères 1/5 · 1/3 · 1/2 · 2/3 · 3/4. Reposé : seulement météo et mécanique, jamais deux galères de suite. Dès la fatigue 2 : galères d'inattention (nid-de-poule, mauvaise bifurcation, affaires oubliées, chute à l'arrêt, gravillons).
+- Affichage : fiche (cases hachurées, niveau, 5 ronds, « Risque de galère »), barre d'action (avertissement, journée de plus, meilleure nuit), « Où dormir ce soir ? » (fatigue enlevée par chaque nuit).
+- Réglages : `FATIGUE`, `FATIGUE_GAIN`, `FATIGUE_REST_DAY` dans `dist/immersion.js` ; `fatigueMax`, `energyCap` dans `dist/rules.js` ; `fatigueInfo` à la fin de `dist/simulator.js`. Tests : 8 tests de plus dans `tests/immersion.test.js`.
+- Cache : `aventure-velo-v79-fatigue`, `?v=fatigue`.
