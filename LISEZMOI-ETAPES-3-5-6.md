@@ -328,3 +328,9 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - Badge du niveau sur la fiche, médaille (bronze, argent, or, cristal) sur l'écran de fin.
 - Code : LEVELS dans `dist/immersion.js` ; immLevel / immLevelId dans `dist/simulator.js` ; levelPicker dans `dist/menus.js` ; badge, météo, chances cachées à la fin de `dist/app.js`. 2 tests de plus.
 - Cache : `aventure-velo-v89-niveaux`, `?v=niveaux`.
+
+## 16 octobre — Marché, crevaisons et photo au col
+- En arrivant en ville, un marché s'ouvre : 🚲 Magasin de vélo (liste du matériel à acheter ou laisser), 🛒 Supérette (provisions), Restaurant, Hôtel.
+- Chambre à air : répare une crevaison une seule fois. Kit de réparation : 2 pièces, se garde (règles version 4). Choix entre les deux s'il y a les deux.
+- Crevaison et chute : le cycliste répare ou tombe sur la carte, la fenêtre arrive après l'animation (tous les modes).
+- Col franchi : une fenêtre montre le cycliste qui photographie son vélo devant le panneau du col (nom et altitude), le flash, puis la photo « +2 ». Le carnet marque le col d'un 📸.
