@@ -334,3 +334,8 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - Chambre à air : répare une crevaison une seule fois. Kit de réparation : 2 pièces, se garde (règles version 4). Choix entre les deux s'il y a les deux.
 - Crevaison et chute : le cycliste répare ou tombe sur la carte, la fenêtre arrive après l'animation (tous les modes).
 - Col franchi : une fenêtre montre le cycliste qui photographie son vélo devant le panneau du col (nom et altitude), le flash, puis la photo « +2 ». Le carnet marque le col d'un 📸.
+
+## 16 octobre (soir) — La nuit en images (mode Immersion)
+- « Où dormir ce soir ? » : les nuits deviennent 4 cartes illustrées (bivouac, camping, hôtel, demander), dessin selon la météo du soir.
+- Après le choix, une fenêtre montre la scène : bivouac monté (feu, Zzz), arrivée au camping, entrée à l'hôtel, ou « toc toc » chez l'habitant (chambre d'amis, jardin ou refus). Bouton « Passer », fermeture seule à la fin. Aucune règle changée.
+- Nouveau fichier : dist/night-scenes.js (dessins seulement).

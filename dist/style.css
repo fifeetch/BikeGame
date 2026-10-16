@@ -2068,3 +2068,20 @@ body.soir .playable-europe .city-names{filter:drop-shadow(0 0 4px #ffd27a)}
 .colphoto button{align-self:flex-end}
 @keyframes cp-in{from{opacity:0}to{opacity:1}}
 .colphoto button{background:#f2a541;color:#1b1406;border:0;border-radius:999px;padding:10px 18px;font-weight:700;font-family:Barlow,sans-serif;cursor:pointer}
+
+/* La nuit en images : cartes illustrées dans « Où dormir ce soir ? » */
+.night-modal .imm-nights.night-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;border:0;border-radius:0;overflow:visible;max-width:840px}
+body .modal.night-wrap .night-cards .imm-night{display:flex;flex-wrap:wrap;align-items:center;align-content:flex-start;gap:5px 6px;padding:0 10px 10px;border:2px solid #d9c79c;border-radius:14px;overflow:hidden;background:#fffaf0;color:#1b1406;text-transform:none;letter-spacing:0;font:500 13px 'Barlow',system-ui,sans-serif;transition:transform .15s,border-color .15s}
+body .modal.night-wrap .night-cards .imm-night:not(:disabled):hover{transform:translateY(-3px);border-color:#f2a541;background:#fffaf0}
+body .modal.night-wrap .night-cards .imm-night.conseil{background:#eef5e2}
+body .modal.night-wrap .night-cards .imm-night.off{opacity:.45}
+.night-cards .imm-night .ic{display:none}
+.night-cards .nc-art{flex:0 0 calc(100% + 20px);margin:0 -10px 3px;display:block;line-height:0}
+.night-cards .nc-art svg{display:block;width:100%;height:auto;aspect-ratio:640/300}
+.night-cards .imm-night .n{flex:1 1 auto;white-space:normal;overflow:visible;font:700 16px 'Barlow Condensed','Arial Narrow',sans-serif;text-transform:uppercase;letter-spacing:.05em}
+.night-cards .imm-night .n .p{display:block;font:500 13px 'Barlow',system-ui,sans-serif;text-transform:none;letter-spacing:0}
+.night-cards .imm-night .p{margin-left:0}
+.night-cards .imm-night .e{font-size:16px}
+.night-cards .imm-night .sub{flex:0 0 100%;margin-top:0;font-size:11.5px;text-transform:none}
+@media (max-width:720px){.night-modal .imm-nights.night-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.modal.night-wrap:has(.night-cards){max-width:900px}

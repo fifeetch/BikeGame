@@ -8,6 +8,7 @@ import {MAP_WIDTH,MAP_HEIGHT,FERRY_ROUTES} from './europe.js';
 import {CARD_PRESETS,cardById as findCard,effectiveCards,makeCustomCard,normalizeCustomCards} from './cards.js';
 import {renderCardEditor} from './card-editor.js';
 import {readArtPreference} from './terrain-art.js';
+import {nightSceneSvg,NIGHT_SCENE_LENGTH} from './night-scenes.js';
 import {readDisplayPrefs,writeDisplayPref} from './display-prefs.js';
 import {titleScreen,plateauScreen,playersScreen,garageScreen,voyagesScreen,onlineScreen,editorHubScreen} from './menus.js';
 import {rulesIntro,rulesHelp,HELP_TABS} from './rules-help.js';
@@ -1214,4 +1215,29 @@ function colPhoto(key,gain){try{const t=m?.board?.[key];if(!t)return;const name=
  colPhotoOpen={el,stop:()=>cancelAnimationFrame(raf),timer:setTimeout(colPhotoClose,reduce?4000:8500)};
  el.querySelector('[data-colphoto-close]').focus({preventScroll:true});}catch(err){console.error(err);}}
 function colPhotoClose(){if(!colPhotoOpen)return;const {el,stop,timer}=colPhotoOpen;colPhotoOpen=null;stop();clearTimeout(timer);el.classList.add('out');setTimeout(()=>el.remove(),250);}
-document.addEventListener('keydown',e=>{if(colPhotoOpen&&(e.key==='Escape'||e.key==='Enter')){e.preventDefault();colPhotoClose();}},true);
+document.addEventListener?.('keydown',e=>{if(colPhotoOpen&&(e.key==='Escape'||e.key==='Enter')){e.preventDefault();colPhotoClose();}},true);
+
+// ---------- La nuit en images (planche validée par Fi le 16 octobre) : cartes illustrées, puis la scène du soir dans une fenêtre ----------
+{const priorNight=nightModal;nightModal=()=>{const h=priorNight();try{const p=S.player(m),info=S.sleepOptions(m,p),rain=Boolean(info.stormy);
+ return h.replace('<div class="imm-nights">','<div class="imm-nights night-cards">').replaceAll('<span class="p">· ','<span class="p">').replace(/(<button class="imm-night[^"]*" data-action="rest-(\w+)"[^>]*>)/g,(all,tag,id)=>
+  NIGHT_SCENE_LENGTH[id]?`${tag}<span class="nc-art" aria-hidden="true"><svg viewBox="0 0 640 300">${nightSceneSvg(id,id==='demander'?7:NIGHT_SCENE_LENGTH[id]-.4,{rain,color:p.color,badge:'',sub:'',key:'nc'+id})}</svg></span>`:all);}catch(err){console.error(err);return h;}};}
+let nightOpen=null;
+function nightSceneClose(){if(!nightOpen)return;const {el,stop,timer}=nightOpen;nightOpen=null;stop();clearTimeout(timer);el.classList.add('out');setTimeout(()=>el.remove(),250);}
+function nightScene(id,{rain,color,name,badge,outcome=0,title}){try{nightSceneClose();colPhotoClose?.();const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches,len=NIGHT_SCENE_LENGTH[id]||7;
+ const el=document.createElement('div');el.className='colphoto-back night-scene-back';el.innerHTML=`<section class="colphoto" role="dialog" aria-label="La nuit de ${esc(name)}"><span class="eyebrow">🌙 Le soir · ${esc(name)}</span><h2>${esc(title)}</h2><div class="colphoto-stage"><svg viewBox="0 0 640 300" role="img" aria-label="${esc(title)}"></svg></div><p>Le résultat de la nuit arrive au réveil.</p><button class="primary" data-night-close>Passer ›</button></section>`;
+ document.body.append(el);const svg=el.querySelector('svg'),btnEl=el.querySelector('[data-night-close]'),t0=performance.now();let raf=0;
+ const frame=now=>{const k=reduce?len-.3:(now-t0)/1000;svg.innerHTML=nightSceneSvg(id,Math.min(k,len-.05),{rain,outcome,color,badge:k>=len-1.8?badge:'',key:'ns'});if(k>=len-1.8)btnEl.textContent='Bonne nuit ›';if(!reduce&&k<len)raf=requestAnimationFrame(frame);};raf=requestAnimationFrame(frame);
+ btnEl.onclick=nightSceneClose;el.addEventListener('click',e=>{if(e.target===el)nightSceneClose();});
+ nightOpen={el,stop:()=>cancelAnimationFrame(raf),timer:setTimeout(nightSceneClose,(reduce?4:len+2.2)*1000)};btnEl.focus({preventScroll:true});}catch(err){console.error(err);}}
+document.addEventListener?.('keydown',e=>{if(nightOpen&&(e.key==='Escape'||e.key==='Enter')){e.preventDefault();nightSceneClose();}},true);
+{const priorAct=act;act=a=>{if(!(typeof a==='string'&&a.startsWith('rest-')&&a!=='rest-open'&&screen==='game'&&m&&S.immersionOn(m)))return priorAct(a);
+ const p=S.player(m),id=a.slice(5),before=m.history.length,money0=p.money;let info=null;try{info=S.sleepOptions(m,p);}catch{}
+ const out=priorAct(a);
+ try{const rec=m.history.slice(before).find(h=>h.kind==='night'&&h.player===p.id),did=Boolean(rec);if(!did||!NIGHT_SCENE_LENGTH[id])return out;
+  const o=info?.options.find(x=>x.id===id),coin=n=>n?` · −${n} 🪙`:'',night=p.imm?.night||{};
+  let title={bivouac:'Bivouac',camping:'Camping',hotel:'Hôtel',demander:'Demander l’hospitalité'}[id],badge=`${title}${coin(o?.price)}`,outcome=0;
+  if(id==='bivouac'&&info?.stormy)badge='Bivouac sous la pluie · nuit ?';
+  if(id==='demander'){const txt=String(rec.text||'').toLowerCase(),kind=night.demand?.kind||(/jardin/.test(txt)?'jardin':/refus/.test(txt)?'refus':'grand');outcome=kind==='jardin'?1:kind==='refus'?2:0;
+   title={grand:'Grand accueil',jardin:'Oui, le jardin',refus:'Refus poli'}[kind];badge=kind==='grand'?'Chambre d’amis':kind==='jardin'?'Coin du jardin':p.money<money0?`Refus → camping${coin(money0-p.money)}`:'Refus → nuit dehors';}
+  nightScene(id,{rain:Boolean(info?.stormy),color:p.color,name:p.name,badge,outcome,title});}catch(err){console.error(err);}
+ return out;};}
