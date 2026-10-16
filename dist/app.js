@@ -995,7 +995,7 @@ function dockPlan(c){const p=S.player(m),tags=routeTags(),path=route.map((k,i)=>
 
 // ---------- Mode Immersion : « Où dormir ce soir ? » — dormir termine toujours la journée ----------
 function immersionSleepTiles(p,blocked){const info=S.sleepOptions(m,p);
- return info.options.map(o=>{if(o.id==='demander')return ficheTile('Demander l’hospitalité',`gratuit · un pari · refus ${oddsLabel(o.odds.refus)} · sinon camping ${o.lateCamping} pièces`,'rest-demander',blocked,'demander');
+ return info.options.map(o=>{if(o.id==='demander')return ficheTile('Demander l’hospitalité',`gratuit · un pari · refus ${oddsLabel(o.odds.refus)}${o.odds.streak?` (déjà demandé ${o.odds.streak>1?o.odds.streak+' soirs de suite':'hier'})`:''} · sinon camping ${o.lateCamping} pièces`,'rest-demander',blocked,'demander');
   const fat=o.fatigue==='reset'?' · fatigue effacée':o.fatigue<0?' · fatigue −1':'';
   return ficheTile(esc(o.name),o.why||`${o.price?o.price+' pièce'+(o.price>1?'s':''):'gratuit'} · +${o.energy} ⚡${fat} · nuit calme ${oddsLabel(o.calm)}`,'rest-'+o.id,blocked||Boolean(o.why),o.id==='hotel'&&(p.fatigue||0)>=m.rules.fatigue.days-1&&!o.why?'conseil':'');}).join('')
   +(info.restDay?`<p class="night-note">Sans rouler aujourd’hui : la nuit rend ${info.factor} fois plus d’énergie.</p>`:'')+(info.stormy?'<p class="night-note storm">Pluie ou orage cette nuit : le bivouac devient risqué.</p>':'');}

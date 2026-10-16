@@ -258,9 +258,18 @@ export const COMPANIONS=[
 
 // ---------- « Demander » l'hospitalité : un pari ----------
 export const DEMAND={base:{grand:25,jardin:40,refus:35},lateCampingPrice:2};
-export function demandOdds({city,exhausted,region}){let refus=DEMAND.base.refus;
+// streak = nombre de soirs d'affilée où l'on a déjà demandé : chaque soir de plus, +10 % de refus (au plus +30 %).
+export function demandOdds({city,exhausted,region,streak=0}){let refus=DEMAND.base.refus,grand=DEMAND.base.grand;
  refus+=city?10:-5;if(exhausted)refus-=10;refus+={balkans:-10,est:-5,alpes:5}[region]||0;
- refus=Math.max(10,Math.min(60,refus));const grand=DEMAND.base.grand,jardin=Math.max(0,100-grand-refus);return {grand,jardin,refus};}
+ const s=Math.min(3,streak);refus+=10*s;grand-=5*s;
+ refus=Math.max(10,Math.min(70,refus));grand=Math.max(10,grand);const jardin=Math.max(0,100-grand-refus);return {grand,jardin,refus,streak:s};}
+// Plusieurs textes pour chaque réponse ({qui}, {lieu}, {offrande} changent avec la zone).
+export const DEMAND_TEXTS={
+ grand:['{qui} t’installe dans la chambre d’amis, puis t’invite à table : {offrande}, et des histoires jusque tard.','On te reçoit comme un cousin : douche chaude, dîner en famille et {offrande} pour la route.','{qui} insiste : « Pas de tente ce soir, il y a un lit. » Repas partagé, rires et photos de famille.','Une grande tablée t’attend {lieu}. Tu repars le lendemain avec {offrande} dans les sacoches.'],
+ jardin:['« Mettez la tente au fond du jardin, il y a un robinet. » Nuit gratuite et tranquille.','{qui} te montre un coin d’herbe derrière la grange. Personne ne viendra te déranger.','On te laisse planter la tente sous les arbres fruitiers. Le chien de la maison monte la garde.','« Le pré est à vous jusqu’à demain matin. » Un simple merci, et la nuit est à toi.'],
+ refusCamping:['« Désolé, pas ce soir. » Il fait nuit : camping de dernière minute, {prix} pièces.','Trois portes, trois refus polis. Tu finis au camping du village, {prix} pièces.','{qui} hésite, puis secoue la tête. Il faut payer un camping de dernière minute : {prix} pièces.'],
+ refusDehors:['« Désolé, pas ce soir. » Plus une pièce en poche : nuit dehors, sans vrai repos.','Personne ne répond. Tu dors roulé dans ta veste, sous un abri de bus.','Refus après refus. La nuit tombe, et tu t’allonges près du vélo, sans tente montée.']
+};
 export function oddsLabel(pct){const list=[[10,'1 sur 10'],[15,'1 sur 7'],[20,'1 sur 5'],[25,'1 sur 4'],[33,'1 sur 3'],[40,'2 sur 5'],[50,'1 sur 2'],[60,'3 sur 5'],[67,'2 sur 3'],[75,'3 sur 4']];
  return list.reduce((best,x)=>Math.abs(x[0]-pct)<Math.abs(best[0]-pct)?x:best)[1];}
 

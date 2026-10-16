@@ -8,7 +8,7 @@ import {EVENT_CARDS,normalizeEventEdits} from './event-cards.js';
 import {applyRoads,isRoadStep,hasRoad} from './routes.js';
 import {regionOf,weatherOn,forecast,REGIONS,WEATHER,STORM_MAX} from './weather.js';
 import {ENCOUNTERS} from './encounters.js';
-import {SCENES,SITUATIONS,SITUATION_SCENES,COMPANIONS,fillVariants,demandOdds,RARITY_WEIGHT,SCENE_COOLDOWN,ROAD_CHANCE,DEMAND,NIGHT,REST_DAY_FACTOR,DEMAND_NIGHT} from './immersion.js';
+import {SCENES,SITUATIONS,SITUATION_SCENES,COMPANIONS,fillVariants,demandOdds,RARITY_WEIGHT,SCENE_COOLDOWN,ROAD_CHANCE,DEMAND,NIGHT,REST_DAY_FACTOR,DEMAND_NIGHT,DEMAND_TEXTS} from './immersion.js';
 
 export const player=m=>m.players[m.activeIndex];
 // ---------- Règle « hors route » (mode Plateau) ----------
@@ -429,7 +429,7 @@ export function spawnSituation(m,p=player(m),forceId=''){const here=m.board[p.po
   if(keys.length<3)continue;const s={uid:++m.imm.seq,id:tpl.id,keys,from:m.round,until:m.round+tpl.days-1};m.imm.situations.push(s);return s;}
  return null;}
 // « Où dormir ce soir ? » (mode Immersion) : dormir termine toujours la journée.
-export function demandInfo(m,p=player(m)){const t=m.board[p.pos];return demandOdds({city:t.type==='ville',exhausted:isExhausted(m,p),region:regionOf(t)});}
+export function demandInfo(m,p=player(m)){const t=m.board[p.pos],im=pim(p);return demandOdds({city:t.type==='ville',exhausted:isExhausted(m,p),region:regionOf(t),streak:im.demandStreak||0});}
 export function sleepOptions(m,p=player(m)){const here=m.board[p.pos],city=here?.type==='ville',restDay=!m.moved,factor=restDay?REST_DAY_FACTOR:1,stormy=['orage','pluie'].includes(immContext(m,p,p.pos).weather),out=[];
  for(const id of ['bivouac','camping','hotel']){const r=restRule(m,p,id),nt=NIGHT[id],free=id==='bivouac'&&p.turnModifiers?.freeBivouac,price=free?0:r.price;
   const why=r.blocked?'interdit ici : '+r.blocked:r.cityOnly&&!city?'en ville seulement':id==='bivouac'&&!free&&!p.items.includes('tente')?'tente nécessaire':p.money<price?'pas assez de pièces':'';
@@ -438,12 +438,14 @@ export function sleepOptions(m,p=player(m)){const here=m.board[p.pos],city=here?
  return {restDay,factor,stormy,options:out};}
 function sleepNight(m,id){const p=player(m);if(!immersionOn(m)||m.pendingAttack||m.done||!['move','place'].includes(m.phase))return false;
  const im=pim(p),restDay=!m.moved;
- if(id==='demander'){const odds=demandInfo(m,p),roll=irand(m)*100,kind=roll<odds.grand?'grand':roll<odds.grand+odds.jardin?'jardin':'refus',late=DEMAND.lateCampingPrice;let title,text,result=kind;
-  if(kind==='grand'){title='Grand accueil';text='On t’installe, puis on t’invite à table. Une vraie nuit, un repas offert.';}
-  else if(kind==='jardin'){title='Oui, le jardin';text='« Mettez la tente au fond du jardin, il y a un robinet. » Nuit gratuite et tranquille.';}
-  else if(p.money>=late){p.money-=late;m.stats.moneySpent+=late;result='refusCamping';title='Refus poli';text=`« Désolé, pas ce soir. » Il fait nuit : camping de dernière minute, ${late} pièces.`;}
-  else{result='refusDehors';title='Refus poli';text='« Désolé, pas ce soir. » Plus une pièce en poche : nuit dehors, sans vrai repos.';}
+ if(id==='demander'){const odds=demandInfo(m,p),late=DEMAND.lateCampingPrice,draw=()=>{const roll=irand(m)*100;return roll<odds.grand?'grand':roll<odds.grand+odds.jardin?'jardin':'refus';};
+  // Jamais trois fois de suite la même réponse : on retire une fois si les deux derniers soirs ont donné la même.
+  let kind=draw();const last=im.demandLast||[];if(last.length>=2&&last[0]===kind&&last[1]===kind)kind=['grand','jardin','refus'].filter(k=>k!==kind)[Math.floor(irand(m)*2)];
+  im.demandLast=[kind,...last].slice(0,2);im.demandStreak=(im.demandStreak||0)+1;
+  let result=kind;if(kind==='refus')result=p.money>=late?'refusCamping':'refusDehors';if(result==='refusCamping'){p.money-=late;m.stats.moneySpent+=late;}
+  const title={grand:'Grand accueil',jardin:'Oui, le jardin',refus:'Refus poli'}[kind],list=DEMAND_TEXTS[result],region=regionOf(m.board[p.pos]);
+  const text=fillVariants(list[Math.floor(irand(m)*list.length)],region,()=>irand(m)).replace('{prix}',String(late));
   im.night={id:'demander',turn:m.turn,rest:restDay,demand:{kind,result,title,text}};record(m,'night','Demander l’hospitalité : '+title.toLowerCase()+'.');}
- else{const opt=sleepOptions(m,p).options.find(o=>o.id===id);if(!opt||opt.why)return false;
+ else{const opt=sleepOptions(m,p).options.find(o=>o.id===id);if(!opt||opt.why)return false;im.demandStreak=0;
   if(opt.price){p.money-=opt.price;m.stats.moneySpent+=opt.price;}im.night={id,turn:m.turn,rest:restDay};record(m,'night','Nuit : '+opt.name.toLowerCase()+(opt.price?` (−${opt.price} pièce${opt.price>1?'s':''})`:'')+'.');}
  if(restDay){p.stats.rest++;m.stats.rest++;m.turnKind='rest';}m.actionDays=1;endTurn(m);return true;}

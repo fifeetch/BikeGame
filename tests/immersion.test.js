@@ -143,3 +143,11 @@ test('Le soir : peu de cadeaux, souvent une nuit tranquille', ()=>{
   const before=p.points;S.rest(m,'camping');total++;if(m.encounter.id==='im-nuit-calme')calm++;S.resolveEncounter(m,pick(m));points+=p.points-before;}
  assert.ok(calm/total>=.4,'nuits tranquilles : '+calm+'/'+total);assert.ok(points/total<=.4,'points moyens par nuit : '+points/total);
 });
+
+test('« Demander » : jamais trois fois la même réponse, et plus risqué chaque soir d’affilée', ()=>{
+ const m=solo(44),p=S.player(m),seen=[];const o0=S.demandInfo(m,p);
+ for(let d=0;d<10;d++){S.rest(m,'demander');seen.push(m.encounter.id);while(m.phase==='encounter')S.resolveEncounter(m,pick(m));p.money=10;}
+ for(let i=2;i<seen.length;i++)assert.ok(!(seen[i]===seen[i-1]&&seen[i]===seen[i-2]),'trois fois de suite : '+seen.join(' '));
+ assert.ok(S.demandInfo(m,p).refus>o0.refus,'refus plus probable après plusieurs soirs');
+ S.rest(m,'camping');while(m.phase==='encounter')S.resolveEncounter(m,pick(m));assert.equal(S.demandInfo(m,p).streak,0,'un soir ailleurs remet à zéro');
+});
