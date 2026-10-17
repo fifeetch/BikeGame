@@ -343,3 +343,30 @@ export const LEVELS={
  expedition:{name:'Expédition',kind:'Expert',icon:'🧭',medal:'cristal',start:6,money:-3,days:30,galere:1.5,bet:-.15,refus:20,late:3,sit:.5,sitMax:3,hard:1,rest:0,restDay:[-2,-3],foodQty:1,mealHalf:true,rainBivouac:1,hideOdds:true,noForecast:true}
 };
 export const LEVEL_ORDER=['balade','voyage','aventure','expedition'];
+
+// ---------- Mode Bêta (17 octobre) : scènes de l'eau (beta:true → seulement dans le mode Bêta) ----------
+// noItem : la scène ne vient pas si on a cet objet ; dry : seulement quand les gourdes sont vides ; effect.water : 'fill' (pleines) ou un nombre.
+SCENES.push(
+ {id:'be-fontaine-seche',beta:true,when:'route',kind:'galere',cause:'route',rarity:'courante',terrain:['plaine','cote'],notCity:true,title:'La fontaine à sec',scene:'plaine',
+  quote:'Sur la place du village, le robinet de la fontaine tousse… et rien ne vient.',choices:[
+  {label:'Frapper à une porte',text:'Quelqu’un aura bien de l’eau.',chance:{odds:.7,ok:{text:'Une dame remplit tes gourdes et t’offre un verre à l’ombre.',effect:{water:'fill',points:1}},ko:{text:'Personne. Tu repars la gorge sèche.',effect:{energy:-1}}}},
+  {label:'Serrer les dents jusqu’à la prochaine ville',text:'Économiser chaque gorgée.',effect:{energy:-1}}]},
+ {id:'be-berger',beta:true,when:'route',kind:'belle',rarity:'courante',terrain:['moyenne_montagne','montagne'],title:'La source du berger',scene:'montagne',
+  quote:'Un berger te fait signe et montre une source qui sort du rocher : « Celle-là, on la boit depuis toujours. »',choices:[
+  {label:'Remplir tes gourdes',text:'Une eau glacée et sûre.',effect:{water:'fill',points:1}},
+  {label:'Boire et repartir',text:'Une grande gorgée fraîche.',effect:{energy:1}}]},
+ {id:'be-source-glacee',beta:true,when:'route',kind:'belle',rarity:'rare',terrain:['montagne','col'],weather:['beau','vent'],title:'La source glacée',scene:'montagne',
+  quote:'Au bord de la route, un filet d’eau glacée coule dans un vieux tronc creusé.',choices:[
+  {label:'Tête sous l’eau et gourdes pleines',text:'Le froid te réveille d’un coup.',effect:{energy:2,water:'fill'}}]},
+ {id:'be-ruisseau-trouble',beta:true,when:'route',kind:'galere',cause:'route',rarity:'courante',terrain:['plaine','cote','moyenne_montagne'],noItem:'filtre',dry:true,title:'Le ruisseau trouble',scene:'plaine',
+  quote:'Tes gourdes sont vides. La seule eau du coin : un ruisseau un peu trouble, après un champ de vaches.',choices:[
+  {label:'Boire quand même',text:'Tu remplis tout et tu croises les doigts.',chance:{odds:.6,ok:{text:'Ça passe. Ton ventre tient bon.',effect:{water:'fill'}},ko:{text:'Le soir, ton ventre te le fait payer.',effect:{water:'fill',energy:-2,fatigue:1}}}},
+  {label:'Attendre une vraie fontaine',text:'Prudent, mais la soif fatigue.',effect:{energy:-1}}]},
+ {id:'be-ferme-eau',beta:true,when:'route',kind:'belle',rarity:'courante',terrain:['plaine','moyenne_montagne'],notCity:true,title:'Le tuyau d’arrosage',scene:'plaine',
+  quote:'Un agriculteur arrose son potager. Il voit ton vélo chargé et te tend le tuyau en riant.',choices:[
+  {label:'Remplir les gourdes',text:'Et un brin de causette.',effect:{water:'fill',points:1}}]},
+ {id:'be-boulangerie',beta:true,sunday:true,when:'route',kind:'belle',rarity:'rare',terrain:['ville'],title:'La boulangerie du dimanche',scene:'ville',
+  quote:'Tout est fermé… sauf une petite boulangerie qui sent le pain chaud.',choices:[
+  {label:'Acheter du pain et des viennoiseries',text:'Le petit luxe du dimanche.',need:{money:1},effect:{money:-1,food:2}},
+  {label:'Juste regarder la vitrine',text:'Ça sent bon, c’est déjà ça.',effect:{}}]}
+);

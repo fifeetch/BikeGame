@@ -36,7 +36,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 let artPref=readArtPreference(),displayPrefs=readDisplayPrefs(),sheetDrawer=false;
 const btn=(text,action,cls='',disabled=false)=>action==='mapedit'?'':`<button class="${cls}" data-action="${action}" ${disabled?'disabled':''}>${text}</button>`;
 const equipmentIcons={tente:'⛺',rechaud:'🍳',chambre:'🛞',kit:'🧰',gps:'🧭',duvet:'🛏️',secours:'🩹',sacoches:'🎒'};
-const equipmentDescriptions={tente:'Permet le bivouac',rechaud:'Repas chaud : +3 énergie au lieu de +2',chambre:'Répare une crevaison, une seule fois',kit:'Répare crevaisons et casses, se garde',gps:'Quitter la route sans pénalité',duvet:'Améliore le repos',secours:'Soigne les blessures',sacoches:'+2 places et +2 repas au maximum'};
+const equipmentDescriptions={filtre:'Remplis tes gourdes aux rivières et torrents sans tomber malade',tente:'Permet le bivouac',rechaud:'Repas chaud : +3 énergie au lieu de +2',chambre:'Répare une crevaison, une seule fois',kit:'Répare crevaisons et casses, se garde',gps:'Quitter la route sans pénalité',duvet:'Améliore le repos',secours:'Soigne les blessures',sacoches:'+2 places et +2 repas au maximum'};
 let m=null,screen='home',modal='',mode='plateau',roster=[{name:'Joueur 1',bike:'gravel'}],choosing=0,drawn=[],setupRules=clone(CLASSIC),draft=null,message='',zoom=1,selected=0,mapSelection='',route=[],cardIndex=-1,ferryTarget='',sheetTab='velo',auto=localStorage.getItem('velo-auto')==='true',profiles={};
 const eventCardById=id=>resolveEventCard(id,m);
 const cardById=id=>m?.cardVersion===3?eventCardById(id):findCard(id,m);
@@ -1175,7 +1175,7 @@ function marketWindow(){const p=S.player(m),r=m.rules,here=m.board[p.pos],region
   ${[[20,'#5f8a6a','🚲'],[135,'#f2a541','🛒'],[400,roof,'🍽'],[515,'#4a7fa8','🏨']].map(([x,c,i])=>`<g transform="translate(${x} 0)"><rect y="62" width="90" height="50" fill="#e8dcbc" stroke="#8a5a14"/><path class="mk-awning" d="M-6 62 Q45 52 96 62 L90 48 L0 48Z" fill="${c}"/><text x="45" y="96" text-anchor="middle" font-size="22">${i}</text></g>`).join('')}
   <g class="mk-rider" transform="translate(300 128) scale(2.4)"><ellipse cx="0" cy="10" rx="14" ry="3" fill="rgba(0,0,0,.2)"/><circle cx="-8" cy="5.6" r="5.4" fill="none" stroke="#1b1406" stroke-width="1.5"/><circle cx="8" cy="5.6" r="5.4" fill="none" stroke="#1b1406" stroke-width="1.5"/><path d="M-8 5.6 L-3 -1 L6 -1 L8 5.6 M-3 -1 L0 5.6 L6 -1 M0 5.6 L-8 5.6 M6 -1 L7 -5 L9.4 -5.3" fill="none" stroke="${p.color}" stroke-width="1.7"/><rect x="-13.4" y="-1.6" width="6.2" height="6.2" rx="1.3" fill="#b8432e"/><path d="M-1 -3.5 L-1 11" stroke="#26343c" stroke-width="2" stroke-linecap="round"/><path d="M-3 -3.5 L1 -10" stroke="${p.color}" stroke-width="3.4" stroke-linecap="round"/><circle cx="3" cy="-12.6" r="2.6" fill="#f2d1a8"/><path d="M.3 -12.8 A2.8 2.8 0 0 1 5.7 -13 Z" fill="#f6e7c1"/></g></svg>`;
  if(marketView==='velo'||marketView==='superette'){const space=S.inventorySpace(m),capa=S.bagCapacity(m,p);let inner='';
-  if(marketView==='velo'){inner=`<p class="mk-wallet">${p.money} pièce${p.money>1?'s':''} · sacoches ${space} / ${capa} places</p><ul class="mk-list">${Object.entries(r.equipment).map(([id,e])=>{const own=p.items.includes(id),why=own?'':p.money<e.price?'pas assez de pièces':space+e.space>capa?'plus de place':'';
+  if(marketView==='velo'){inner=`<p class="mk-wallet">${p.money} pièce${p.money>1?'s':''} · sacoches ${space} / ${capa} places</p><ul class="mk-list">${Object.entries(r.equipment).filter(([,e])=>!e.betaOnly||S.betaOn(m)).map(([id,e])=>{const own=p.items.includes(id),why=own?'':p.money<e.price?'pas assez de pièces':space+e.space>capa?'plus de place':'';
     return `<li class="${own?'own':''}"><span class="mk-ico" aria-hidden="true">${ITEM_EMOJI[id]||'🎒'}</span><span class="mk-what"><b>${esc(e.name)}</b><small>${esc(equipmentDescriptions[id]||'')} · ${e.space} place${e.space>1?'s':''}</small></span><em>${e.price} pièce${e.price>1?'s':''}</em>${own?btn('Déposer','market-drop-'+id,'light'):`<button type="button" data-action="market-buy-${id}" ${why?'disabled':''} title="${esc(why)}">${why?esc(why):'Acheter'}</button>`}</li>`;}).join('')}</ul>`;}
   else{const full=typeof S.foodCapacity==='function'?p.food>=S.foodCapacity(m,p):false;const why=p.money<r.food.price?'pas assez de pièces':full?'sacoches à provisions pleines':'';
    inner=`<p class="mk-wallet">${p.money} pièce${p.money>1?'s':''} · ${p.food} repas dans les sacoches</p><ul class="mk-list"><li><span class="mk-ico" aria-hidden="true">🥖</span><span class="mk-what"><b>Provisions</b><small>${r.food.quantity} repas · à manger plus tard, partout (froid +2, chaud +3 avec réchaud)</small></span><em>${r.food.price} pièce${r.food.price>1?'s':''}</em><button type="button" data-action="market-food" ${why?'disabled':''}>${why?esc(why):'Acheter'}</button></li></ul>`;}
@@ -1211,7 +1211,7 @@ let poseHeld='',poseUntil=0;
  document.querySelectorAll('.modal-back').forEach(el=>el.classList.add('hold'));clearTimeout(holdTimer);holdTimer=setTimeout(()=>document.querySelectorAll('.hold').forEach(el=>el.classList.remove('hold')),left);
 }catch(err){console.error(err);}};}
 
-const ITEM_EMOJI={tente:'⛺',rechaud:'🔥',chambre:'🛞',kit:'🧰',gps:'🧭',duvet:'🛏',secours:'🩹',sacoches:'🎒'};
+const ITEM_EMOJI={filtre:'💧',tente:'⛺',rechaud:'🔥',chambre:'🛞',kit:'🧰',gps:'🧭',duvet:'🛏',secours:'🩹',sacoches:'🎒'};
 
 // ---------- La photo au sommet du col (validée par Fi le 16 octobre) : une fenêtre montre la petite scène ----------
 const COL_ALT={'Col du Tourmalet':'2 115 m','Col du Galibier':'2 642 m','Mont Ventoux':'1 910 m','Col du Stelvio':'2 757 m','Grossglockner':'2 504 m','Transfăgărășan':'2 042 m','Trollstigen':'858 m','Alto de l’Angliru':'1 573 m'};
@@ -1392,3 +1392,17 @@ var setupPage='players';
  if(a==='mode-beta'){setupRules.immersion={...(setupRules.immersion||{}),beta:true};return priorAct('mode-immersion');}
  if(a==='mode-immersion'||a==='mode-original')setupRules.immersion={...(setupRules.immersion||{}),beta:false};
  return priorAct(a);};}
+// ---------- Mode Bêta (17 octobre) : gourdes et jour de la semaine sur la fiche ; boutiques fermées en ville ----------
+{const priorGauges=immGauges;immGauges=function(p,fi,cells,cap){const h=priorGauges(p,fi,cells,cap);if(!S.betaOn(m))return h;
+ const w=S.water(m,p),wc=S.waterCap(m,p),day=S.weekday(m),Day=day[0].toUpperCase()+day.slice(1);
+ const bottles=Array.from({length:wc},(_,i)=>`<i class="${i<w?'full':''}" aria-hidden="true"></i>`).join('');
+ const dry=w<1?' · <em>plus d’eau : −1 énergie au prochain départ, pas de repas chaud</em>':'',filt=p.items.includes('filtre')?' · filtre : rivières et torrents sans risque':'';
+ const row=`<div class="beta-water" title="1 gourde bue au premier déplacement du jour. Eau sûre : ville, hameau, camping, hôtel, habitant. Rivière, lac, torrent : sûr avec le filtre, sinon 1 fois sur 4 eau contaminée."><span class="imm-lab">EAU</span><span class="bw-bottles">${bottles}</span><b>${w}<small>/${wc}</small></b><span class="bw-note">${dry||filt}</span><span class="bw-day">📅 ${Day}</span></div>`;
+ const i=h.lastIndexOf('</section>');return h.slice(0,i)+row+h.slice(i);};}
+{const priorMarket2=marketWindow;marketWindow=function(){const h=priorMarket2();if(!m||!S.betaOn(m))return h;const p=S.player(m),here=m.board[p.pos];
+ const why=id=>S.shopClosed(m,p.pos,id),txt=r=>r==='dimanche'?'fermé le dimanche':r==='lundi'?'fermé le lundi':`fermé : ${r}`;
+ if(marketView==='velo'||marketView==='superette'){const r=why(marketView);if(!r)return h;const title=marketView==='velo'?'🚲 Magasin de vélo':'🛒 Supérette';
+  return `<div class="market-win tw-in"><div class="tw-grid"><div class="tw-pic tw-pic-${marketView} tw-closed">${townInsideSvg(marketView)}<span class="tw-closed-sign">FERMÉ</span></div><div class="mk-body"><span class="eyebrow">${esc((here.name||'').toUpperCase())} · ${esc(title.toUpperCase())}</span><h2>${title}</h2><p class="mk-wallet">Rideau baissé : ${esc(txt(r))}. Reviens demain, ou va au restaurant.</p><div class="mk-foot">${btn('← Ressortir sur la place','market-back','light')}${btn('Continuer ma route','market-close')}</div></div></div></div>`;}
+ const shut=['superette','velo'].filter(id=>why(id));if(!shut.length)return h;
+ const names=shut.map(id=>id==='velo'?'le magasin de vélo':'la supérette').join(' et '),r=why(shut[0]);
+ return h.replace('<small>Clique sur une boutique : ton cycliste y entre.</small>',`<small>Clique sur une boutique : ton cycliste y entre.</small><small class="tw-shut">🔒 ${S.weekday(m)[0].toUpperCase()+S.weekday(m).slice(1)} : ${names} ${shut.length>1?'sont fermés':'est fermé'} (${esc(r==='dimanche'||r==='lundi'?'jour de fermeture':r)}).</small>`);};}

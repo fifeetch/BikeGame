@@ -21,7 +21,7 @@ export const CLASSIC={rulesVersion:3,
  cardBalance:{foodEnergy:2,bivouacEnergy:1},
  loan:{amount:5,penalty:3},// prêt de la banque (règle de Fi, 17 octobre)
  eventCards:{startingHand:3,handLimit:3,bonusLimit:2,drawPerTurn:2,shuffle:true,categories:{positive:true,negative:true,climatic:true,permanent:true}},
- equipment:{tente:{name:'Tente',price:2,space:2,energyBonus:0},rechaud:{name:'Réchaud',price:1,space:1,energyBonus:0},chambre:{name:'Chambre à air',price:1,space:1,energyBonus:0},kit:{name:'Kit de réparation',price:2,space:1,energyBonus:0},gps:{name:'GPS',price:3,space:1,energyBonus:0},duvet:{name:'Matelas et duvet',price:3,space:2,energyBonus:1},secours:{name:'Trousse de secours',price:2,space:1,energyBonus:0},sacoches:{name:'Sacoches',price:2,space:1,energyBonus:0,foodBonus:2,capacityBonus:2}},
+ equipment:{tente:{name:'Tente',price:2,space:2,energyBonus:0},rechaud:{name:'Réchaud',price:1,space:1,energyBonus:0},chambre:{name:'Chambre à air',price:1,space:1,energyBonus:0},kit:{name:'Kit de réparation',price:2,space:1,energyBonus:0},gps:{name:'GPS',price:3,space:1,energyBonus:0},duvet:{name:'Matelas et duvet',price:3,space:2,energyBonus:1},secours:{name:'Trousse de secours',price:2,space:1,energyBonus:0},sacoches:{name:'Sacoches',price:2,space:1,energyBonus:0,foodBonus:2,capacityBonus:2},filtre:{name:'Filtre à eau',price:2,space:1,energyBonus:0,betaOnly:true}},
  probabilities:{negative:50,positive:30,challenge:20},eventAfterWork:false,eventAfterRest:false,
  points:{plaine:0,moyenne_montagne:0,montagne:0,cote:0,ville:0,camping:2,auberge:2,col:2,decouverte:4,objective:10},
  victory:{mode:'multi',points:35,voyages:3,days:40,turns:20,allObjectives:false},

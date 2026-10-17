@@ -1,6 +1,7 @@
 import * as E from './engine.js';
 import {europeBoard,MAP_VERSION,axialDistance} from './europe.js';
 import {voyages,progress,voyagePoints,findVoyage} from './voyages.js';
+import {DECOR} from './assets/europe/decor-data.js';
 import {CLASSIC,COLORS,clone,validateRules,energyCap,isExhausted,fatigueMax,IMM_FATIGUE_MAX} from './rules.js';
 import {cardById,effectiveCards,normalizeCustomCards} from './cards.js';
 import * as C from './event-card-engine.js';
@@ -139,7 +140,7 @@ export function updateRules(m,input){const r=validateRules(input);if(C.isEventGa
 export function cost(m,t){if(C.isEventGame(m))return eventStepCost(m,t);const p=player(m),discount=['moyenne_montagne','montagne','col'].includes(t.type)?m.rules.bikes[p.bike].mountainDiscount:0;return Math.max(0,(m.rules.terrain[t.type]??0)-discount);}
 export function ferryOptions(m,from=player(m).pos){return m.mode==='plateau'&&!m.pendingAttack&&!m.done&&m.phase==='move'?m.edges.filter(e=>e.ferry&&(e.a===from||e.b===from)).map(e=>m.board[e.a===from?e.b:e.a]):[];}
 export function moves(m){if(m.pendingAttack||m.done||m.phase!=='move'||m.moved>=distance(m)||C.isEventGame(m)&&player(m).turnModifiers?.skipMove)return [];const out=E.moves(view(m));if(m.mode!=='plateau')return out;const p=player(m),off=offroadToday(m,p);return out.filter(t=>!m.edges.some(e=>e.ferry&&((e.a===p.pos&&e.b===t.key)||(e.b===p.pos&&e.a===t.key)))&&offroadAllows(m,p,p.pos,t,m.moved,off)&&!snowBlocked(m,p,t)&&!immBlocked(m,t));}
-export function routeCheck(m,route){if(C.isEventGame(m))return eventRouteCheck(m,route);if(!Array.isArray(route)||!route.length||m.done||m.phase!=='move'||route.length>distance(m)-m.moved)return {ok:false,reason:'Limite de 5 cases ou journée indisponible.'};let pos=player(m).pos,energy=player(m).energy;const p=player(m),normalDistance=Math.max(0,Math.min(5,m.rules.distance+m.rules.bikes[p.bike].extraDistance)-(p.turnModifiers?.distancePenalty||0)-m.moved);let off=offroadToday(m,p);for(let i=0;i<route.length;i++){const key=route[i],t=m.board[key];if(!t||key===pos)return {ok:false,reason:'Les cases doivent se suivre.'};const near=m.mode==='plateau'?m.board[pos].links.includes(key)&&!m.edges.some(e=>e.ferry&&((e.a===pos&&e.b===key)||(e.b===pos&&e.a===key))):E.moves({...view(m),pos}).some(n=>E.key(n.x,n.y)===key);if(!near)return {ok:false,reason:'Choisis des cases voisines ; les bateaux se prennent séparément.'};if(!offroadAllows(m,p,pos,t,m.moved+i,off))return {ok:false,reason:offroadReason(m,p)};off=off||!roadStep(m,pos,t);energy-=cost(m,t)+(i>=normalDistance?(p.turnModifiers?.extraMoveEnergy||0):0)+weatherExtra(m,p,pos,t,m.moved+i);if(energy<0)return {ok:false,reason:'Énergie insuffisante pour ce parcours.'};pos=key;}return {ok:true,energyUsed:p.energy-energy};}
+export function routeCheck(m,route){if(C.isEventGame(m))return eventRouteCheck(m,route);if(!Array.isArray(route)||!route.length||m.done||m.phase!=='move'||route.length>distance(m)-m.moved)return {ok:false,reason:'Limite de 5 cases ou journée indisponible.'};let pos=player(m).pos,energy=player(m).energy;const p=player(m),normalDistance=Math.max(0,Math.min(5,m.rules.distance+m.rules.bikes[p.bike].extraDistance)-(p.turnModifiers?.distancePenalty||0)-m.moved);let off=offroadToday(m,p);for(let i=0;i<route.length;i++){const key=route[i],t=m.board[key];if(!t||key===pos)return {ok:false,reason:'Les cases doivent se suivre.'};const near=m.mode==='plateau'?m.board[pos].links.includes(key)&&!m.edges.some(e=>e.ferry&&((e.a===pos&&e.b===key)||(e.b===pos&&e.a===key))):E.moves({...view(m),pos}).some(n=>E.key(n.x,n.y)===key);if(!near)return {ok:false,reason:'Choisis des cases voisines ; les bateaux se prennent séparément.'};if(!offroadAllows(m,p,pos,t,m.moved+i,off))return {ok:false,reason:offroadReason(m,p)};off=off||!roadStep(m,pos,t);energy-=cost(m,t)+(i>=normalDistance?(p.turnModifiers?.extraMoveEnergy||0):0)+weatherExtra(m,p,pos,t,m.moved+i)+betaThirst(m,p,m.moved+i);if(energy<0)return {ok:false,reason:'Énergie insuffisante pour ce parcours.'};pos=key;}return {ok:true,energyUsed:p.energy-energy};}
 function offroadReason(m,p){const s=offroadStatus(m,p);return `Hors route sans ${s.item} : ${s.max} case${s.max>1?'s':''} maximum aujourd’hui.`;}
 // « En suivant une route » : en mode Plateau, le côté traversé doit porter une route (routes-data.js).
 function roadLink(m,from,t){return m.mode==='plateau'?Boolean(m.board[from]?.links?.includes(t.key)&&isRoadStep(m.board[from],t)):!!(m.board[from]?.roads?.length&&t.roads?.length);}
@@ -202,10 +203,10 @@ export function move(m,k){const p=player(m),t=m.board[k];if(C.isEventGame(m)&&m.
  if(!offroadAllows(m,p,p.pos,t,m.moved,offroadToday(m,p)))return false;
  if(snowBlocked(m,p,t)||immBlocked(m,t))return false;
  const onRoad=roadStep(m,p.pos,t);
- const spent=(eventGame?eventStepCost(m,t,step,free):cost(m,t)+extra)+weatherExtra(m,p,p.pos,t,m.moved);
+ const spent=(eventGame?eventStepCost(m,t,step,free):cost(m,t)+extra)+weatherExtra(m,p,p.pos,t,m.moved)+betaThirst(m,p,m.moved);
  if(p.energy<spent)return false;
   const usedFree=eventGame&&!!free,usedLight=eventGame&&C.hasBonusEffect(m,p,'light_bike')&&p.lightTurn!==m.turn&&!usedFree&&!p.shortcutActive&&terrainSurcharge(m,p,t);
- p.energy-=spent;m.stats.energySpent+=spent;p.stats.energySpent+=spent;if(m.moved===0)p.dayStart={turn:m.turn,pos:p.pos};if(m.mode==='plateau'&&!onRoad){p.offroadTurn=m.turn;p.stats.offroad=(p.stats.offroad||0)+1;}p.pos=k;if(t.type==='ville')p.lastCity=k;p.steps++;p.stats.steps++;m.moved++;m.stats.terrain[t.type]=(m.stats.terrain[t.type]||0)+1;
+ p.energy-=spent;m.stats.energySpent+=spent;p.stats.energySpent+=spent;if(m.moved===0)p.dayStart={turn:m.turn,pos:p.pos};if(m.mode==='plateau'&&!onRoad){p.offroadTurn=m.turn;p.stats.offroad=(p.stats.offroad||0)+1;}p.pos=k;if(t.type==='ville')p.lastCity=k;p.steps++;p.stats.steps++;m.moved++;m.stats.terrain[t.type]=(m.stats.terrain[t.type]||0)+1;betaStep(m,p,k,t);
  if(usedFree){p.freeSteps--;if(free==='road')p.freeRoadSteps--;else if(free==='tailwind')p.freeTailwindSteps--;else p.freeGeneralSteps--;p.bonusDistanceUsed=(p.bonusDistanceUsed||0)+1;}if(usedLight)p.lightTurn=m.turn;
  for(const weather of routeWeather(m))if(['mountain_snow','heavy_rain','coastal_storm'].includes(weather.kind)){
   if(weather.kind==='mountain_snow'&&['moyenne_montagne','montagne'].includes(t.type)||weather.kind==='heavy_rain'&&!hasRoad(t)||weather.kind==='coastal_storm'&&t.type==='cote')weather.used=true;
@@ -224,7 +225,7 @@ export function move(m,k){const p=player(m),t=m.board[k];if(C.isEventGame(m)&&m.
 // Repas (règle de Fi, 17 octobre) : sans réchaud, repas froid +2 partout ; avec réchaud, repas chaud +3. Un repas des sacoches dans les deux cas.
 const COLD_MEALS={ouest:'un sandwich',alpes:'du pain et du fromage',nord:'du pain de seigle et du poisson fumé',est:'des pirojkis',balkans:'un burek'};
 const HOT_MEALS={ouest:'des pâtes au réchaud',alpes:'une polenta au réchaud',nord:'une soupe au réchaud',est:'une soupe de légumes au réchaud',balkans:'un ragoût au réchaud'};
-const hasStove=(m,p)=>p.items.includes('rechaud')||Boolean(C.isEventGame(m)&&C.hasBonusEffect(m,p,'efficient_stove'));
+const hasStove=(m,p)=>(p.items.includes('rechaud')||Boolean(C.isEventGame(m)&&C.hasBonusEffect(m,p,'efficient_stove')))&&!(betaOn(m)&&water(m,p)<1);// Bêta : le réchaud ne boit pas, mais il faut au moins 1 gourde
 export function mealInfo(m,p=player(m)){const hot=hasStove(m,p),region=regionOf(m.board[p.pos]);return {hot,label:hot?'Repas chaud':'Repas froid',dish:(hot?HOT_MEALS:COLD_MEALS)[region]||(hot?'un repas chaud':'un repas froid')};}
 export function eatGain(m,p=player(m)){const f=m.rules.food,hot=hasStove(m,p);const base=hot?(f.hotEnergy??3)+(p.items.includes('rechaud')&&C.isEventGame(m)&&C.hasBonusEffect(m,p,'efficient_stove')?1:0):(f.coldEnergy??2);const g=Math.max(0,base-immMealPenalty(m,p));return immOn(m)&&immLevel(m).mealHalf?Math.max(1,Math.floor(g/2)):g;}
 export function eat(m){const p=player(m);if(m.pendingAttack||m.done||!['move','place'].includes(m.phase)||m.ate>=m.rules.food.maxPerTurn||p.food<1||p.energy>=energyCap(m,p))return false;p.food--;m.ate++;const base=C.isEventGame(m)?C.hasBonusEffect(m,p,'efficient_stove')?3:m.rules.cardBalance.foodEnergy:m.rules.food.energy;p.energy=Math.min(energyCap(m,p),p.energy+eatGain(m,p));{const meal=mealInfo(m,p);record(m,'food',`${meal.label} : ${meal.dish} (+${eatGain(m,p)} énergie).`);}return true;}
@@ -236,12 +237,12 @@ export function takeLoan(m){const p=player(m);if(!canTakeLoan(m,p))return false;
 export function canRepayLoan(m,p=player(m)){return Boolean(p.loan&&!m.done&&!m.pendingAttack&&['move','place'].includes(m.phase)&&m.board[p.pos]?.type==='ville'&&p.money>=p.loan.amount);}
 export function repayLoan(m){const p=player(m);if(!canRepayLoan(m,p))return false;const n=p.loan.amount;p.money-=n;p.loan=null;record(m,'loan',`${p.name} rembourse son prêt : −${n} pièces.`);return true;}
 export function settleLoans(m){const {penalty}=loanRule(m);for(const p of m.players)if(p.loan&&!p.loanSettled){p.points=Math.max(0,p.points-penalty);p.loanSettled=true;record(m,'loan',`${p.name} n’a pas remboursé son prêt : −${penalty} points d’aventure.`);}}
-export function buyFood(m){const p=player(m),r=m.rules.food;if(m.pendingAttack||m.done||!['move','place'].includes(m.phase)||(r.cityOnly&&m.board[p.pos].type!=='ville')||p.money<r.price||p.food>=C.foodCapacity(m,p))return false;p.money-=r.price;p.food+=Math.min(r.quantity,C.foodCapacity(m,p)-p.food);m.stats.moneySpent+=r.price;record(m,'buy','Achat de provisions.');return true;}
+export function buyFood(m){const p=player(m),r=m.rules.food;if(shopClosed(m,p.pos,'superette')||m.pendingAttack||m.done||!['move','place'].includes(m.phase)||(r.cityOnly&&m.board[p.pos].type!=='ville')||p.money<r.price||p.food>=C.foodCapacity(m,p))return false;p.money-=r.price;p.food+=Math.min(r.quantity,C.foodCapacity(m,p)-p.food);m.stats.moneySpent+=r.price;record(m,'buy','Achat de provisions.');return true;}
 export function restaurant(m){const p=player(m),r=m.rules.food;if(m.pendingAttack||m.done||!['move','place'].includes(m.phase)||m.board[p.pos].type!=='ville'||p.money<r.restaurantPrice||p.energy>=energyCap(m,p)||m.ate>=r.maxPerTurn)return false;p.money-=r.restaurantPrice;m.stats.moneySpent+=r.restaurantPrice;m.ate++;p.energy=Math.min(energyCap(m,p),p.energy+r.restaurantEnergy);record(m,'food','Repas au restaurant.');return true;}
-export function buy(m,id){const p=player(m),e=m.rules.equipment[id];if(!e||m.pendingAttack||m.done||!['move','place'].includes(m.phase)||m.board[p.pos].type!=='ville'||p.items.includes(id)||p.money<e.price||inventorySpace(m)+e.space>capacityFor(m.rules,p.bike,[...p.items,id]))return false;p.money-=e.price;p.items.push(id);p.food+=e.foodBonus||0;m.stats.moneySpent+=e.price;record(m,'buy','Équipement acheté : '+e.name);return true;}
+export function buy(m,id){const p=player(m),e=m.rules.equipment[id];if(!e||e.betaOnly&&!betaOn(m)||shopClosed(m,p.pos,'velo')||m.pendingAttack||m.done||!['move','place'].includes(m.phase)||m.board[p.pos].type!=='ville'||p.items.includes(id)||p.money<e.price||inventorySpace(m)+e.space>capacityFor(m.rules,p.bike,[...p.items,id]))return false;p.money-=e.price;p.items.push(id);p.food+=e.foodBonus||0;m.stats.moneySpent+=e.price;record(m,'buy','Équipement acheté : '+e.name);return true;}
 export function discard(m,id){const p=player(m);if(m.pendingAttack||m.done||!['move','place'].includes(m.phase)||!p.items.includes(id))return false;{const rest=p.items.filter(i=>i!==id);if(rest.reduce((n,k)=>n+(m.rules.equipment[k]?.space||0),0)>capacityFor(m.rules,p.bike,rest))return false;}p.items=p.items.filter(i=>i!==id);record(m,'equipment','Équipement déposé : '+m.rules.equipment[id].name);return true;}
 export function work(m){const p=player(m);if(!m.rules.workEnabled||m.pendingAttack||m.done||!['move','place'].includes(m.phase)||m.moved||m.placed||(m.rules.workCityOnly&&m.board[p.pos].type!=='ville'))return false;p.money+=m.rules.salary;p.stats.work++;m.stats.work++;m.turnKind='work';m.actionDays=m.rules.workDays;record(m,'work','Travail : +'+m.rules.salary+' pièces, '+m.actionDays+' jour(s) sans déplacement.');endTurn(m);return true;}
-export function rest(m,id){if(immersionOn(m))return sleepNight(m,id);if(origNightsOn(m))return origSleep(m,id);const p=player(m),r=restRule(m,p,id),free=id==='bivouac'&&p.turnModifiers?.freeBivouac;if(!r||r.blocked||m.pendingAttack||m.done||!['move','place'].includes(m.phase)||m.moved||m.placed||(!free&&(p.money<r.price||(r.tent&&!p.items.includes('tente'))))||(r.cityOnly&&m.board[p.pos].type!=='ville'))return false;if(!free){p.money-=r.price;m.stats.moneySpent+=r.price;const bonus=p.items.reduce((n,i)=>n+(m.rules.equipment[i]?.energyBonus||0),0);const restEnergy=C.isEventGame(m)&&id==='bivouac'?C.hasBonusEffect(m,p,'comfortable_tent')?2:m.rules.cardBalance.bivouacEnergy:r.energy;p.energy=Math.min(energyCap(m,p),p.energy+restEnergy+bonus);}if(id!=='bivouac')p.fatigue=0;(p.nights||=[]).push({key:p.pos,kind:id,day:m.round});p.stats.rest++;m.stats.rest++;m.turnKind='rest';m.actionDays=r.days;record(m,'rest',(free?'Bivouac gratuit grâce à Abri trouvé':r.name)+' : '+r.days+' jour(s) sans déplacement.');endTurn(m);return true;}
+export function rest(m,id){if(immersionOn(m)){const p0=player(m),ok=sleepNight(m,id);if(ok)betaNight(m,p0,id);return ok;}if(origNightsOn(m))return origSleep(m,id);const p=player(m),r=restRule(m,p,id),free=id==='bivouac'&&p.turnModifiers?.freeBivouac;if(!r||r.blocked||m.pendingAttack||m.done||!['move','place'].includes(m.phase)||m.moved||m.placed||(!free&&(p.money<r.price||(r.tent&&!p.items.includes('tente'))))||(r.cityOnly&&m.board[p.pos].type!=='ville'))return false;if(!free){p.money-=r.price;m.stats.moneySpent+=r.price;const bonus=p.items.reduce((n,i)=>n+(m.rules.equipment[i]?.energyBonus||0),0);const restEnergy=C.isEventGame(m)&&id==='bivouac'?C.hasBonusEffect(m,p,'comfortable_tent')?2:m.rules.cardBalance.bivouacEnergy:r.energy;p.energy=Math.min(energyCap(m,p),p.energy+restEnergy+bonus);}if(id!=='bivouac')p.fatigue=0;(p.nights||=[]).push({key:p.pos,kind:id,day:m.round});p.stats.rest++;m.stats.rest++;m.turnKind='rest';m.actionDays=r.days;record(m,'rest',(free?'Bivouac gratuit grâce à Abri trouvé':r.name)+' : '+r.days+' jour(s) sans déplacement.');endTurn(m);return true;}
 function random(m){return E.random(m);}
 function weighted(m,list){let n=random(m)*list.reduce((s,e)=>s+e.weight,0);return list.find(e=>(n-=e.weight)<0)||list.at(-1);}
 export function drawEvent(m){let n=random(m)*100,category='challenge';for(const [k,value]of Object.entries(m.rules.probabilities)){n-=value;if(n<0){category=k;break;}}
@@ -309,6 +310,7 @@ export function resolveEncounter(m,index){if(!canChooseEncounter(m,index))return
  for(const k of ['food','money','points'])if(fx[k])p[k]=Math.max(0,p[k]+fx[k]);
  if(fx.food)p.food=Math.min(p.food,C.foodCapacity(m,p));
  if(fx.fatigue&&m.rules.fatigue?.enabled){p.fatigue=Math.max(0,Math.min(fatigueMax(m),(p.fatigue||0)+fx.fatigue));p.energy=Math.min(p.energy,energyCap(m,p));}
+ if(fx.water!==undefined&&betaOn(m))p.water=fx.water==='fill'?waterCap(m,p):Math.max(0,Math.min(waterCap(m,p),water(m,p)+fx.water));
  if(fx.tomorrow)p.nextDay={...(p.nextDay||{}),tomorrow:(p.nextDay?.tomorrow||0)+fx.tomorrow};
  if(fx.restDay)p.nextDay={...(p.nextDay||{}),rest:true};
  if(fx.stopToday)p.turnModifiers={...p.turnModifiers,skipMove:true};
@@ -396,7 +398,7 @@ export function restRule(m,p,id){const base=m.rules.rest[id];if(!base||!immersio
 function rideGain(m,p,gain){const ride=immersionOn(m)&&p.imm?.ride;if(!ride||ride.until<m.round)return gain;ride.n=(ride.n||0)+1;return ride.n%2===1?Math.max(0,gain-1):gain;}
 const MOUNTAIN=['moyenne_montagne','montagne','col'];
 function immContext(m,p,key,onRoad=true){const t=m.board[key],region=regionOf(t),weather=forecastOn(m)?weatherOn(m.seed,m.round,region):'beau';return {t,type:t.type,region,weather,offroad:!onRoad,city:t.type==='ville'};}
-function sceneFits(m,p,s,ctx){const im=pim(p);
+function sceneFits(m,p,s,ctx){const im=pim(p);if(s.beta&&!betaOn(m))return false;if(s.noItem&&p.items.includes(s.noItem))return false;if(s.dry&&water(m,p)>0)return false;if(s.sunday&&weekday(m)!=='dimanche')return false;
  if(s.terrain&&!s.terrain.includes(ctx.type))return false;if(s.region&&!s.region.includes(ctx.region))return false;if(s.weather&&!s.weather.includes(ctx.weather))return false;
  if(s.offroad&&!ctx.offroad)return false;if(s.notCity&&ctx.city)return false;if(s.item&&!p.items.includes(s.item))return false;
  const seen=im.seen[s.id];if(seen&&(s.rarity==='unique'||m.round-seen<SCENE_COOLDOWN))return false;return true;}
@@ -550,3 +552,43 @@ function applyOrigNight(m,p){const n=p.origNight;p.origNight=null;if(!n||n.turn!
  if(r.food)p.food=Math.min(C.foodCapacity(m,p),p.food+r.food);if(r.points)p.points+=r.points;
  (p.nights||=[]).push({key:p.pos,kind:n.demand?(key==='refusDehors'?'dehors':key==='refusCamping'?'camping':'demander'):n.id,day:m.round});if(p.nights.length>80)p.nights.splice(0,p.nights.length-80);
  const fd=(p.fatigue||0)-fBefore;record(m,'rest',`${n.demand?n.demand.title:NIGHT[n.id].name}${n.rest?' après une journée sans rouler':''} : +${p.energy-before} énergie${fd?` · fatigue ${fd>0?'+':'−'}${Math.abs(fd)}`:''}.`);}
+
+// ---------- Mode Bêta (règles de Fi, 17 octobre) : l'eau et le calendrier ----------
+// L'eau : gourdes (Gravel 2, Randonneuse 3), 1 bue au premier déplacement du jour ; sans eau −1 énergie et pas de repas chaud.
+// Eau sûre : ville, hameau (fontaine), camping, hôtel, habitant. Rivière, lac, torrent de montagne : sûr avec le filtre, sinon 1 fois sur 4 eau contaminée.
+export const WATER_CAP={gravel:2,randonneur:3};
+export const WATER_RISK=.25,WATER_SICK={energy:-2,fatigue:1};
+export const waterCap=(m,p)=>WATER_CAP[p.bike]??2;
+export function water(m,p){if(p.water===undefined||p.water===null)p.water=waterCap(m,p);return p.water;}
+let WATER_CELLS=null;
+function waterCells(){if(WATER_CELLS)return WATER_CELLS;const k=(q,r)=>`hex-${q}-${r}`,river=new Set(),fountain=new Set();
+ for(const r of DECOR.rivers||[])for(const pt of r.points)river.add(k(pt[2],pt[3]));for(const l of DECOR.lakes||[])river.add(k(l[5],l[6]));for(const v of DECOR.villages||[])fountain.add(k(v.at(-2),v.at(-1)));
+ return WATER_CELLS={river,fountain};}
+// '' (pas d'eau), 'ville', 'fontaine' (hameau), 'riviere' (rivière ou lac), 'torrent' (montagne).
+export function waterSpot(m,key){const t=m.board?.[key];if(!t)return '';if(t.type==='ville')return 'ville';const w=waterCells();if(w.fountain.has(key))return 'fontaine';if(w.river.has(key))return 'riviere';if(['moyenne_montagne','montagne','col'].includes(t.type))return 'torrent';return '';}
+export function betaThirst(m,p,step){return betaOn(m)&&step===0&&water(m,p)<1?1:0;}
+function fillWater(m,p,why){const cap=waterCap(m,p),before=water(m,p);if(before>=cap)return false;p.water=cap;record(m,'eau',`💧 Gourdes remplies (${why}) : ${cap} / ${cap}.`);return true;}
+function betaStep(m,p,k,t){if(!betaOn(m))return;
+ if(m.moved===1){if(water(m,p)>0){p.water--;record(m,'eau',`💧 Tu bois une gourde : ${p.water} / ${waterCap(m,p)}.`);}else record(m,'eau','🥵 Plus d’eau : −1 énergie, et pas de repas chaud tant que tu n’as pas rempli une gourde.');}
+ const spot=waterSpot(m,k);
+ if(spot==='ville')fillWater(m,p,'à la fontaine de la ville');else if(spot==='fontaine')fillWater(m,p,'à la fontaine du hameau');
+ else if(spot==='riviere'||spot==='torrent'){const where=spot==='riviere'?'à la rivière':'au torrent';
+  if(p.items.includes('filtre'))fillWater(m,p,where+', avec le filtre');
+  else if(water(m,p)<1){fillWater(m,p,where+', sans filtre');if(irand(m)<WATER_RISK){p.energy=Math.max(0,p.energy+WATER_SICK.energy);if(m.rules.fatigue?.enabled){p.fatigue=Math.min(fatigueMax(m),(p.fatigue||0)+WATER_SICK.fatigue);p.energy=Math.min(p.energy,energyCap(m,p));}record(m,'eau','🤢 Eau contaminée ! Ventre retourné : −2 énergie, +1 fatigue. Un filtre t’aurait évité ça.');}}}
+ const h=t.type==='ville'?holidayAt(m,k):'';if(h&&p.feteRound!==m.round){p.feteRound=m.round;p.points+=1;record(m,'fete',`🎉 ${h} à ${t.name||'la ville'} : on t’invite à la fête (+1 point). Supérette et magasin de vélo fermés.`,{points:1});}}
+function betaNight(m,p,id){if(!betaOn(m))return;if(['camping','hotel','demander'].includes(id)){const cap=waterCap(m,p);if(water(m,p)<cap){p.water=cap;p.log?.unshift(`💧 Gourdes remplies pour la nuit : ${cap} / ${cap}.`);}}}
+// Le calendrier : la partie commence un lundi. Jours de fermeture selon le pays (supérette et magasin de vélo).
+export const WEEKDAYS=['lundi','mardi','mercredi','jeudi','vendredi','samedi','dimanche'];
+export const weekday=(m,round=m.round)=>WEEKDAYS[(((round||1)-1)%7+7)%7];
+const COUNTRY={Paris:'FR',Lille:'FR',Calais:'FR',Lyon:'FR',Bordeaux:'FR',Marseille:'FR',Berlin:'DE',Vienne:'AT',Zurich:'CH',Bruxelles:'BE',Amsterdam:'NL',Milan:'IT',Venise:'IT',Rome:'IT',Ancona:'IT',Madrid:'ES',Barcelone:'ES',Lisbonne:'PT',
+ 'Cap Nord':'NO',Narvik:'NO',Trondheim:'NO',Bergen:'NO',Oslo:'NO',Kristiansand:'NO',Stockholm:'SE',Helsingborg:'SE',Hirtshals:'DK',Helsingør:'DK',Copenhague:'DK',Helsinki:'FI',Thessalonique:'GR',Athènes:'GR',Varsovie:'PL',
+ Londres:'GB',Douvres:'GB',Holyhead:'GB',Dublin:'IE',Prague:'CZ',Budapest:'HU',Zagreb:'HR',Split:'HR',Belgrade:'RS',Sarajevo:'BA',Skopje:'MK',Sofia:'BG',Bucarest:'RO','Constanța':'RO',Istanbul:'TR',Izmir:'TR',Ankara:'TR',Trabzon:'TR',Tbilissi:'GE',Bakou:'AZ'};
+const SUNDAY_CLOSED=new Set(['FR','DE','AT','CH','BE','NL','IT','ES','PT','NO','SE','DK','FI','GR','PL']);
+const HOLIDAY_NAME={FR:'Fête nationale',IT:'Ferragosto',ES:'Fiesta mayor',PT:'Fête de la ville',GR:'Fête de la Panagia',TR:'Bayram',DE:'Feiertag',AT:'Feiertag',CH:'Fête fédérale',PL:'Fête nationale',RS:'Slava',BG:'Fête nationale',RO:'Fête nationale',HR:'Fête nationale'};
+export const HOLIDAY_ODDS=.05;
+const countryAt=(m,key)=>{const t=m.board?.[key];return t?.type==='ville'?COUNTRY[t.name]||'':'';};
+function dayHash(seed,round,txt){let x=(seed>>>0)^Math.imul(round+1,374761393);for(const c of txt)x=Math.imul(x^c.charCodeAt(0),668265263);x^=x>>>13;x=Math.imul(x,1274126177);return ((x^x>>>16)>>>0)/4294967296;}
+export function holidayAt(m,key,round=m.round){if(!betaOn(m))return '';const c=countryAt(m,key);if(!c||weekday(m,round)==='dimanche')return '';return dayHash(m.seed||1,round,c)<HOLIDAY_ODDS?(HOLIDAY_NAME[c]||'Jour férié'):'';}
+// Pourquoi la boutique est fermée aujourd'hui ('' = ouverte). shop : 'superette' ou 'velo'.
+export function shopClosed(m,key,shop,round=m.round){if(!betaOn(m))return '';const c=countryAt(m,key);if(!c)return '';const d=weekday(m,round);
+ const h=holidayAt(m,key,round);if(h)return h;if(d==='dimanche'&&SUNDAY_CLOSED.has(c))return 'dimanche';if(d==='lundi'&&shop==='velo'&&c==='FR')return 'lundi';return '';}
