@@ -12,6 +12,8 @@ import {nightSceneSvg,NIGHT_SCENE_LENGTH} from './night-scenes.js';
 import {sceneFor,encounterSceneSvg,cardScene} from './encounter-scenes.js';
 import {landmarkArt} from './landmark-art.js';
 import {voyageCard,cardArtUrl} from './voyage-card.js';
+import {townSvg,townInsideSvg,townArrive,townGo,townOut,townSkip,townAct,townTick} from './town-scene.js';
+import {axialDistance as townDistance} from './europe.js';
 import {readDisplayPrefs,writeDisplayPref} from './display-prefs.js';
 import {titleScreen,plateauScreen,playersScreen,garageScreen,voyagesScreen,onlineScreen,editorHubScreen} from './menus.js';
 import {rulesIntro,rulesHelp,HELP_TABS} from './rules-help.js';
@@ -1303,3 +1305,39 @@ document.addEventListener?.('keydown',e=>{if(scenePop&&(e.key==='Escape'||e.key=
    nightScene(id,{rain:false,color:p.color,name:p.name,badge:title+(cost>0?` · −${cost} 🪙`:''),outcome:0,title,text:'Une journée de repos : l’énergie revient.'});}}
  }catch(err){console.error(err);}
  return out;};}
+
+
+// ---------- Arrivée en ville : le carrefour (planche « Le carrefour de la ville », validée par Fi le 17 octobre) ----------
+// On arrive au carrefour ; on clique sur une boutique, le cycliste y roule, frappe et entre ; la boutique s'ouvre avec sa scène. Règles et prix inchangés.
+let townKey='',townRaf=0;
+const townReduce=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
+const townHash=v=>{let h=7;for(const c of String(v))h=(h*31+c.charCodeAt(0))|0;return Math.abs(h)||1;};
+function townSigns(here){const v=Object.values(m.board).filter(t=>t.type==='ville'&&t.name&&t.name!==here.name).map(t=>({t,d:townDistance(here,t)})).sort((a,b)=>a.d-b.d);
+ const a=v.find(x=>x.t.x>here.x)||v[0],b=v.find(x=>x.t.x<=here.x&&x!==a)||v.find(x=>x!==a);return [a?`${a.t.name} ${a.d}`:'',b?`${b.t.name} ${b.d}`:''];}
+const TOWN_VIEW={velo:'velo',superette:'superette',resto:'resto',hotel:'hotel'};
+{const priorMarket=marketWindow;marketWindow=function(){const p=S.player(m),r=m.rules,here=m.board[p.pos],imm=S.immersionOn(m),cap=energyCap(m,p),NAME=esc((here.name||'').toUpperCase());
+ if(townKey!==marketSeen){townKey=marketSeen;if(townReduce())townSkip('velo'),townOut();else townArrive();}
+ const back=btn('← Ressortir sur la place','market-back','light'),go=btn('Continuer ma route','market-close');
+ const inside=(id,title,inner)=>`<div class="market-win tw-in"><div class="tw-grid"><div class="tw-pic tw-pic-${id}">${townInsideSvg(id)}</div><div class="mk-body"><span class="eyebrow">${NAME} · ${title.toUpperCase()}</span><h2>${title}</h2>${inner}<div class="mk-foot">${back}${go}</div></div></div></div>`;
+ if(marketView==='velo'||marketView==='superette'){const h=priorMarket();const body=h.slice(h.indexOf('<div class="mk-body">')+21,h.lastIndexOf('<div class="mk-foot">'));
+  return inside(marketView,marketView==='velo'?'🚲 Magasin de vélo':'🛒 Supérette',body.replace(/^<span class="eyebrow">[^<]*<\/span><h2>[^<]*<\/h2>/,''));}
+ const pl=n=>`${n} pièce${n>1?'s':''}`,line=(ico,name,sub,price,action,label,why)=>`<ul class="mk-list"><li><span class="mk-ico" aria-hidden="true">${ico}</span><span class="mk-what"><b>${name}</b><small>${esc(sub)}</small></span><em>${price}</em><button type="button" data-action="${action}" ${why?'disabled':''}>${why?esc(why):label}</button></li></ul>`;
+ if(marketView==='resto'){const why=p.money<r.food.restaurantPrice?'pas assez de pièces':p.energy>=cap?'énergie pleine':m.ate>=r.food.maxPerTurn?'déjà mangé aujourd’hui':'';
+  return inside('resto','🍽 Restaurant',`<p class="mk-wallet">${pl(p.money)} · ⚡ ${p.energy} / ${cap}</p>`+line('🍲','Le plat du jour',`+${r.food.restaurantEnergy} énergie · un repas par jour`,pl(r.food.restaurantPrice),'market-resto','Manger',why));}
+ if(marketView==='hotel'){let why='';if(imm){const o=S.sleepOptions(m,p).options.find(x=>x.id==='hotel');why=o?.why||'';}else{const a=r.rest.hotel;why=m.moved?'déjà roulé aujourd’hui':p.money<a.price?'pas assez de pièces':'';}
+  return inside('hotel','🏨 Hôtel',`<p class="mk-wallet">${pl(p.money)}</p>`+line('🛏','Une chambre',`Dormir ici${imm?' · termine la journée':''}`,pl(r.rest.hotel.price),'market-hotel','Prendre une chambre',why));}
+ return `<div class="market-win tw-street-win">${townSvg({region:S.regionAt(m,p.pos),seed:townHash(p.pos),signs:townSigns(here),color:p.color})}<div class="mk-body tw-bar"><div class="tw-title"><span class="eyebrow">ARRIVÉE · JOUR ${m.round} · ${pl(p.money)} · ⚡ ${p.energy} / ${cap}</span><h2>${esc(here.name||'La ville')}</h2><small>Clique sur une boutique : ton cycliste y entre.</small></div><div class="mk-foot"><label><input type="checkbox" id="market-off" ${marketOff()?'checked':''}> Ne plus ouvrir à chaque ville</label>${go}</div></div></div>`;};}
+{const priorAct=act;act=a=>{if(typeof a!=='string'||!a.startsWith('market-'))return priorAct(a);
+ if(a.startsWith('market-go-')){const id=a.slice(10);if(!TOWN_VIEW[id])return;
+  if(townReduce()){townSkip(id);marketView=TOWN_VIEW[id];render();return;}
+  townGo(id,()=>{if(modal==='market'){marketView=TOWN_VIEW[id];render();}});return;}
+ if(a==='market-back'){townOut();marketView='';render();return;}
+ const p=S.player(m),money=p.money,energy=p.energy,food=p.food;
+ if(a.startsWith('market-buy-')){const id=a.slice(11);priorAct(a);if(S.player(m).money<money)townAct({cost:'−'+(money-S.player(m).money),say:'Et voilà !',item:ITEM_EMOJI[id]||'🎒'});return;}
+ if(a==='market-food'){priorAct(a);const q=S.player(m);if(q.money<money)townAct({cost:'−'+(money-q.money),say:'Bonne route !',item:'🥖',badge:`+${q.food-food} 🥖 repas`});return;}
+ if(a==='market-resto'){priorAct(a);const q=S.player(m);if(q.money<money)townAct({cost:'−'+(money-q.money),say:'Bon appétit !',badge:`+${q.energy-energy} ⚡ · −${money-q.money} 🪙`});return;}
+ return priorAct(a);};}
+{const priorRender=render;render=(...a)=>{priorRender(...a);try{if(modal!=='market')return;
+ document.querySelectorAll('.tw-shop').forEach(g=>g.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();act(g.dataset.action);}});
+ if(townReduce()){townTick();return;}
+ if(!townRaf){const loop=()=>{if(modal!=='market'||!townTick()){townRaf=0;return;}townRaf=requestAnimationFrame(loop);};townRaf=requestAnimationFrame(loop);}}catch(err){console.error(err);}};}

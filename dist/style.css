@@ -2121,3 +2121,31 @@ body .modal.night-wrap .night-cards .imm-night.off{opacity:.45}
 .vcard .vcard-head{display:block;position:static;background:none;box-shadow:none;margin:0}
 .vcard .vcard-head h3{display:block}
 .vcard .vcard-route{display:flex}
+
+/* ---------- Le carrefour de la ville (17 octobre) ---------- */
+.modal.market-modal:has(.tw-street-win),.modal.market-modal:has(.tw-in){max-width:min(900px,96vw);width:min(900px,96vw)}
+.tw-street{display:block;width:100%;height:auto;max-height:64vh;background:#8cc2d6;user-select:none}
+.tw-bar{flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:space-between;padding:10px 16px 12px}
+.tw-title{display:grid;gap:2px}.tw-bar h2{font-size:21px}.tw-title small{color:#5a4a2c;font-size:13px}
+.tw-shop{cursor:pointer;outline:none}.tw-hl{opacity:0;transition:opacity .15s}.tw-shop:hover .tw-hl,.tw-shop:focus-visible .tw-hl{opacity:1}
+.tw-awn{animation:tw-sway 3.2s ease-in-out infinite;transform-box:fill-box;transform-origin:top center}
+@keyframes tw-sway{50%{transform:skewX(-2deg) scaleY(1.04)}}
+.tw-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr)}
+.tw-inside{display:block;width:100%;height:100%;min-height:240px;background:#efe0bf}
+@media (max-width:720px){.tw-grid{grid-template-columns:1fr}.tw-inside{min-height:0;height:auto;aspect-ratio:640/300}}
+@media (prefers-reduced-motion: reduce){.tw-awn{animation:none}}
+/* textes lisibles sur le fond crème de la fenêtre de la ville */
+.modal.market-modal .mk-body h2{color:#1b3b38;font-size:24px;line-height:1.1;margin:0}
+.modal.market-modal .mk-body :is(b,label){color:#1b3b38}
+.modal.market-modal .mk-body :is(p,small,.mk-foot){color:#5a4a2c}
+.modal.market-modal .mk-body button.light{color:#1b3b38;border-color:#1b3b38}
+.modal.market-modal .mk-list button{min-height:34px;font-size:15px;padding:4px 10px}
+.modal.market-modal .mk-foot button{min-height:42px}
+.tw-grid{align-items:stretch}
+.tw-inside{height:auto;min-height:0;aspect-ratio:640/300}
+@media (max-width:720px){.tw-grid{background:none}}
+.tw-pic{display:flex;align-items:center;background:linear-gradient(#efe0bf 0 50%,#a8774a 50%)}
+.tw-pic-hotel{background:linear-gradient(#e7d3ae 0 50%,#a8774a 50%)}.tw-pic-resto{background:linear-gradient(#efd7b0 0 50%,#a8774a 50%)}
+.tw-pic .tw-inside{flex:1}
+.tw-bar .mk-foot label{display:inline-flex;gap:6px;align-items:center}
+@media (max-width:720px){.tw-pic{background:none}}

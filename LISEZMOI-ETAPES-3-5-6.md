@@ -362,3 +362,10 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - **5 cartes durcies** (trop faciles dans leur tranche) : Cap vers le Nord 4 villes (58 → 20 pts) ; Les routes de l'Est 4 montagnes (47 → 16) ; Des îles au continent 3 côtes (17 → 4) ; Vers la mer Égée 2 villes (19 → 4) ; Le fil du Danube 3 côtes (38 → 12). Partie guidée : 8 points.
 - **Cartes illustrées** : les 20 illustrations de Fi (`dist/assets/voyages/cartes/<id>.webp`, 800 × 500) ; partie basse générée (`dist/voyage-card.js` : titre, trajet, objectifs avec image de case, environ N cases, niveau et points). Utilisées sur l'écran « Choisis ton voyage », dans la fenêtre « nouveau voyage » et en petit dans l'objectif.
 - Correction : le résumé des règles affichait « ${r.fatigue.maxEnergyPenalty} » tel quel.
+
+## 17 octobre 2026 — Arrivée en ville : le carrefour (cache v96-carrefour)
+- Planche « Le carrefour de la ville » (https://claude.ai/artifact/6TdAidsaFdFVbyiDikJn5r), validée par Fi.
+- En arrivant dans une ville, la fenêtre montre une petite rue au même trait que les scènes du soir, en plein jour : magasin de vélo, supérette, restaurant, hôtel, fontaine, panneau des villes voisines, passants, pigeons, fumée, drapeau.
+- Maisons selon la région : pierre et tuiles (Ouest), chalets (Alpes), pignons à gradins (Nord), façades pastel (Est), maisons à encorbellement (Balkans). Couleurs et détails tirés selon la case : une même ville garde toujours le même visage.
+- On clique sur une boutique : le cycliste y roule, pose son vélo, frappe, la porte s'allume, il entre. La boutique s'ouvre avec sa scène (commerçant, pièce qui part, objet acheté) et ses achats. « Ressortir sur la place » le ramène au carrefour.
+- Règles et prix inchangés (mêmes actions qu'avant). Dessins dans `dist/town-scene.js` ; branchement à la fin de `dist/app.js` ; styles `.tw-*` à la fin de `style.css`.
