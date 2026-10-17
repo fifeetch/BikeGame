@@ -372,3 +372,7 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 ## 17 octobre 2026 — Cartes Événement au style « carte d'aventure » (cache v97-evenements)
 - Les 40 cartes Événement redessinées (planche « Carte Événement n° 1 », validée par Fi) : bandeau de la couleur de la famille (Positive, Négative, Climatique, Bonus) avec le numéro, petite scène animée du jeu sur la carte autour de la case du joueur, nom en Fraunces, phrase en italique, effet en une phrase avec les terrains concernés et la protection, ligne « pour qui / quand ».
 - Code : `dist/event-card-ui.js` (eventFace, textes courts par type d'effet, boucle d'animation startCardScenes ; plus de 8 cartes à l'écran : seule la carte survolée s'anime) ; style à la fin de `dist/style.css`. Aucune règle changée.
+
+## 17 octobre, 11 h 40 (cache v98-soir) — Deux corrections du mode original
+- « Finir ma journée » ouvre bien « Où dormir ce soir ? » (la fenêtre était réservée au mode Immersion).
+- En roulant jusqu'à une ville, la fenêtre de la ville ne clignote plus avant le trajet : elle reste cachée pendant que le cycliste roule (`.modal-back.hold` sans fondu).

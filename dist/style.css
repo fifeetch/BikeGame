@@ -1955,7 +1955,7 @@ body.soir .playable-europe .city-names{filter:drop-shadow(0 0 4px #ffd27a)}
 
 /* Fenêtre retenue pendant que le pion roule, puis qui apparaît en douceur */
 .modal-back,.bet-layer{transition:opacity .45s ease}
-.modal-back.hold,.bet-layer.hold{opacity:0;pointer-events:none}
+.modal-back.hold,.bet-layer.hold{opacity:0;pointer-events:none;transition:none}
 @media (prefers-reduced-motion: reduce){.modal-back,.bet-layer{transition:none}}
 
 /* ---------- Petites animations sur la carte ---------- */
