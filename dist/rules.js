@@ -17,10 +17,10 @@ export const CLASSIC={rulesVersion:3,
  immersion:{enabled:false,level:'voyage'},
  bikes:{gravel:{name:'Gravel',price:5,capacity:4,mountainDiscount:0,extraDistance:0,extraFood:0},randonneur:{name:'Randonneuse',price:3,capacity:8,mountainDiscount:0,extraDistance:-1,extraFood:0}},
  rest:{bivouac:{name:'Bivouac',price:0,energy:3,days:1,tent:true,cityOnly:false},camping:{name:'Camping',price:1,energy:5,days:1,tent:false,cityOnly:false},hotel:{name:'Hôtel',price:3,energy:10,days:1,tent:false,cityOnly:true}},
- food:{energy:3,stoveBonus:2,price:1,quantity:2,maxPerTurn:1,cityOnly:true,restaurantPrice:1,restaurantEnergy:4},
+ food:{energy:3,stoveBonus:2,coldEnergy:2,hotEnergy:3,price:1,quantity:2,maxPerTurn:1,cityOnly:true,restaurantPrice:1,restaurantEnergy:4},
  cardBalance:{foodEnergy:2,bivouacEnergy:1},
  eventCards:{startingHand:3,handLimit:3,bonusLimit:2,drawPerTurn:2,shuffle:true,categories:{positive:true,negative:true,climatic:true,permanent:true}},
- equipment:{tente:{name:'Tente',price:2,space:2,energyBonus:0},rechaud:{name:'Réchaud',price:1,space:1,energyBonus:0},chambre:{name:'Chambre à air',price:1,space:1,energyBonus:0},kit:{name:'Kit de réparation',price:2,space:1,energyBonus:0},gps:{name:'GPS',price:3,space:1,energyBonus:0},duvet:{name:'Matelas et duvet',price:3,space:2,energyBonus:1},secours:{name:'Trousse de secours',price:2,space:1,energyBonus:0},sacoches:{name:'Sacoches',price:2,space:1,energyBonus:0,foodBonus:3}},
+ equipment:{tente:{name:'Tente',price:2,space:2,energyBonus:0},rechaud:{name:'Réchaud',price:1,space:1,energyBonus:0},chambre:{name:'Chambre à air',price:1,space:1,energyBonus:0},kit:{name:'Kit de réparation',price:2,space:1,energyBonus:0},gps:{name:'GPS',price:3,space:1,energyBonus:0},duvet:{name:'Matelas et duvet',price:3,space:2,energyBonus:1},secours:{name:'Trousse de secours',price:2,space:1,energyBonus:0},sacoches:{name:'Sacoches',price:2,space:1,energyBonus:0,foodBonus:3,capacityBonus:2}},
  probabilities:{negative:50,positive:30,challenge:20},eventAfterWork:false,eventAfterRest:false,
  points:{plaine:0,moyenne_montagne:0,montagne:0,cote:0,ville:0,camping:2,auberge:2,col:2,decouverte:4,objective:10},
  victory:{mode:'multi',points:35,voyages:3,days:40,turns:20,allObjectives:false},
@@ -35,8 +35,8 @@ export const clone=value=>JSON.parse(JSON.stringify(value));
 function merge(base,value){if(Array.isArray(base))return value===undefined?clone(base):clone(value);if(base&&typeof base==='object'){const out={};for(const k of Object.keys(base))out[k]=merge(base[k],value?.[k]);return out;}return value===undefined?base:value;}
 // Règles enregistrées sur l'appareil avant le 15 octobre 2026 : on remet à jour les points et la fin de partie décidés par Fi
 // (le reste — météo, rencontres, réglages personnels — est gardé).
-export const RULES_VERSION=4;
-export function upgradeStoredRules(raw){if(!raw||typeof raw!=='object')return raw;if((raw.rulesVersion||1)<RULES_VERSION){const out={...raw},v=raw.rulesVersion||1;if(v<2){delete out.points;delete out.adventure;delete out.victory;}if(v<3)delete out.bikes;if(v<4)delete out.equipment;/* v4 (16 octobre) : kit de réparation à 2 pièces */out.rulesVersion=RULES_VERSION;return out;}return raw;}
+export const RULES_VERSION=5;
+export function upgradeStoredRules(raw){if(!raw||typeof raw!=='object')return raw;if((raw.rulesVersion||1)<RULES_VERSION){const out={...raw},v=raw.rulesVersion||1;if(v<2){delete out.points;delete out.adventure;delete out.victory;}if(v<3)delete out.bikes;if(v<4)delete out.equipment;if(v<5){delete out.food;delete out.equipment;}/* v5 (17 octobre) : repas froid +2 / chaud +3, sacoches +2 places *//* v4 (16 octobre) : kit de réparation à 2 pièces */out.rulesVersion=RULES_VERSION;return out;}return raw;}
 export function validateRules(input){
  const r=merge(CLASSIC,input);
  if(r.bikes?.randonneur?.name==='Randonnée')r.bikes.randonneur.name='Randonneuse';// ancien nom enregistré sur l'appareil

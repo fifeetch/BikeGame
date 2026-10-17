@@ -61,8 +61,9 @@ test('flat card hits another player on their next day; kit repairs, no kit retur
  assert(S.repairPuncture(m));assert.equal(m.players[1].flat,false);assert.equal(m.phase,'card-choice');
  const p=m.players[1];assert.equal(p.pos,p.lastCity);
 });
-test('food outside towns requires stove and terrain/ferry costs are configurable',()=>{
+// Règle de Fi (17 octobre) : repas froid +2 partout sans réchaud, repas chaud +3 avec réchaud.
+test('cold meal anywhere, hot meal with stove, and terrain/ferry costs are configurable',()=>{
  const r=clone(CLASSIC);r.terrain.moyenne_montagne=4;r.ferryPrice=1;
  const m=S.createMatch([{...roster[0],items:[]}],'plateau',r,2),p=S.player(m);const tile=Object.values(m.board).find(t=>t.type==='moyenne_montagne');assert.equal(S.cost(m,tile),4);
- p.pos=tile.key;p.energy=3;assert(!S.eat(m));p.items.push('rechaud');assert(S.eat(m));
+ p.pos=tile.key;p.energy=3;assert(S.eat(m));assert.equal(p.energy,5);m.ate=0;p.items.push('rechaud');assert(S.eat(m));assert.equal(p.energy,8);
 });

@@ -152,20 +152,20 @@ function bikeFacts(rules,id){
 const FLAVOR={gravel:['Léger et rapide','On file, on grimpe… mais chaque objet compte.'],randonneur:['Lourd mais autonome','On porte tout, on dort bien, on tient la distance.']};
 export function garageScreen({btn,player,index,total,rules,coinsLeft,descriptions}){
  const bikeIds=Object.keys(rules.bikes),current=player.bike,bike=rules.bikes[current],items=player.items||[];
- const bags=bagsFor(current,bike.capacity),{free,content}=packBags(bags,items,rules.equipment);
+ const bags=bagsFor(current,(bike.capacity+items.reduce((n,k)=>n+(rules.equipment[k]?.capacityBonus||0),0))),{free,content}=packBags(bags,items,rules.equipment);
  const used=items.reduce((n,id)=>n+(rules.equipment[id]?.space||0),0);
  const kg=Math.round(((current==='randonneur'?17:9)+(current==='randonneur'?6:1.5)+items.reduce((n,id)=>n+(GEAR_KG[id]||1),0))*10)/10;
  const pct=Math.max(0,Math.min(100,(kg-8)/(36-8)*100)),feel=kg<16?'Léger : les montées passent bien':kg<26?'Chargé : rythme de croisière':'Lourd : chaque col se mérite';
  const chips=bags.map(b=>{const names=content[b.id]||[],left=free[b.id];return `<span class="mc-chip ${names.length?'full':''}" style="left:${b.x}%;top:${b.y}%">${esc(b.label)}${names.length?' · '+esc(names.join(', ')):''}${left>0?` · ${plural(left,'place libre','places libres')}`:''}</span>`;}).join('');
  const bikeCards=bikeIds.map(id=>{const b=rules.bikes[id],[tag,line]=FLAVOR[id]||[b.name,''];return `<button class="mc-bike-card ${id===current?'on':''}" data-bike-choice="${esc(id)}" aria-pressed="${id===current}">${bikeSvg(id,null,'mini')}<span class="mc-bike-copy"><strong>${esc(b.name)}</strong><em>${esc(tag)}</em><small>${esc(line)}</small><small class="facts">${bikeFacts(rules,id).map(esc).join(' · ')}</small></span></button>`;}).join('');
- const shop=Object.entries(rules.equipment).map(([id,e])=>{const owned=items.includes(id),tooPricey=e.price>coinsLeft,noRoom=used+e.space>bike.capacity,disabled=!owned&&(tooPricey||noRoom);
+ const shop=Object.entries(rules.equipment).map(([id,e])=>{const owned=items.includes(id),tooPricey=e.price>coinsLeft,noRoom=used+e.space>(bike.capacity+items.reduce((n,k)=>n+(rules.equipment[k]?.capacityBonus||0),0))+(e.capacityBonus||0),disabled=!owned&&(tooPricey||noRoom);
   return `<button class="mc-item ${owned?'owned':''}" data-equipment="${id}" aria-pressed="${owned}" ${disabled?'disabled':''}>${icon(GEAR_ICONS[id]||GEAR_ICONS.sacoches)}<span class="mc-item-name">${esc(e.name)}<small>${esc(descriptions[id]||'')}</small></span><span class="mc-item-meta">${plural(e.space,'place','places')} · ${plural(e.price,'pièce','pièces')}</span><span class="mc-item-state">${owned?'Chargé':tooPricey?'Trop cher':noRoom?'Plus de place':''}</span></button>`;}).join('');
  return `<main class="menu-c mc-page mc-garage">${backdrop('dim')}${steps('gear')}
   <header class="mc-head"><div><p class="mc-kicker">Le garage · Cycliste ${index+1}/${total}</p><h1>${esc(player.name)}, choisis ta monture</h1></div>${btn('← Cyclistes','setup','mc-ghost')}</header>
   <div class="mc-garage-grid">
    <div class="mc-bikes" role="group" aria-label="Vélo">${bikeCards}</div>
    <section class="mc-load" aria-label="Le vélo chargé">
-    <div class="mc-hud"><div><span>Bourse · vélo compris</span><b>${coinsLeft} / ${rules.startMoney} pièces</b>${rules.budget?.startBonus?`<small>+${rules.budget.startBonus} au départ, puis +${rules.budget.amount} tous les ${rules.budget.every} tours</small>`:''}</div><div><span>Places</span><b>${used} / ${bike.capacity}</b></div><div class="mc-weight"><span>Poids chargé · ${String(kg).replace('.',',')} kg</span><i><em style="left:${pct}%"></em></i><small>${feel}</small></div></div>
+    <div class="mc-hud"><div><span>Bourse · vélo compris</span><b>${coinsLeft} / ${rules.startMoney} pièces</b>${rules.budget?.startBonus?`<small>+${rules.budget.startBonus} au départ, puis +${rules.budget.amount} tous les ${rules.budget.every} tours</small>`:''}</div><div><span>Places</span><b>${used} / ${(bike.capacity+items.reduce((n,k)=>n+(rules.equipment[k]?.capacityBonus||0),0))}</b></div><div class="mc-weight"><span>Poids chargé · ${String(kg).replace('.',',')} kg</span><i><em style="left:${pct}%"></em></i><small>${feel}</small></div></div>
     <div class="mc-stage">${bikeSvg(current,content)}${chips}</div>
    </section>
    <section class="mc-shop" aria-label="Matériel"><h2>L’étal du marchand</h2>${shop}<p>Clique un objet : il va dans la première sacoche où il tient. Tu pourras racheter du matériel dans les villes.</p></section>

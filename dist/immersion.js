@@ -327,7 +327,7 @@ export const NIGHT={
 };
 export const REST_DAY_FACTOR=2;
 // « Demander » : ce que donne chaque réponse (la nuit compte comme un hôtel, un camping, ou un refus).
-export const DEMAND_NIGHT={grand:{energy:3,fatigue:-2,food:1,points:1},jardin:{energy:2,fatigue:-1},refusCamping:{energy:2,fatigue:-1},refusDehors:{energy:0,fatigue:1}};
+export const DEMAND_NIGHT={grand:{energy:2,fatigue:-2,food:1,points:1},jardin:{energy:2,fatigue:-1},refusCamping:{energy:2,fatigue:-1},refusDehors:{energy:0,fatigue:1}};
 
 // ---------- Niveaux de difficulté (mode Immersion, solo) — planche « Difficulté Immersion », validés par Fi le 16 octobre ----------
 // start : énergie de départ ; money : pièces en plus/en moins ; days : fin de partie ; galere : multiplie la part de galères ;

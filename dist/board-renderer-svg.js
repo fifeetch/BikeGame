@@ -21,6 +21,7 @@ const labelScale=s=>Math.min(1.3,Math.max(.36,Math.pow(1.05/s,.75)));
 const DETAIL_SCALE=1.55;
 const STEP_MS=650;// une case toutes les 0,65 s : on a le temps de voir le cycliste rouler
 
+const TURN_ZOOM=2.1;// zoom quand le tour passe à un autre joueur
 export function createSVGBoardRenderer(container,options={}){
  const doc=container.ownerDocument,make=(tag,attrs={})=>{const el=doc.createElementNS(NS,tag);attrsTo(el,attrs);return el;};
  const html=(tag,cls)=>{const el=doc.createElement(tag);if(cls)el.className=cls;return el;};
@@ -400,10 +401,10 @@ export function createSVGBoardRenderer(container,options={}){
   if(container.parentElement&&weather.parentElement!==container.parentElement)container.parentElement.append(weather);
   drawMiniDots(g);
   if(!miniImg.getAttribute('src'))miniImg.setAttribute('src',TERRAIN_ART_SRC);
-  // Premier affichage : on cadre le cycliste actif ; ensuite on glisse vers le joueur suivant.
+  // Premier affichage : on cadre le cycliste actif ; ensuite on glisse et on zoome sur le joueur suivant (demande de Fi, 17 octobre).
   const activePos=g.board[g.pos];
-  if(firstView&&activePos){firstView=false;if(editMode)camera.fit({animate:false});else camera.center(activePos.x,activePos.y,1.7);}
-  else if(previous&&previous.activeId!==g.id&&activePos&&!editMode){clearTimeout(glideTimer);glideTimer=setTimeout(()=>{if(!destroyed)camera.focus(activePos.x,activePos.y,{scale:Math.max(camera.scale,1.25),duration:700});},moveMs?moveMs+120:60);}
+  if(firstView&&activePos){firstView=false;if(editMode)camera.fit({animate:false});else camera.center(activePos.x,activePos.y,TURN_ZOOM);}
+  else if(previous&&previous.activeId!==g.id&&activePos&&!editMode){clearTimeout(glideTimer);glideTimer=setTimeout(()=>{if(!destroyed)camera.focus(activePos.x,activePos.y,{scale:Math.max(camera.scale,TURN_ZOOM),duration:900});},moveMs?moveMs+120:60);}
   else if(moveMs&&activePos&&!followingNow()&&!camera.isVisible(activePos.x,activePos.y,60)){clearTimeout(glideTimer);glideTimer=setTimeout(()=>{if(!destroyed)camera.focus(activePos.x,activePos.y,{duration:600});},Math.min(moveMs,500));}
   previous={activeId:g.id,route:[...route],pos:g.pos};
   diagnostics.lastUpdateMs=clock()-started;

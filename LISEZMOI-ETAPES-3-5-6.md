@@ -391,3 +391,11 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - Les effets « au prochain tour » (pas de trajet, route barrée, neige) s’appliquent au tour où la cible découvre la carte ; une crevaison, une casse ou une chute ouvre la réparation tout de suite.
 - Celui qui joue la carte voit « Carte envoyée : … la découvrira au début de son tour ». Les cartes climatiques (jouées sur le trajet du joueur actif) ne changent pas.
 - Tests des cartes adaptés à la nouvelle règle (cartes-fi, event-cards-v3, event-card-editor-v3).
+
+## 17 octobre, 18 h 50 (cache v102-repas) — Repas, sacoches, nuits, zoom et passage plus rapide (demandes de Fi)
+- Repas : un repas des sacoches se mange partout. Sans réchaud, repas froid +2 (sandwich à l’ouest, burek dans les Balkans, pain et fromage dans les Alpes, pirojkis à l’est, pain de seigle et poisson fumé au nord) ; avec réchaud, repas chaud +3. Règles food.coldEnergy / food.hotEnergy ; mealInfo et eatGain (simulator.js). La carte « réchaud » permanente compte comme un réchaud (+1 de plus avec le vrai réchaud).
+- Sacoches : prennent 1 place mais en ajoutent 2 (capacityBonus:2 ; capacityFor / bagCapacity). On ne peut pas les déposer si les sacoches restantes débordent.
+- Nuits : bivouac +1, camping +2, chez l’habitant au plus +2 (grand accueil +2 au lieu de +3), dans les deux modes.
+- RULES_VERSION 5 : les règles « nourriture » et « équipement » enregistrées sur l’appareil sont remises aux nouvelles valeurs.
+- Changement de joueur : la carte zoome sur le cycliste dont c’est le tour (TURN_ZOOM 2,1 dans board-renderer-svg.js).
+- Passage plus rapide d’un tour à l’autre : la scène de la nuit joue deux fois plus vite (environ 5 s au lieu de 10, NIGHT_SPEED dans app.js) ; « Passer » la ferme toujours tout de suite.
