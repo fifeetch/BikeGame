@@ -108,7 +108,7 @@ export function plateauScreen({btn,maps=[],message=''}){
 // Fin de partie : Standard (50 points, 3 voyages ou 40 jours) ou personnalisée. 0 = condition non utilisée.
 export function victoryBlock(rules,btn){const v=rules.victory||{},multi=v.mode==='multi',std=multi&&v.points===35&&v.voyages===3&&v.days===40;
  const num=(k,label)=>`<label class="mc-vic-field"><input type="number" min="0" max="999" step="1" data-victory="${k}" value="${multi?Number(v[k]||0):''}"/> ${label}</label>`;
- return `<section class="mc-weather mc-victory" aria-label="Fin de partie"><div><p class="mc-kicker">Fin de partie</p><p>La partie s’arrête dès que l’une de ces conditions est atteinte (0 = pas utilisée). Après un voyage réussi, on en tire un nouveau.</p></div>
+ return `<section class="mc-weather mc-victory" aria-label="Fin de partie"><div><p class="mc-kicker">Fin de partie</p><p>La partie s’arrête dès que l’une de ces conditions est atteinte (0 = pas utilisée). Après un voyage réussi, on en tire un nouveau. Le premier à finir ses voyages gagne +5 points ; à la fin, le plus de points gagne.</p></div>
   <div class="mc-vic-row">${num('points','points d’aventure')}${num('voyages','voyages réussis')}${num('days','jours (le plus de points gagne)')}
   <button type="button" data-action="victory-standard" class="${std?'on':''}" aria-pressed="${std}"><b>Standard</b><small>35 points · 3 voyages · 40 jours</small></button></div></section>`;}
 export function playersScreen({btn,roster,colors,rules}){

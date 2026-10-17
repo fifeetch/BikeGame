@@ -380,3 +380,8 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 ## 17 octobre, 17 h 40 (cache v99-icone) — Icône et aperçu du lien
 - Nouvelle icône aux couleurs du jeu : une case hexagonale bordée de crème avec un morceau de la carte, la route en pointillés orange et un vélo chargé (icon.svg, icon-192/512, icon-maskable-512, apple-touch-icon, favicon-32).
 - Aperçu quand on partage le lien (WhatsApp, Messenger, mail…) : og-image.jpg 1200 × 630 avec titre, phrase et « Jouer gratuitement ». Balises Open Graph et Twitter dans index.html ; manifeste aux couleurs du jeu (#102226), nom court « Aventure à Vélo ».
+
+## 17 octobre, 17 h 55 (cache v100-fin) — Nouvelle fin de partie (règle de Fi)
+- Le premier cycliste qui réussit 3 voyages arrête la partie et reçoit +5 points d’aventure (`victory.voyagesBonus`, 5 par défaut).
+- Le gagnant est ensuite celui qui a le plus de points d’aventure (à égalité : le plus de voyages, puis celui qui a fini en premier). En solo, rien ne change à part le bonus.
+- Les conditions 35 points et 40 jours restent comme avant. Règles (onglet « Fin de partie ») et écran de choix de la fin de partie mis à jour. Code : checkMultiVictory (simulator.js).

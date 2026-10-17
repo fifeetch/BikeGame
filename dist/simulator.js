@@ -68,7 +68,9 @@ export function fastTravel(m,id){const p=player(m);if(m.phase!=='voyage-choice'|
 function checkMultiVictory(m){if(!multiVictory(m)||m.done)return false;const r=m.rules.victory;let w=null,why='';
  const byPoints=r.points?[...m.players].filter(p=>p.points>=r.points).sort((a,b)=>b.points-a.points)[0]:null;
  const byVoyages=r.voyages?m.players.find(p=>(p.voyagesDone||[]).length>=r.voyages):null;
- if(byVoyages){w=byVoyages;why=`${r.voyages} voyages réussis`;}else if(byPoints){w=byPoints;why=`${r.points} points d’aventure atteints`;}
+ if(byVoyages){const bonus=r.voyagesBonus??5;if(bonus){byVoyages.points+=bonus;m.stats&&(m.stats.firstVoyagesBonus=bonus);record(m,'bonus',`${byVoyages.name} réussit ${r.voyages} voyages en premier : +${bonus} points d’aventure.`);}
+  w=m.players.length>1?[...m.players].sort((a,b)=>b.points-a.points||(b.voyagesDone?.length||0)-(a.voyagesDone?.length||0)||Number(b.id===byVoyages.id)-Number(a.id===byVoyages.id))[0]:byVoyages;
+  why=m.players.length>1?`${byVoyages.name} a réussi ${r.voyages} voyages en premier (+${bonus} points) ; ${w.id===byVoyages.id?'et a aussi':'mais '+w.name+' a'} le plus de points d’aventure`:`${r.voyages} voyages réussis (+${bonus} points)`;}else if(byPoints){w=byPoints;why=`${r.points} points d’aventure atteints`;}
  else if(r.days&&m.round>r.days){w=ranking(m)[0];why=`${r.days} jours écoulés, le plus de points`;}
  if(!w)return false;m.done=true;m.phase='finished';m.winner=w.id;m.winReason=why;record(m,'finish',`${w.name} gagne la partie : ${why}.`);return true;}
 export function view(m,p=player(m)){
