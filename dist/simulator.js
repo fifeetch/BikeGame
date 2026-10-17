@@ -570,11 +570,6 @@ export function betaThirst(m,p,step){return betaOn(m)&&step===0&&water(m,p)<1?1:
 function fillWater(m,p,why){const cap=waterCap(m,p),before=water(m,p);if(before>=cap)return false;p.water=cap;record(m,'eau',`💧 Gourdes remplies (${why}) : ${cap} / ${cap}.`);return true;}
 function betaStep(m,p,k,t){if(!betaOn(m))return;
  if(m.moved===1){if(water(m,p)>0){p.water--;record(m,'eau',`💧 Tu bois une gourde : ${p.water} / ${waterCap(m,p)}.`);}else record(m,'eau','🥵 Plus d’eau : −1 énergie, et pas de repas chaud tant que tu n’as pas rempli une gourde.');}
- const spot=waterSpot(m,k);
- if(spot==='ville')fillWater(m,p,'à la fontaine de la ville');else if(spot==='fontaine')fillWater(m,p,'à la fontaine du hameau');
- else if(spot==='riviere'||spot==='torrent'){const where=spot==='riviere'?'à la rivière':'au torrent';
-  if(p.items.includes('filtre'))fillWater(m,p,where+', avec le filtre');
-  else if(water(m,p)<1){fillWater(m,p,where+', sans filtre');if(irand(m)<WATER_RISK){p.energy=Math.max(0,p.energy+WATER_SICK.energy);if(m.rules.fatigue?.enabled){p.fatigue=Math.min(fatigueMax(m),(p.fatigue||0)+WATER_SICK.fatigue);p.energy=Math.min(p.energy,energyCap(m,p));}record(m,'eau','🤢 Eau contaminée ! Ventre retourné : −2 énergie, +1 fatigue. Un filtre t’aurait évité ça.');}}}
  const h=t.type==='ville'?holidayAt(m,k):'';if(h&&p.feteRound!==m.round){p.feteRound=m.round;p.points+=1;record(m,'fete',`🎉 ${h} à ${t.name||'la ville'} : on t’invite à la fête (+1 point). Supérette et magasin de vélo fermés.`,{points:1});}}
 function betaNight(m,p,id){if(!betaOn(m))return;if(['camping','hotel','demander'].includes(id)){const cap=waterCap(m,p);if(water(m,p)<cap){p.water=cap;p.log?.unshift(`💧 Gourdes remplies pour la nuit : ${cap} / ${cap}.`);}}}
 // Le calendrier : la partie commence un lundi. Jours de fermeture selon le pays (supérette et magasin de vélo).
@@ -592,3 +587,14 @@ export function holidayAt(m,key,round=m.round){if(!betaOn(m))return '';const c=c
 // Pourquoi la boutique est fermée aujourd'hui ('' = ouverte). shop : 'superette' ou 'velo'.
 export function shopClosed(m,key,shop,round=m.round){if(!betaOn(m))return '';const c=countryAt(m,key);if(!c)return '';const d=weekday(m,round);
  const h=holidayAt(m,key,round);if(h)return h;if(d==='dimanche'&&SUNDAY_CLOSED.has(c))return 'dimanche';if(d==='lundi'&&shop==='velo'&&c==='FR')return 'lundi';return '';}
+// Remplir ses gourdes (bouton « Remplir les gourdes », 17 octobre, demande de Fi) : on s'arrête sur la case.
+// Sûr : ville, hameau (fontaine). Rivière, lac, torrent : sûr avec le filtre, sinon 1 fois sur 4 eau contaminée.
+export function waterInfo(m,p=player(m)){if(!betaOn(m))return null;const spot=waterSpot(m,p.pos),cap=waterCap(m,p),w=water(m,p),filter=p.items.includes('filtre');
+ const label={ville:'fontaine de la ville',fontaine:'fontaine du hameau',riviere:'rivière',torrent:'torrent'}[spot]||'';
+ const safe=spot==='ville'||spot==='fontaine'||(spot&&filter);
+ const why=!spot?'pas d’eau ici':w>=cap?'gourdes pleines':'';return {spot,label,cap,water:w,filter,safe,why};}
+export function refillWater(m){const p=player(m),i=waterInfo(m,p);if(!i||i.why||m.pendingAttack||m.done||!['move','place'].includes(m.phase))return false;
+ p.water=i.cap;record(m,'eau',`💧 Gourdes remplies à la ${i.label}${i.spot!=='ville'&&i.spot!=='fontaine'?(i.filter?', avec le filtre':', sans filtre'):''} : ${i.cap} / ${i.cap}.`);
+ if(!i.safe&&irand(m)<WATER_RISK){p.energy=Math.max(0,p.energy+WATER_SICK.energy);if(m.rules.fatigue?.enabled){p.fatigue=Math.min(fatigueMax(m),(p.fatigue||0)+WATER_SICK.fatigue);p.energy=Math.min(p.energy,energyCap(m,p));}
+  record(m,'eau','🤢 Eau contaminée ! Ventre retourné : −2 énergie, +1 fatigue. Un filtre t’aurait évité ça.');m.waterSick={turn:m.turn,text:'Eau contaminée ! Ventre retourné : −2 énergie, +1 fatigue.'};}
+ return true;}

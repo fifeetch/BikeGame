@@ -2306,3 +2306,9 @@ body .modal.night-wrap .night-cards .imm-night.off{opacity:.45}
 .tw-closed svg{filter:grayscale(.7) brightness(.7)}
 .tw-closed-sign{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(-6deg);background:#d0574a;color:#fff3cf;font:900 28px 'Fraunces',Georgia,serif;letter-spacing:.08em;padding:6px 18px;border:3px solid #fff3cf;border-radius:8px;box-shadow:0 4px 0 #0006}
 .tw-shut{display:block;color:#f2a541;font-weight:600}
+/* Mode Bêta : points d'eau sur la carte (fontaines des hameaux, rivières plus visibles) */
+.water-spot-inner{transform:scale(var(--sym,1))}
+.water-spot circle{fill:#102226;stroke:#6fb3dc;stroke-width:1.3}
+.water-spot path{fill:#7cc4ee}
+.beta-water .decor-river{stroke:#2f8fd0;stroke-opacity:1;stroke-width:3.2}
+.beta-water .decor-lakes ellipse{fill:#2f8fd0;fill-opacity:1;stroke:#d8ecf7;stroke-width:1}

@@ -567,7 +567,7 @@ function ficheJournee(p){const r=m.rules,here=m.board[p.pos],atCity=here?.type==
  const eatGain=S.eatGain(m,p),dist=S.distance(m);
  const why=(...checks)=>checks.find(([bad])=>bad)?.[1]||'';
  const eatWhy=why([!p.food,'plus de nourriture'],[p.energy>=cap,'énergie pleine'],[m.ate>=r.food.maxPerTurn,'déjà mangé']);
- const foodWhy=why([r.food.cityOnly&&!atCity,'en ville seulement'],[p.money<r.food.price,'pas assez de pièces']);
+ const foodWhy=why([r.food.cityOnly&&!atCity,'en ville seulement'],[Boolean(S.shopClosed(m,p.pos,'superette')),'supérette fermée aujourd’hui'],[p.money<r.food.price,'pas assez de pièces']);
  const restoWhy=why([!atCity,'en ville seulement'],[p.money<r.food.restaurantPrice,'pas assez de pièces'],[p.energy>=cap,'énergie pleine'],[m.ate>=r.food.maxPerTurn,'déjà mangé']);
  const sleep=S.immersionOn(m)?immersionSleepTiles(p,blocked):origSleepRows(p,blocked,rode,atCity);const sleepOld=()=>Object.entries(r.rest).map(([id,a0])=>{const a=S.restRule(m,p,id)||a0,free=id==='bivouac'&&p.turnModifiers?.freeBivouac,no=why([a.blocked,'interdit ici (imprévu)'],[rode,'déjà roulé aujourd’hui'],[a.cityOnly&&!atCity,'en ville seulement'],[!free&&a.tent&&!p.items.includes('tente'),'tente nécessaire'],[!free&&p.money<a.price,'pas assez de pièces']);
   const sub=no||(free?'gratuit':(a.price?a.price+' pièce'+(a.price>1?'s':''):'gratuit')+(a.tent?' · tente':'')+(id!=='bivouac'&&r.fatigue.enabled?' · repose':''));
@@ -581,7 +581,7 @@ function ficheJournee(p){const r=m.rules,here=m.board[p.pos],atCity=here?.type==
  const explain=lost?`Les ${lost} case${lost>1?'s':''} en pointillés ${lost>1?'sont perdues':'est perdue'}${reasons.length?' à cause de '+reasons.join(' et de '):''}.`:'';
  const hint=off.enabled&&!off.gps&&!off.off?`Sans ${esc(off.item)}, quitter la route limite la journée à ${off.max} case${off.max>1?'s':''}.`:off.enabled&&off.gps&&off.off?`Hors route avec ${esc(off.item)} : aucune limite.`:'';
  return `${meteoHere(p)}<section class="fiche-route-card"><div class="fiche-route-head"><b>Route du jour</b><span>${place?'depuis '+esc(place):''}</span></div><div class="fiche-rings"><span aria-hidden="true">${rings}</span><b>${m.moved} / ${dist} case${dist>1?'s':''}</b></div>${explain||hint?`<p>${esc(explain)}${explain&&hint?' ':''}${hint}</p>`:''}</section>${note?`<p class="fiche-note">${esc(note)}</p>`:''}
- <p class="fiche-label">Se ravitailler</p><div class="fiche-tiles">${ficheTile(S.mealInfo(m,p).label,eatWhy||'+'+eatGain+' énergie · '+S.mealInfo(m,p).dish,'eat',blocked||Boolean(eatWhy))}${ficheTile('Provisions',foodWhy||r.food.quantity+' repas · '+r.food.price+' pièce'+(r.food.price>1?'s':''),'food',blocked||Boolean(foodWhy))}${ficheTile('Restaurant',restoWhy||'+'+r.food.restaurantEnergy+' énergie · '+r.food.restaurantPrice+' pièce'+(r.food.restaurantPrice>1?'s':''),'restaurant',blocked||Boolean(restoWhy))}${work}</div>
+ <p class="fiche-label">Se ravitailler</p><div class="fiche-tiles">${ficheTile(S.mealInfo(m,p).label,eatWhy||'+'+eatGain+' énergie · '+S.mealInfo(m,p).dish,'eat',blocked||Boolean(eatWhy))}${ficheTile('Provisions',foodWhy||r.food.quantity+' repas · '+r.food.price+' pièce'+(r.food.price>1?'s':''),'food',blocked||Boolean(foodWhy))}${ficheTile('Restaurant',restoWhy||'+'+r.food.restaurantEnergy+' énergie · '+r.food.restaurantPrice+' pièce'+(r.food.restaurantPrice>1?'s':''),'restaurant',blocked||Boolean(restoWhy))}${work}${betaWaterTile(p,blocked)}</div>
  <p class="fiche-label">Dormir · termine la journée</p><div class="fiche-tiles">${sleep}</div>${immersionPanel(p)}${ferries?`<p class="fiche-label">Traversée</p><div class="fiche-tiles">${ferries}</div>`:''}
 `;}
 function ficheSacoches(p){const r=m.rules,b=r.bikes[p.bike],used=S.inventorySpace(m),atCity=m.board[p.pos]?.type==='ville',blocked=m.done||!['move','place'].includes(m.phase),cap=S.bagCapacity(m,p),free=Math.max(0,cap-used),off=S.offroadStatus(m,p);
@@ -1406,3 +1406,8 @@ var setupPage='players';
  const shut=['superette','velo'].filter(id=>why(id));if(!shut.length)return h;
  const names=shut.map(id=>id==='velo'?'le magasin de vélo':'la supérette').join(' et '),r=why(shut[0]);
  return h.replace('<small>Clique sur une boutique : ton cycliste y entre.</small>',`<small>Clique sur une boutique : ton cycliste y entre.</small><small class="tw-shut">🔒 ${S.weekday(m)[0].toUpperCase()+S.weekday(m).slice(1)} : ${names} ${shut.length>1?'sont fermés':'est fermé'} (${esc(r==='dimanche'||r==='lundi'?'jour de fermeture':r)}).</small>`);};}
+// Mode Bêta : bouton « Remplir les gourdes » dans « Se ravitailler » (on s'arrête sur la case d'eau).
+function betaWaterTile(p,blocked){const i=S.waterInfo?.(m,p);if(!i)return '';
+ const sub=i.why||(i.safe?`💧 ${i.label} · eau sûre`:`⚠ ${i.label} sans filtre · 1 risque sur 4`);
+ return ficheTile('Remplir les gourdes',sub,'water-fill',blocked||Boolean(i.why),'beta-fill');}
+{const priorAct=act;act=a=>{if(a!=='water-fill')return priorAct(a);const out=priorAct(a);if(!m||!S.refillWater(m))message='Impossible de remplir ici : pas d’eau, ou gourdes déjà pleines.';else if(m.waterSick?.turn===m.turn){message='🤢 '+m.waterSick.text;m.waterSick=null;}else message='💧 Gourdes remplies.';persist();render();return out;};}

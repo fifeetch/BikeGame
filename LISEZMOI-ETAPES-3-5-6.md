@@ -457,3 +457,8 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - Calendrier : jour 1 = lundi, jour affiché sur la fiche. Supérette et magasin de vélo fermés le dimanche en France, Allemagne, Autriche, Suisse, Belgique, Pays-Bas, Italie, Espagne, Portugal, Norvège, Suède, Danemark, Finlande, Grèce, Pologne ; magasin de vélo fermé aussi le lundi en France. Jours fériés au hasard (≈1 jour sur 20 par pays) : boutiques fermées, +1 point « fête » en arrivant en ville.
 - 6 scènes Bêta : fontaine à sec, source du berger, source glacée, ruisseau trouble (sans filtre, gourdes vides), tuyau d'arrosage, boulangerie du dimanche.
 - Code : fin de simulator.js (WATER_CAP, waterSpot, betaStep, betaNight, weekday, shopClosed, holidayAt) ; crochets dans move, routeCheck, rest, buyFood, buy, hasStove, sceneFits, resolveEncounter ; scènes à la fin de immersion.js ; fiche et boutiques fermées à la fin de app.js ; `filtre` dans rules.js (betaOnly). Planche : https://claude.ai/artifact/H2MeaqWjfvpdmXFT8yFDQv
+
+## 17 octobre, 22 h 40 — Bêta : bouton « Remplir les gourdes » (cache v115-gourdes, poussé, pas encore publié)
+- Plus de remplissage automatique en roulant (l'eau ne baissait pas). Bouton « Remplir les gourdes » dans « Se ravitailler » quand on est arrêté sur un point d'eau : ville ou fontaine de hameau (sûr) ; rivière, lac, torrent (sûr avec le filtre, sinon 1 risque sur 4). Camping, hôtel, habitant remplissent toujours la nuit.
+- Carte : goutte bleue sur les 90 fontaines de hameau, rivières et lacs plus visibles (classe `beta-water`).
+- Code : waterInfo, refillWater (fin de simulator.js) ; betaWaterTile et action water-fill (fin de app.js) ; drawAdventure (board-renderer-svg.js).

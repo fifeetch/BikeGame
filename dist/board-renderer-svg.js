@@ -197,7 +197,8 @@ export function createSVGBoardRenderer(container,options={}){
  function drawAdventure(g,editMode){
   const cols=Object.values(g.board).filter(t=>t.type==='col'&&t.colName),marks=Object.entries(g.landmarks||{}),climbed=g.colsClimbed||{},colorOf=id=>(g.players||[]).find(p=>p.id===id)?.color||'';
   const sky=g.forecast&&g.mode==='plateau'&&!editMode?forecast(g.seed,g.round):null;
-  const sig=JSON.stringify(sky)+editMode+'|'+cols.map(t=>t.key+(climbed[t.key]||'')).join(',')+'|'+marks.map(([k,l])=>k+(l.found?'1':'0')).join(',');
+  const beta=Boolean(g.beta&&g.immersion&&!editMode);svg.classList?.toggle('beta-water',beta);
+  const sig=JSON.stringify(sky)+editMode+beta+'|'+cols.map(t=>t.key+(climbed[t.key]||'')).join(',')+'|'+marks.map(([k,l])=>k+(l.found?'1':'0')).join(',');
   if(sig===adventureSig)return;adventureSig=sig;
   if(editMode){adventure.innerHTML='';return;}
   let out='';
@@ -206,6 +207,9 @@ export function createSVGBoardRenderer(container,options={}){
   for(const [k,l]of marks){const t=g.board[k];if(!t)continue;
    out+=l.found?`<g class="landmark found" transform="translate(${f1(t.x)} ${f1(t.y)})"><title>${esc(l.name)} (+${l.value})</title><g class="landmark-inner"><circle r="5.5"/><text y="2.6">✦</text></g></g>`
     :`<g class="landmark" transform="translate(${f1(t.x)} ${f1(t.y)})"><title>Lieu remarquable caché</title><g class="landmark-inner"><circle r="7.5"/><text y="3.6">?</text></g></g>`;}
+  // Mode Bêta (17 octobre) : les fontaines des hameaux, points d'eau sûrs (goutte bleue).
+  if(beta)for(const v of DECOR.villages){const t=g.board[`hex-${v.at(-2)}-${v.at(-1)}`];if(!t||t.type==='ville'||t.type==='mer')continue;
+   out+=`<g class="water-spot" transform="translate(${f1(t.x)} ${f1(t.y+6)})"><title>Fontaine du hameau : eau sûre</title><g class="water-spot-inner"><circle r="5.6"/><path d="M0 -3.6C2.2 -1 3 .4 3 1.4a3 3 0 0 1 -6 0c0 -1 .8 -2.4 3 -5z"/></g></g>`;}
   // Météo annoncée : temps du jour posé au centre de chaque région.
   if(sky)for(const [id,w]of Object.entries(sky)){const c=REGION_CENTRES[id],label=`${REGIONS[id].name} · ${WEATHER[w].name}`;
    out+=`<g class="weather-badge w-${w}" transform="translate(${f1(c.x)} ${f1(c.y)})" aria-label="${esc(label)} : ${esc(WEATHER[w].effect)}"><g class="weather-badge-inner"><circle r="8"/><text class="weather-icon" y="3.4">${WEATHER[w].icon}</text></g></g>`;}
