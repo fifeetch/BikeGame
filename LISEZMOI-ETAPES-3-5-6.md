@@ -446,3 +446,7 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - « Qui part ? » refait : 1 · nombre de cyclistes (gros boutons), noms ; 2 · paramètres avec une phrase chacun (météo, imprévus, fin de partie). Règles et réglages par défaut inchangés.
 - En ligne : « Créer une partie » passe par les deux mêmes écrans, puis la salle d'attente avec le code. « J'ai reçu un code » inchangé.
 - Code : kindScreen, kindChoices, countPicker, paramsBlock (menus.js) ; setupPage et actions kind-next, kind, count-N, net-create-open, net-create-next, net-count-N (fin de app.js) ; styles .mc-kind, .mc-param… (fin de style.css). Planche : https://claude.ai/artifact/Kv1xFXZtbjHFXufwWX5dFM
+
+## 17 octobre, 22 h 15 — Mode Bêta (cache v113-beta)
+- 4ᵉ carte « Bêta · pour tester » sur l'écran « À quoi veux-tu jouer ? » : une copie exacte du mode Immersion, où les nouvelles règles à l'essai (eau, magasins fermés le dimanche…) seront ajoutées sans toucher aux autres modes.
+- Code : `rules.immersion.beta` (rules.js), `m.beta` et `betaOn(m)` (simulator.js) ; action `mode-beta` (fin de app.js) ; carte et libellés dans menus.js. Une nouvelle règle Bêta s'écrit `if(betaOn(m)){…}`.

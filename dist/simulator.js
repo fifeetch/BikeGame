@@ -92,7 +92,7 @@ export function createMatch(roster,mode='plateau',rules=CLASSIC,seed=randomSeed(
   const lv=LEVELS[r.immersion.level]||LEVELS.voyage;r.startEnergy=Math.min(r.maxEnergy,lv.start);if(r.victory?.mode==='multi'&&r.victory.days)r.victory={...r.victory,days:lv.days};if(lv.foodQty)r.food={...r.food,quantity:lv.foodQty};}for(const p of roster)if(!r.bikes[p.bike]||!findVoyage(p.voyage))throw Error('Vélo ou objectif inconnu.');
  const base=E.makeGame(roster[0].bike,seed,roster[0].voyage,mode);
  const m={version:2,cardVersion:3,forecast:Boolean(r.weather?.forecast&&mode==='plateau'),encounters:Boolean(r.encounters?.enabled&&mode==='plateau'),customCards:normalizeCustomCards(customCards),eventCardEdits:normalizeEventEdits(eventCardEdits),mode,seed:base.seed,board:base.board,edges:base.edges||[],mapVersion:base.mapVersion,deck:base.deck,hand:base.hand,rules:r,players:[],activeIndex:0,round:1,turn:1,phase:mode==='plateau'?'move':'place',moved:0,ate:0,placed:false,event:null,cardChoices:[],turnKind:'travel',done:false,history:[],stats:{turns:0,events:0,categories:{negative:0,positive:0,challenge:0},terrain:{},work:0,rest:0,energySpent:0,moneySpent:0}};
- if(r.immersion?.enabled&&mode==='plateau'){m.immersion=true;m.imm={rng:((base.seed^0x51ed27)>>>0)||1,situations:[],seq:0,level:LEVELS[r.immersion.level]?r.immersion.level:'voyage'};}
+ if(r.immersion?.enabled&&mode==='plateau'){m.immersion=true;m.beta=Boolean(r.immersion.beta);m.imm={rng:((base.seed^0x51ed27)>>>0)||1,situations:[],seq:0,level:LEVELS[r.immersion.level]?r.immersion.level:'voyage'};}
  roster.forEach((entry,i)=>{
   const v=findVoyage(entry.voyage);let pos;
   if(mode==='plateau')pos='city-'+v.from;
@@ -379,6 +379,8 @@ export function migrate(old){E.upgradePlateau(old);const v=findVoyage(old.voyage
 // Pas de cartes : des scènes en route (environ un jour sur deux) et le soir, des imprévus qui durent sur
 // des zones de la carte, « Demander » l'hospitalité, des compagnons de route et un carnet du soir.
 export const immersionOn=m=>Boolean(m?.immersion&&m.mode==='plateau');
+// Mode Bêta (17 octobre) : une copie du mode Immersion ; les nouvelles règles à l'essai se branchent seulement ici : if(betaOn(m)){…}
+export const betaOn=m=>Boolean(immersionOn(m)&&m.beta);
 function irand(m){let s=m.imm.rng>>>0;s=(Math.imul(s,1664525)+1013904223)>>>0;m.imm.rng=s;return s/4294967296;}
 function pim(p){return p.imm||={seen:{},planTurn:0,planStep:0,last:'',companions:{},ride:null,zones:[],sitDone:[],demand:null};}
 export const situationTemplate=id=>SITUATIONS.find(s=>s.id===id);

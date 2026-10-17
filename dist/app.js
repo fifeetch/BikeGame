@@ -1387,3 +1387,8 @@ var setupPage='players';
   if(/^net-count-\d$/.test(a)){readNetForm();net={...net,count:+a.slice(10)};render();return;}
  }
  return priorAct(a);};}
+// Mode Bêta (17 octobre) : Immersion + beta:true ; les autres choix de mode remettent beta à false.
+{const priorAct=act;act=a=>{
+ if(a==='mode-beta'){setupRules.immersion={...(setupRules.immersion||{}),beta:true};return priorAct('mode-immersion');}
+ if(a==='mode-immersion'||a==='mode-original')setupRules.immersion={...(setupRules.immersion||{}),beta:false};
+ return priorAct(a);};}
