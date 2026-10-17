@@ -222,7 +222,7 @@ export function restaurant(m){const p=player(m),r=m.rules.food;if(m.pendingAttac
 export function buy(m,id){const p=player(m),e=m.rules.equipment[id];if(!e||m.pendingAttack||m.done||!['move','place'].includes(m.phase)||m.board[p.pos].type!=='ville'||p.items.includes(id)||p.money<e.price||inventorySpace(m)+e.space>m.rules.bikes[p.bike].capacity)return false;p.money-=e.price;p.items.push(id);p.food+=e.foodBonus||0;m.stats.moneySpent+=e.price;record(m,'buy','Équipement acheté : '+e.name);return true;}
 export function discard(m,id){const p=player(m);if(m.pendingAttack||m.done||!['move','place'].includes(m.phase)||!p.items.includes(id))return false;p.items=p.items.filter(i=>i!==id);record(m,'equipment','Équipement déposé : '+m.rules.equipment[id].name);return true;}
 export function work(m){const p=player(m);if(!m.rules.workEnabled||m.pendingAttack||m.done||!['move','place'].includes(m.phase)||m.moved||m.placed||(m.rules.workCityOnly&&m.board[p.pos].type!=='ville'))return false;p.money+=m.rules.salary;p.stats.work++;m.stats.work++;m.turnKind='work';m.actionDays=m.rules.workDays;record(m,'work','Travail : +'+m.rules.salary+' pièces, '+m.actionDays+' jour(s) sans déplacement.');endTurn(m);return true;}
-export function rest(m,id){if(immersionOn(m))return sleepNight(m,id);const p=player(m),r=restRule(m,p,id),free=id==='bivouac'&&p.turnModifiers?.freeBivouac;if(!r||r.blocked||m.pendingAttack||m.done||!['move','place'].includes(m.phase)||m.moved||m.placed||(!free&&(p.money<r.price||(r.tent&&!p.items.includes('tente'))))||(r.cityOnly&&m.board[p.pos].type!=='ville'))return false;if(!free){p.money-=r.price;m.stats.moneySpent+=r.price;const bonus=p.items.reduce((n,i)=>n+(m.rules.equipment[i]?.energyBonus||0),0);const restEnergy=C.isEventGame(m)&&id==='bivouac'?C.hasBonusEffect(m,p,'comfortable_tent')?2:m.rules.cardBalance.bivouacEnergy:r.energy;p.energy=Math.min(energyCap(m,p),p.energy+restEnergy+bonus);}if(id!=='bivouac')p.fatigue=0;(p.nights||=[]).push({key:p.pos,kind:id,day:m.round});p.stats.rest++;m.stats.rest++;m.turnKind='rest';m.actionDays=r.days;record(m,'rest',(free?'Bivouac gratuit grâce à Abri trouvé':r.name)+' : '+r.days+' jour(s) sans déplacement.');endTurn(m);return true;}
+export function rest(m,id){if(immersionOn(m))return sleepNight(m,id);if(origNightsOn(m))return origSleep(m,id);const p=player(m),r=restRule(m,p,id),free=id==='bivouac'&&p.turnModifiers?.freeBivouac;if(!r||r.blocked||m.pendingAttack||m.done||!['move','place'].includes(m.phase)||m.moved||m.placed||(!free&&(p.money<r.price||(r.tent&&!p.items.includes('tente'))))||(r.cityOnly&&m.board[p.pos].type!=='ville'))return false;if(!free){p.money-=r.price;m.stats.moneySpent+=r.price;const bonus=p.items.reduce((n,i)=>n+(m.rules.equipment[i]?.energyBonus||0),0);const restEnergy=C.isEventGame(m)&&id==='bivouac'?C.hasBonusEffect(m,p,'comfortable_tent')?2:m.rules.cardBalance.bivouacEnergy:r.energy;p.energy=Math.min(energyCap(m,p),p.energy+restEnergy+bonus);}if(id!=='bivouac')p.fatigue=0;(p.nights||=[]).push({key:p.pos,kind:id,day:m.round});p.stats.rest++;m.stats.rest++;m.turnKind='rest';m.actionDays=r.days;record(m,'rest',(free?'Bivouac gratuit grâce à Abri trouvé':r.name)+' : '+r.days+' jour(s) sans déplacement.');endTurn(m);return true;}
 function random(m){return E.random(m);}
 function weighted(m,list){let n=random(m)*list.reduce((s,e)=>s+e.weight,0);return list.find(e=>(n-=e.weight)<0)||list.at(-1);}
 export function drawEvent(m){let n=random(m)*100,category='challenge';for(const [k,value]of Object.entries(m.rules.probabilities)){n-=value;if(n<0){category=k;break;}}
@@ -236,6 +236,7 @@ export function endTurn(m){if(m.pendingAttack||m.done||!['move','place'].include
  if(immersionOn(m))immersionRideFatigue(m,rider);
  else if(fatigue?.enabled&&m.moved>0&&m.turnKind!=='rest'){const before=rider.fatigue||0;rider.fatigue=Math.min(fatigue.days,before+rideGain(m,rider,1+(rider.dayCols?fatigue.colExtra:0)));rider.energy=Math.min(rider.energy,energyCap(m,rider));
   if(rider.fatigue>before)record(m,'fatigue',isExhausted(m,rider)?`${rider.name} est fourbu : énergie maximale ${energyCap(m,rider)} jusqu’à une vraie nuit (camping ou hôtel).`:`${rider.name} : fatigue ${rider.fatigue}/${fatigue.days}, énergie maximale ${energyCap(m,rider)}.`);}
+ if(!immersionOn(m))applyOrigNight(m,rider);
  rider.dayCols=0;
  record(m,'end','Fin du tour sur '+(m.board[player(m).pos].name||E.terrains[m.board[player(m).pos].type].name)+'.',{distance:m.moved,action:m.turnKind});
  if(C.isEventGame(m)){const p=player(m);C.onTurnEnd(m,p);if(p.blockedFirst){for(const effect of (p.pendingEffects||[]).filter(e=>e.kind==='road_closed'))C.discard(m,effect.cardId);p.pendingEffects=(p.pendingEffects||[]).filter(e=>e.kind!=='road_closed');p.blockedFirst=null;}p.freeSteps=0;p.freeGeneralSteps=0;p.freeRoadSteps=0;p.freeTailwindSteps=0;p.bonusDistanceUsed=0;p.shortcutActive=false;if(m.encounters){beginEncounter(m);return true;}C.drawChoices(m);if(!m.cardChoices.length&&!m.pendingAttack)advance(m);return true;}
@@ -456,8 +457,8 @@ export function demandInfo(m,p=player(m)){const t=m.board[p.pos],im=pim(p),o=dem
 export function sleepOptions(m,p=player(m)){const here=m.board[p.pos],city=here?.type==='ville',restDay=!m.moved,factor=restDay?REST_DAY_FACTOR:1,stormy=['orage','pluie'].includes(immContext(m,p,p.pos).weather),out=[];
  for(const id of ['bivouac','camping','hotel']){const r=restRule(m,p,id),nt=NIGHT[id],free=id==='bivouac'&&p.turnModifiers?.freeBivouac,price=free?0:r.price;
   const why=r.blocked?'interdit ici : '+r.blocked:r.cityOnly&&!city?'en ville seulement':id==='bivouac'&&!free&&!p.items.includes('tente')?'tente nécessaire':p.money<price?'pas assez de pièces':'';
-  out.push({id,name:nt.name,price,energy:nt.energy*factor,fatigue:nightFatigue(nt,restDay,city,immLevel(m)),calm:(stormy?nt.stormy:nt.odds).calm,why});}
- const o=demandInfo(m,p);out.push({id:'demander',name:'Demander l’hospitalité',price:0,odds:o,why:'',lateCamping:immLevel(m).late,fatigue:{grand:nightFatigue(DEMAND_NIGHT.grand,restDay,city,immLevel(m)),jardin:nightFatigue(DEMAND_NIGHT.jardin,restDay,city,immLevel(m))}});
+  out.push({id,name:nt.name,price,energy:nt.energy*factor+(immersionOn(m)?0:equipBonus(m,p)),fatigue:immersionOn(m)?nightFatigue(nt,restDay,city,immLevel(m)):ORIG_NIGHT_FATIGUE[id],calm:(stormy?nt.stormy:nt.odds).calm,why});}
+ const o=demandInfo(m,p);out.push({id:'demander',name:'Demander l’hospitalité',price:0,odds:o,why:'',lateCamping:immLevel(m).late,fatigue:immersionOn(m)?{grand:nightFatigue(DEMAND_NIGHT.grand,restDay,city,immLevel(m)),jardin:nightFatigue(DEMAND_NIGHT.jardin,restDay,city,immLevel(m))}:{grand:ORIG_NIGHT_FATIGUE.grand,jardin:ORIG_NIGHT_FATIGUE.jardin}});
  return {restDay,factor,stormy,options:out};}
 function sleepNight(m,id){const p=player(m);if(!immersionOn(m)||m.pendingAttack||m.done||!['move','place'].includes(m.phase))return false;
  const im=pim(p),restDay=!m.moved;
@@ -497,3 +498,28 @@ export function fatigueInfo(m,p=player(m)){if(!immOn(m))return null;const f=Math
 // Niveau de difficulté de la partie (mode Immersion) ; « voyage » = le jeu standard.
 export function immLevel(m){return LEVELS[m?.imm?.level]||LEVELS.voyage;}
 export const immLevelId=m=>m?.immersion&&LEVELS[m?.imm?.level]?m.imm.level:'voyage';
+
+// ---------- Mode original (règle de Fi, 17 octobre) : comme en Immersion, dormir termine la journée ----------
+// Énergie des nuits = chiffres Immersion (bivouac +1, camping +2, hôtel +3, Demander), ×2 après une journée sans rouler, + bonus du matelas.
+// Fatigue = règle du mode original : camping, hôtel et grand accueil l'effacent ; bivouac ne change rien ; jardin −1 ; nuit dehors +1.
+export const origNightsOn=m=>Boolean(m&&m.mode==='plateau'&&!immersionOn(m));
+const ORIG_NIGHT_FATIGUE={bivouac:0,camping:'reset',hotel:'reset',grand:'reset',jardin:-1,refusCamping:'reset',refusDehors:1};
+function equipBonus(m,p){return p.items.reduce((n,i)=>n+(m.rules.equipment[i]?.energyBonus||0),0);}
+function origSleep(m,id){const p=player(m);if(m.pendingAttack||m.done||!['move','place'].includes(m.phase))return false;const restDay=!m.moved,im=pim(p);let night;
+ if(id==='demander'){const odds=demandInfo(m,p),late=immLevel(m).late,draw=()=>{const roll=random(m)*100;return roll<odds.grand?'grand':roll<odds.grand+odds.jardin?'jardin':'refus';};
+  let kind=draw();const last=im.demandLast||[];if(last.length>=2&&last[0]===kind&&last[1]===kind)kind=['grand','jardin','refus'].filter(k=>k!==kind)[Math.floor(random(m)*2)];
+  im.demandLast=[kind,...last].slice(0,2);im.demandStreak=(im.demandStreak||0)+1;
+  let result=kind;if(kind==='refus')result=p.money>=late?'refusCamping':'refusDehors';if(result==='refusCamping'){p.money-=late;m.stats.moneySpent+=late;}
+  const title={grand:'Grand accueil',jardin:'Oui, le jardin',refus:'Refus poli'}[kind],list=DEMAND_TEXTS[result];
+  const text=fillVariants(list[Math.floor(random(m)*list.length)],regionOf(m.board[p.pos]),()=>random(m)).replace('{prix}',String(late));
+  night={id,turn:m.turn,rest:restDay,demand:{kind,result,title,text}};im.night=night;record(m,'night','Demander l’hospitalité : '+title.toLowerCase()+'.');}
+ else{const opt=sleepOptions(m,p).options.find(o=>o.id===id);if(!opt||opt.why)return false;im.demandStreak=0;
+  if(opt.price){p.money-=opt.price;m.stats.moneySpent+=opt.price;}night={id,turn:m.turn,rest:restDay};im.night=night;record(m,'night','Nuit : '+opt.name.toLowerCase()+(opt.price?` (−${opt.price} pièce${opt.price>1?'s':''})`:'')+'.');}
+ p.origNight=night;if(restDay){p.stats.rest++;m.stats.rest++;m.turnKind='rest';}m.actionDays=1;endTurn(m);return true;}
+function applyOrigNight(m,p){const n=p.origNight;p.origNight=null;if(!n||n.turn!==m.turn)return;
+ const key=n.demand?n.demand.result:n.id,r=n.demand?DEMAND_NIGHT[key]:NIGHT[n.id],f=m.rules.fatigue,before=p.energy,fBefore=p.fatigue||0;
+ if(f?.enabled){const d=ORIG_NIGHT_FATIGUE[key];p.fatigue=d==='reset'?0:Math.max(0,Math.min(fatigueMax(m),(p.fatigue||0)+(d||0)));}
+ p.energy=Math.min(energyCap(m,p),p.energy+(r.energy||0)*(n.rest?REST_DAY_FACTOR:1)+equipBonus(m,p));
+ if(r.food)p.food=Math.min(C.foodCapacity(m,p),p.food+r.food);if(r.points)p.points+=r.points;
+ (p.nights||=[]).push({key:p.pos,kind:n.demand?(key==='refusDehors'?'dehors':key==='refusCamping'?'camping':'demander'):n.id,day:m.round});if(p.nights.length>80)p.nights.splice(0,p.nights.length-80);
+ const fd=(p.fatigue||0)-fBefore;record(m,'rest',`${n.demand?n.demand.title:NIGHT[n.id].name}${n.rest?' après une journée sans rouler':''} : +${p.energy-before} énergie${fd?` · fatigue ${fd>0?'+':'−'}${Math.abs(fd)}`:''}.`);}

@@ -349,3 +349,10 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - Mode original : carte Événement reçue (attaque ou événement solo) → la scène animée à côté de la carte, carte du jeu en fond ; carte jouée pour soi (positive ou équipement) → fenêtre avec sa scène ; « Nuit chez l'habitant » → scène « toc toc » ; repos bivouac, camping, hôtel → scène de la nuit.
 - Lieux cachés (jetons « ? ») : 15 paysages, un par lieu (belvédère, pont, chapelle, lavoir, moulin, source, village perché, cascade, gorges, château, forêt, panorama, lac, abbaye, grotte), avec petites animations (eau, roue, torche).
 - Nouveau fichier : dist/landmark-art.js. Aucune règle changée.
+
+## 17 octobre — Mode original : on roule, puis on dort (règles de Fi)
+- **Dormir termine la journée**, comme en Immersion : « Finir ma journée » ouvre « Où dormir ce soir ? » (bivouac, camping, hôtel, Demander l'hospitalité). On peut dormir après avoir roulé.
+- **Énergie des nuits = chiffres Immersion** (choix de Fi) : bivouac +1, camping +2, hôtel +3 ; Demander : grand accueil +3, repas et +1 point · jardin +2 · refus → camping de dernière minute 2 pièces (+2) ou nuit dehors (+0). Journée sans rouler : la nuit rend 2 fois plus. Le matelas et duvet ajoute toujours +1.
+- **Fatigue du mode original gardée** : camping, hôtel, grand accueil et camping de dernière minute l'effacent ; bivouac ne change rien ; jardin −1 ; nuit dehors +1. Pas de « pari de la nuit » dans le mode original.
+- **Solo** : plus de cartes négatives ni climatiques dans la main de départ (elles retournent sous la pioche et sont remplacées).
+- Code : `origSleep` / `applyOrigNight` à la fin de `dist/simulator.js` ; `origNightRows` dans `dist/app.js` ; main de départ solo dans `dist/event-card-engine.js` (setup). Cache v94-nuits.

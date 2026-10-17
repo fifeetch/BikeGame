@@ -26,7 +26,10 @@ export function setup(m){m.eventCardIds=enabledCardIds(m.rules);const starting=m
  if(starting*m.players.length>m.eventCardIds.length)throw Error('La pioche ne contient pas assez de cartes pour la distribution de départ.');
  m.eventDeck=m.rules.eventCards?.shuffle===false?[...m.eventCardIds].reverse():shuffle(m,m.eventCardIds);m.eventDiscard=[];m.cardChoices=[];m.cardWindow=null;m.pendingAttack=null;m.soloEventQueue=[];
  for(const p of m.players){p.bonusCards=[];p.pendingEffects=[];p.journalCities=[];p.cardHand=[];p.freeSteps=0;p.freeGeneralSteps=0;p.freeRoadSteps=0;p.bonusDistanceUsed=0;p.cardPlayedTurn=0;p.climatePlayedTurn=0;p.negativePlayedTurn=0;p.warmTurn=0;p.lightTurn=0;for(let i=0;i<starting;i++){const id=draw(m);if(id)p.cardHand.push(id);}}
- if(m.players.length===1){m.players[0].cardHand=extractSoloEvents(m,m.players[0].cardHand);nextSoloEvent(m);}
+ // Solo (règle de Fi, 17 octobre) : pas de carte négative ni climatique au départ ; elles retournent sous la pioche et sont remplacées.
+ if(m.players.length===1){const p=m.players[0],bad=id=>['negative','climatic'].includes(card(id,m)?.category),back=p.cardHand.filter(bad);p.cardHand=p.cardHand.filter(id=>!bad(id));
+  for(let tries=m.eventDeck.length;p.cardHand.length<starting&&tries>0;tries--){const id=m.eventDeck.pop();if(!id)break;if(bad(id))back.push(id);else p.cardHand.push(id);}
+  m.eventDeck.unshift(...back);}
 }
 function extractSoloEvents(m,ids){return ids.filter(id=>{if(['negative','climatic'].includes(card(id,m)?.category)){m.soloEventQueue.push(id);return false;}return true;});}
 function nextSoloEvent(m){if(m.players.length!==1||m.pendingAttack||!m.soloEventQueue?.length)return;const id=m.soloEventQueue.shift(),p=m.players[0];m.pendingAttack={cardId:id,actorId:p.id,targetId:p.id,solo:true};note(m,p,`${p.name} pioche un événement solo : ${card(id,m).name}.`,'card-solo',{cardId:id});}

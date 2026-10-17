@@ -310,7 +310,7 @@ function act(a){
  else if(a==='restaurant'){if(!S.restaurant(m))message='Restaurant indisponible : ville, argent ou repas quotidien.';}
  else if(a==='work'){if(!S.work(m))message='Le travail demande une journée sans déplacement ni pose de tuile.';mapSelection='';}
  else if(a==='night-open'){modal='night';}
- else if(a.startsWith('rest-')&&a!=='rest-open'){if(!S.rest(m,a.slice(5)))message=S.immersionOn(m)?'Impossible de dormir ici : lieu, argent ou équipement requis.':'Repos indisponible : journée commencée, argent, lieu ou équipement requis.';else if(modal==='night')modal='';mapSelection='';}
+ else if(a.startsWith('rest-')&&a!=='rest-open'){if(!S.rest(m,a.slice(5)))message=(S.immersionOn(m)||S.origNightsOn(m))?'Impossible de dormir ici : lieu, argent ou équipement requis.':'Repos indisponible : journée commencée, argent, lieu ou équipement requis.';else if(modal==='night')modal='';mapSelection='';}
  else if(a==='endturn'){modal='';S.endTurn(m);mapSelection='';route=[];}
  else if(a==='endturn-ask'){const left=Math.max(0,S.distance(m)-m.moved);if(!m.moved||left&&S.moves(m).length)modal='end-confirm';else{S.endTurn(m);mapSelection='';route=[];}}
  else if(a==='rest-open'){modal='';sheetTab='journee';if(narrowScreen())sheetDrawer=true;else if(!displayPrefs.sheet)displayPrefs=writeDisplayPref('sheet',true);setTimeout(()=>document.querySelector('.fiche-journee .fiche-label:nth-of-type(2)')?.scrollIntoView({behavior:'smooth',block:'center'}),80);}
@@ -1005,7 +1005,7 @@ function dockPlan(c){const p=S.player(m),tags=routeTags(),path=route.map((k,i)=>
  return `<div class="dock-plan"><b>Ton étape : ${route.length} case${route.length>1?'s':''}</b><span class="dock-path">${path}</span><span class="dock-chips">${c.ok?`<em class="cost">−${c.energyUsed} ⚡ · il t’en restera ${p.energy-c.energyUsed}</em>`:`<em class="bad">${esc(c.reason||'Parcours impossible')}</em>`}${dockWarnings().replace(/^<span class="dock-chips">|<\/span>$/g,'')}</span></div>`;}
 
 // ---------- Mode Immersion : « Où dormir ce soir ? » — dormir termine toujours la journée ----------
-function immersionSleepTiles(p,blocked){const info=S.sleepOptions(m,p);
+function immersionSleepTiles(p,blocked){if(S.origNightsOn(m))return origNightRows(p,blocked);const info=S.sleepOptions(m,p);
  if(S.fatigueInfo(m,p))return immSleepRows(p,blocked,info);
  return info.options.map(o=>{if(o.id==='demander')return ficheTile('Demander l’hospitalité',`gratuit · un pari · refus ${oddsLabel(o.odds.refus)}${o.odds.streak?` (déjà demandé ${o.odds.streak>1?o.odds.streak+' soirs de suite':'hier'})`:''} · sinon camping ${o.lateCamping} pièces`,'rest-demander',blocked,'demander').replace('sinon camping','accueil fatigue −'+(-o.fatigue.grand)+' · jardin −'+(-o.fatigue.jardin)+' · sinon camping');
   const cut=typeof o.fatigue==='number'&&o.fatigue<0?Math.min(-o.fatigue,p.fatigue||0):0,fat=typeof o.fatigue!=='number'?'':o.fatigue>0?` · fatigue +${o.fatigue}`:cut?` · fatigue −${cut}`:(p.fatigue||0)?' · fatigue inchangée':'';
@@ -1013,10 +1013,10 @@ function immersionSleepTiles(p,blocked){const info=S.sleepOptions(m,p);
   +(info.restDay?`<p class="night-note">Sans rouler aujourd’hui : la nuit rend ${info.factor} fois plus d’énergie.</p>`:'')+(info.stormy?'<p class="night-note storm">Pluie ou orage cette nuit : le bivouac devient risqué.</p>':'');}
 function nightModal(){const p=S.player(m),blocked=m.done||!['move','place'].includes(m.phase),left=Math.max(0,S.distance(m)-m.moved);
  return `<div class="night-modal"><span class="eyebrow">LE SOIR · JOUR ${m.round} · ${esc(p.name)}</span><h2>Où dormir ce soir ?</h2>
- <p class="night-sub">Dormir termine ta journée. Chaque nuit est un pari : plus c’est cher, plus c’est sûr.${m.moved&&left&&S.moves(m).length?` Tu peux encore rouler ${left} case${left>1?'s':''}.`:''}</p>
+ <p class="night-sub">Dormir termine ta journée.${S.immersionOn(m)?' Chaque nuit est un pari : plus c’est cher, plus c’est sûr.':' Camping, hôtel et grand accueil effacent la fatigue.'}${m.moved&&left&&S.moves(m).length?` Tu peux encore rouler ${left} case${left>1?'s':''}.`:''}</p>
  <div class="fiche-tiles night-tiles">${immersionSleepTiles(p,blocked)}</div>
  <div class="night-actions">${btn('Continuer la journée','close','light')}</div></div>`;}
-{const prior=dayAction;dayAction=b=>{const h=prior(b);return m&&S.immersionOn(m)?h.replace(/data-action="(endturn-ask|endturn|rest-open)"/g,'data-action="night-open"').replace(/>Me reposer</g,'>Dormir<').replace(/>Passer</g,'>Dormir ici<').replace(' · clique les cases entourées sur la carte',''):h;};}
+{const prior=dayAction;dayAction=b=>{const h=prior(b);return m&&(S.immersionOn(m)||S.origNightsOn(m))?h.replace(/data-action="(endturn-ask|endturn|rest-open)"/g,'data-action="night-open"').replace(/>Me reposer</g,'>Dormir<').replace(/>Passer</g,'>Dormir ici<').replace(' · clique les cases entourées sur la carte',''):h;};}
 
 // ---------- Mode Immersion : la fatigue sur la fiche et dans la barre d'action (maquette « Fatigue — mode Immersion ») ----------
 function immRiskBar(label){const [k,n]=label.split(' sur ').map(Number);return `<span class="imm-risk-bar" aria-hidden="true">${Array.from({length:n||1},(_,i)=>`<i class="${i<k?'on':''}"></i>`).join('')}</span>`;}
@@ -1060,7 +1060,7 @@ const ORIG_FAT_NAMES=['En forme','Un peu las','Fatigué','Fourbu'];
 function origFatigue(p){const r=m.rules.fatigue;if(!r?.enabled)return null;const f=Math.min(r.days,p.fatigue||0),cap=energyCap(m,p);
  const name=f>=r.days?'Fourbu':ORIG_FAT_NAMES[Math.min(f,ORIG_FAT_NAMES.length-2)];
  return {orig:true,level:f,max:r.days,name,cap,text:f===0?'reposé':`énergie max ${cap} · camping ou hôtel pour récupérer`};}
-function origSleepRows(p,blocked,rode,atCity){const r=m.rules,f=p.fatigue||0,fat=r.fatigue?.enabled;
+function origSleepRows(p,blocked,rode,atCity){if(S.origNightsOn(m))return origNightRows(p,blocked);const r=m.rules,f=p.fatigue||0,fat=r.fatigue?.enabled;
  const rows=Object.entries(r.rest).map(([id,a0])=>{const a=S.restRule(m,p,id)||a0,free=id==='bivouac'&&p.turnModifiers?.freeBivouac;
   const why=[[a.blocked,'interdit ici (imprévu)'],[rode,'déjà roulé aujourd’hui'],[a.cityOnly&&!atCity,'en ville seulement'],[!free&&a.tent&&!p.items.includes('tente'),'tente nécessaire'],[!free&&p.money<a.price,'pas assez de pièces']].find(([bad])=>bad)?.[1]||'';
   const bonus=p.items.reduce((n,i)=>n+(r.equipment[i]?.energyBonus||0),0),gain=(id==='bivouac'&&m.cardVersion===3?r.cardBalance?.bivouacEnergy??a.energy:a.energy)+bonus;
@@ -1068,6 +1068,14 @@ function origSleepRows(p,blocked,rode,atCity){const r=m.rules,f=p.fatigue||0,fat
   const off=blocked||Boolean(why),price=free?'gratuit':a.price?a.price+' pièce'+(a.price>1?'s':''):'gratuit';
   return `<button class="imm-night orig${off?' off':''}${id!=='bivouac'&&f>=(r.fatigue?.days||3)-1&&!why?' conseil':''}" data-action="rest-${id}" ${off?'disabled':''}><span class="ic" aria-hidden="true">${NIGHT_ICON[id]||''}</span><span class="n">${esc(a.name)} <span class="p">· ${price}${a.tent&&!free?' · tente':''}</span></span><span class="e">+${gain} ⚡</span>${pill}${why?`<span class="sub">${esc(why)}</span>`:''}</button>`;}).join('');
  return `<div class="imm-nights">${rows}</div>`;}
+// Mode original (17 octobre) : « Où dormir ce soir ? » comme en Immersion ; énergie des nuits Immersion, fatigue du mode original.
+function origNightRows(p,blocked){const info=S.sleepOptions(m,p),f=p.fatigue||0,fat=m.rules.fatigue?.enabled,pill=(cls,t)=>`<span class="imm-pill ${cls}">${t}</span>`;
+ const fp=d=>!fat?'':d==='reset'?pill(f?'f':'z',f?'fatigue effacée':'reposé'):d>0?pill('r','fatigue +'+d):d<0?pill(f?'f':'z',f?'fatigue −1':'reposé'):pill(f?'r':'z',f?'fatigue gardée':'reposé');
+ const rows=info.options.map(o=>{const off=blocked||Boolean(o.why),d=o.id==='demander';
+  const e=d?`+${2*info.factor}/+${3*info.factor} ⚡`:'+'+o.energy+' ⚡';
+  const sub=o.why?esc(o.why):d?`Un pari : accueil ${oddsLabel(o.odds.grand)} (repas, +1 point) · jardin ${oddsLabel(o.odds.jardin)} · refus ${oddsLabel(o.odds.refus)} → camping ${o.lateCamping} pièces`:'';
+  return `<button class="imm-night orig${off?' off':''}${o.id!=='bivouac'&&!d&&f>=(m.rules.fatigue?.days||3)-1&&!o.why?' conseil':''}" data-action="rest-${o.id}" ${off?'disabled':''}><span class="ic" aria-hidden="true">${NIGHT_ICON[o.id]||''}</span><span class="n">${esc(d?'Demander':o.name)} <span class="p">· ${o.price?o.price+' pièce'+(o.price>1?'s':''):'gratuit'}</span></span><span class="e">${e}</span>${fp(d?o.fatigue.grand:o.fatigue)}${sub?`<span class="sub">${sub}</span>`:''}</button>`;}).join('');
+ return `<div class="imm-nights">${rows}</div>`+(info.restDay?`<p class="night-note">Sans rouler aujourd’hui : la nuit rend ${info.factor} fois plus d’énergie.</p>`:'');}
 // ---------- Mode Immersion : les paris (maquette « Paris et fiche standard ») ----------
 let betResult=null;
 function fxList(fx){const sign=n=>(n>0?'+':'−')+Math.abs(n),out=[];
@@ -1232,16 +1240,17 @@ function nightScene(id,{rain,color,name,badge,outcome=0,title,text='Le résultat
  btnEl.onclick=nightSceneClose;el.addEventListener('click',e=>{if(e.target===el)nightSceneClose();});
  nightOpen={el,stop:()=>cancelAnimationFrame(raf),timer:setTimeout(nightSceneClose,(reduce?4:len+2.2)*1000)};btnEl.focus({preventScroll:true});}catch(err){console.error(err);}}
 document.addEventListener?.('keydown',e=>{if(nightOpen&&(e.key==='Escape'||e.key==='Enter')){e.preventDefault();nightSceneClose();}},true);
-{const priorAct=act;act=a=>{if(!(typeof a==='string'&&a.startsWith('rest-')&&a!=='rest-open'&&screen==='game'&&m&&S.immersionOn(m)))return priorAct(a);
+{const priorAct=act;act=a=>{if(!(typeof a==='string'&&a.startsWith('rest-')&&a!=='rest-open'&&screen==='game'&&m&&(S.immersionOn(m)||S.origNightsOn(m))))return priorAct(a);
  const p=S.player(m),id=a.slice(5),before=m.history.length,money0=p.money;let info=null;try{info=S.sleepOptions(m,p);}catch{}
  const out=priorAct(a);
  try{const rec=m.history.slice(before).find(h=>h.kind==='night'&&h.player===p.id),did=Boolean(rec);if(!did||!NIGHT_SCENE_LENGTH[id])return out;
   const o=info?.options.find(x=>x.id===id),coin=n=>n?` · −${n} 🪙`:'',night=p.imm?.night||{};
   let title={bivouac:'Bivouac',camping:'Camping',hotel:'Hôtel',demander:'Demander l’hospitalité'}[id],badge=`${title}${coin(o?.price)}`,outcome=0;
-  if(id==='bivouac'&&info?.stormy)badge='Bivouac sous la pluie · nuit ?';
+  if(id==='bivouac'&&info?.stormy&&S.immersionOn(m))badge='Bivouac sous la pluie · nuit ?';
   if(id==='demander'){const txt=String(rec.text||'').toLowerCase(),kind=night.demand?.kind||(/jardin/.test(txt)?'jardin':/refus/.test(txt)?'refus':'grand');outcome=kind==='jardin'?1:kind==='refus'?2:0;
    title={grand:'Grand accueil',jardin:'Oui, le jardin',refus:'Refus poli'}[kind];badge=kind==='grand'?'Chambre d’amis':kind==='jardin'?'Coin du jardin':p.money<money0?`Refus → camping${coin(money0-p.money)}`:'Refus → nuit dehors';}
-  nightScene(id,{rain:Boolean(info?.stormy),color:p.color,name:p.name,badge,outcome,title});}catch(err){console.error(err);}
+  const orig=S.origNightsOn(m)&&m.history.slice(before).find(h=>h.kind==='rest'&&h.player===p.id);
+  nightScene(id,{rain:Boolean(info?.stormy),color:p.color,name:p.name,badge,outcome,title,...(orig?{text:(night.demand?.text?night.demand.text+' ':'')+orig.text}:{})});}catch(err){console.error(err);}
  return out;};}
 
 // ---------- Scènes animées dans la fenêtre de la rencontre, avec la carte en fond (planche validée par Fi le 16 octobre) ----------
@@ -1287,7 +1296,7 @@ document.addEventListener?.('keydown',e=>{if(scenePop&&(e.key==='Escape'||e.key=
   if(play){const c=eventCardById(play.cardId),q=m.players.find(x=>x.id===play.player)||p;
    if(play.cardId==='evt-04')nightScene('demander',{rain:false,color:q.color,name:q.name,badge:'Nuit chez l’habitant',outcome:0,title:c?.name||'Nuit chez l’habitant',text:c?.effectText||''});
    else scenePopup(cardScene(play.cardId,c?.category),{eyebrow:(c?.category==='permanent'?'🎒 Équipement · ':'🃏 Carte jouée · ')+q.name,title:c?.name||'Carte',text:c?.effectText||'',player:q});}
-  const rest=a.startsWith('rest-')&&fresh.find(h=>h.kind==='rest'&&h.player===p.id);
+  const rest=!S.origNightsOn(m)&&a.startsWith('rest-')&&fresh.find(h=>h.kind==='rest'&&h.player===p.id);
   if(rest){const id=a.slice(5);if(NIGHT_SCENE_LENGTH[id]){const title={bivouac:'Bivouac',camping:'Camping',hotel:'Hôtel'}[id],cost=money0-p.money;
    nightScene(id,{rain:false,color:p.color,name:p.name,badge:title+(cost>0?` · −${cost} 🪙`:''),outcome:0,title,text:'Une journée de repos : l’énergie revient.'});}}
  }catch(err){console.error(err);}
