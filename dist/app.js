@@ -660,8 +660,10 @@ async function startListening(){
 async function resyncOnline(note=''){if(!online)return;try{const g=await NET.getGame(online.code);if(NET.stateOf(g)&&g?.board){netDeferred=null;applyRemote(NET.joinGame(NET.stateOf(g),g.board),NET.revOf(g),true);if(note)message=note;render();}}catch(e){message='Connexion impossible : '+e.message;render();}}
 async function pushNow(){
  if(!onlineGame())return;if(netPushing){netAgain=true;return;}
- netPushing=true;const sent=lightOf(m);
+ netPushing=true;const sent=lightOf(m),t0=Date.now();
  try{const rev=await NET.pushState(online.code,m,online.rev);
+  // Mesure du temps d'envoi (17 octobre) : si l'envoi dépasse 4 secondes, on le dit au joueur pour comprendre la lenteur.
+  {const sec=(Date.now()-t0)/1000;if(sec>4){message=`⏱ Envoi lent : ${sec.toFixed(0)} s pour transmettre ton coup (${Math.round(sent.length/1024)} Ko). Vérifie la connexion.`;setTimeout(()=>render(),0);}}
   if(rev){online.rev=rev;saveOnline();if(lightOf(m)===sent)netDirty=false;}else{netPushing=false;netDirty=false;await resyncOnline('La partie a été resynchronisée avec l’autre joueur.');return;}}
  catch(e){message='Envoi impossible (connexion ?) : nouvel essai dans 4 secondes.';netPushing=false;setTimeout(()=>{if(onlineGame()&&netDirty)pushNow();},4000);render();return;}
  netPushing=false;
