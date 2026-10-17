@@ -414,3 +414,8 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 ## 17 octobre, 19 h 25 (cache v105-fin-en-ligne) — Écran de fin en ligne
 - En ligne, l’écran « Partie terminée » s’affiche aussi chez l’autre joueur (les fenêtres étaient cachées hors de son tour, même partie finie). Le bandeau dit « Partie terminée » au lieu de « … joue ».
 - Classement de fin lisible (texte foncé sur la carte crème) et phrase de victoire à jour (+5 au premier à 3 voyages, le plus de points gagne).
+
+## 17 octobre, 19 h 45 (cache v106-stats) — Écran de fin avec statistiques (planche « Statistiques de fin » validée par Fi)
+- « Partie terminée » montre une fiche par joueur : d’où viennent les points (barre par catégorie), le détail de chaque point d’aventure jour par jour (à déplier), les voyages (complets ou −40 %), la route par terrain (cols mythiques, hors route, train), les nuits, les repas, les cartes jouées et subies ; puis les moments de la partie (roi des cols, plus de côtes, plus beau voyage, nuits dehors).
+- Chaque ligne du journal garde désormais les points gagnés ou perdus (stampPoints dans event-card-engine.js, champ `pts`) ; pour les anciennes parties, les points se lisent dans le texte du journal.
+- Code : `dist/end-stats.js` (endStatsHtml, playerStats, pointLines) ; styles `.es-*` à la fin de style.css. Ajouté à FILES de sw.js.

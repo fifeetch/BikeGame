@@ -16,8 +16,10 @@ const bonusForEffect=(m,p,type)=>p.bonusCards?.map(id=>card(id,m)).find(c=>c?.ef
 export const hasBonusEffect=(m,p,type)=>!!bonusForEffect(m,p,type);
 // Repas au maximum (règle de Fi, 17 octobre) : Gravel 2, Randonneuse 4, +2 avec les sacoches, +3 avec la carte « grande sacoche ».
 export const foodCapacity=(m,p)=>(m.rules.bikes[p.bike]?.maxFood??m.rules.maxFood)+p.items.reduce((n,id)=>n+(m.rules.equipment[id]?.foodBonus||0),0)+(hasBonusEffect(m,p,'food_capacity')?3:0);
+// Chaque ligne du journal garde les points d'aventure gagnés ou perdus depuis la ligne précédente (écran de fin, 17 octobre).
+export function stampPoints(m,entry){const pts={};for(const q of m.players||[]){if(typeof q.ptsSeen!=='number'){q.ptsSeen=q.points||0;entry.ptsInit=true;continue;}const d=(q.points||0)-q.ptsSeen;if(d){pts[q.id]=d;q.ptsSeen=q.points||0;}}if(Object.keys(pts).length)entry.pts=pts;return entry;}
 export function note(m,actor,text,kind='card',extra={}){
- m.history.push({turn:m.turn,round:m.round,player:actor.id,name:actor.name,kind,text,...extra});
+ m.history.push(stampPoints(m,{turn:m.turn,round:m.round,player:actor.id,name:actor.name,kind,text,...extra}));
  actor.log.unshift(text);actor.log=actor.log.slice(0,8);
 }
 export function discard(m,id){if(id)m.eventDiscard.push(id);}

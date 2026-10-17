@@ -2185,3 +2185,54 @@ body .modal.night-wrap .night-cards .imm-night.off{opacity:.45}
 
 /* Écran de fin (17 octobre) : classement lisible sur la carte crème */
 .modal .standings{color:#1b3b38}.modal .standings h3{color:#1b3b38}.modal .standings li,.modal .standings p{color:#3d4a3a}.modal .standings .muted{color:#5a4a2c}
+
+/* Écran « Partie terminée » avec statistiques (17 octobre, planche « Statistiques de fin ») */
+.modal:has(.es-end){max-width:min(1100px,96vw);width:min(1100px,96vw);max-height:92vh;overflow:auto}
+.es-end{display:grid;gap:14px}
+.es-end>h2{font-family:Fraunces,Georgia,serif;font-weight:900;font-size:32px;margin:0;line-height:1.05}
+.es-end .win-line{margin:0}
+.es-players{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.es-card{background:#fbf1d8;color:#1b3b38;border-radius:16px;padding:14px 16px;display:grid;gap:12px;min-width:0;text-align:left}
+.es-top{display:flex;align-items:center;gap:12px}
+.es-rank{font-family:Fraunces,Georgia,serif;font-weight:900;font-size:22px;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:#fbf1d8;flex:none}
+.es-top h3{font-family:Fraunces,Georgia,serif;font-weight:900;font-size:22px;margin:0;line-height:1;color:#1b3b38}
+.es-top small{display:block;font-size:13px;color:#5a4a2c}
+.es-pts{margin-left:auto;text-align:right;font-family:Fraunces,Georgia,serif;font-weight:900;font-size:32px;line-height:1;font-variant-numeric:tabular-nums;color:#1b3b38}
+.es-pts small{display:block;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#5a4a2c;font-weight:700}
+.es-sec{display:grid;gap:6px}
+.es-sec h4{margin:0;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#8a5a14}
+.es-bar{display:flex;height:14px;border-radius:7px;overflow:hidden;border:1.5px solid #1b3b38;background:#efe0bf}
+.es-bar span{display:block;height:100%}
+.es-legend{display:flex;flex-wrap:wrap;gap:3px 12px;font-size:13px;color:#5a4a2c;font-variant-numeric:tabular-nums}
+.es-legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px;border:1px solid rgba(27,59,56,.5)}
+.es-legend b{color:#1b3b38}
+.es-detail{font-size:13px;color:#1b3b38}
+.es-detail summary{cursor:pointer;font-weight:700;color:#8a5a14}
+.es-group{margin-top:6px}
+.es-group ul{list-style:none;margin:2px 0 0;padding:0;display:grid;gap:2px}
+.es-group li{display:grid;grid-template-columns:34px 1fr auto;gap:8px;border-bottom:1px dashed #d9c79c;padding:2px 0}
+.es-day{color:#8a5a14;font-variant-numeric:tabular-nums}
+.es-gain{font-weight:800;color:#2f6b3a;font-variant-numeric:tabular-nums}.es-gain.neg{color:#b74732}
+.es-rows{display:grid;gap:3px}
+.es-row{display:grid;grid-template-columns:1fr auto;gap:10px;font-size:13px;border-bottom:1px dashed #d9c79c;padding-bottom:2px;color:#1b3b38}
+.es-row span:last-child{font-weight:600;text-align:right}.es-row .warn{color:#b74732}
+.es-nights{display:grid;grid-template-columns:repeat(auto-fit,minmax(70px,1fr));gap:6px}
+.es-night{background:#f1e2bb;border-radius:10px;padding:5px 4px;text-align:center;display:grid;gap:1px}
+.es-night b{font-family:Fraunces,Georgia,serif;font-size:20px;line-height:1.1;color:#1b3b38}
+.es-night span{font-size:12px;color:#5a4a2c}.es-night svg{width:26px;height:20px;margin:0 auto}
+.es-mini{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;text-align:center}
+.es-mini div{display:grid}.es-mini b{font-family:Fraunces,Georgia,serif;font-size:19px;color:#1b3b38}.es-mini span{font-size:12px;color:#5a4a2c}
+.es-hl{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+.es-hl div{border:1.5px solid #4c6a68;border-radius:14px;padding:9px 12px;display:grid;gap:2px;text-align:left}
+.es-hl .k{font-weight:700;letter-spacing:.12em;text-transform:uppercase;font-size:11px;color:#f2a541}
+.es-hl .v{font-family:Fraunces,Georgia,serif;font-size:18px;font-weight:600;color:#f6e7c1}
+.es-hl .s{font-size:12px;color:#cdbf98}
+.es-foot{display:flex;flex-wrap:wrap;gap:8px}
+.es-none{margin:4px 0 0;color:#5a4a2c}
+@media (max-width:460px){.es-mini{grid-template-columns:repeat(2,1fr)}.es-pts{font-size:26px}}
+
+.es-players{align-items:start}.es-card{align-content:start}
+.modal .es-card h3,.modal .es-card .es-what,.modal .es-card .es-row span,.modal .es-card b{color:#1b3b38}
+.modal .es-card .es-row .warn{color:#b74732}
+.modal .es-card .es-detail summary{color:#8a5a14}
+.modal .es-card .es-group>b{font-size:13px}
