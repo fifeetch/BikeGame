@@ -422,3 +422,8 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 
 ## 17 octobre, 19 h 35 (cache v107-stats) — Écran de fin
 - Le détail de chaque point d’aventure est ouvert d’office pour tous les joueurs.
+
+## 17 octobre, 19 h 55 (cache v108-sauvegardes) — Sauvegardes et lancement en ligne
+- « Mes parties » créait une nouvelle entrée à chaque sauvegarde : l’identifiant venait de la graine du hasard (m.seed), qui change à chaque tirage. Identifiant fixe désormais (m.gameId, saveIdOf dans saves.js) ; une partie rouverte depuis « Mes parties » garde son entrée.
+- Sauvegarde à la main (demande de Fi) : « 💾 Sauvegarder » remplace la sauvegarde de la partie dans « Mes parties » ; « Sauvegarde auto : oui/non » dans la fiche (désactivée par défaut) la réenregistre au même endroit à chaque action. La reprise rapide (« Continuer ») reste toujours à jour.
+- Lancement en ligne : un deuxième clic sur « Lancer la partie » (ou une action de salle d’attente déjà fermée) affichait « Cannot read properties of null (reading 'code') ». Actions protégées, bouton « ⏳ Lancement… » pendant l’envoi.

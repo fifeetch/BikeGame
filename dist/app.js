@@ -37,7 +37,7 @@ let artPref=readArtPreference(),displayPrefs=readDisplayPrefs(),sheetDrawer=fals
 const btn=(text,action,cls='',disabled=false)=>action==='mapedit'?'':`<button class="${cls}" data-action="${action}" ${disabled?'disabled':''}>${text}</button>`;
 const equipmentIcons={tente:'⛺',rechaud:'🍳',chambre:'🛞',kit:'🧰',gps:'🧭',duvet:'🛏️',secours:'🩹',sacoches:'🎒'};
 const equipmentDescriptions={tente:'Permet le bivouac',rechaud:'Repas chaud : +3 énergie au lieu de +2',chambre:'Répare une crevaison, une seule fois',kit:'Répare crevaisons et casses, se garde',gps:'Quitter la route sans pénalité',duvet:'Améliore le repos',secours:'Soigne les blessures',sacoches:'+2 places et +2 repas au maximum'};
-let m=null,screen='home',modal='',mode='plateau',roster=[{name:'Joueur 1',bike:'gravel'}],choosing=0,drawn=[],setupRules=clone(CLASSIC),draft=null,message='',zoom=1,selected=0,mapSelection='',route=[],cardIndex=-1,ferryTarget='',sheetTab='velo',auto=localStorage.getItem('velo-auto')!=='false',profiles={};
+let m=null,screen='home',modal='',mode='plateau',roster=[{name:'Joueur 1',bike:'gravel'}],choosing=0,drawn=[],setupRules=clone(CLASSIC),draft=null,message='',zoom=1,selected=0,mapSelection='',route=[],cardIndex=-1,ferryTarget='',sheetTab='velo',auto=localStorage.getItem('velo-auto')==='true',profiles={};
 const eventCardById=id=>resolveEventCard(id,m);
 const cardById=id=>m?.cardVersion===3?eventCardById(id):findCard(id,m);
 let eventActorId='',eventTargetId='',privacyCover=false;
@@ -100,7 +100,7 @@ function saveEditedMap(){const definition=editorDefinition();if(!mapIsPlayable(e
 function downloadMap(map){const blob=new Blob([JSON.stringify(map,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download=(map.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'carte-velo')+'.json';link.click();URL.revokeObjectURL(url);}
 try{profiles=JSON.parse(localStorage.getItem('velo-rule-profiles'))||{};}catch{}
 try{const raw=localStorage.getItem('velo-save');if(raw){const saved=JSON.parse(raw);if(saved.version===1)localStorage.setItem('velo-save-before-multiplayer',raw);if(saved.mode==='plateau'&&saved.mapVersion<7)localStorage.setItem('velo-save-before-new-map',raw);m=S.load(raw);}}catch{message='Sauvegarde illisible : le fichier existant reste conservé.';}
-function persist(force=false){if(m&&(auto||force))try{localStorage.setItem('velo-save',S.serialize(m));return true;}catch{message='Stockage indisponible : utilise Exporter la partie.';return false;}}
+function persist(force=false){if(m)try{localStorage.setItem('velo-save',S.serialize(m));return true;}catch{message='Stockage indisponible : utilise Exporter la partie.';return false;}}
 function render(){
  const scroll=document.querySelector('.map'),sx=scroll?.scrollLeft,sy=scroll?.scrollTop;
  const boardFocusKey=document.activeElement?.getAttribute?.('data-board-key');
@@ -266,8 +266,8 @@ function act(a){
  else if(a==='reveal-close')revealCard=null;
  else if(a==='applyrules'||a==='saveprofile'){try{const r=captureRules();if(a==='saveprofile'){let name=r.name.trim();if(!name||name==='Classique')name='Personnalisé';r.name=name;profiles[name]=clone(r);localStorage.setItem('velo-rule-profiles',JSON.stringify(profiles));draft=r;message='Profil « '+name+' » enregistré. Clique sur Appliquer pour modifier la partie.';}else{if(m&&screen==='game')S.updateRules(m,r);setupRules=r;localStorage.setItem('velo-setup-rules',JSON.stringify(r));modal='';message='Règles appliquées aux prochaines actions.';}}catch(e){message=e.message;}}
  else if(a==='loadprofile'){const name=document.querySelector('#rule-profile').value;prepareDraft(name==='Classique'?CLASSIC:profiles[name]);}
- else if(a==='autosave'){auto=!auto;localStorage.setItem('velo-auto',auto);}
- else if(a==='save'){message=persist(true)?'Partie sauvegardée sur cet appareil.':message;}
+ else if(a==='autosave'){auto=!auto;localStorage.setItem('velo-auto',auto);message=auto?'Sauvegarde automatique activée : la partie est réenregistrée à chaque action, au même endroit.':'Sauvegarde automatique désactivée : pense à cliquer « Sauvegarder ».';if(auto)persist(true);}
+ else if(a==='save'){message=persist(true)?'💾 Partie sauvegardée : elle remplace la sauvegarde précédente de cette partie (« Mes parties »).':message;}
  else if(a==='export'){if(m)download();}
  else if(a==='loan-take'){if(S.takeLoan(m))message=`🏦 Prêt de ${S.loanRule(m).amount} pièces : à rembourser dans une banque, sinon −${S.loanRule(m).penalty} points à la fin.`;}
  else if(a==='finish-confirm'){S.settleLoans(m);m.done=true;m.phase='finished';modal='';}
@@ -612,7 +612,7 @@ playerSheet=(inline=false)=>{const p=S.player(m),r=m.rules,v=findVoyage(p.voyage
  ${ficheGauges(p)}
  <div class="fiche-tabs" role="tablist" aria-label="Fiche du cycliste">${ficheTabs().map(([id,label])=>`<button type="button" role="tab" data-sheet-tab="${id}" aria-selected="${id===tab}" class="${id===tab?'on':''}">${svgI(TAB_SVG[id],20)}<span>${label}${id==='cartes'?' '+p.cardHand.length:''}</span></button>`).join('')}</div>
  ${ficheTabs().map(([id,label])=>`<section class="fiche-panel fiche-${id}" role="tabpanel" aria-label="${label}" data-sheet-panel="${id}" ${id===tab?'':'hidden'}>${panels[id]}</section>`).join('')}
- <div class="fiche-footer">${btn('Sauvegarder','save','fiche-link')}${btn('Journal de route','stats','fiche-link')}${btn('Fin de partie','finish','fiche-link')}</div>`;
+ <div class="fiche-footer">${btn('💾 Sauvegarder','save','fiche-link')}${btn(auto?'Sauvegarde auto : oui':'Sauvegarde auto : non','autosave','fiche-link')}${btn('Journal de route','stats','fiche-link')}${btn('Fin de partie','finish','fiche-link')}</div>`;
  return inline?`<section class="player-sheet-inline player-mat fiche">${body}</section>`:`<div class="player-mat fiche">${body}</div>`;};
 {const bindBeforeFiche=bind;bind=()=>{bindBeforeFiche();document.body?.classList?.toggle('en-partie',screen==='game');document.querySelectorAll('[data-sheet-tab]').forEach(el=>el.onclick=()=>{sheetTab=el.dataset.sheetTab;const root=el.closest('.fiche')||document;root.querySelectorAll('[data-sheet-tab]').forEach(t=>{const on=t.dataset.sheetTab===sheetTab;t.classList.toggle('on',on);t.setAttribute('aria-selected',String(on));});root.querySelectorAll('[data-sheet-panel]').forEach(panel=>{panel.hidden=panel.dataset.sheetPanel!==sheetTab;});});};}
 render();if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
@@ -685,6 +685,7 @@ async function netAction(a){
   else if(a==='net-copy'||a==='net-copy-link'){const text=a==='net-copy'?net.code:location.origin+location.pathname+'?partie='+net.code;
    try{await navigator.clipboard.writeText(text);message=a==='net-copy'?'Code copié.':'Lien copié : envoie-le à ton ami.';}catch{message=text;}}
  }catch(e){net={...net,busy:false,error:e.message};}
+ finally{if(a==='net-lobby-start')lobbyStarting=false;}
  render();
 }
 {const priorAct=act;act=a=>{
@@ -760,7 +761,11 @@ function leaveLobbyLocal(){lobbyUnlisten?.();lobbyUnlisten=null;lobby=null;saveL
 function endPrep(){if(lobbyPrep&&lobbyRulesBackup)setupRules=lobbyRulesBackup;lobbyPrep=false;lobbyRulesBackup=null;}
 function readNetForm(){readVictory();const name=document.querySelector('#net-name')?.value??document.querySelector('#net-join-name')?.value,count=document.querySelector('#net-count')?.value,code=document.querySelector('#net-code')?.value;
  if(name!==undefined)net.name=name;if(count)net.count=+count;if(code!==undefined)net.code=code;}
+let lobbyStarting=false;
 async function lobbyAction(a){
+ // Pas de salle d'attente (déjà lancée ou quittée) : on ignore un deuxième clic au lieu d'afficher une erreur (17 octobre).
+ if(a!=='net-lobby-create'&&!lobby)return;
+ if(a==='net-lobby-start'&&lobbyStarting)return;
  try{
   if(a==='net-lobby-create'){readNetForm();const name=(net.name||'').trim();if(!name)throw Error('Écris ton nom pour créer la partie.');
    net={...net,busy:true,error:''};render();const r=await NET.createLobby({count:net.count||2,rules:setupRules,name});await enterLobby(r.code,r.seat);return;}
@@ -770,7 +775,7 @@ async function lobbyAction(a){
    lobbyRulesBackup=lobbyRulesBackup||setupRules;setupRules=lobbyRules(g);lobbyPrep=true;
    if(s.ready)NET.setLobbySeat(lobby.code,lobby.seat,{ready:false}).catch(()=>{});
    roster=[{name:s.name||'Cycliste',bike:s.bike&&setupRules.bikes[s.bike]?s.bike:'gravel',items:[...(s.items||[])]}];choosing=0;screen='equipment';modal='';message='';render();return;}
-  if(a==='net-lobby-start'){const g=await NET.getGame(lobby.code);if(!g||g.status!=='lobby')throw Error('La partie n’est plus en attente.');
+  if(a==='net-lobby-start'){lobbyStarting=true;net={...net,busy:true,error:'',starting:true};message='Lancement de la partie…';render();const g=await NET.getGame(lobby.code);if(!g||g.status!=='lobby')throw Error('La partie n’est plus en attente.');
    const seats=NET.seatIds(g.count);if(!seats.every(id=>g.lobby?.[id]?.ready))throw Error('Tout le monde n’est pas encore prêt.');
    const list=seats.map(id=>{const s=g.lobby[id];return {name:s.name,bike:s.bike,items:s.items||[],voyage:s.voyage};});
    net={...net,busy:true};render();
@@ -791,12 +796,12 @@ async function lobbyAction(a){
  // Pendant la préparation en ligne : « ← Cyclistes » ramène à la salle d'attente.
  if(lobbyPrep&&(a==='setup'||a==='home'||a==='online')){endPrep();if(lobby){showLobbyAgain();return;}}
  return priorAct(a);};}
-async function showLobbyAgain(){try{const g=await NET.getGame(lobby.code);if(g&&g.status==='lobby')showLobby(g);}catch{}screen='online';render();}
+async function showLobbyAgain(){if(!lobby){screen='online';render();return;}try{const g=await NET.getGame(lobby.code);if(g&&g.status==='lobby')showLobby(g);}catch{}screen='online';render();}
 // Choix du voyage pendant la préparation en ligne : on enregistre son cycliste au lieu de lancer une partie sur cet appareil.
 globalThis.document?.addEventListener?.('click',async e=>{
  if(!lobbyPrep||screen!=='voyages')return;const el=e.target.closest?.('[data-voyage]');if(!el)return;
  e.stopPropagation();e.preventDefault();const id=el.dataset.voyage;if(!drawn.some(v=>v.id===id))return;
- const p=roster[0];try{await NET.setLobbySeat(lobby.code,lobby.seat,{name:p.name,bike:p.bike,items:p.items||[],voyage:id,ready:true});
+ const p=roster[0];if(!lobby)return;try{await NET.setLobbySeat(lobby.code,lobby.seat,{name:p.name,bike:p.bike,items:p.items||[],voyage:id,ready:true});
   endPrep();message='Ton cycliste est prêt !';await showLobbyAgain();}
  catch(e2){message=e2.message;render();}
 },true);
@@ -841,7 +846,7 @@ const slug=t=>String(t||'partie').toLowerCase().normalize('NFD').replace(/[̀-ͯ
 async function openParty(id){const rec=await SAVES.getSave(id);if(!rec){message='Partie introuvable.';render();return;}
  let next;try{next=S.load(rec.data);}catch(e){message='Partie illisible : '+e.message;render();return;}
  if(typeof onlineGame==='function'&&onlineGame()&&!(rec.summary?.online&&online?.code===rec.summary.online.code))leaveOnline();
- m=next;partyLastData.set(id,rec.data);route=[];mapSelection='';modal='';zoom=1;selected=0;
+ m=next;m.gameId=id;partyLastData.set(id,rec.data);route=[];mapSelection='';modal='';zoom=1;selected=0;
  if(rec.summary?.online&&!online){online={code:rec.summary.online.code,seat:rec.summary.online.seat,rev:0};saveOnline();netLight=lightOf(m);net={view:'home',joining:true};startListening();}
  screen='game';try{localStorage.setItem('velo-save',rec.data);}catch{}render();center?.();}
 {const priorAct=act;act=a=>{

@@ -18,7 +18,9 @@ export const allSaves=()=>run('readonly',s=>s.getAll()).then(list=>(list||[]).so
 export async function trimSaves(keepId){const list=await allSaves();const extra=list.filter(r=>r.id!==keepId).slice(MAX_SAVES-1);for(const r of extra)await deleteSave(r.id);return extra.length;}
 
 // Identifiant d'une partie : la graine de la partie (unique à chaque nouvelle partie).
-export const saveIdOf=m=>'partie-'+String(m?.seed??'0');
+// Identifiant fixe d'une partie (17 octobre) : la graine m.seed change à chaque tirage au sort, elle créait une nouvelle
+// entrée dans « Mes parties » à chaque sauvegarde. On fige l'identifiant la première fois et il voyage avec la partie.
+export const saveIdOf=m=>{if(!m)return 'partie-0';if(!m.gameId)m.gameId='partie-'+String(m.seed??'0');return m.gameId;};
 // Résumé affiché dans la liste (sans relire toute la partie).
 export function summarize(m,{voyages=[],online=null}={}){
  const title=id=>voyages.find(v=>v.id===id);

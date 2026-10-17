@@ -199,7 +199,7 @@ export function onlineScreen({btn,net={},local=null,current=null,message='',rule
    <p class="mc-lobby-rules">${esc(net.rulesLine||'')}</p>
    <p>Chacun, sur son appareil : ouvre le jeu, « Jouer en ligne », tape le code, puis passe au garage (vélo, sacoches) et choisit son voyage.</p>
    <div class="mc-online-row">${me&&me.state!=='ready'?btn('Préparer mon cycliste →','net-lobby-prep','mc-go'):me?btn('Modifier mon cycliste','net-lobby-prep','mc-ghost'):''}
-   ${net.host?btn(all?'Lancer la partie →':'Lancer quand tout le monde est prêt','net-lobby-start','mc-go',!all):'<span class="mc-lobby-wait">L’hôte lance la partie quand tout le monde est prêt.</span>'}</div>
+   ${net.host?btn(net.starting?'⏳ Lancement… (envoi de la carte)':all?'Lancer la partie →':'Lancer quand tout le monde est prêt','net-lobby-start','mc-go',!all||Boolean(net.starting)):'<span class="mc-lobby-wait">L’hôte lance la partie quand tout le monde est prêt.</span>'}</div>
    ${btn(net.host?'Annuler la partie':'Quitter la salle d’attente','net-lobby-leave','mc-ghost')}`,'wide');}
  else if(net.view==='created')body=card(`<p class="mc-kicker">Donne ce code à ton ami</p><b class="mc-online-code">${esc(net.code)}</b>
    <div class="mc-online-row">${btn('Copier le code','net-copy','mc-ghost')}${btn('Copier le lien','net-copy-link','mc-ghost')}</div>
