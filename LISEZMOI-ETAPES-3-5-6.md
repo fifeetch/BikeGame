@@ -419,3 +419,6 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - « Partie terminée » montre une fiche par joueur : d’où viennent les points (barre par catégorie), le détail de chaque point d’aventure jour par jour (à déplier), les voyages (complets ou −40 %), la route par terrain (cols mythiques, hors route, train), les nuits, les repas, les cartes jouées et subies ; puis les moments de la partie (roi des cols, plus de côtes, plus beau voyage, nuits dehors).
 - Chaque ligne du journal garde désormais les points gagnés ou perdus (stampPoints dans event-card-engine.js, champ `pts`) ; pour les anciennes parties, les points se lisent dans le texte du journal.
 - Code : `dist/end-stats.js` (endStatsHtml, playerStats, pointLines) ; styles `.es-*` à la fin de style.css. Ajouté à FILES de sw.js.
+
+## 17 octobre, 19 h 35 (cache v107-stats) — Écran de fin
+- Le détail de chaque point d’aventure est ouvert d’office pour tous les joueurs.
