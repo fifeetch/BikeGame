@@ -36,9 +36,10 @@ export const VOYAGE_LENGTHS={traversee:27,soleil:14,alpes:13,campagne:11,nord:21
 export const voyageTier=v=>{const id=typeof v==='string'?v:v?.id,effort=VOYAGE_EFFORT[id]||0;return VOYAGE_TIERS.find(t=>effort<=t.max);};
 export const voyagePoints=v=>voyageTier(v).points;
 export function drawVoyages(rng=Math.random){const cards=[...voyages];for(let i=cards.length-1;i>0;i--){let j=Math.floor(rng()*(i+1));[cards[i],cards[j]]=[cards[j],cards[i]];}return cards.slice(0,3);}
-export function progress(g){const v=findVoyage(g.voyage);if(!v)return null;const history=g.travelHistory||(g.travel||[]).map(k=>({key:k,type:g.board[k]?.type,endpoint:g.board[k]?.id===0||g.board[k]?.id===g.arrivalId}));const first=new Map();for(const t of history)if(!first.has(t.key))first.set(t.key,t);const unique=[...first.values()];const count=type=>unique.filter(t=>t.type===type&&!t.endpoint).length;
+export function progress(g){const v=findVoyage(g.voyage);if(!v)return null;const history=g.travelHistory||(g.travel||[]).map(k=>({key:k,type:g.board[k]?.type,endpoint:g.board[k]?.id===0||g.board[k]?.id===g.arrivalId}));// Règle de Fi (17 octobre) : un col compte comme une montagne (objectifs montagne et montagnes consécutives).
+const mt=t=>t.type==='col'?{...t,type:'montagne'}:t;const first=new Map();for(const t of history)if(!first.has(t.key))first.set(t.key,mt(t));const unique=[...first.values()];const count=type=>unique.filter(t=>t.type===type&&!t.endpoint).length;
 let runs={montagne:0,cote:0,plaine:0},current=0,last='',seen=new Set(),chains=0,chainAwarded=false;
-for(const {key:k,type} of history){if(type!==last){current=0;chainAwarded=false;}if(seen.has(k)){current=0;}else {current++;seen.add(k);}last=type;if(type in runs)runs[type]=Math.max(runs[type],current);if(type==='montagne'&&current>=2&&!chainAwarded){chains++;chainAwarded=true;}}
+for(const step of history){const {key:k,type}=mt(step);if(seen.has(k)&&type===last)continue;/* case déjà traversée : ne compte pas, ne casse pas la série */if(type!==last){current=0;chainAwarded=false;}if(seen.has(k)){current=0;}else {current++;seen.add(k);}last=type;if(type in runs)runs[type]=Math.max(runs[type],current);if(type==='montagne'&&current>=2&&!chainAwarded){chains++;chainAwarded=true;}}
 const rows=[];const add=(label,value,target)=>rows.push({label,value:Math.min(value,target),target,done:value>=target});
 add(v.cities===1?'Ville intermédiaire':'Villes intermédiaires',count('ville'),v.cities);
 if(v.mountainRun)add('Montagnes consécutives',runs.montagne,v.mountainRun);

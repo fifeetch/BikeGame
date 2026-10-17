@@ -399,3 +399,8 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - RULES_VERSION 5 : les règles « nourriture » et « équipement » enregistrées sur l’appareil sont remises aux nouvelles valeurs.
 - Changement de joueur : la carte zoome sur le cycliste dont c’est le tour (TURN_ZOOM 2,1 dans board-renderer-svg.js).
 - Passage plus rapide d’un tour à l’autre : la scène de la nuit joue deux fois plus vite (environ 5 s au lieu de 10, NIGHT_SPEED dans app.js) ; « Passer » la ferme toujours tout de suite.
+
+## 17 octobre, 19 h (cache v103-montagnes) — Objectifs montagne (choix de Fi)
+- Un col compte comme une montagne, pour « Montagnes consécutives » et « Tuiles montagne » (progress, voyages.js).
+- Repasser sur une case déjà traversée ne compte pas, mais ne casse plus la série. La moyenne montagne casse toujours la série.
+- À surveiller : VOYAGE_EFFORT a été calculé avant ce changement (quelques cartes de montagne deviennent un peu plus faciles).
