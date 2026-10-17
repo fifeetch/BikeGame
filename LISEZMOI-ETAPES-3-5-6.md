@@ -410,3 +410,7 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - Repas emportés (RULES_VERSION 6) : 2 repas au départ pour tous ; au maximum Gravel 2, Randonneuse 4 (bikes.*.maxFood) ; Sacoches +2 repas (foodBonus 2) ; carte « grande sacoche » +3. Le maximum s’applique dans tous les modes (achats compris).
 - Règles consultables (rules-help.js) et partie guidée (tutorial.js) mises à jour : on roule puis on dort, chiffres des nuits, repas froid/chaud, repas au maximum, cartes négatives reçues à son tour, cols = montagnes, fin de partie (+5 au premier à 3 voyages, le plus de points gagne), banque.
 - Tests adaptés aux nouvelles limites de repas (cartes, partie guidée : on rachète des provisions à Thessalonique).
+
+## 17 octobre, 19 h 25 (cache v105-fin-en-ligne) — Écran de fin en ligne
+- En ligne, l’écran « Partie terminée » s’affiche aussi chez l’autre joueur (les fenêtres étaient cachées hors de son tour, même partie finie). Le bandeau dit « Partie terminée » au lieu de « … joue ».
+- Classement de fin lisible (texte foncé sur la carte crème) et phrase de victoire à jour (+5 au premier à 3 voyages, le plus de points gagne).

@@ -2182,3 +2182,6 @@ body .modal.night-wrap .night-cards .imm-night.off{opacity:.45}
 .event-face.compact .event-face-effect small,.event-face.compact .event-face-tags span{font-size:11px}
 .event-face.compact .event-face-who{font-size:11.5px;padding:5px 8px}
 @media(max-width:760px){.event-face{width:min(220px,100%);min-height:0}.event-face h3{font-size:19px}}
+
+/* Écran de fin (17 octobre) : classement lisible sur la carte crème */
+.modal .standings{color:#1b3b38}.modal .standings h3{color:#1b3b38}.modal .standings li,.modal .standings p{color:#3d4a3a}.modal .standings .muted{color:#5a4a2c}

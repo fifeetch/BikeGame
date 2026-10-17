@@ -164,7 +164,7 @@ function sidebar(){const p=S.player(m),r=m.rules,blocked=m.done||m.phase==='even
 // Résumé de la fin de partie (mode « multi »).
 function earlyFinishButton(html){if(!m||!S.canFinishVoyageEarly(m))return html;return html.replace('<div class="dock-day">',`<div class="dock-finish-row">${btn('🏁 Terminer le voyage ici · +'+S.earlyVoyagePoints(m)+' points (−40 %)','finish-voyage-early','dock-finish')}</div><div class="dock-day">`);}
 function victoryLine(r){const v=r.victory||{},parts=[];if(v.points)parts.push(`${v.points} points`);if(v.voyages)parts.push(`${v.voyages} voyages`);if(v.days)parts.push(`${v.days} jours`);return parts.join(' ou ')||'—';}
-function leaderboard(){return `<section class="panel standings"><h3>Classement</h3><ol>${S.ranking(m).map(p=>`<li><span style="color:${p.color}">●</span> ${esc(p.name)} <b>${p.points} points Aventure</b> · ${S.multiVictory(m)?`${(p.voyagesDone||[]).length} voyage${(p.voyagesDone||[]).length>1?'s':''} réussi${(p.voyagesDone||[]).length>1?'s':''}`:p.completed?'✓ Objectif accompli':'Objectif en cours'}</li>`).join('')}</ol><p class="muted">Victoire : ${S.multiVictory(m)?victoryLine(m.rules):m.rules.victory.mode==='points'?m.rules.victory.points+' points':m.rules.victory.mode==='turns'?m.rules.victory.turns+' jours':m.rules.victory.allObjectives?'tous les objectifs':'premier objectif accompli'}. À égalité, classement partagé.</p></section>`;}
+function leaderboard(){return `<section class="panel standings"><h3>Classement</h3><ol>${S.ranking(m).map(p=>`<li><span style="color:${p.color}">●</span> ${esc(p.name)} <b>${p.points} points Aventure</b> · ${S.multiVictory(m)?`${(p.voyagesDone||[]).length} voyage${(p.voyagesDone||[]).length>1?'s':''} réussi${(p.voyagesDone||[]).length>1?'s':''}`:p.completed?'✓ Objectif accompli':'Objectif en cours'}</li>`).join('')}</ol><p class="muted">Victoire : ${S.multiVictory(m)?victoryLine(m.rules):m.rules.victory.mode==='points'?m.rules.victory.points+' points':m.rules.victory.mode==='turns'?m.rules.victory.turns+' jours':m.rules.victory.allObjectives?'tous les objectifs':'premier objectif accompli'}.${S.multiVictory(m)&&m.rules.victory.voyages?` Le premier à ${m.rules.victory.voyages} voyages gagne +${m.rules.victory.voyagesBonus??5} points ; le plus de points gagne.`:''} À égalité, classement partagé.</p></section>`;}
 function rulesForm(){
  const field=(path,label,type='number',options=null)=>{const value=path.split('.').reduce((o,k)=>o[k],draft);return `<label class="rule-field">${label}${type==='boolean'?`<input type="checkbox" data-rule="${path}" ${value?'checked':''}/>`:options?`<select data-rule="${path}">${options.map(([id,text])=>`<option value="${id}" ${id===value?'selected':''}>${esc(text)}</option>`).join('')}</select>`:`<input type="${type}" data-rule="${path}" value="${esc(value)}" ${type==='number'?'step="1"':''}/>`}</label>`;};
  const group=(title,body,open=false)=>`<details ${open?'open':''}><summary>${title}</summary><div class="rule-grid">${body}${title==='Repos, hébergement et nourriture'?field('food.restaurantPrice','Prix du restaurant')+field('food.restaurantEnergy','Énergie du restaurant'):''}</div></details>`;
@@ -703,12 +703,12 @@ async function netAction(a){
  if(onlineGame())privacyCover=false;// chacun son écran : pas besoin de « passage de main »
  priorRender();
  if(!onlineGame()||screen!=='game')return;
- const mine=myTurn(),actor=seatName(NET.actorId(m)),brand=document.querySelector('header .brand');
- brand?.insertAdjacentHTML('beforeend',`<span class="net-pill ${mine?'mine':''}" role="status">${mine?'À toi de jouer':esc(actor)+' joue…'} · ${esc(online.code)}</span>`);
+ const mine=myTurn()||Boolean(m.done),actor=seatName(NET.actorId(m)),brand=document.querySelector('header .brand');
+ brand?.insertAdjacentHTML('beforeend',`<span class="net-pill ${mine?'mine':''}" role="status">${m.done?'Partie terminée':mine?'À toi de jouer':esc(actor)+' joue…'} · ${esc(online.code)}</span>`);
  document.body?.classList?.toggle('net-waiting',!mine);if(mine)document.querySelectorAll('.net-banner').forEach(e=>e.remove());
  if(!mine){const a=m.players.find(p=>p.id===NET.actorId(m)),what=m.pendingAttack?'répond à une carte…':m.phase==='card-intervention'?'peut jouer une carte météo…':'roule…';
   document.querySelectorAll('.net-banner').forEach(e=>e.remove());document.body?.insertAdjacentHTML('beforeend',`<div class="net-banner" role="status"><span class="nb-dot" style="background:${esc(a?.color||'#267b91')}"></span><b>C’est à ${esc(a?.name||'l’autre joueur')} de jouer</b><span>· jour ${m.round} · ${esc(a?.name||'')} ${what}</span><button type="button" data-action="net-resync" class="nb-btn">🔄 Recharger</button></div>`);}
- if(netWasMyTurn===false&&mine)message='À toi de jouer !';netWasMyTurn=mine;
+ if(netWasMyTurn===false&&mine&&!m.done)message='À toi de jouer !';netWasMyTurn=mine;
  try{document.title=(mine?'● À toi — ':'')+'L’Aventure à Vélo';}catch{}
  // Toute différence vient d'une action faite ici (hors de son tour, les actions sont bloquées) : on l'envoie.
  const light=lightOf(m);if(light!==netLight&&netDirty){netLight=light;pushNow();}else if(light!==netLight&&!netDirty&&!netPushing){/* changement fait par l'affichage seul : on attend l'état en ligne */}
@@ -718,7 +718,7 @@ async function netAction(a){
  if(!onlineGame()||myTurn())return priorSheet(inline);
  const mine=m.players.findIndex(p=>p.id===online.seat);if(mine<0)return priorSheet(inline);
  const keep=m.activeIndex;m.activeIndex=mine;try{return priorSheet(inline).replace('class="player-mat fiche','class="player-mat fiche net-mine-sheet').replace('class="player-sheet-inline player-mat fiche','class="player-sheet-inline player-mat fiche net-mine-sheet');}finally{m.activeIndex=keep;}};}
-{const priorOverlay=overlay;overlay=()=>{if(onlineGame()&&screen==='game'&&!myTurn()&&!['meteo','stats'].includes(modal))return '';return priorOverlay();};}
+{const priorOverlay=overlay;overlay=()=>{if(onlineGame()&&screen==='game'&&!myTurn()&&!m?.done&&!['meteo','stats'].includes(modal))return '';return priorOverlay();};}
 // Hors de son tour : seuls les boutons « pour regarder » marchent.
 const NET_VIEW_ACTIONS=new Set(['net-resync','zoomin','zoomout','center','art','sheet-toggle','split-view','meteo','close','home','settings','stats','online','net-play','net-leave','reveal-close']);
 globalThis.document?.addEventListener?.('click',e=>{
