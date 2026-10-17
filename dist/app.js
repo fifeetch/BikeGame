@@ -9,7 +9,8 @@ import {CARD_PRESETS,cardById as findCard,effectiveCards,makeCustomCard,normaliz
 import {renderCardEditor} from './card-editor.js';
 import {readArtPreference} from './terrain-art.js';
 import {nightSceneSvg,NIGHT_SCENE_LENGTH} from './night-scenes.js';
-import {sceneFor,encounterSceneSvg} from './encounter-scenes.js';
+import {sceneFor,encounterSceneSvg,cardScene} from './encounter-scenes.js';
+import {landmarkArt} from './landmark-art.js';
 import {readDisplayPrefs,writeDisplayPref} from './display-prefs.js';
 import {titleScreen,plateauScreen,playersScreen,garageScreen,voyagesScreen,onlineScreen,editorHubScreen} from './menus.js';
 import {rulesIntro,rulesHelp,HELP_TABS} from './rules-help.js';
@@ -466,7 +467,7 @@ let revealCard=null,routeNews=[];
 const LANDMARK_FLAVOR={'Belvédère':'Un balcon sur la vallée, rien que pour toi.','Vieux pont de pierre':'Trois arches moussues au-dessus de l’eau claire.','Chapelle isolée':'Une petite chapelle au bout d’un chemin de terre.','Lavoir ancien':'L’eau fraîche du lavoir, une pause à l’ombre.','Moulin à eau':'La roue tourne encore et le meunier te salue.','Source fraîche':'Une source glacée au bord de la route.','Village perché':'Des ruelles en pente et une vue à couper le souffle.','Cascade':'Tu entends l’eau bien avant de la voir.','Gorges sauvages':'La route se faufile entre deux murs de roche.','Château en ruine':'Des tours écroulées et des siècles d’histoire.','Forêt ancienne':'Des arbres immenses et un grand silence.','Panorama grandiose':'Toute la région à tes pieds.','Lac secret':'Un petit chemin sous les sapins, et l’eau la plus claire du voyage.','Abbaye oubliée':'Des pierres dorées et un cloître silencieux.','Grotte ornée':'Des peintures très anciennes sur la roche.'};
 const STAR='<svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 20.9l1.6-7L2 9.2l7.1-.6Z" fill="#f2a541" stroke="#8a5a14" stroke-width="1"/></svg>';
 const SCENE='<svg viewBox="0 0 400 230" role="img" aria-label="Paysage découvert au bord de la route" preserveAspectRatio="xMidYMid slice"><rect width="400" height="230" fill="#9fc7c0"/><path d="M0 150 L70 60 L120 115 L190 30 L270 125 L320 80 L400 140 L400 230 L0 230 Z" fill="#5f7f84"/><path d="M150 78 L190 30 L226 74 L206 68 L190 82 L172 70 Z" fill="#f6e7c1"/><path d="M0 168 C 90 150, 300 152, 400 174 L400 230 L0 230 Z" fill="#2d7fa8"/><path d="M60 188 C 140 178, 260 180, 340 192" fill="none" stroke="#bfe3ef" stroke-width="3" stroke-linecap="round"/><g fill="#24463a"><path d="M24 176 L40 120 L56 176 Z"/><path d="M48 180 L66 108 L84 180 Z"/><path d="M330 180 L348 112 L366 180 Z"/><path d="M356 184 L372 130 L388 184 Z"/></g></svg>';
-function revealMarkup(){const c=revealCard;return `<div class="modal-back reveal-back"><section class="reveal-card" role="dialog" aria-modal="true" aria-labelledby="reveal-title"><div class="reveal-art">${SCENE}<span>Lieu remarquable</span></div><div class="reveal-body"><h2 id="reveal-title">${esc(c.name)}</h2><p class="reveal-flavor">${esc(LANDMARK_FLAVOR[c.name]||'Un détour qui valait le coup.')}</p><div class="reveal-points"><span aria-hidden="true">${STAR.repeat(c.value)}</span><b>+${c.value} point${c.value>1?'s':''} d’aventure</b></div><p class="reveal-who">Découvert par ${esc(c.player||'')} · le jeton quitte la carte</p>${btn('Continuer la route →','reveal-close','reveal-go')}</div></section></div>`;}
+function revealMarkup(){const c=revealCard;return `<div class="modal-back reveal-back"><section class="reveal-card" role="dialog" aria-modal="true" aria-labelledby="reveal-title"><div class="reveal-art">${landmarkArt(c.name,SCENE)}<span>Lieu remarquable</span></div><div class="reveal-body"><h2 id="reveal-title">${esc(c.name)}</h2><p class="reveal-flavor">${esc(LANDMARK_FLAVOR[c.name]||'Un détour qui valait le coup.')}</p><div class="reveal-points"><span aria-hidden="true">${STAR.repeat(c.value)}</span><b>+${c.value} point${c.value>1?'s':''} d’aventure</b></div><p class="reveal-who">Découvert par ${esc(c.player||'')} · le jeton quitte la carte</p>${btn('Continuer la route →','reveal-close','reveal-go')}</div></section></div>`;}
 {const overlayBeforeReveal=overlay;overlay=()=>{const html=overlayBeforeReveal();if(html||!revealCard||screen!=='game')return html;return revealMarkup();};}
 const NEWS_ICON={col:'<path d="M5 21V4"/><path d="M5 4l12 3.5L5 11"/>','col-first':'<path d="M5 21V4"/><path d="M5 4l12 3.5L5 11"/>',climber:'<path d="M3 20l6-10 4 6 3-4 5 8Z"/>',fatigue:'<path d="M4 18h16"/><path d="M6 18v-5a6 6 0 0 1 12 0v5"/><path d="M14 5h4l-4 4h4"/>',budget:'<circle cx="12" cy="12" r="8"/><path d="M12 8v8M9.5 10h4a1.5 1.5 0 0 1 0 3h-3a1.5 1.5 0 0 0 0 3h4"/>'};
 {const bindBeforeNews=bind;bind=()=>{bindBeforeNews();const wrap=document.querySelector('.map-wrap');if(!wrap||!routeNews.length||!wrap.append||!document.createElement)return;const list=document.createElement('ul');list.className='route-news';list.setAttribute('aria-live','polite');list.innerHTML=routeNews.map(n=>`<li class="news-${n.kind}"><svg width="28" height="28" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${NEWS_ICON[n.kind]||''}</svg><span>${esc(n.text)}</span></li>`).join('');wrap.append(list);routeNews=[];setTimeout(()=>list.remove(),7000);};}
@@ -1224,8 +1225,8 @@ document.addEventListener?.('keydown',e=>{if(colPhotoOpen&&(e.key==='Escape'||e.
   NIGHT_SCENE_LENGTH[id]?`${tag}<span class="nc-art" aria-hidden="true"><svg viewBox="0 0 640 300">${nightSceneSvg(id,id==='demander'?7:NIGHT_SCENE_LENGTH[id]-.4,{rain,color:p.color,badge:'',sub:'',key:'nc'+id})}</svg></span>`:all);}catch(err){console.error(err);return h;}};}
 let nightOpen=null;
 function nightSceneClose(){if(!nightOpen)return;const {el,stop,timer}=nightOpen;nightOpen=null;stop();clearTimeout(timer);el.classList.add('out');setTimeout(()=>el.remove(),250);}
-function nightScene(id,{rain,color,name,badge,outcome=0,title}){try{nightSceneClose();colPhotoClose?.();const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches,len=NIGHT_SCENE_LENGTH[id]||7;
- const el=document.createElement('div');el.className='colphoto-back night-scene-back';el.innerHTML=`<section class="colphoto" role="dialog" aria-label="La nuit de ${esc(name)}"><span class="eyebrow">🌙 Le soir · ${esc(name)}</span><h2>${esc(title)}</h2><div class="colphoto-stage"><svg viewBox="0 0 640 300" role="img" aria-label="${esc(title)}"></svg></div><p>Le résultat de la nuit arrive au réveil.</p><button class="primary" data-night-close>Passer ›</button></section>`;
+function nightScene(id,{rain,color,name,badge,outcome=0,title,text='Le résultat de la nuit arrive au réveil.'}){try{nightSceneClose();colPhotoClose?.();const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches,len=NIGHT_SCENE_LENGTH[id]||7;
+ const el=document.createElement('div');el.className='colphoto-back night-scene-back';el.innerHTML=`<section class="colphoto" role="dialog" aria-label="La nuit de ${esc(name)}"><span class="eyebrow">🌙 Le soir · ${esc(name)}</span><h2>${esc(title)}</h2><div class="colphoto-stage"><svg viewBox="0 0 640 300" role="img" aria-label="${esc(title)}"></svg></div><p>${esc(text)}</p><button class="primary" data-night-close>Passer ›</button></section>`;
  document.body.append(el);const svg=el.querySelector('svg'),btnEl=el.querySelector('[data-night-close]'),t0=performance.now();let raf=0;
  const frame=now=>{const k=reduce?len-.3:(now-t0)/1000;svg.innerHTML=nightSceneSvg(id,Math.min(k,len-.05),{rain,outcome,color,badge:k>=len-1.8?badge:'',key:'ns'});if(k>=len-1.8)btnEl.textContent='Bonne nuit ›';if(!reduce&&k<len)raf=requestAnimationFrame(frame);};raf=requestAnimationFrame(frame);
  btnEl.onclick=nightSceneClose;el.addEventListener('click',e=>{if(e.target===el)nightSceneClose();});
@@ -1246,7 +1247,9 @@ document.addEventListener?.('keydown',e=>{if(nightOpen&&(e.key==='Escape'||e.key
 // ---------- Scènes animées dans la fenêtre de la rencontre, avec la carte en fond (planche validée par Fi le 16 octobre) ----------
 const ENC_MAP='assets/terrain/europe-terrain.webp';
 let encAnim={key:'',start:0,raf:0};
-function encSceneInfo(){const e=S.currentEncounter(m),p=S.player(m);if(!e)return null;const enc=m.encounter||{},t=m.board[p.pos]||{};
+function encSceneInfo(){const atk=m?.cardVersion===3&&m.pendingAttack;if(atk){const c=eventCardById(atk.cardId),q=m.players.find(x=>x.id===atk.targetId)||S.player(m),t=m.board[q.pos]||{};
+  return {sc:cardScene(atk.cardId,c?.category),key:['atk',m.turn,atk.cardId,atk.targetId].join('|'),opts:{href:ENC_MAP,x:t.x,y:t.y,color:q.color,uid:'enc'}};}
+ const e=S.currentEncounter(m),p=S.player(m);if(!e)return null;const enc=m.encounter||{},t=m.board[p.pos]||{};
  const kind=enc.situation?'imprevu':!S.immersionOn(m)?'rencontre':enc.road?'route':'soir';
  return {sc:sceneFor(e.title,kind),key:[m.turn,p.id,e.id||e.title,kind].join('|'),opts:{href:ENC_MAP,x:t.x,y:t.y,color:p.color,uid:'enc'}};}
 function encAnimTick(now){encAnim.raf=0;const el=document.querySelector('.encounter-art svg.enc-anim');if(!el||!m)return;const info=encSceneInfo();if(!info)return;
@@ -1259,3 +1262,33 @@ function encAnimTick(now){encAnim.raf=0;const el=document.querySelector('.encoun
  const svg=`<svg class="enc-anim" viewBox="-48 0 416 150" role="img" aria-label="${esc(S.currentEncounter(m).title)}">${encounterSceneSvg(info.sc,reduce?99:el,{...info.opts,now})}</svg>`;
  return h.replace(/<svg viewBox="0 0 520 180"[\s\S]*?<\/svg>/,svg);}catch(err){console.error(err);return h;}};}
 {const priorRender=render;render=(...a)=>{priorRender(...a);try{if(screen==='game'&&m&&document.querySelector('.encounter-art svg.enc-anim')&&!encAnim.raf)encAnim.raf=requestAnimationFrame(encAnimTick);}catch{}};}
+
+// ---------- Mode original (17 octobre) : les animations dans les fenêtres des cartes Événement et des nuits ----------
+// Carte reçue (attaque ou événement solo) : la scène en haut de la fenêtre « Réaction ».
+{const priorOv=overlay;overlay=()=>{const h=priorOv();try{if(!h||!m||m.cardVersion!==3||!m.pendingAttack||!/RÉACTION ·/.test(h))return h;const info=encSceneInfo();if(!info)return h;
+ const now=performance.now(),el=info.key===encAnim.key?(now-encAnim.start)/1000:0;
+ const art=`<div class="encounter-art event-anim"><svg class="enc-anim" viewBox="-48 0 416 150" preserveAspectRatio="xMidYMid slice" role="img" aria-label="${esc(eventCardById(m.pendingAttack.cardId)?.name||'Événement')}">${encounterSceneSvg(info.sc,el,{...info.opts,now})}</svg></div>`;
+ const i=h.indexOf('</h2>',h.indexOf('RÉACTION ·'))+5,j=h.indexOf('<div class="event-action-row">',i);if(i<5||j<0)return h;
+ return h.slice(0,i)+`<div class="event-react">${h.slice(i,j)}${art}</div>`+h.slice(j);}catch(err){console.error(err);return h;}};}
+// Carte jouée pour soi (positive ou équipement) : une fenêtre avec sa scène, comme la photo au col.
+let scenePop=null;
+function scenePopClose(){if(!scenePop)return;const {el,stop,timer}=scenePop;scenePop=null;stop();clearTimeout(timer);el.classList.add('out');setTimeout(()=>el.remove(),250);}
+function scenePopup(sc,{eyebrow,title,text,player}){try{scenePopClose();const q=player||S.player(m),t=m.board[q.pos]||{},reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+ const el=document.createElement('div');el.className='colphoto-back';el.innerHTML=`<section class="colphoto" role="dialog" aria-label="${esc(title)}"><span class="eyebrow">${esc(eyebrow)}</span><h2>${esc(title)}</h2><div class="colphoto-stage"><svg viewBox="-48 0 416 150" role="img" aria-label="${esc(title)}"></svg></div><p>${esc(text||'')}</p><button class="primary" data-scene-close>Continuer</button></section>`;
+ document.body.append(el);const svg=el.querySelector('svg'),t0=performance.now();let raf=0;
+ const frame=now=>{svg.innerHTML=encounterSceneSvg(sc,reduce?99:(now-t0)/1000,{href:ENC_MAP,x:t.x,y:t.y,color:q.color,uid:'pop',now});if(!reduce)raf=requestAnimationFrame(frame);};raf=requestAnimationFrame(frame);
+ el.querySelector('[data-scene-close]').onclick=scenePopClose;el.addEventListener('click',e=>{if(e.target===el)scenePopClose();});
+ scenePop={el,stop:()=>cancelAnimationFrame(raf),timer:setTimeout(scenePopClose,(reduce?4:sc.P+4)*1000)};el.querySelector('[data-scene-close]').focus({preventScroll:true});}catch(err){console.error(err);}}
+document.addEventListener?.('keydown',e=>{if(scenePop&&(e.key==='Escape'||e.key==='Enter')){e.preventDefault();scenePopClose();}},true);
+{const priorAct=act;act=a=>{if(typeof a!=='string'||screen!=='game'||!m||S.immersionOn(m))return priorAct(a);
+ const before=m.history.length,p=S.player(m),money0=p.money,out=priorAct(a);
+ try{const fresh=m.history.slice(before);
+  const play=m.cardVersion===3&&fresh.find(h=>h.kind==='card-play'&&h.cardId);
+  if(play){const c=eventCardById(play.cardId),q=m.players.find(x=>x.id===play.player)||p;
+   if(play.cardId==='evt-04')nightScene('demander',{rain:false,color:q.color,name:q.name,badge:'Nuit chez l’habitant',outcome:0,title:c?.name||'Nuit chez l’habitant',text:c?.effectText||''});
+   else scenePopup(cardScene(play.cardId,c?.category),{eyebrow:(c?.category==='permanent'?'🎒 Équipement · ':'🃏 Carte jouée · ')+q.name,title:c?.name||'Carte',text:c?.effectText||'',player:q});}
+  const rest=a.startsWith('rest-')&&fresh.find(h=>h.kind==='rest'&&h.player===p.id);
+  if(rest){const id=a.slice(5);if(NIGHT_SCENE_LENGTH[id]){const title={bivouac:'Bivouac',camping:'Camping',hotel:'Hôtel'}[id],cost=money0-p.money;
+   nightScene(id,{rain:false,color:p.color,name:p.name,badge:title+(cost>0?` · −${cost} 🪙`:''),outcome:0,title,text:'Une journée de repos : l’énergie revient.'});}}
+ }catch(err){console.error(err);}
+ return out;};}

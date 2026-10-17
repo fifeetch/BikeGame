@@ -344,3 +344,8 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - Chaque fenêtre de rencontre (en route, le soir, imprévus) montre en haut une petite animation propre à la scène (51 scènes + vendanges et fête nationale ; scène simple pour les autres), jouée une fois puis vivante sur sa dernière image.
 - Le fond est la vraie carte du jeu autour de la case du cycliste (village, côte, montagne…), case entourée d'orange ; le soir la carte s'assombrit.
 - Nouveau fichier : dist/encounter-scenes.js (dessins seulement). Aucune règle changée.
+
+## 17 octobre — Animations dans le mode original, paysages des lieux cachés
+- Mode original : carte Événement reçue (attaque ou événement solo) → la scène animée à côté de la carte, carte du jeu en fond ; carte jouée pour soi (positive ou équipement) → fenêtre avec sa scène ; « Nuit chez l'habitant » → scène « toc toc » ; repos bivouac, camping, hôtel → scène de la nuit.
+- Lieux cachés (jetons « ? ») : 15 paysages, un par lieu (belvédère, pont, chapelle, lavoir, moulin, source, village perché, cascade, gorges, château, forêt, panorama, lac, abbaye, grotte), avec petites animations (eau, roue, torche).
+- Nouveau fichier : dist/landmark-art.js. Aucune règle changée.
