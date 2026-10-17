@@ -376,3 +376,7 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 ## 17 octobre, 11 h 40 (cache v98-soir) — Deux corrections du mode original
 - « Finir ma journée » ouvre bien « Où dormir ce soir ? » (la fenêtre était réservée au mode Immersion).
 - En roulant jusqu'à une ville, la fenêtre de la ville ne clignote plus avant le trajet : elle reste cachée pendant que le cycliste roule (`.modal-back.hold` sans fondu).
+
+## 17 octobre, 17 h 40 (cache v99-icone) — Icône et aperçu du lien
+- Nouvelle icône aux couleurs du jeu : une case hexagonale bordée de crème avec un morceau de la carte, la route en pointillés orange et un vélo chargé (icon.svg, icon-192/512, icon-maskable-512, apple-touch-icon, favicon-32).
+- Aperçu quand on partage le lien (WhatsApp, Messenger, mail…) : og-image.jpg 1200 × 630 avec titre, phrase et « Jouer gratuitement ». Balises Open Graph et Twitter dans index.html ; manifeste aux couleurs du jeu (#102226), nom court « Aventure à Vélo ».
