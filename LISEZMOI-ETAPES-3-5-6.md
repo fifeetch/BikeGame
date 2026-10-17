@@ -440,3 +440,9 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - À plusieurs : après « Où dormir ce soir ? », le tour passe tout de suite au joueur suivant. La pioche des cartes Événement se fait au début de son tour (« DÉBUT DE TA JOURNÉE », m.resumePhase ; afterDraw dans simulator.js), puis il découvre les cartes jouées contre lui. La scène de la nuit ne retient plus le tour. En solo, rien ne change.
 - En ligne, quand un autre joueur gagne des points d’aventure (voyage, col, carte, lieu caché…), une bulle s’affiche en bas à gauche (« Marion +2 pts · Col du Stelvio franchi ») et la case du joueur brille sur la carte (pointToasts dans app.js, à partir du champ `pts` du journal).
 - Tests des cartes adaptés à la pioche en début de tour.
+
+## 17 octobre, 22 h — Départ simplifié (cache v112-depart)
+- Nouvel écran « À quoi veux-tu jouer ? » : trois grandes cartes illustrées (Original · Immersion · Coopératif grisé « Bientôt »).
+- « Qui part ? » refait : 1 · nombre de cyclistes (gros boutons), noms ; 2 · paramètres avec une phrase chacun (météo, imprévus, fin de partie). Règles et réglages par défaut inchangés.
+- En ligne : « Créer une partie » passe par les deux mêmes écrans, puis la salle d'attente avec le code. « J'ai reçu un code » inchangé.
+- Code : kindScreen, kindChoices, countPicker, paramsBlock (menus.js) ; setupPage et actions kind-next, kind, count-N, net-create-open, net-create-next, net-count-N (fin de app.js) ; styles .mc-kind, .mc-param… (fin de style.css). Planche : https://claude.ai/artifact/Kv1xFXZtbjHFXufwWX5dFM

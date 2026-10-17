@@ -15,7 +15,7 @@ import {voyageCard,cardArtUrl} from './voyage-card.js';
 import {townSvg,townInsideSvg,townArrive,townGo,townOut,townSkip,townAct,townTick} from './town-scene.js';
 import {axialDistance as townDistance} from './europe.js';
 import {readDisplayPrefs,writeDisplayPref} from './display-prefs.js';
-import {titleScreen,plateauScreen,playersScreen,garageScreen,voyagesScreen,onlineScreen,editorHubScreen} from './menus.js';
+import {titleScreen,plateauScreen,playersScreen,kindScreen,garageScreen,voyagesScreen,onlineScreen,editorHubScreen} from './menus.js';
 import {rulesIntro,rulesHelp,HELP_TABS} from './rules-help.js';
 import * as SAVES from './saves.js';
 import {partiesScreen} from './menus.js';
@@ -120,7 +120,7 @@ function journeySteps(active){return `<nav class="journey-steps" aria-label="Ét
 function home(){const n=typeof partiesList!=='undefined'?partiesList.length:0;return titleScreen({btn,hasSave:Boolean(m)||n>0,saveLine:n>1?`${n} parties enregistrées`:m?`Jour ${m.round} · ${S.player(m).name}`:'',message,reduced:Boolean(displayPrefs.reduced),maps});}
 function modes(){return plateauScreen({btn,maps,message});}
 function editorScreen(){return `<main class="game map-editor-page"><div class="topbar"><div><span class="eyebrow">ÉDITEUR DE CARTE</span><h1>Créer une carte Europe</h1><p>Choisis une case pour changer son terrain. Les villes des voyages restent fixes.</p></div></div><div class="editor-controls"><label>Nom de la carte <input id="editor-map-name" maxlength="60" value="${esc(editorName)}"/></label><span>Col mythique : ${editorColEffort} énergie</span>${btn('💾 Enregistrer la carte','map-save-project')}${btn('⬇️ Enregistrer en fichier','map-export-file','light')}${btn('Choisir ce plateau','map-play','light')}</div><div class="map-wrap"><div class="map">${boardSurfaceMarkup({g:editorGame,reachable:[],cost:()=>editorColEffort,selected:mapEditKey,route:[],nextSteps:[],editMode:true})}</div><div class="maptools">${btn('−','zoomout')}${btn('+','zoomin')}${btn('◎','center')}${artButton()}</div></div><p class="muted">Les changements sont conservés sur cet appareil après « Enregistrer la carte ». Le fichier .json permet de les garder ou de les importer ailleurs.</p><p class="toast" role="status">${esc(message)}</p>${btn('← Éditeur','editor-hub','light')}</main>`;}
-function setup(){return playersScreen({btn,roster,colors:COLORS,rules:setupRules});}
+function setup(){if(setupPage==='kind')return kindScreen({btn,rules:setupRules});return playersScreen({btn,roster,colors:COLORS,rules:setupRules});}
 function equipmentSetup(){
  const p=roster[choosing],items=p.items||[],spent=items.reduce((n,id)=>n+setupRules.equipment[id].price,0);
  const descriptions=equipmentDescriptions;
@@ -357,8 +357,8 @@ function bind(){
  const editorNameInput=document.querySelector('#editor-map-name');if(editorNameInput)editorNameInput.oninput=()=>{editorName=editorNameInput.value;};
  document.querySelectorAll('[data-action]').forEach(el=>el.onclick=()=>act(el.dataset.action));
  bindCardEditor();
- document.querySelectorAll('[data-mode]').forEach(el=>el.onclick=()=>{mode=el.dataset.mode;selectedMapId='';screen='setup';render();});
- document.querySelectorAll('[data-map-choice]').forEach(el=>el.onclick=()=>{const id=el.dataset.mapChoice;if(id&&!findMap(id))return;selectedMapId=id;mode='plateau';const chosen=findMap(id);if(chosen)setupRules.terrain.col=chosen.terrain.col;screen='setup';render();});
+ document.querySelectorAll('[data-mode]').forEach(el=>el.onclick=()=>{mode=el.dataset.mode;selectedMapId='';screen='setup';setupPage='kind';render();});
+ document.querySelectorAll('[data-map-choice]').forEach(el=>el.onclick=()=>{const id=el.dataset.mapChoice;if(id&&!findMap(id))return;selectedMapId=id;mode='plateau';const chosen=findMap(id);if(chosen)setupRules.terrain.col=chosen.terrain.col;screen='setup';setupPage='kind';render();});
  document.querySelectorAll('[data-edit-map]').forEach(el=>el.onclick=()=>{openEditor(el.dataset.editMap);render();center();});
  const count=document.querySelector('#player-count');if(count)count.onchange=()=>{readRoster();const n=+count.value;roster=Array.from({length:n},(_,i)=>roster[i]||{name:'Joueur '+(i+1),bike:'gravel'});render();};
   document.querySelectorAll('[data-voyage]').forEach(el=>el.onclick=()=>{const id=el.dataset.voyage;if(!drawn.some(v=>v.id===id))return;roster[choosing].voyage=id;choosing++;if(choosing<roster.length)drawn=drawVoyages();else{try{m=S.createMatch(roster,mode,setupRules,undefined,customCards,eventEdits);}catch(e){choosing--;message=e.message;render();return;}const chosen=findMap(selectedMapId);if(chosen){applyCustomMap(m,chosen);m.mapChoice=chosen.id;m.mapName=chosen.name;}else{m.mapChoice='';m.mapName='Europe standard';}screen='game';zoom=1;mapSelection='';selected=0;}render();if(screen==='game')center();});
@@ -1373,3 +1373,17 @@ function pointToasts(from,next){const mine=online?.seat,lines=(next.history||[])
   const el=document.createElement('div');el.className='pts-toast';el.innerHTML=`<span class="pts-dot" style="background:${esc(p.color)}"></span><b>${esc(p.name)}</b><em class="${d<0?'neg':''}">${d>0?'+':''}${d} pts</em><small>${esc(lab.slice(0,70))}</small>`;
   box.append(el);setTimeout(()=>{el.classList.add('out');setTimeout(()=>el.remove(),400);},6000);
   try{const key=next.players.find(q=>q.id===id)?.pos;if(d>0&&key)setTimeout(()=>boardRenderer?.effect?.('voyage',key,{text:`+${d}`}),400);}catch{}}}
+
+// ---------- Départ simplifié (17 octobre) : écran « À quoi veux-tu jouer ? », puis « Qui part ? » ; en ligne, mêmes écrans avant le code ----------
+var setupPage='players';
+{const priorAct=act;act=a=>{
+ if(a==='kind-next'){setupPage='players';render();return;}
+ if(a==='kind'){readRoster();screen='setup';setupPage='kind';render();return;}
+ if(a==='setup')setupPage='players';
+ if(/^count-\d$/.test(a)){readRoster();const n=+a.slice(6);roster=Array.from({length:n},(_,i)=>roster[i]||{name:'Joueur '+(i+1),bike:'gravel'});render();return;}
+ if(screen==='online'){
+  if(a==='net-create-open'){readNetForm();net={...net,view:'create1',error:''};render();return;}
+  if(a==='net-create-next'){net={...net,view:'create2',error:''};render();return;}
+  if(/^net-count-\d$/.test(a)){readNetForm();net={...net,count:+a.slice(10)};render();return;}
+ }
+ return priorAct(a);};}

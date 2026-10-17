@@ -56,7 +56,7 @@ function bikeSvg(bikeId,content,cls=''){
 // ---------- Fond commun : la carte peinte ----------
 const backdrop=(mode='blur')=>`<div class="mc-backdrop mc-${mode}" aria-hidden="true"><img src="${MAP_IMG}" alt=""/></div>`;
 export function steps(active){
- const list=[['map','Plateau'],['players','Cyclistes'],['gear','Garage'],['goal','Voyage']],at=list.findIndex(s=>s[0]===active);
+ const list=[['map','Plateau'],['kind','Jeu'],['players','Cyclistes'],['gear','Garage'],['goal','Voyage']],at=list.findIndex(s=>s[0]===active);
  return `<ol class="mc-steps" aria-label="Étapes du départ">${list.map(([id,label],i)=>`<li class="${i<at?'done':i===at?'current':''}" ${i===at?'aria-current="step"':''}>${i<at?'✓':i+1} · ${label}</li>`).join('')}</ol>`;
 }
 
@@ -111,34 +111,41 @@ export function victoryBlock(rules,btn){const v=rules.victory||{},multi=v.mode==
  return `<section class="mc-weather mc-victory" aria-label="Fin de partie"><div><p class="mc-kicker">Fin de partie</p><p>La partie s’arrête dès que l’une de ces conditions est atteinte (0 = pas utilisée). Après un voyage réussi, on en tire un nouveau. Le premier à finir ses voyages gagne +5 points ; à la fin, le plus de points gagne.</p></div>
   <div class="mc-vic-row">${num('points','points d’aventure')}${num('voyages','voyages réussis')}${num('days','jours (le plus de points gagne)')}
   <button type="button" data-action="victory-standard" class="${std?'on':''}" aria-pressed="${std}"><b>Standard</b><small>35 points · 3 voyages · 40 jours</small></button></div></section>`;}
+// Départ simplifié (17 octobre, planche « Qui part à l'aventure — simplifié ») : écran 1 = type de jeu, écran 2 = cyclistes puis paramètres.
+const KIND_ART={
+ orig:`<svg viewBox="0 0 300 110" aria-hidden="true"><rect width="300" height="110" fill="#16353a"/><g stroke="#0b1a1c" stroke-width="2"><rect x="92" y="24" width="50" height="70" rx="6" fill="#f6e7c1" transform="rotate(-12 117 59)"/><rect x="125" y="18" width="50" height="70" rx="6" fill="#f6e7c1"/><rect x="158" y="24" width="50" height="70" rx="6" fill="#f2a541" transform="rotate(12 183 59)"/></g><circle cx="150" cy="46" r="10" fill="none" stroke="#c8483a" stroke-width="3"/><path d="M140 68h20" stroke="#0b1a1c" stroke-width="3"/></svg>`,
+ imm:`<svg viewBox="0 0 300 110" aria-hidden="true"><rect width="300" height="110" fill="#1d3b3a"/><path d="M0 86 L60 50 L95 72 L150 26 L205 74 L240 54 L300 84 V110 H0Z" fill="#2c544a"/><path d="M150 26 L162 40 L138 40Z" fill="#f6e7c1"/><path d="M20 100 Q100 80 160 92 T300 88" stroke="#f2a541" stroke-width="3" stroke-dasharray="6 6" fill="none"/><circle cx="240" cy="22" r="10" fill="#f2a541"/></svg>`,
+ coop:`<svg viewBox="0 0 300 110" aria-hidden="true"><rect width="300" height="110" fill="#17303f"/><path d="M0 94 Q150 64 300 94" stroke="#f2a541" stroke-width="3" stroke-dasharray="6 6" fill="none"/><g stroke="#0b1a1c" stroke-width="2"><circle cx="115" cy="72" r="13" fill="#f6e7c1"/><circle cx="150" cy="66" r="13" fill="#f2a541"/><circle cx="185" cy="72" r="13" fill="#7fa9c9"/></g><path d="M60 28 L80 16 L100 28 M200 28 l20-12 20 12" stroke="#c9bd9f" stroke-width="3" fill="none"/></svg>`};
+export function kindChoices(rules){const imm=Boolean(rules.immersion?.enabled);
+ const card=(on,action,art,who,title,text,soon=false)=>`<button type="button" class="mc-kind ${on?'on':''} ${soon?'soon':''}" ${action?`data-action="${action}"`:''} aria-pressed="${on}" ${soon?'disabled':''}>${art}<span class="mc-kind-text"><em>${who}</em><b>${title}</b><span>${text}</span>${soon?'<i class="mc-soon">Bientôt</i>':''}</span></button>`;
+ return `<div class="mc-kinds" role="group" aria-label="Type de jeu">${card(!imm,'mode-original',KIND_ART.orig,'À plusieurs','Original','Le jeu de société : on pioche, on garde ses cartes, on en joue contre les autres. Le plus malin gagne.')}${card(imm,'mode-immersion',KIND_ART.imm,'Idéal en solo','Immersion','Le voyage comme si tu y étais : plus de cartes, la route, la météo et la fatigue décident. Rencontres et nuits à vivre.')}${card(false,'',KIND_ART.coop,'En équipe','Coopératif','On part ensemble contre la route : on partage repas et matériel, on gagne ou on perd tous ensemble.',true)}</div>`;}
+export function kindScreen({btn,rules}){
+ return `<main class="menu-c mc-page mc-start">${backdrop()}${steps('kind')}
+  <header class="mc-head"><div><p class="mc-kicker">Autour de la table</p><h1>À quoi veux-tu jouer ?</h1><p class="mc-lead">Tu pourras changer les détails à l’écran suivant.</p></div></header>
+  ${kindChoices(rules)}
+  <footer class="mc-foot">${btn('← Plateau','modes','mc-ghost')}<span></span>${btn('Continuer →','kind-next','mc-go')}</footer>
+ </main>`;}
+const COUNT_WORD=['','Seul','À deux','À trois','À quatre','À cinq','À six'];
+export function countPicker(n,list,prefix){return `<div class="mc-count-pick" role="group" aria-label="Nombre de cyclistes">${list.map(k=>`<button type="button" data-action="${prefix}${k}" aria-pressed="${k===n}" class="${k===n?'on':''}"><span>${k}</span>${COUNT_WORD[k]}</button>`).join('')}</div>`;}
+export function paramsBlock(rules){
+ const imm=Boolean(rules.immersion?.enabled),forecast=Boolean(rules.weather?.forecast),enc=Boolean(rules.encounters?.enabled),v=rules.victory||{},multi=v.mode==='multi',std=multi&&v.points===35&&v.voyages===3&&v.days===40;
+ const opt=(on,action,title,small)=>`<button type="button" data-action="${action}" aria-pressed="${on}" class="${on?'on':''}"><b>${title}</b><small>${small}</small></button>`;
+ const row=(name,hint,body)=>`<div class="mc-param"><div class="mc-param-name"><b>${name}</b><small>${hint}</small></div><div class="mc-param-body">${body}</div></div>`;
+ const num=(k,label)=>`<label class="mc-end-field"><input type="number" min="0" max="999" step="1" data-victory="${k}" value="${multi?Number(v[k]||0):''}"/> ${label}</label>`;
+ const rows=imm?[row('Le voyage','Comment la route se vit.','<p class="mc-param-note">Météo annoncée par zones, pas de cartes : ce qui arrive dépend du terrain, de la météo et de ta fatigue.</p>')]
+  :[row('La météo','Comment le temps arrive sur la route.',opt(forecast,'weather-forecast','Annoncée','Le bulletin du lendemain chaque soir, par région.')+opt(!forecast,'weather-cards','En cartes','Pluie, neige, vent : des cartes qu’on se joue entre cyclistes.')),
+    row('Les imprévus','Ce qui arrive en chemin.',opt(!enc,'events-cards','Cartes Événement','On pioche, on garde, on joue ses cartes.')+opt(enc,'events-encounters','Rencontres','Chaque soir, une rencontre et un choix.'))];
+ rows.push(row('La fin de partie','La partie s’arrête dès qu’un cycliste atteint l’un de ces buts (0 = pas utilisé). Le premier à finir ses voyages gagne +5 points ; le plus de points gagne.',`<div class="mc-ends">${num('points','points')}${num('voyages','voyages')}${num('days','jours')}${std?'':'<button type="button" data-action="victory-standard" class="mc-link">Revenir à 35 · 3 · 40</button>'}</div>`));
+ return `<div class="mc-params">${rows.join('')}</div>`;}
 export function playersScreen({btn,roster,colors,rules}){
- const cards=roster.map((p,i)=>`<section class="mc-player" style="--player-color:${colors[i]}" aria-label="Cycliste ${i+1}">
-   <div class="mc-player-head"><span class="mc-token" aria-hidden="true">${i+1}</span><span>Cycliste ${i+1}</span></div>
-   <label>Nom sur la fiche <input data-roster="${i}" data-field="name" value="${esc(p.name)}" maxlength="40"/></label>
-   <p>Le garage vient ensuite : choix du vélo et chargement des sacoches.</p>
-  </section>`).join('');
- return `<main class="menu-c mc-page">${backdrop()}${steps('players')}
-  <header class="mc-head"><div><p class="mc-kicker">Autour de la table</p><h1>Qui part à l’aventure ?</h1></div>
-   <label class="mc-count">Nombre de cyclistes <select id="player-count">${Array.from({length:6},(_,i)=>`<option value="${i+1}" ${roster.length===i+1?'selected':''}>${i+1}</option>`).join('')}</select></label></header>
-  <div class="mc-players">${cards}</div>
-  <section class="mc-weather mc-mode" aria-label="Mode de jeu"><div><p class="mc-kicker">Mode de jeu</p><p>Le jeu de plateau original, ou un voyage plein d’imprévus.</p></div>
-   <div class="mc-weather-choices" role="group" aria-label="Choix du mode">
-    <button type="button" data-action="mode-original" aria-pressed="${!rules.immersion?.enabled}" class="${!rules.immersion?.enabled?'on':''}"><b>Mode original</b><small>Le jeu de plateau et ses cartes à se jouer. Conseillé à plusieurs.</small></button>
-    <button type="button" data-action="mode-immersion" aria-pressed="${!!rules.immersion?.enabled}" class="${rules.immersion?.enabled?'on':''}"><b>Mode Immersion · conseillé en solo</b><small>Plus de cartes : la route décide. Scènes en route et le soir, imprévus sur la carte, « Demander » l’hospitalité, compagnons de route.</small></button>
-   </div></section>
-  ${rules.immersion?.enabled?`<p class="mc-mode-note">En mode Immersion, la météo est annoncée par zones et il n’y a plus de cartes Événement : ce qui arrive dépend du terrain, de la zone, de la météo et de ta fatigue.</p>${roster.length===1?levelPicker(rules.immersion.level):''}`:`  <section class="mc-weather" aria-label="Météo de la partie"><div><p class="mc-kicker">Météo de la partie</p><p>Choisis une seule des deux façons de jouer la météo.</p></div>
-   <div class="mc-weather-choices" role="group" aria-label="Choix de la météo">
-    <button type="button" data-action="weather-cards" aria-pressed="${!rules.weather?.forecast}" class="${!rules.weather?.forecast?'on':''}"><b>Cartes météo</b><small>Les cartes Événement climatiques (pluie, neige, vent…) se jouent entre cyclistes.</small></button>
-    <button type="button" data-action="weather-forecast" aria-pressed="${!!rules.weather?.forecast}" class="${rules.weather?.forecast?'on':''}"><b>Météo annoncée</b><small>Chaque soir, le bulletin du lendemain pour 5 régions. Les cartes climatiques sont retirées.</small></button>
-   </div></section>
-  <section class="mc-weather" aria-label="Événements de la partie"><div><p class="mc-kicker">Événements de la route</p><p>Les cartes à se jouer entre cyclistes, ou des rencontres à vivre chaque soir.</p></div>
-   <div class="mc-weather-choices" role="group" aria-label="Choix des événements">
-    <button type="button" data-action="events-cards" aria-pressed="${!rules.encounters?.enabled}" class="${!rules.encounters?.enabled?'on':''}"><b>Cartes Événement</b><small>On pioche, on garde, on joue ses cartes et on en donne aux autres.</small></button>
-    <button type="button" data-action="events-encounters" aria-pressed="${!!rules.encounters?.enabled}" class="${rules.encounters?.enabled?'on':''}"><b>Rencontres · idéal en solo</b><small>Plus de cartes : chaque soir, une rencontre liée à l’endroit propose un choix.</small></button>
-   </div></section>
-`}
-  ${victoryBlock(rules,btn)}
-  <footer class="mc-foot">${btn('← Plateau','modes','mc-ghost')}<span>Règles : ${esc(rules.name)} · ${Object.values(rules.bikes).map(b=>`${esc(b.name)} ${Math.min(5,Math.max(1,rules.distance+(b.extraDistance||0)))}`).join(' / ')} cases/jour · ${rules.startEnergy} énergie · ${rules.startMoney} pièces · ${btn('Modifier','rules','mc-link')}</span>${btn('Au garage →','start','mc-go')}</footer>
+ const n=roster.length,imm=Boolean(rules.immersion?.enabled);
+ const names=roster.map((p,i)=>`<label class="mc-name-field" style="--player-color:${colors[i]}"><span><i class="mc-token" aria-hidden="true">${i+1}</i>Cycliste ${i+1}</span><input data-roster="${i}" data-field="name" value="${esc(p.name)}" maxlength="40"/></label>`).join('');
+ return `<main class="menu-c mc-page mc-start">${backdrop()}${steps('players')}
+  <header class="mc-head"><div><p class="mc-kicker">Type de jeu : ${imm?'Immersion':'Original'} · ${btn('changer','kind','mc-link')}</p><h1>Qui part ?</h1></div></header>
+  <section class="mc-block" aria-label="Cyclistes"><p class="mc-block-title">1 · Combien de cyclistes ?</p>${countPicker(n,[1,2,3,4,5,6],'count-')}<div class="mc-names">${names}</div></section>
+  <section class="mc-block" aria-label="Paramètres"><p class="mc-block-title">2 · Les paramètres de la partie</p><p class="mc-block-hint">Déjà réglés pour une première partie. Touche un paramètre pour le changer.</p>${paramsBlock(rules)}</section>
+  ${imm&&n===1?levelPicker(rules.immersion.level):''}
+  <footer class="mc-foot">${btn('← Type de jeu','kind','mc-ghost')}<span>${btn('Règles avancées','rules','mc-link')}</span>${btn('Au garage →','start','mc-go')}</footer>
  </main>`;
 }
 
@@ -209,20 +216,21 @@ export function onlineScreen({btn,net={},local=null,current=null,message='',rule
  else if(net.view==='seats')body=card(`<p class="mc-kicker">Partie ${esc(net.code)}</p><h2>Quel cycliste es-tu ?</h2>
    <div class="mc-online-pick">${(net.players||[]).map(p=>`<button type="button" data-action="net-seat-${esc(p.id)}" ${p.taken?'disabled':''}><b>${esc(p.name)}</b><small>${p.mine?'déjà sur cet appareil':p.taken?'déjà pris':'libre'}</small></button>`).join('')}</div>
    ${btn('← Retour','net-back','mc-ghost')}`,'wide');
+ else if(net.view==='create1')body=`<section class="mc-online-flow"><h2>À quoi voulez-vous jouer ?</h2>${kindChoices(rules)}<div class="mc-online-row">${btn('← Retour','net-back','mc-ghost')}${btn('Continuer →','net-create-next','mc-go')}</div></section>`;
+ else if(net.view==='create2'){const n=net.count||2,imm=Boolean(rules.immersion?.enabled);
+  body=`<section class="mc-online-flow"><p class="mc-kicker">Type de jeu : ${imm?'Immersion':'Original'} · ${btn('changer','net-create-open','mc-link')}</p><h2>Qui part ?</h2>
+   <div class="mc-block"><p class="mc-block-title">1 · Combien de cyclistes ?</p>${countPicker(n,[2,3,4,5,6],'net-count-')}<input type="hidden" id="net-count" value="${n}"/>
+   <label class="mc-name-field"><span>Ton nom</span><input id="net-name" maxlength="40" autocomplete="off" value="${esc(net.name||'')}" placeholder="Ton prénom"/></label></div>
+   <div class="mc-block"><p class="mc-block-title">2 · Les paramètres de la partie</p><p class="mc-block-hint">Déjà réglés pour une première partie. Touche un paramètre pour le changer.</p>${paramsBlock(rules)}</div>
+   <div class="mc-online-row">${btn('← Type de jeu','net-create-open','mc-ghost')}${btn('Créer la partie et avoir le code →','net-lobby-create','mc-go')}</div></section>`;}
  else{
   const forecast=Boolean(rules.weather?.forecast),enc=Boolean(rules.encounters?.enabled),imm=Boolean(rules.immersion?.enabled);
-  const create=card(`<p class="mc-kicker">Créer</p><h2>Créer une partie en ligne</h2><p>Chacun choisira son vélo, ses sacoches et son voyage sur son propre appareil.</p>
-    <label class="mc-online-label">Ton nom <input id="net-name" maxlength="40" autocomplete="off" value="${esc(net.name||'')}" placeholder="Fi"/></label>
-    <label class="mc-online-label">Nombre de cyclistes <select id="net-count">${[2,3,4,5,6].map(n=>`<option value="${n}" ${(net.count||2)===n?'selected':''}>${n}</option>`).join('')}</select></label>
-    <div class="mc-weather-choices mc-online-opts" role="group" aria-label="Mode">${toggle(!imm,'mode-original','Mode original','Les cartes qu’on se joue.')}${toggle(imm,'mode-immersion','Mode Immersion','La route décide (conseillé en solo).')}</div>
-    ${imm?'':`    <div class="mc-weather-choices mc-online-opts" role="group" aria-label="Météo">${toggle(!forecast,'weather-cards','Cartes météo','Pluie, neige, vent… en cartes.')}${toggle(forecast,'weather-forecast','Météo annoncée','Bulletin chaque soir, sans cartes climatiques.')}</div>
-    <div class="mc-weather-choices mc-online-opts" role="group" aria-label="Événements">${toggle(!enc,'events-cards','Cartes Événement','On joue des cartes aux autres.')}${toggle(enc,'events-encounters','Rencontres','Une rencontre chaque soir.')}</div>`}
-    ${victoryBlock(rules,btn)}
-    ${btn('Créer la partie en ligne','net-lobby-create','mc-go')}`);
+  const create=card(`<p class="mc-kicker">Créer</p><h2>Créer une partie</h2><p>Tu choisis le type de jeu et les paramètres, puis tu envoies le code à tes amis. Chacun prépare ensuite son vélo et son voyage sur son appareil.</p>
+    ${btn('Créer une partie →','net-create-open','mc-go')}`);
   const upload=local?card(`<p class="mc-kicker">Ou bien</p><h2>Mettre ma partie en cours en ligne</h2><p>Partie préparée sur cet appareil : ${esc(local.title)}. Choisis le cycliste que tu joues ici ; les autres se joueront sur l’appareil de tes amis.</p>
     <div class="mc-online-pick">${local.players.map(p=>`<button type="button" data-action="net-create-${esc(p.id)}"><b>Je suis ${esc(p.name)}</b><small>${esc(p.detail)}</small></button>`).join('')}</div>`)
    :'';
-  const join=card(`<p class="mc-kicker">Rejoindre</p><h2>J’ai reçu un code</h2><label class="mc-online-label">Code de la partie <input id="net-code" inputmode="numeric" autocomplete="off" placeholder="VELO-1234" value="${esc(net.code||'')}"/></label><label class="mc-online-label">Ton nom <input id="net-join-name" maxlength="40" autocomplete="off" value="${esc(net.name||'')}" placeholder="Léa"/></label>${btn('Rejoindre la partie','net-peek','mc-go')}`);
+  const join=card(`<p class="mc-kicker">Rejoindre</p><h2>J’ai reçu un code</h2><label class="mc-online-label">Code de la partie <input id="net-code" inputmode="numeric" autocomplete="off" placeholder="VELO-1234" value="${esc(net.code||'')}"/></label><label class="mc-online-label">Ton nom <input id="net-join-name" maxlength="40" autocomplete="off" value="${esc(net.name||'')}" placeholder="Ton prénom"/></label>${btn('Rejoindre la partie','net-peek','mc-go')}`);
   const now=current?card(`<p class="mc-kicker">Sur cet appareil</p><h2>Partie ${esc(current.code)}</h2><p>Tu joues ${esc(current.name)}.</p><div class="mc-online-row">${btn('Reprendre la partie →','net-play','mc-go')}${btn('Quitter cette partie en ligne','net-leave','mc-ghost')}</div>`,'wide'):'';
   const back=lobbyBack?card(`<p class="mc-kicker">Salle d’attente</p><h2>Partie ${esc(lobbyBack)}</h2><p>Une partie en préparation t’attend.</p>${btn('Retour à la salle d’attente →','net-lobby-back','mc-go')}`,'wide'):'';
   body=now+back+`<div class="mc-online-grid">${create}${join}</div>`+(upload?`<div class="mc-online-grid mc-online-upload">${upload}</div>`:'');
