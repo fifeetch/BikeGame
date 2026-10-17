@@ -3,18 +3,18 @@ export const voyages=[
 {id:'soleil',title:'La route du soleil',from:'Barcelone',to:'Rome',color:'#287a80',cities:3,coast:4,coastRun:3,plain:2},
 {id:'alpes',title:'Au-delà des Alpes',from:'Lyon',to:'Vienne',color:'#345a74',cities:2,mountainRun:4,plain:3},
 {id:'campagne',title:'Les chemins de campagne',from:'Amsterdam',to:'Prague',color:'#aa781e',cities:4,plain:5,plainRun:3,mountain:1},
-{id:'nord',title:'Cap vers le Nord',from:'Copenhague',to:'Cap Nord',color:'#416546',cities:3,coast:3,chains:2},
+{id:'nord',title:'Cap vers le Nord',from:'Copenhague',to:'Cap Nord',color:'#416546',cities:4,coast:3,chains:2},
 {id:'atlantique',title:'De l’Atlantique aux Alpes',from:'Bordeaux',to:'Zurich',color:'#865b39',cities:3,coast:2,mountainRun:2,art:'atlantique-alpes.png'},
-{id:'est',title:'Les routes de l’Est',from:'Berlin',to:'Bucarest',color:'#935836',cities:4,plain:4,mountain:2,art:'routes-est.png'},
+{id:'est',title:'Les routes de l’Est',from:'Berlin',to:'Bucarest',color:'#935836',cities:4,plain:4,mountain:4,art:'routes-est.png'},
 {id:'balkans',title:'Le tour des Balkans',from:'Venise',to:'Thessalonique',color:'#287a80',cities:3,coast:3,mountainRun:2,art:'balkans.png'},
 // Nouveaux voyages (15 octobre 2026). Sans illustration : une petite carte du trajet est dessinée à la place.
 {id:'iberique',title:'La traversée ibérique',from:'Lisbonne',to:'Barcelone',color:'#b5652b',cities:2,plain:4,hills:2},
 {id:'manche',title:'Par-delà la Manche',from:'Londres',to:'Bordeaux',color:'#3f6f8f',cities:3,plain:4,coast:2},
-{id:'iles',title:'Des îles au continent',from:'Dublin',to:'Paris',color:'#3d7a4f',cities:4,plain:3,coast:1},
+{id:'iles',title:'Des îles au continent',from:'Dublin',to:'Paris',color:'#3d7a4f',cities:4,plain:3,coast:3},
 {id:'rhin',title:'Le long du Rhin',from:'Amsterdam',to:'Milan',color:'#6a5a8c',cities:2,hills:3,mountainRun:2},
-{id:'danube',title:'Le fil du Danube',from:'Vienne',to:'Constanța',color:'#2f6f86',cities:3,hills:4,mountain:2,coast:1},
+{id:'danube',title:'Le fil du Danube',from:'Vienne',to:'Constanța',color:'#2f6f86',cities:3,hills:4,mountain:2,coast:3},
 {id:'adriatique',title:'Les rives de l’Adriatique',from:'Venise',to:'Skopje',color:'#2a7f8f',cities:3,coast:3,mountain:2},
-{id:'grece',title:'Vers la mer Égée',from:'Sofia',to:'Athènes',color:'#3b6fa8',cities:1,coast:3,mountain:1},
+{id:'grece',title:'Vers la mer Égée',from:'Sofia',to:'Athènes',color:'#3b6fa8',cities:2,coast:3,mountain:1},
 {id:'anatolie',title:'Les hauts plateaux d’Anatolie',from:'Izmir',to:'Trabzon',color:'#a4532f',cities:2,mountainRun:3,coast:1},
 {id:'fjords',title:'La route des fjords',from:'Bergen',to:'Narvik',color:'#3c6475',cities:2,coastRun:4,mountain:1},
 {id:'baltique',title:'Les rivages baltes',from:'Varsovie',to:'Saint-Pétersbourg',color:'#5a6f3a',cities:3,plainRun:4,coast:2},
@@ -25,10 +25,15 @@ export const voyages=[
 export const TUTORIAL_VOYAGE={id:'apprentissage',title:'Premier voyage : vers la mer Égée',from:'Budapest',to:'Athènes',color:'#3b6fa8',cities:3,coast:3,mountain:1,tutorial:true};
 // Trouver une carte Voyage par son identifiant (les 20 cartes + celle de la partie guidée).
 export const findVoyage=id=>voyages.find(v=>v.id===id)||(id===TUTORIAL_VOYAGE.id?TUTORIAL_VOYAGE:undefined);
-// Points d'aventure du voyage selon sa longueur (nombre de cases du trajet le plus court).
-export const VOYAGE_TIERS=[{max:8,name:'Courte',points:6},{max:13,name:'Moyenne',points:9},{max:20,name:'Longue',points:12},{max:Infinity,name:'Très longue',points:15}];
+// Points d'aventure selon l'EFFORT du voyage (barème de Fi, 17 octobre 2026 : 1 point = 2,5 d'effort).
+// Effort = cases + énergie du meilleur trajet qui remplit TOUS les objectifs (plaine 1, moyenne montagne 2, montagne 3, côte 1, ville 0, col 3).
+// 10 et plus → 4 · 20 et plus → 8 · 30 et plus → 12 · 40 et plus → 16 · 50 et plus → 20.
+// Le 17 octobre, 5 cartes trop faciles dans leur tranche ont reçu un objectif de plus (Nord, Est, îles, mer Égée, Danube).
+export const VOYAGE_TIERS=[{max:19,name:'Facile',points:4},{max:29,name:'Modéré',points:8},{max:39,name:'Difficile',points:12},{max:49,name:'Très difficile',points:16},{max:Infinity,name:'Épique',points:20}];
+export const VOYAGE_EFFORT={traversee:57,soleil:34,alpes:36,campagne:39,nord:58,atlantique:37,est:47,balkans:29,iberique:44,manche:16,iles:17,rhin:26,danube:38,adriatique:26,grece:19,anatolie:25,fjords:47,baltique:26,riviera:26,carpates:29,apprentissage:26};
+// Longueur du trajet le plus court (affichée « environ N cases »).
 export const VOYAGE_LENGTHS={traversee:27,soleil:14,alpes:13,campagne:11,nord:21,atlantique:11,est:16,balkans:12,iberique:11,manche:10,iles:9,rhin:9,danube:12,adriatique:10,grece:6,anatolie:9,fjords:15,baltique:12,riviera:8,carpates:10,apprentissage:13};
-export const voyageTier=v=>{const id=typeof v==='string'?v:v?.id,len=VOYAGE_LENGTHS[id]||0;return VOYAGE_TIERS.find(t=>len<=t.max);};
+export const voyageTier=v=>{const id=typeof v==='string'?v:v?.id,effort=VOYAGE_EFFORT[id]||0;return VOYAGE_TIERS.find(t=>effort<=t.max);};
 export const voyagePoints=v=>voyageTier(v).points;
 export function drawVoyages(rng=Math.random){const cards=[...voyages];for(let i=cards.length-1;i>0;i--){let j=Math.floor(rng()*(i+1));[cards[i],cards[j]]=[cards[j],cards[i]];}return cards.slice(0,3);}
 export function progress(g){const v=findVoyage(g.voyage);if(!v)return null;const history=g.travelHistory||(g.travel||[]).map(k=>({key:k,type:g.board[k]?.type,endpoint:g.board[k]?.id===0||g.board[k]?.id===g.arrivalId}));const first=new Map();for(const t of history)if(!first.has(t.key))first.set(t.key,t);const unique=[...first.values()];const count=type=>unique.filter(t=>t.type===type&&!t.endpoint).length;

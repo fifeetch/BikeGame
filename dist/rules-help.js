@@ -19,9 +19,9 @@ export function rulesIntro(r,{btn,eventGame=true}={}){const o=opts(r),t=r.terrai
  return `<div class="rules-intro"><span class="eyebrow">AVANT LE DÉPART · L’ESSENTIEL EN 1 MINUTE</span><h2>Comment on joue</h2><div class="ri-grid">
   ${box('🎯','Le but',`Réussir des <b>voyages de ville à ville</b> et gagner des <b>points d’aventure</b>. La partie s’arrête à ${victory(r)}.`)}
   ${box('🚲','Ta journée',`Cases par jour : ${bikeDays(r)}. Chaque case coûte de l’énergie : plaine et côte ${t.plaine}, moyenne montagne ${t.moyenne_montagne}, montagne et col ${t.montagne}, ville ${t.ville}.`)}
-  ${box('⚡','Énergie et repos',`${r.startEnergy} au départ, ${r.maxEnergy} au plus. Un jour, on roule <b>ou</b> on se repose : bivouac (tente), camping ${r.rest.camping.price} pièce, hôtel ${r.rest.hotel.price} pièces.${r.fatigue?.enabled?' Chaque jour de route fatigue : −${r.fatigue.maxEnergyPenalty} d’énergie maximum par niveau, jusqu’à une vraie nuit.':''}`)}
+  ${box('⚡','Énergie et repos',`${r.startEnergy} au départ, ${r.maxEnergy} au plus. Un jour, on roule <b>ou</b> on se repose : bivouac (tente), camping ${r.rest.camping.price} pièce, hôtel ${r.rest.hotel.price} pièces.${r.fatigue?.enabled?` Chaque jour de route fatigue : −${r.fatigue.maxEnergyPenalty} d’énergie maximum par niveau, jusqu’à une vraie nuit.`:''}`)}
   ${o.offroad?box('🛣','Route ou hors route',`Sans ${esc(r.equipment[r.offroad.item]?.name||'GPS')}, quitter la route limite la journée à ${Object.entries(r.offroad.maxDistance).map(([id,n])=>`${n} cases (${esc(r.bikes[id]?.name||id)})`).join(' ou ')}.`):box('🛣','Routes','Routes et chemins : on roule partout, la route ne change rien.')}
-  ${box('⭐','Les points',`Voyage réussi +${VOYAGE_TIERS[0].points} à +${VOYAGE_TIERS.at(-1).points} selon sa longueur · col mythique +${r.points.col} · ${r.adventure.climberCols} cols +${r.adventure.climberBonus} · jeton « ? » +1 à +3.`)}
+  ${box('⭐','Les points',`Voyage réussi +${VOYAGE_TIERS[0].points} à +${VOYAGE_TIERS.at(-1).points} selon l’effort demandé · col mythique +${r.points.col} · ${r.adventure.climberCols} cols +${r.adventure.climberBonus} · jeton « ? » +1 à +3.`)}
   ${r.immersion?.enabled?box('🧭','Le mode Immersion','Plus de cartes : la route décide. Des scènes en route (plus souvent, et plus de galères, quand tu es fatigué), des imprévus visibles sur la carte, et chaque soir tu choisis où dormir : bivouac, camping, hôtel ou « Demander ». Dormir termine la journée, et chaque nuit est un pari.'):o.encounters?box('🤝','Les rencontres','Chaque soir, une rencontre liée à l’endroit où tu t’arrêtes : tu choisis ce que tu fais.'):box('🃏','Les cartes',`Fin de tour : pioche ${r.eventCards.drawPerTurn}, garde-en 1. Positives pour toi, négatives contre un autre${o.forecast?'':', météo pendant son trajet'}, bonus posés devant toi.`)}
  </div><p class="muted">${o.forecast?'Météo annoncée : chaque soir, le bulletin du lendemain pour 5 régions. ':''}Toutes les règles sont dans « 📖 Règles », à tout moment de la partie.</p>
  <div class="ri-actions">${btn('C’est parti →','intro-close')}${btn('📖 Règles détaillées','help','light')}</div>
@@ -49,7 +49,7 @@ export function rulesHelp(r,tab='route',{btn,eventGame=true}={}){const o=opts(r)
   `Budget : +${r.budget.amount} pièces tous les ${r.budget.every} tours.`])}`;
  else if(tab==='voyages')body=`<h3>Voyages & points</h3>${li([
   'Ta <b>carte Voyage</b> donne une ville d’arrivée et des objectifs de cases (villes, côtes, montagnes…). Remplis-les, puis rejoins la ville d’arrivée.',
-  `Points du voyage selon sa longueur : ${VOYAGE_TIERS.map(x=>`${x.name} +${x.points}`).join(' · ')}.`,
+  `Points du voyage selon l’effort demandé : ${VOYAGE_TIERS.map(x=>`${x.name} +${x.points}`).join(' · ')}.`,
   'Arrivé sans tous les objectifs : « 🏁 Terminer le voyage ici », avec 40 % de points en moins.',
   'Voyage réussi : au début de ton tour suivant, tire 3 cartes Voyage et garde-en 1. Tu pars d’où tu es ; seules les cases parcourues ensuite comptent.',
   `Col mythique : +${r.points.col} · ${r.adventure.climberCols} cols franchis : +${r.adventure.climberBonus} (une fois).`,

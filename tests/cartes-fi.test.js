@@ -84,7 +84,7 @@ test('arrivé sans tous les objectifs : on peut terminer le voyage avec 40 % de 
  const m=game(),p=S.player(m);
  const voyage=S.view(m).voyage,dest=Object.values(m.board).find(t=>t.type==='ville'&&t.name===({traversee:'Istanbul',soleil:'Rome'}[voyage]));
  p.pos=dest.key;p.travelHistory=[];p.voyageFrom=0;m.phase='move';
- assert(S.canFinishVoyageEarly(m));const before=p.points,full={traversee:15,soleil:12}[voyage];
+ assert(S.canFinishVoyageEarly(m));const before=p.points,full={traversee:20,soleil:12}[voyage];
  assert(S.finishVoyageEarly(m));assert.equal(p.points-before,Math.round(full*.6));assert(p.completed);assert.equal(p.voyageChoices.length,3);assert(p.voyagesDone.at(-1).partial);
  assert(!S.canFinishVoyageEarly(m),'une seule fois');
 });

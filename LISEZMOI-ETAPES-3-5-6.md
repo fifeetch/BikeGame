@@ -356,3 +356,9 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - **Fatigue du mode original gardée** : camping, hôtel, grand accueil et camping de dernière minute l'effacent ; bivouac ne change rien ; jardin −1 ; nuit dehors +1. Pas de « pari de la nuit » dans le mode original.
 - **Solo** : plus de cartes négatives ni climatiques dans la main de départ (elles retournent sous la pioche et sont remplacées).
 - Code : `origSleep` / `applyOrigNight` à la fin de `dist/simulator.js` ; `origNightRows` dans `dist/app.js` ; main de départ solo dans `dist/event-card-engine.js` (setup). Cache v94-nuits.
+
+## 17 octobre 2026 — Cartes Voyage illustrées et points selon l'effort (cache v95-cartes)
+- **Points selon l'effort** (barème de Fi, 1 point = 2,5 d'effort) : effort = cases + énergie du meilleur trajet qui remplit tous les objectifs. 10 et plus → 4 (Facile) · 20 et plus → 8 (Modéré) · 30 et plus → 12 (Difficile) · 40 et plus → 16 (Très difficile) · 50 et plus → 20 (Épique). Tableau `VOYAGE_EFFORT` dans `dist/voyages.js`.
+- **5 cartes durcies** (trop faciles dans leur tranche) : Cap vers le Nord 4 villes (58 → 20 pts) ; Les routes de l'Est 4 montagnes (47 → 16) ; Des îles au continent 3 côtes (17 → 4) ; Vers la mer Égée 2 villes (19 → 4) ; Le fil du Danube 3 côtes (38 → 12). Partie guidée : 8 points.
+- **Cartes illustrées** : les 20 illustrations de Fi (`dist/assets/voyages/cartes/<id>.webp`, 800 × 500) ; partie basse générée (`dist/voyage-card.js` : titre, trajet, objectifs avec image de case, environ N cases, niveau et points). Utilisées sur l'écran « Choisis ton voyage », dans la fenêtre « nouveau voyage » et en petit dans l'objectif.
+- Correction : le résumé des règles affichait « ${r.fatigue.maxEnergyPenalty} » tel quel.

@@ -175,16 +175,11 @@ export function garageScreen({btn,player,index,total,rules,coinsLeft,description
 }
 
 // ---------- 4. Voyages ----------
-export function voyagesScreen({player,index,total,drawn,lengths,artwork,message=''}){
+export function voyagesScreen({player,index,total,drawn,lengths,artwork,card,message=''}){
  return `<main class="menu-c mc-page">${backdrop()}${steps('goal')}
   <header class="mc-head"><div><p class="mc-kicker">${esc(player.name)} · ${index+1}/${total} · 3 cartes tirées</p><h1>Choisis ton voyage</h1></div></header>
-  <div class="mc-voyages">${drawn.map((v,i)=>`<article class="mc-voyage ${i===1?'feature':''}" style="--voyage-color:${v.color}">
-   <div class="mc-voyage-art">${artwork(v)}</div>
-   <div class="mc-voyage-copy"><p class="mc-route-line">${esc(v.from)} → ${esc(v.to)}</p><h2>${esc(v.title)}</h2>
-    <ul>${v.rows.map(r=>`<li>${r.target} ${esc(r.label.toLowerCase())}</li>`).join('')}</ul>
-    <p class="mc-len">${v.tier?`<b class="mc-tier">${esc(v.tier.name)} · +${v.tier.points} points d’aventure</b>`:''}${lengths[v.id]?`<span class="mc-len-cases">${lengths[v.id]} cases de route</span>`:''}</p>
-    <button data-voyage="${v.id}">Prendre ce voyage →</button></div>
-  </article>`).join('')}</div>
+  <div class="mc-voyages mc-vcards">${drawn.map((v,i)=>`<div class="mc-vcard ${i===1?'feature':''}">${card(v)}
+    <button data-voyage="${v.id}">Prendre ce voyage →</button></div>`).join('')}</div>
   <p class="toast" role="alert">${esc(message)}</p>
  </main>`;
 }

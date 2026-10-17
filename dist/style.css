@@ -2091,3 +2091,33 @@ body .modal.night-wrap .night-cards .imm-night.off{opacity:.45}
 .event-react{display:flex;gap:16px;align-items:stretch;flex-wrap:wrap}
 .event-react .encounter-art.event-anim{flex:1 1 300px;min-width:0;min-height:200px;border-radius:14px;overflow:hidden;display:flex}
 .event-react .encounter-art.event-anim svg.enc-anim{width:100%;height:100%;min-height:200px;aspect-ratio:auto;max-height:none}
+/* Cartes Voyage illustrées (17 octobre 2026) : image de Fi + partie basse carnet crème. */
+.vcard{--vc:#ba4d2a;background:var(--vc);border-radius:20px;padding:9px;box-shadow:0 14px 34px rgba(0,0,0,.4);color:#1b3b38;font-family:'Barlow',system-ui,sans-serif;width:100%;max-width:400px}
+.vcard-in{background:#fbf1d8;border-radius:13px;overflow:hidden;display:flex;flex-direction:column}
+.vcard-art{position:relative;aspect-ratio:8/5;background:#7cc6ef center/cover no-repeat}
+.vcard-tag{position:absolute;left:50%;top:10px;transform:translateX(-50%);font:700 11px/1.2 'Barlow Condensed','Arial Narrow',sans-serif;letter-spacing:.18em;text-transform:uppercase;background:#fbf1d8;color:#1b3b38;border-radius:999px;padding:4px 12px;border:1.5px solid var(--vc);white-space:nowrap}
+.vcard-head{text-align:center;padding:11px 14px 8px;border-bottom:2px dashed #e2cf9f}
+.vcard-head h3{margin:0;font:900 25px/1.05 'Fraunces',Georgia,serif;color:#1b3b38;text-wrap:balance}
+.vcard-route{display:flex;justify-content:center;align-items:center;gap:8px;margin:6px 0 0;font:700 13px 'Barlow Condensed','Arial Narrow',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--vc)}
+.vcard-route i{flex:0 0 26px;height:2px;background:var(--vc);position:relative}
+.vcard-route i::after{content:"";position:absolute;right:-2px;top:-3px;border:4px solid transparent;border-left:6px solid var(--vc)}
+.vcard-obj{list-style:none;margin:0;padding:9px 12px;display:flex;flex-direction:column;gap:6px}
+.vcard-obj li{display:grid;grid-template-columns:44px 1fr 20px;align-items:center;gap:10px;font-size:15px;font-weight:600;line-height:1.2;background:#fff8e6;border-radius:10px;padding:5px 8px;color:#1b3b38}
+.vcard-obj svg{width:44px;height:30px;display:block;border-radius:6px}
+.vcard-obj b{display:block;font-size:12.5px;color:#7a6440;font-weight:600}
+.vcard-obj em{width:18px;height:18px;border-radius:50%;border:2px solid #b49a62;display:block}
+.vcard-obj li.done{background:#e6f0d6}.vcard-obj li.done em{background:#4f8a4a;border-color:#4f8a4a}
+.vcard-foot{display:flex;align-items:baseline;gap:10px;padding:4px 14px 11px;font:600 13px 'Barlow',system-ui,sans-serif;color:#6b5733}
+.vcard-tier{margin-left:auto;font:700 12px 'Barlow Condensed','Arial Narrow',sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#8a7650}
+.vcard-pts b{font:900 22px 'Fraunces',Georgia,serif;color:var(--vc)}
+.vcard-compact .vcard-head h3{font-size:20px}.vcard-compact .vcard-obj li{font-size:13.5px;padding:4px 7px}.vcard-compact .vcard-obj b{font-size:11.5px}
+.mc-vcards{grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));align-items:start;justify-items:center}
+.mc-vcard{display:flex;flex-direction:column;align-items:center;gap:12px;width:100%;max-width:380px}
+.mc-vcard.feature .vcard{box-shadow:0 0 0 4px #f2a541,0 24px 60px #00000080}
+.mc-vcard button{width:100%}
+.newvoyage.newvoyage-vcard{border:0;background:none;color:inherit;overflow:visible;align-items:center;gap:10px}
+.newvoyage-vcard .newvoyage-copy{padding:0;width:100%;max-width:400px}
+.voyage-art.art-photo{background-size:cover;background-position:center;background-repeat:no-repeat;aspect-ratio:8/5}
+.vcard .vcard-head{display:block;position:static;background:none;box-shadow:none;margin:0}
+.vcard .vcard-head h3{display:block}
+.vcard .vcard-route{display:flex}

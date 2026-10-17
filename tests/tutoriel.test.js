@@ -31,6 +31,6 @@ test('partie guidée : le chemin conseillé mène au voyage réussi en 5 jours',
  assert.ok(S.rest(m,'camping'));tick();assert.equal(p.fatigue,0);assert.equal(m.round,5);
  const i=p.cardHand.indexOf(T.TUTORIAL_CARD);assert.ok(i>=0);assert.ok(S.playCard(m,i,p.id));tick();
  ride(5);assert.ok(p.completed);assert.ok(progress(S.view(m,p)).rows.every(r=>r.done));
- assert.equal(T.currentStep(m).id,'bravo');assert.equal(p.points,11);
+ assert.equal(T.currentStep(m).id,'bravo');assert.equal(p.points,10);
  T.endTutorial(m);assert.equal(m.tutorial.cardsOff,false);assert.equal(T.tutorialOn(m),false);
 });

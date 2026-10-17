@@ -11,7 +11,8 @@ test('20 voyages, villes existantes, longueur enregistrée = trajet le plus cour
  assert.equal(voyages.length,20);assert.equal(new Set(voyages.map(v=>v.id)).size,20);
  for(const v of voyages){assert.equal(VOYAGE_LENGTHS[v.id],shortest(v.from,v.to),v.id);assert(progress({voyage:v.id,travelHistory:[],mode:'plateau'}).rows.length>=2,v.id);}
 });
-test('points selon la longueur : courte 6, moyenne 9, longue 12, très longue 15',()=>{
- assert.equal(voyagePoints('grece'),6);assert.equal(voyagePoints('alpes'),9);assert.equal(voyagePoints('fjords'),12);assert.equal(voyagePoints('traversee'),15);
- for(const v of voyages)assert([6,9,12,15].includes(voyagePoints(v)),v.id);
+test('points selon l’effort (barème de Fi) : 4, 8, 12, 16, 20',()=>{
+ assert.equal(voyagePoints('grece'),4);assert.equal(voyagePoints('manche'),4);assert.equal(voyagePoints('rhin'),8);assert.equal(voyagePoints('alpes'),12);
+ assert.equal(voyagePoints('iberique'),16);assert.equal(voyagePoints('fjords'),16);assert.equal(voyagePoints('traversee'),20);assert.equal(voyagePoints('nord'),20);
+ for(const v of voyages)assert([4,8,12,16,20].includes(voyagePoints(v)),v.id);
 });
