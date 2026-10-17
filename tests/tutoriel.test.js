@@ -26,7 +26,7 @@ test('partie guidée : le chemin conseillé mène au voyage réussi en 5 jours',
  manual();ride(1);assert.ok(S.eat(m));tick();S.endTurn(m);tick();
  assert.equal(m.round,2);assert.equal(m.forecast,true);manual();
  assert.ok(S.eat(m));tick();manual();ride(2);assert.equal(p.points,2);S.endTurn(m);tick();manual();
- ride(3);assert.ok(S.eat(m));tick();S.endTurn(m);tick();manual();
+ ride(3);assert.ok(S.buyFood(m),'2 repas au plus pour la Gravel : on rachète à Thessalonique');assert.ok(S.eat(m));tick();S.endTurn(m);tick();manual();
  assert.equal(p.fatigue,3);assert.equal(T.currentStep(m).id,'fourbu');
  assert.ok(S.rest(m,'camping'));tick();assert.equal(p.fatigue,0);assert.equal(m.round,5);
  const i=p.cardHand.indexOf(T.TUTORIAL_CARD);assert.ok(i>=0);assert.ok(S.playCard(m,i,p.id));tick();

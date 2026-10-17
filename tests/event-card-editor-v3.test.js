@@ -36,8 +36,8 @@ test('edited positive and bonus cards apply their selected effects, not their fo
  assert(S.playCard(m,first,p.id));assert.equal(p.money,beforeMoney+3);assert.equal(p.freeSteps,0);
  m.turn++;
  const bonus=give(m,'evt-31',p);assert(S.playCard(m,bonus,p.id));
- assert(C.hasBonusEffect(m,p,'food_capacity'));assert.equal(C.foodCapacity(m,p),9);
- p.food=9;assert(C.removeBonus(m,p,0));assert.equal(p.food,6);
+ assert(C.hasBonusEffect(m,p,'food_capacity'));assert.equal(C.foodCapacity(m,p),5,'Gravel 2 + grande sacoche 3');
+ p.food=5;assert(C.removeBonus(m,p,0));assert.equal(p.food,2);
 });
 
 test('a re-skinned Coup de pouce remains a playable defense',()=>{

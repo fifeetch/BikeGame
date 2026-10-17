@@ -144,7 +144,7 @@ export function playersScreen({btn,roster,colors,rules}){
 
 // ---------- 3. Garage : monture + chargement ----------
 function bikeFacts(rules,id){
- const b=rules.bikes[id],facts=[...(b.price?[`${b.price} pièces`]:[]),`${Math.min(5,rules.distance+(b.extraDistance||0))} cases/jour`,plural(b.capacity,'place','places')+' de sacoche'];
+ const b=rules.bikes[id],facts=[...(b.price?[`${b.price} pièces`]:[]),`${Math.min(5,rules.distance+(b.extraDistance||0))} cases/jour`,plural(b.capacity,'place','places')+' de sacoche',...(b.maxFood?[plural(b.maxFood,'repas','repas')+' au maximum']:[])];
  if(b.mountainDiscount)facts.push(`montagne ${b.mountainDiscount>0?'−':'+'}${Math.abs(b.mountainDiscount)} énergie`);
  if(b.extraFood)facts.push(`+${b.extraFood} nourriture au départ`);
  return facts;

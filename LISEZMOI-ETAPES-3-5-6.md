@@ -404,3 +404,9 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - Un col compte comme une montagne, pour « Montagnes consécutives » et « Tuiles montagne » (progress, voyages.js).
 - Repasser sur une case déjà traversée ne compte pas, mais ne casse plus la série. La moyenne montagne casse toujours la série.
 - À surveiller : VOYAGE_EFFORT a été calculé avant ce changement (quelques cartes de montagne deviennent un peu plus faciles).
+
+## 17 octobre, 19 h 20 (cache v104-banque) — Banque, repas emportés, règles et tutoriel à jour (demandes de Fi)
+- Banque (tous les modes) : bouton « 🏦 Banque » dans la fenêtre de la ville (intérieur dessiné dans town-scene.js), et « Emprunter 5 pièces » dans la fenêtre du train quand le billet est trop cher. Un seul prêt de 5 pièces, sans intérêts, remboursé en une fois dans une banque ; non remboursé à la fin : −3 points (rules.loan ; takeLoan, repayLoan, settleLoans dans simulator.js ; le classement de fin en tient compte). Prêt affiché sur la fiche (« · prêt 5 »).
+- Repas emportés (RULES_VERSION 6) : 2 repas au départ pour tous ; au maximum Gravel 2, Randonneuse 4 (bikes.*.maxFood) ; Sacoches +2 repas (foodBonus 2) ; carte « grande sacoche » +3. Le maximum s’applique dans tous les modes (achats compris).
+- Règles consultables (rules-help.js) et partie guidée (tutorial.js) mises à jour : on roule puis on dort, chiffres des nuits, repas froid/chaud, repas au maximum, cartes négatives reçues à son tour, cols = montagnes, fin de partie (+5 au premier à 3 voyages, le plus de points gagne), banque.
+- Tests adaptés aux nouvelles limites de repas (cartes, partie guidée : on rachète des provisions à Thessalonique).

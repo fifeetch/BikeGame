@@ -3,6 +3,7 @@
 // donc le texte suit toujours les réglages choisis (vélos, météo, rencontres, fin de partie…).
 import {VOYAGE_TIERS} from './voyages.js';
 import {WEATHER} from './weather.js';
+import {NIGHT,DEMAND_NIGHT} from './immersion.js';
 
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const plural=(n,one,many)=>`${n} ${n>1?many:one}`;
@@ -11,18 +12,21 @@ const victory=r=>{const v=r.victory||{};if(v.mode!=='multi')return v.mode==='poi
  const parts=[];if(v.points)parts.push(`<b>${v.points} points</b> d’aventure`);if(v.voyages)parts.push(`<b>${plural(v.voyages,'voyage réussi','voyages réussis')}</b>`);if(v.days)parts.push(`<b>${v.days} jours</b>`);return parts.join(', ou ');};
 const opts=r=>({forecast:Boolean(r.weather?.forecast),encounters:Boolean(r.encounters?.enabled),cards:!r.encounters?.enabled,offroad:Boolean(r.offroad?.enabled)});
 const mealEnergy=(r,eventGame)=>eventGame?r.cardBalance?.foodEnergy??2:r.food.energy;
-const bivouacEnergy=(r,eventGame)=>eventGame?r.cardBalance?.bivouacEnergy??1:r.rest.bivouac.energy;
+// Nuits, repas et sacoches (règles de Fi, 17 octobre) : mêmes chiffres dans tous les modes.
+const nights=()=>`bivouac +${NIGHT.bivouac.energy} (gratuit, tente), camping +${NIGHT.camping.energy} (1 pièce), hôtel +${NIGHT.hotel.energy} (3 pièces, en ville), chez l’habitant +${DEMAND_NIGHT.grand.energy} au plus`;
+const foodMax=r=>Object.values(r.bikes).map(b=>`${esc(b.name)} ${b.maxFood??r.maxFood}`).join(', ');
+const meals=r=>`repas froid <b>+${r.food.coldEnergy??2}</b> partout, repas chaud <b>+${r.food.hotEnergy??3}</b> avec le réchaud`;
 
 // ---------- Résumé avant le départ ----------
 export function rulesIntro(r,{btn,eventGame=true}={}){const o=opts(r),t=r.terrain;
  const box=(icon,title,text)=>`<div class="ri-box"><b>${icon} ${title}</b><p>${text}</p></div>`;
  return `<div class="rules-intro"><span class="eyebrow">AVANT LE DÉPART · L’ESSENTIEL EN 1 MINUTE</span><h2>Comment on joue</h2><div class="ri-grid">
-  ${box('🎯','Le but',`Réussir des <b>voyages de ville à ville</b> et gagner des <b>points d’aventure</b>. La partie s’arrête à ${victory(r)}.`)}
+  ${box('🎯','Le but',`Réussir des <b>voyages de ville à ville</b> et gagner des <b>points d’aventure</b>. La partie s’arrête à ${victory(r)}.${r.victory?.mode==='multi'&&r.victory.voyages?` Le premier à ${r.victory.voyages} voyages gagne +${r.victory.voyagesBonus??5} points ; à la fin, <b>le plus de points gagne</b>.`:''}`)}
   ${box('🚲','Ta journée',`Cases par jour : ${bikeDays(r)}. Chaque case coûte de l’énergie : plaine et côte ${t.plaine}, moyenne montagne ${t.moyenne_montagne}, montagne et col ${t.montagne}, ville ${t.ville}.`)}
-  ${box('⚡','Énergie et repos',`${r.startEnergy} au départ, ${r.maxEnergy} au plus. Un jour, on roule <b>ou</b> on se repose : bivouac (tente), camping ${r.rest.camping.price} pièce, hôtel ${r.rest.hotel.price} pièces.${r.fatigue?.enabled?` Chaque jour de route fatigue : −${r.fatigue.maxEnergyPenalty} d’énergie maximum par niveau, jusqu’à une vraie nuit.`:''}`)}
+  ${box('⚡','Énergie et repos',`${r.startEnergy} au départ, ${r.maxEnergy} au plus. On roule, puis on dort : <b>dormir termine la journée</b>. Nuits : ${nights()} ; une journée sans rouler, la nuit rend deux fois plus. Repas : ${meals(r)}. Repas au maximum : ${foodMax(r)} (+2 avec les sacoches), ${r.startFood} au départ.${r.fatigue?.enabled?` Chaque jour de route fatigue : −${r.fatigue.maxEnergyPenalty} d’énergie maximum par niveau, jusqu’à une vraie nuit.`:''}`)}
   ${o.offroad?box('🛣','Route ou hors route',`Sans ${esc(r.equipment[r.offroad.item]?.name||'GPS')}, quitter la route limite la journée à ${Object.entries(r.offroad.maxDistance).map(([id,n])=>`${n} cases (${esc(r.bikes[id]?.name||id)})`).join(' ou ')}.`):box('🛣','Routes','Routes et chemins : on roule partout, la route ne change rien.')}
   ${box('⭐','Les points',`Voyage réussi +${VOYAGE_TIERS[0].points} à +${VOYAGE_TIERS.at(-1).points} selon l’effort demandé · col mythique +${r.points.col} · ${r.adventure.climberCols} cols +${r.adventure.climberBonus} · jeton « ? » +1 à +3.`)}
-  ${r.immersion?.enabled?box('🧭','Le mode Immersion','Plus de cartes : la route décide. Des scènes en route (plus souvent, et plus de galères, quand tu es fatigué), des imprévus visibles sur la carte, et chaque soir tu choisis où dormir : bivouac, camping, hôtel ou « Demander ». Dormir termine la journée, et chaque nuit est un pari.'):o.encounters?box('🤝','Les rencontres','Chaque soir, une rencontre liée à l’endroit où tu t’arrêtes : tu choisis ce que tu fais.'):box('🃏','Les cartes',`Fin de tour : pioche ${r.eventCards.drawPerTurn}, garde-en 1. Positives pour toi, négatives contre un autre${o.forecast?'':', météo pendant son trajet'}, bonus posés devant toi.`)}
+  ${r.immersion?.enabled?box('🧭','Le mode Immersion','Plus de cartes : la route décide. Des scènes en route (plus souvent, et plus de galères, quand tu es fatigué), des imprévus visibles sur la carte, et chaque soir tu choisis où dormir : bivouac, camping, hôtel ou « Demander ». Dormir termine la journée, et chaque nuit est un pari.'):o.encounters?box('🤝','Les rencontres','Chaque soir, une rencontre liée à l’endroit où tu t’arrêtes : tu choisis ce que tu fais.'):box('🃏','Les cartes',`Fin de tour : pioche ${r.eventCards.drawPerTurn}, garde-en 1. Positives pour toi, négatives contre un autre (il la découvre au début de son tour)${o.forecast?'':', météo pendant son trajet'}, bonus posés devant toi.`)}
  </div><p class="muted">${o.forecast?'Météo annoncée : chaque soir, le bulletin du lendemain pour 5 régions. ':''}Toutes les règles sont dans « 📖 Règles », à tout moment de la partie.</p>
  <div class="ri-actions">${btn('C’est parti →','intro-close')}${btn('📖 Règles détaillées','help','light')}</div>
  <label class="ri-hide"><input type="checkbox" id="intro-hide"/> Ne plus afficher ce résumé au départ</label></div>`;}
@@ -34,21 +38,23 @@ export function rulesHelp(r,tab='route',{btn,eventGame=true}={}){const o=opts(r)
  if(tab==='route')body=`<h3>Se déplacer</h3>${li([
   `Cases par jour : <b>${bikeDays(r)}</b>, de case voisine en case voisine.`,
   `Coût en énergie : plaine ${t.plaine} · côte ${t.cote} · moyenne montagne ${t.moyenne_montagne} · montagne ${t.montagne} · col ${t.col} · ville ${t.ville}.`,
-  'Trace ton étape en cliquant les cases <b>entourées</b> de la carte, puis le gros bouton « 🚴 Rouler ». « ⏭ Finir ma journée » passe au joueur suivant.',
+  'Trace ton étape en cliquant les cases <b>entourées</b> de la carte, puis le gros bouton « 🚴 Rouler ». « 🌙 Finir ma journée » ouvre « Où dormir ce soir ? » ; dormir termine la journée et passe au joueur suivant.',
   o.offroad&&`Les <b>routes</b> sont les traits clairs. Sans ${esc(r.equipment[r.offroad.item]?.name||'GPS')}, un seul pas hors route limite toute la journée à ${Object.entries(r.offroad.maxDistance).map(([id,n])=>`${n} cases (${esc(r.bikes[id]?.name||id)})`).join(' ou ')} — les cases de route déjà faites comptent dedans.`,
   o.offroad&&`Avec le ${esc(r.equipment[r.offroad.item]?.name||'GPS')} (au garage) ou la carte bonus « GPS de randonnée » : pas de limite hors route.`,
   `<b>Bateaux</b> : ${r.ferryPrice} pièces la traversée ; la journée s’arrête au port d’arrivée.`])}`;
  else if(tab==='repos')body=`<h3>Manger & dormir</h3>${li([
   `Énergie : ${r.startEnergy} au départ, ${r.maxEnergy} au plus.`,
+  `<b>Banque</b> (en ville, ou dans la fenêtre du train) : un prêt de ${r.loan?.amount??5} pièces, sans intérêts, un seul à la fois ; on le rembourse en une fois dans une banque. Non remboursé à la fin : −${r.loan?.penalty??3} points d’aventure.`,
   `<b>Manger</b> un repas des sacoches, ${r.food.maxPerTurn} par jour, partout : <b>repas froid +${r.food.coldEnergy??2}</b> énergie (sandwich, burek…) ou, avec le réchaud, <b>repas chaud +${r.food.hotEnergy??3}</b>.`,
+  `<b>Repas dans les sacoches</b> : ${r.startFood} au départ ; au plus ${foodMax(r)}. Les <b>Sacoches</b> (équipement) ajoutent 2 repas et 2 places (elles en prennent 1).`,
   `<b>Provisions</b> : ${r.food.quantity} repas pour ${r.food.price} pièce${r.food.cityOnly?', en ville':''}. <b>Restaurant</b> : +${r.food.restaurantEnergy} énergie pour ${r.food.restaurantPrice} pièce, en ville.`,
-  `<b>Un jour, on roule ou on se repose.</b> Se reposer termine la journée :`,
-  `Bivouac : gratuit, il faut la tente, +${bivouacEnergy(r,eventGame)} énergie (la fatigue reste).`,
-  `Camping : ${r.rest.camping.price} pièce, +${r.rest.camping.energy} énergie, vraie nuit. Hôtel : ${r.rest.hotel.price} pièces, en ville, énergie pleine, vraie nuit.`,
-  r.fatigue?.enabled&&`<b>Fatigue</b> : +1 par journée de route (+${r.fatigue.colExtra} le jour d’un col). Chaque niveau de fatigue baisse ton énergie maximum de ${r.fatigue.maxEnergyPenalty} (${Array.from({length:r.fatigue.days},(_,i)=>`${i+1} → ${r.maxEnergy-r.fatigue.maxEnergyPenalty*(i+1)}`).join(', ')}). À ${r.fatigue.days}, tu es <b>fourbu</b>. Une vraie nuit (camping ou hôtel) efface la fatigue ; le bivouac, non.`,
+  `<b>On roule, puis on dort.</b> « Finir ma journée » ouvre « Où dormir ce soir ? » : ${nights()}. Une journée sans rouler : la nuit rend deux fois plus. Matelas et duvet : +1 la nuit.`,
+  `<b>Demander l’hospitalité</b> : gratuit, mais un pari. Grand accueil (+${DEMAND_NIGHT.grand.energy}, un repas, +1 point), jardin (+${DEMAND_NIGHT.jardin.energy}) ou refus poli (camping de dernière minute à 2 pièces, +${DEMAND_NIGHT.refusCamping.energy} ; sans pièces, nuit dehors +0).`,
+  r.fatigue?.enabled&&`<b>Fatigue</b> : +1 par journée de route (+${r.fatigue.colExtra} le jour d’un col). Chaque niveau de fatigue baisse ton énergie maximum de ${r.fatigue.maxEnergyPenalty} (${Array.from({length:r.fatigue.days},(_,i)=>`${i+1} → ${r.maxEnergy-r.fatigue.maxEnergyPenalty*(i+1)}`).join(', ')}). À ${r.fatigue.days}, tu es <b>fourbu</b>. Camping, hôtel et grand accueil effacent la fatigue ; le bivouac, non ; le jardin l’enlève de 1 ; une nuit dehors l’augmente de 1.`,
   `Budget : +${r.budget.amount} pièces tous les ${r.budget.every} tours.`])}`;
  else if(tab==='voyages')body=`<h3>Voyages & points</h3>${li([
   'Ta <b>carte Voyage</b> donne une ville d’arrivée et des objectifs de cases (villes, côtes, montagnes…). Remplis-les, puis rejoins la ville d’arrivée.',
+  'Un <b>col</b> compte comme une montagne. Pour les objectifs « consécutives », une case déjà traversée ne compte pas mais ne casse pas la série ; un autre terrain la casse.',
   `Points du voyage selon l’effort demandé : ${VOYAGE_TIERS.map(x=>`${x.name} +${x.points}`).join(' · ')}.`,
   'Arrivé sans tous les objectifs : « 🏁 Terminer le voyage ici », avec 40 % de points en moins.',
   'Voyage réussi : au début de ton tour suivant, tire 3 cartes Voyage et garde-en 1. Tu pars d’où tu es ; seules les cases parcourues ensuite comptent.',
@@ -64,5 +70,5 @@ export function rulesHelp(r,tab='route',{btn,eventGame=true}={}){const o=opts(r)
   '« Coup de pouce » annule une carte jouée contre toi.'])}`;
  else if(tab==='meteo')body=o.forecast?`<h3>Météo annoncée</h3>${li(['Chaque soir, le bulletin du lendemain pour 5 régions (Ouest, Alpes, Nord, Est, Balkans). Les pastilles sont sur la carte.',...Object.values(WEATHER).map(w=>`${w.icon} <b>${esc(w.name)}</b> : ${esc(w.effect)}.`)])}`
   :`<h3>Météo</h3>${li([o.encounters?'Dans ce mode, pas de météo : les rencontres remplacent les cartes.':'La météo arrive par les <b>cartes climatiques</b> : les autres joueurs peuvent en jouer une quand tu annonces ton trajet (vent, pluie, orage, neige, brouillard…).','On peut choisir « Météo annoncée » au début d’une partie : un bulletin chaque soir, sans cartes climatiques.'])}`;
- else body=`<h3>Fin de partie</h3>${li([`La partie s’arrête dès qu’un cycliste atteint ${victory(r)}.`,r.victory?.voyages?`Le premier qui réussit ${r.victory.voyages} voyages arrête la partie et gagne <b>+${r.victory.voyagesBonus??5} points</b> d’aventure ; c’est ensuite celui qui a <b>le plus de points</b> qui gagne.`:'',r.victory?.days?`Au bout de ${r.victory.days} jours, celui qui a le plus de points gagne.`:'','Ces conditions se choisissent avant la partie (0 = condition non utilisée).'])}`;
+ else body=`<h3>Fin de partie</h3>${li([`La partie s’arrête dès qu’un cycliste atteint ${victory(r)}.`,r.victory?.voyages?`Le premier qui réussit ${r.victory.voyages} voyages arrête la partie et gagne <b>+${r.victory.voyagesBonus??5} points</b> d’aventure ; c’est ensuite celui qui a <b>le plus de points</b> qui gagne.`:'',r.victory?.days?`Au bout de ${r.victory.days} jours, celui qui a le plus de points gagne.`:'',`Un prêt de la banque non remboursé : −${r.loan?.penalty??3} points d’aventure à la fin.`,'Ces conditions se choisissent avant la partie (0 = condition non utilisée).'])}`;
  return `<div class="rules-help"><span class="eyebrow">RÈGLES DÉTAILLÉES</span><div class="rh-tabs" role="tablist">${tabs.map(([id,label])=>`<button type="button" role="tab" data-action="help-tab-${id}" aria-selected="${id===tab}" class="${id===tab?'on':''}">${esc(label)}</button>`).join('')}</div><div class="rh-body">${body}</div>${btn('Fermer et reprendre la partie','close','light')}</div>`;}

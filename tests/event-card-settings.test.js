@@ -49,7 +49,7 @@ test('end-turn solo draws resolve negatives before keeping one beneficial card a
 test('two adverse draws both activate and do not leave a dead-end choice screen',()=>{
  const m=game();drawNext(m,['evt-17','evt-19']);assert(S.endTurn(m));assert.equal(m.soloEventQueue.length,1);conserved(m);
  assert(S.resolveEventAttack(m,{}));assert.equal(m.turn,1);conserved(m);
- assert(S.resolveEventAttack(m,{}));assert.equal(m.turn,2);assert.equal(m.phase,'move');assert.equal(m.players[0].energy,6);assert.equal(m.players[0].food,2);conserved(m);
+ assert(S.resolveEventAttack(m,{}));assert.equal(m.turn,2);assert.equal(m.phase,'move');assert.equal(m.players[0].energy,6);assert.equal(m.players[0].food,1,'2 repas au départ, la sacoche déchirée en prend 1');conserved(m);
 });
 
 test('solo weather is stored on draw, can be defended, and affects the next route once',()=>{

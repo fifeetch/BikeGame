@@ -158,7 +158,7 @@ function skyDyn(){const t=performance.now()/1000;return [[40,30,1],[260,50,.7],[
 
 // ---- intérieurs (même cadre que les scènes de nuit : 640 × 300, monde à l'échelle 4) ----
 let act=null,actT=0;
-function interior(id,k){const t=performance.now()/1000,a=act?(performance.now()-actT)/1000:-1;let s=`<rect width="640" height="226" fill="${id==='hotel'?'#e7d3ae':id==='resto'?'#efd7b0':'#efe0bf'}"/><rect y="186" width="640" height="40" fill="${id==='resto'?'#b74732':'#c9b48e'}" opacity=".55"/><rect y="226" width="640" height="74" fill="#a8774a"/>`+[0,1,2,3,4,5,6,7].map(i=>`<path d="M${i*90} 226 v74" stroke="#8a5a2e" stroke-width="1.5"/>`).join('')+`<path d="M0 252 h640 M0 278 h640" stroke="#8a5a2e" stroke-width="1"/>`;
+function interior(id,k){const t=performance.now()/1000,a=act?(performance.now()-actT)/1000:-1;let s=`<rect width="640" height="226" fill="${id==='hotel'?'#e7d3ae':id==='resto'?'#efd7b0':id==='banque'?'#e3dccb':'#efe0bf'}"/><rect y="186" width="640" height="40" fill="${id==='resto'?'#b74732':'#c9b48e'}" opacity=".55"/><rect y="226" width="640" height="74" fill="#a8774a"/>`+[0,1,2,3,4,5,6,7].map(i=>`<path d="M${i*90} 226 v74" stroke="#8a5a2e" stroke-width="1.5"/>`).join('')+`<path d="M0 252 h640 M0 278 h640" stroke="#8a5a2e" stroke-width="1"/>`;
  s+=`<rect x="380" y="40" width="80" height="70" fill="#9cc9d8" stroke="#1b1406" stroke-width="2.4"/><path d="M420 40 v70 M380 75 h80" stroke="#1b1406" stroke-width="2"/><path d="M380 92 Q420 80 460 96 L460 110 L380 110Z" fill="#7f9a62"/>`;
  let w=`<rect x="-80" y="-34" width="14" height="45" fill="#5a3412" stroke="#1b1406" stroke-width=".6"/><rect x="-80" y="-34" width="14" height="45" fill="#ffd27a" opacity=".45"/>`;
  let keeper='',fx='';const enter=ease(seg(k,0,1.2)),cx=-73+63*enter;
@@ -180,6 +180,13 @@ function interior(id,k){const t=performance.now()/1000,a=act?(performance.now()-
   w+=`<path d="M50 11 L50 -30 L78 -30" fill="none" stroke="#5a3412" stroke-width="1.6"/>`+Array.from({length:8},(_,i)=>`<path d="M${50+i*3.5} ${11-i*5} h3.5 v-5" fill="none" stroke="#1b1406" stroke-width=".6"/>`).join('');
   w+=`<rect x="10" y="-4" width="34" height="15" fill="#5a3412" stroke="#1b1406" stroke-width=".6"/><rect x="8" y="-6" width="38" height="2.4" fill="#8a5a2e" stroke="#1b1406" stroke-width=".5"/><path d="M38 -6 a2 2 0 0 1 4 0Z" fill="#f2c14e" stroke="#1b1406" stroke-width=".4"/><circle cx="-4" cy="5" r="5" fill="#3f6b4a"/><rect x="-7" y="6" width="6" height="5" fill="#a8774a" stroke="#1b1406" stroke-width=".4"/>`;
   keeper=`<g transform="translate(0 -8)">${person(26,{f:-1,pose:a>=0&&a<1.4?'reach':'stand',col:'#4a7fa8',hair:'#5a3a22'})}</g>`;}
+ if(id==='banque'){// La banque (17 octobre) : guichet vitré, coffre-fort, banquier ; même trait que les autres boutiques.
+  w+=`<rect x="-56" y="-46" width="30" height="40" rx="2" fill="#7d8790" stroke="#1b1406" stroke-width=".7"/><circle cx="-41" cy="-26" r="7" fill="#a9b3bb" stroke="#1b1406" stroke-width=".6"/><path d="M-41 -33 v14 M-48 -26 h14" stroke="#1b1406" stroke-width=".6"/><rect x="-54" y="-8" width="26" height="3" fill="#5c656d"/>`;
+  w+=`<rect x="4" y="-40" width="48" height="6" fill="#1b3b38" stroke="#1b1406" stroke-width=".5"/><text x="28" y="-35.4" font-size="4.6" text-anchor="middle" fill="#f6e7c1" font-family="Barlow Condensed,sans-serif" font-weight="700" letter-spacing=".6">BANQUE</text>`;
+  w+=`<rect x="6" y="-34" width="44" height="22" fill="#cfe6ee" opacity=".55" stroke="#1b1406" stroke-width=".6"/><path d="M28 -34 v22" stroke="#1b1406" stroke-width=".5"/>`;
+  w+=`<rect x="2" y="-12" width="52" height="23" fill="#8a5a2e" stroke="#1b1406" stroke-width=".6"/><rect x="0" y="-14" width="56" height="2.6" fill="#a8774a" stroke="#1b1406" stroke-width=".5"/>`;
+  w+=[0,1,2].map(i=>`<ellipse cx="${44+i*1.2}" cy="${-15-i*1.4}" rx="3" ry="1" fill="#f2c14e" stroke="#1b1406" stroke-width=".35"/>`).join('');
+  keeper=`<g transform="translate(0 -14)">${person(18,{f:-1,pose:a>=0&&a<1.4?'reach':'stand',col:'#26343c',hair:'#8a8f94'})}</g><path d="M16.5 -27.5 l1.5 2 l1.5 -2" fill="#b74732" stroke="#1b1406" stroke-width=".3"/>`;}
  C=riderColor;
  // le cycliste entre puis agit
  let me;if(id==='resto'&&a>=1){me=person(-34+2,{f:1,pose:'sit',y:-7});fx+=`<ellipse cx="-31" cy="-.6" rx="3" ry=".9" fill="#f6e7c1" stroke="#1b1406" stroke-width=".3"/>`+[0,1].map(i=>{const p=((t*.7+i/2)%1);return `<path d="M${-32+i*2} ${n(-2-p*6)} q1 -1.5 0 -3" stroke="#f6f2e6" stroke-width=".5" fill="none" opacity="${n(1-p)}"/>`;}).join('');}

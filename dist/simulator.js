@@ -36,6 +36,7 @@ export const stormToday=(m,p=player(m))=>forecastOn(m)&&weatherToday(m,dayStartP
 export function weatherExtra(m,p,from,t,movedBefore){if(!forecastOn(m)||!t)return 0;const w=weatherOn(m.seed,m.round,regionOf(t));
  return (w==='vent'&&movedBefore===0?1:w==='pluie'&&!roadStep(m,from,t)?1:w==='neige'&&['montagne','col'].includes(t.type)?1:0)+immExtra(m,p,from,t,movedBefore);}
 export const distance=m=>{const p=player(m);let d=baseDistance(m);if(offroadLimited(m,p,offroadToday(m,p)))d=Math.min(d,offroadMax(m,p));if(stormToday(m,p))d=Math.min(d,STORM_MAX);return d;};
+export const foodCapacity=(m,p=player(m))=>C.foodCapacity(m,p);
 export const capacityFor=(r,bike,items=[])=>(r.bikes[bike]?.capacity||0)+items.reduce((n,id)=>n+(r.equipment[id]?.capacityBonus||0),0);
 export const bagCapacity=(m,p=player(m))=>capacityFor(m.rules,p.bike,p.items);
 export const inventorySpace=(m,p=player(m))=>p.items.reduce((sum,id)=>sum+(m.rules.equipment[id]?.space||0),0);
@@ -74,7 +75,8 @@ function checkMultiVictory(m){if(!multiVictory(m)||m.done)return false;const r=m
   w=m.players.length>1?[...m.players].sort((a,b)=>b.points-a.points||(b.voyagesDone?.length||0)-(a.voyagesDone?.length||0)||Number(b.id===byVoyages.id)-Number(a.id===byVoyages.id))[0]:byVoyages;
   why=m.players.length>1?`${byVoyages.name} a réussi ${r.voyages} voyages en premier (+${bonus} points) ; ${w.id===byVoyages.id?'et a aussi':'mais '+w.name+' a'} le plus de points d’aventure`:`${r.voyages} voyages réussis (+${bonus} points)`;}else if(byPoints){w=byPoints;why=`${r.points} points d’aventure atteints`;}
  else if(r.days&&m.round>r.days){w=ranking(m)[0];why=`${r.days} jours écoulés, le plus de points`;}
- if(!w)return false;m.done=true;m.phase='finished';m.winner=w.id;m.winReason=why;record(m,'finish',`${w.name} gagne la partie : ${why}.`);return true;}
+ if(!w)return false;if(m.players.some(p=>p.loan)){settleLoans(m);if(m.players.length>1){const top=[...m.players].sort((a,b)=>b.points-a.points||(b.voyagesDone?.length||0)-(a.voyagesDone?.length||0))[0];if(top.points>w.points){why=why.split(' ; ')[0]+` ; avec les prêts non remboursés (−${loanRule(m).penalty} points), ${top.name} a le plus de points d’aventure`;w=top;}}}
+ m.done=true;m.phase='finished';m.winner=w.id;m.winReason=why;record(m,'finish',`${w.name} gagne la partie : ${why}.`);return true;}
 export function view(m,p=player(m)){
  const v=findVoyage(p.voyage),board={};
  for(const [k,t]of Object.entries(m.board))board[k]={...t,id:t.name===v?.from?0:t.id===0?-1:t.id};
@@ -98,7 +100,7 @@ export function createMatch(roster,mode='plateau',rules=CLASSIC,seed=randomSeed(
   const items=Array.isArray(entry.items)?[...new Set(entry.items)]:[];if(items.some(id=>!r.equipment[id]))throw Error('Équipement inconnu.');
   const space=items.reduce((n,id)=>n+r.equipment[id].space,0),price=items.reduce((n,id)=>n+r.equipment[id].price,0);
   const bikePrice=r.bikes[entry.bike].price||0;if(space>capacityFor(r,entry.bike,items)||price+bikePrice>r.startMoney)throw Error('Le vélo et le matériel de départ dépassent le budget ou les emplacements.');
-  m.players.push({id:'p'+(i+1),name:String(entry.name||'Joueur '+(i+1)).slice(0,40),color:COLORS[i],bike:entry.bike,voyage:entry.voyage,pos,energy:r.startEnergy,food:r.startFood+r.bikes[entry.bike].extraFood+items.reduce((n,id)=>n+(r.equipment[id].foodBonus||0),0),money:r.startMoney-bikePrice-price+r.budget.startBonus,points:0,fatigue:0,dayCols:0,items,cardHand:[],pendingCards:[],turnModifiers:{},flat:false,lastCity:pos,visited:[pos],travel:[],travelHistory:[],steps:0,cols:0,cities:1,discoveries:0,completed:false,voyageWon:false,turns:0,availableDay:1,log:[],stats:{steps:0,energySpent:0,work:0,rest:0,events:0}});
+  m.players.push({id:'p'+(i+1),name:String(entry.name||'Joueur '+(i+1)).slice(0,40),color:COLORS[i],bike:entry.bike,voyage:entry.voyage,pos,energy:r.startEnergy,food:r.startFood+(r.bikes[entry.bike].extraFood||0),money:r.startMoney-bikePrice-price+r.budget.startBonus,points:0,fatigue:0,dayCols:0,items,cardHand:[],pendingCards:[],turnModifiers:{},flat:false,lastCity:pos,visited:[pos],travel:[],travelHistory:[],steps:0,cols:0,cities:1,discoveries:0,completed:false,voyageWon:false,turns:0,availableDay:1,log:[],stats:{steps:0,energySpent:0,work:0,rest:0,events:0}});
  });if(m.immersion){const lv=immLevel(m);if(lv.money)for(const p of m.players)p.money=Math.max(0,p.money+lv.money);}
  placeLandmarks(m);C.setup(m);record(m,'setup','Partie créée : '+roster.length+' joueur(s), '+r.eventCards.startingHand+' cartes piochées chacun parmi '+m.eventCardIds.length+'.');return m;
 }
@@ -226,7 +228,15 @@ const hasStove=(m,p)=>p.items.includes('rechaud')||Boolean(C.isEventGame(m)&&C.h
 export function mealInfo(m,p=player(m)){const hot=hasStove(m,p),region=regionOf(m.board[p.pos]);return {hot,label:hot?'Repas chaud':'Repas froid',dish:(hot?HOT_MEALS:COLD_MEALS)[region]||(hot?'un repas chaud':'un repas froid')};}
 export function eatGain(m,p=player(m)){const f=m.rules.food,hot=hasStove(m,p);const base=hot?(f.hotEnergy??3)+(p.items.includes('rechaud')&&C.isEventGame(m)&&C.hasBonusEffect(m,p,'efficient_stove')?1:0):(f.coldEnergy??2);const g=Math.max(0,base-immMealPenalty(m,p));return immOn(m)&&immLevel(m).mealHalf?Math.max(1,Math.floor(g/2)):g;}
 export function eat(m){const p=player(m);if(m.pendingAttack||m.done||!['move','place'].includes(m.phase)||m.ate>=m.rules.food.maxPerTurn||p.food<1||p.energy>=energyCap(m,p))return false;p.food--;m.ate++;const base=C.isEventGame(m)?C.hasBonusEffect(m,p,'efficient_stove')?3:m.rules.cardBalance.foodEnergy:m.rules.food.energy;p.energy=Math.min(energyCap(m,p),p.energy+eatGain(m,p));{const meal=mealInfo(m,p);record(m,'food',`${meal.label} : ${meal.dish} (+${eatGain(m,p)} énergie).`);}return true;}
-export function buyFood(m){const p=player(m),r=m.rules.food;if(m.pendingAttack||m.done||!['move','place'].includes(m.phase)||(r.cityOnly&&m.board[p.pos].type!=='ville')||p.money<r.price||C.isEventGame(m)&&p.food>=C.foodCapacity(m,p))return false;p.money-=r.price;p.food+=C.isEventGame(m)?Math.min(r.quantity,C.foodCapacity(m,p)-p.food):r.quantity;m.stats.moneySpent+=r.price;record(m,'buy','Achat de provisions.');return true;}
+// Prêt de la banque (règle de Fi, 17 octobre) : un seul prêt de 5 pièces, sans intérêts ; on l'obtient à la banque d'une ville
+// ou dans la fenêtre du train ; on le rembourse en une fois dans une banque ; non remboursé à la fin : −3 points d'aventure.
+export const loanRule=m=>({amount:m.rules.loan?.amount??5,penalty:m.rules.loan?.penalty??3});
+export function canTakeLoan(m,p=player(m)){return Boolean(!p.loan&&!m.done&&!m.pendingAttack&&(['move','place'].includes(m.phase)&&m.board[p.pos]?.type==='ville'||m.phase==='voyage-choice'));}
+export function takeLoan(m){const p=player(m);if(!canTakeLoan(m,p))return false;const {amount}=loanRule(m);p.loan={amount,day:m.round};p.money+=amount;record(m,'loan',`${p.name} emprunte ${amount} pièces à la banque (à rembourser dans une banque).`);return true;}
+export function canRepayLoan(m,p=player(m)){return Boolean(p.loan&&!m.done&&!m.pendingAttack&&['move','place'].includes(m.phase)&&m.board[p.pos]?.type==='ville'&&p.money>=p.loan.amount);}
+export function repayLoan(m){const p=player(m);if(!canRepayLoan(m,p))return false;const n=p.loan.amount;p.money-=n;p.loan=null;record(m,'loan',`${p.name} rembourse son prêt : −${n} pièces.`);return true;}
+export function settleLoans(m){const {penalty}=loanRule(m);for(const p of m.players)if(p.loan&&!p.loanSettled){p.points=Math.max(0,p.points-penalty);p.loanSettled=true;record(m,'loan',`${p.name} n’a pas remboursé son prêt : −${penalty} points d’aventure.`);}}
+export function buyFood(m){const p=player(m),r=m.rules.food;if(m.pendingAttack||m.done||!['move','place'].includes(m.phase)||(r.cityOnly&&m.board[p.pos].type!=='ville')||p.money<r.price||p.food>=C.foodCapacity(m,p))return false;p.money-=r.price;p.food+=Math.min(r.quantity,C.foodCapacity(m,p)-p.food);m.stats.moneySpent+=r.price;record(m,'buy','Achat de provisions.');return true;}
 export function restaurant(m){const p=player(m),r=m.rules.food;if(m.pendingAttack||m.done||!['move','place'].includes(m.phase)||m.board[p.pos].type!=='ville'||p.money<r.restaurantPrice||p.energy>=energyCap(m,p)||m.ate>=r.maxPerTurn)return false;p.money-=r.restaurantPrice;m.stats.moneySpent+=r.restaurantPrice;m.ate++;p.energy=Math.min(energyCap(m,p),p.energy+r.restaurantEnergy);record(m,'food','Repas au restaurant.');return true;}
 export function buy(m,id){const p=player(m),e=m.rules.equipment[id];if(!e||m.pendingAttack||m.done||!['move','place'].includes(m.phase)||m.board[p.pos].type!=='ville'||p.items.includes(id)||p.money<e.price||inventorySpace(m)+e.space>capacityFor(m.rules,p.bike,[...p.items,id]))return false;p.money-=e.price;p.items.push(id);p.food+=e.foodBonus||0;m.stats.moneySpent+=e.price;record(m,'buy','Équipement acheté : '+e.name);return true;}
 export function discard(m,id){const p=player(m);if(m.pendingAttack||m.done||!['move','place'].includes(m.phase)||!p.items.includes(id))return false;{const rest=p.items.filter(i=>i!==id);if(rest.reduce((n,k)=>n+(m.rules.equipment[k]?.space||0),0)>capacityFor(m.rules,p.bike,rest))return false;}p.items=p.items.filter(i=>i!==id);record(m,'equipment','Équipement déposé : '+m.rules.equipment[id].name);return true;}
@@ -307,13 +317,13 @@ function advance(m){player(m).turns++;m.stats.turns++;const r=m.rules.victory,bu
  if(budget?.amount>0&&rider.turns%budget.every===0){rider.money+=budget.amount;record(m,'budget',`Budget du voyage : +${budget.amount} pièces pour ${rider.name} (tous les ${budget.every} tours).`);}
  if(multiVictory(m)){if(checkMultiVictory(m))return;}
  const win=r.mode==='objectives'&&(r.allObjectives?m.players.every(p=>p.completed):m.players.some(p=>p.completed))||r.mode==='points'&&m.players.some(p=>p.points>=r.points);
- if(win){m.done=true;m.phase='finished';record(m,'finish','Condition de victoire atteinte.');return;}
+ if(win){settleLoans(m);m.done=true;m.phase='finished';record(m,'finish','Condition de victoire atteinte.');return;}
  player(m).availableDay=(player(m).availableDay||m.round)+(m.actionDays||1);
  const nextDay=Math.min(...m.players.map(p=>p.availableDay));let next=m.activeIndex;
  for(let offset=1;offset<=m.players.length;offset++){const i=(m.activeIndex+offset)%m.players.length;if(m.players[i].availableDay===nextDay){next=i;break;}}
  m.activeIndex=next;m.round=nextDay;m.turn++;m.moved=0;m.ate=0;m.placed=false;m.turnKind='travel';m.actionDays=1;
  if(checkMultiVictory(m))return;
- if(r.mode==='turns'&&m.round>r.turns){m.done=true;m.phase='finished';record(m,'finish','Nombre de manches atteint.');return;}
+ if(r.mode==='turns'&&m.round>r.turns){settleLoans(m);m.done=true;m.phase='finished';record(m,'finish','Nombre de manches atteint.');return;}
  const nextPlayer=player(m);nextPlayer.turnModifiers={};
  if(C.isEventGame(m)){
   nextPlayer.freeSteps=0;nextPlayer.freeGeneralSteps=0;nextPlayer.freeRoadSteps=0;nextPlayer.freeTailwindSteps=0;nextPlayer.bonusDistanceUsed=0;nextPlayer.shortcutActive=false;nextPlayer.blockedFirst=null;

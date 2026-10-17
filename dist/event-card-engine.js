@@ -14,7 +14,8 @@ export const card=(id,m)=>eventCardById(id,m);
 export const hasBonus=(p,id)=>p.bonusCards?.includes(id)||false;
 const bonusForEffect=(m,p,type)=>p.bonusCards?.map(id=>card(id,m)).find(c=>c?.effectType===type);
 export const hasBonusEffect=(m,p,type)=>!!bonusForEffect(m,p,type);
-export const foodCapacity=(m,p)=>Math.max(m.rules.maxFood,m.rules.startFood+(m.rules.bikes[p.bike]?.extraFood||0)+p.items.reduce((n,id)=>n+(m.rules.equipment[id]?.foodBonus||0),0))+(hasBonusEffect(m,p,'food_capacity')?3:0);
+// Repas au maximum (règle de Fi, 17 octobre) : Gravel 2, Randonneuse 4, +2 avec les sacoches, +3 avec la carte « grande sacoche ».
+export const foodCapacity=(m,p)=>(m.rules.bikes[p.bike]?.maxFood??m.rules.maxFood)+p.items.reduce((n,id)=>n+(m.rules.equipment[id]?.foodBonus||0),0)+(hasBonusEffect(m,p,'food_capacity')?3:0);
 export function note(m,actor,text,kind='card',extra={}){
  m.history.push({turn:m.turn,round:m.round,player:actor.id,name:actor.name,kind,text,...extra});
  actor.log.unshift(text);actor.log=actor.log.slice(0,8);

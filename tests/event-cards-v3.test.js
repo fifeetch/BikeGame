@@ -66,8 +66,8 @@ test('discard is reshuffled only when the common deck is empty',()=>{
 });
 
 test('food capacity, solar panel and tent bonus stop immediately after replacement',()=>{
- const m=game(),p=m.players[0];let i=give(m,'evt-33',p);assert(S.playCard(m,i,p.id));p.food=9;
- assert.equal(C.foodCapacity(m,p),9);assert(C.removeBonus(m,p,0));assert.equal(p.food,6);assert.equal(C.foodCapacity(m,p),6);nextTurn(m);
+ const m=game(),p=m.players[0];let i=give(m,'evt-33',p);assert(S.playCard(m,i,p.id));p.food=5;
+ assert.equal(C.foodCapacity(m,p),5,'Gravel : 2 repas + 3 avec la grande sacoche');assert(C.removeBonus(m,p,0));assert.equal(p.food,2);assert.equal(C.foodCapacity(m,p),2);nextTurn(m);
  i=give(m,'evt-34',p);assert(S.playCard(m,i,p.id));p.energy=5;C.onTurnEnd(m,p);assert.equal(p.energy,6);
  assert(C.removeBonus(m,p,0));C.onTurnEnd(m,p);assert.equal(p.energy,6);nextTurn(m);
  i=give(m,'evt-37',p);assert(S.playCard(m,i,p.id));assert.equal(p.bonusCards[0],'evt-37');conserved(m);
@@ -104,7 +104,7 @@ test('only one own-turn card may be played, including after reload; reactions re
 });
 
 test('positive resource cards apply their printed values and respect caps',()=>{
- for(const [id,field,start,expected] of [['evt-02','food',5,6],['evt-03','energy',9,10],['evt-04','energy',6,9],['evt-05','money',1,4],['evt-06','food',5,6],['evt-08','points',0,2]]){
+ for(const [id,field,start,expected] of [['evt-02','food',1,2],['evt-03','energy',9,10],['evt-04','energy',6,9],['evt-05','money',1,4],['evt-06','food',1,2],['evt-08','points',0,2]]){
   const m=game(),p=m.players[0];p[field]=start;const i=give(m,id,p);assert(S.playCard(m,i,p.id),id);assert.equal(p[field],expected,id);
   if(id==='evt-06')assert.equal(p.money,11);conserved(m);
  }
