@@ -40,6 +40,10 @@ function localBackend(){
   async create(code,value){if(read(code))return false;write(code,value);return true;},
   async update(code,fn){const cur=read(code),next=fn(cur);if(next===undefined)return {committed:false,value:cur};write(code,next);return {committed:true,value:next};},
   listen(code,cb){const list=listeners.get(code)||[];list.push(cb);listeners.set(code,list);setTimeout(()=>cb(read(code)),0);return ()=>listeners.set(code,(listeners.get(code)||[]).filter(f=>f!==cb));},
+  async getChild(code,path){return read(code)?.[path]??null;},
+  async updateChild(code,path,fn){const cur=read(code);if(!cur)return {committed:false,value:null};const next=fn(cur[path]??null);if(next===undefined)return {committed:false,value:cur[path]};write(code,{...cur,[path]:next});return {committed:true,value:next};},
+  async setChildren(code,obj){const cur=read(code)||{};write(code,{...cur,...obj});},
+  listenChild(code,path,cb){return this.listen(code,v=>cb(v?.[path]??null));},
   async sendChat(code,msg){const k='chat:'+code,list=[...(read(k)||[]),msg].slice(-50);write(k,list);},
   listenChat(code,cb){const k='chat:'+code;return this.listen(k,v=>cb(v||[]));}
  };
@@ -53,6 +57,11 @@ async function firebaseBackend(){
   // Firebase appelle d'abord la fonction avec sa copie locale, parfois vide (null) : on renvoie null pour qu'il relise le serveur.
   async update(code,fn){const r=await db.runTransaction(node(code),cur=>cur===null?null:fn(cur));const v=r.snapshot.val();return {committed:r.committed&&v!==null,value:v};},
   listen(code,cb){return db.onValue(node(code),snap=>cb(snap.val()));},
+  // Accès à une seule partie du nœud (17 octobre) : on n'envoie et ne reçoit plus la carte à chaque action.
+  async getChild(code,path){return (await db.get(db.ref(base,'games/'+code+'/'+path))).val();},
+  async updateChild(code,path,fn){const r=await db.runTransaction(db.ref(base,'games/'+code+'/'+path),fn);return {committed:r.committed,value:r.snapshot.val()};},
+  async setChildren(code,obj){await db.update(node(code),obj);},
+  listenChild(code,path,cb){return db.onValue(db.ref(base,'games/'+code+'/'+path),snap=>cb(snap.val()));},
   async sendChat(code,msg){await db.push(db.ref(base,'games/'+code+'/chat'),msg);},
   listenChat(code,cb){return db.onValue(db.query(db.ref(base,'games/'+code+'/chat'),db.limitToLast(50)),snap=>{const out=[];snap.forEach(c=>{out.push(c.val());});cb(out);});}
  };
@@ -65,7 +74,7 @@ function backend(){return backendPromise||=(isLocalTest()?Promise.resolve(localB
 // Créer : on envoie la partie préparée sur cet appareil ; mySeat = le cycliste joué ici.
 export async function createOnline(m,mySeat){const net=await backend(),{light,board}=splitGame(m),me=clientId();
  for(let tries=0;tries<8;tries++){const code=makeCode();
-  if(await net.create(code,{board,state:light,rev:1,seats:{[mySeat]:me},names:Object.fromEntries(m.players.map(p=>[p.id,p.name])),createdAt:Date.now(),updatedAt:Date.now()}))return {code,seat:mySeat,rev:1,client:me};}
+  if(await net.create(code,{board,state:light,live:{state:light,rev:1},rev:1,seats:{[mySeat]:me},names:Object.fromEntries(m.players.map(p=>[p.id,p.name])),createdAt:Date.now(),updatedAt:Date.now()}))return {code,seat:mySeat,rev:1,client:me};}
  throw Error('Impossible de créer un code de partie, réessaie.');}
 // Rejoindre : lit la partie et la liste des cyclistes libres.
 export async function peekOnline(code){const net=await backend(),g=await net.get(code);if(!g)throw Error('Aucune partie avec ce code.');
@@ -74,12 +83,24 @@ export async function takeSeat(code,seat){const net=await backend(),me=clientId(
  const r=await net.update(code,g=>{if(!g)return undefined;const seats=g.seats||{};if(seats[seat]&&seats[seat]!==me)return undefined;return {...g,seats:{...seats,[seat]:me}};});
  if(!r.committed)throw Error('Ce cycliste est déjà pris par un autre appareil.');return {code,seat,client:me,rev:r.value.rev};}
 // Envoyer l'état après une action. Refusé si quelqu'un a joué entre-temps (rev différent).
+// Léger (17 octobre) : on réserve le numéro de version (petite transaction), puis on écrit l'état sans la carte.
+// Avant, chaque action renvoyait tout le nœud (carte comprise, plusieurs centaines de Ko) : plus d'une minute de délai.
 export async function pushState(code,m,baseRev){const net=await backend(),{light}=splitGame(m);
- const r=await net.update(code,g=>{if(!g||g.rev!==baseRev)return undefined;return {...g,state:light,rev:baseRev+1,updatedAt:Date.now()};});
- return r.committed?r.value.rev:null;}
+ const r=await net.updateChild(code,'rev',cur=>cur===null||cur===baseRev?baseRev+1:undefined);
+ if(!r.committed||r.value!==baseRev+1)return null;
+ await net.setChildren(code,{live:{state:light,rev:baseRev+1},state:null,updatedAt:Date.now()});
+ return baseRev+1;}
+export const stateOf=g=>g?.live?.state||g?.state||null;
+export const revOf=g=>g?.live?.rev||g?.rev||0;
 // Écouter la partie : cb(texte complet de la sauvegarde, rev) à chaque changement.
-export async function listenOnline(code,cb){const net=await backend();let board=null;
- return net.listen(code,g=>{if(!g||!g.state||!g.board&&!board)return;board=board||g.board;cb(joinGame(g.state,board),g.rev,g);});}
+export async function listenOnline(code,cb){const net=await backend();const board=await net.getChild(code,'board');let last={state:null,rev:0},meta=null;
+ if(!board)return net.listen(code,g=>{if(!g||!stateOf(g)||!g.board)return;cb(joinGame(stateOf(g),g.board),revOf(g),g);});
+ const first=await net.getChild(code,'live');if(!first){const st=await net.getChild(code,'state'),rv=await net.getChild(code,'rev');if(st)last={state:st,rev:rv||1};}
+ const fire=()=>{if(last.state)cb(joinGame(last.state,board),last.rev,meta);};
+ const offLive=net.listenChild(code,'live',v=>{if(v?.state){last={state:v.state,rev:v.rev};fire();}else if(!first&&last.state)fire();});
+ const offSeats=net.listenChild(code,'seats',seats=>{meta={...(meta||{}),seats:seats||{}};if(last.state)fire();});
+ const offNames=net.listenChild(code,'names',names=>{meta={...(meta||{}),names:names||{}};});
+ return ()=>{offLive?.();offSeats?.();offNames?.();};}
 
 // ---------- Salle d'attente : on crée la partie en ligne dès le départ, chacun prépare son cycliste chez soi ----------
 // /games/<CODE> pendant la préparation : { status:'lobby', count, rules (texte), host, lobby:{ p1:{client,name,bike,items,voyage,ready}, … } }
@@ -100,7 +121,7 @@ export async function setLobbySeat(code,seat,data){const net=await backend(),me=
 // Lancer : l'hôte envoie la partie complète ; chaque appareil garde sa place.
 export async function startLobby(code,m){const net=await backend(),{light,board}=splitGame(m),me=clientId();
  const r=await net.update(code,g=>{if(!g||g.status!=='lobby'||g.host!==me)return undefined;const seats=Object.fromEntries(Object.entries(g.lobby||{}).map(([id,s])=>[id,s.client]));
-  return {...g,status:'playing',board,state:light,rev:1,seats,names:Object.fromEntries(m.players.map(p=>[p.id,p.name])),updatedAt:Date.now()};});
+  return {...g,status:'playing',board,state:light,live:{state:light,rev:1},rev:1,seats,names:Object.fromEntries(m.players.map(p=>[p.id,p.name])),updatedAt:Date.now()};});
  if(!r.committed)throw Error('Lancement impossible.');return 1;}
 export async function getGame(code){const net=await backend();return net.get(code);}
 export async function listenRaw(code,cb){const net=await backend();return net.listen(code,g=>cb(g));}

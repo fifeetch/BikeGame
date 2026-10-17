@@ -427,3 +427,8 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - « Mes parties » créait une nouvelle entrée à chaque sauvegarde : l’identifiant venait de la graine du hasard (m.seed), qui change à chaque tirage. Identifiant fixe désormais (m.gameId, saveIdOf dans saves.js) ; une partie rouverte depuis « Mes parties » garde son entrée.
 - Sauvegarde à la main (demande de Fi) : « 💾 Sauvegarder » remplace la sauvegarde de la partie dans « Mes parties » ; « Sauvegarde auto : oui/non » dans la fiche (désactivée par défaut) la réenregistre au même endroit à chaque action. La reprise rapide (« Continuer ») reste toujours à jour.
 - Lancement en ligne : un deuxième clic sur « Lancer la partie » (ou une action de salle d’attente déjà fermée) affichait « Cannot read properties of null (reading 'code') ». Actions protégées, bouton « ⏳ Lancement… » pendant l’envoi.
+
+## 17 octobre, 20 h 05 (cache v109-rapide) — Partie en ligne beaucoup plus légère
+- Lenteur en ligne (plus d’une minute) : chaque action renvoyait tout le nœud Firebase de la partie, carte comprise (plusieurs centaines de Ko), dans une transaction qui pouvait tout retélécharger. Maintenant : petite transaction sur `rev`, puis écriture de `live:{state,rev}` sans la carte ; l’autre joueur écoute seulement `live` (et `seats`, `names`), la carte est lue une fois (online.js : pushState, listenOnline, stateOf, revOf). Les anciennes parties (state au premier niveau) restent lisibles.
+- Doublon : une carte négative découverte au début de son tour (fenêtre « Réaction ») n’apparaît plus une deuxième fois dans « cartes reçues ».
+- Les deux joueurs doivent recharger la page pour avoir cette version (les anciennes versions lisent l’état au premier niveau).

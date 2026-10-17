@@ -657,7 +657,7 @@ async function startListening(){
  catch(e){message='Connexion impossible à la partie en ligne : '+e.message;render();}
 }
 // Recharge l'état exact de la partie en ligne (après un conflit, ou à la demande du joueur).
-async function resyncOnline(note=''){if(!online)return;try{const g=await NET.getGame(online.code);if(g?.state&&g?.board){netDeferred=null;applyRemote(NET.joinGame(g.state,g.board),g.rev,true);if(note)message=note;render();}}catch(e){message='Connexion impossible : '+e.message;render();}}
+async function resyncOnline(note=''){if(!online)return;try{const g=await NET.getGame(online.code);if(NET.stateOf(g)&&g?.board){netDeferred=null;applyRemote(NET.joinGame(NET.stateOf(g),g.board),NET.revOf(g),true);if(note)message=note;render();}}catch(e){message='Connexion impossible : '+e.message;render();}}
 async function pushNow(){
  if(!onlineGame())return;if(netPushing){netAgain=true;return;}
  netPushing=true;const sent=lightOf(m);

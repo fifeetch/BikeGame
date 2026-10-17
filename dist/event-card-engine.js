@@ -113,7 +113,8 @@ export function resolveAttack(m,choice={}){const a=m.pendingAttack;if(!a)return 
    if(a.solo){p.pendingEffects.push({cardId:c.id,kind:'solo_weather'});deferred=true;}else m.cardWindow.weather=weatherFor(c);break;
  }}
  if((a.solo||a.atStart)&&['move','place','puncture'].includes(m.phase))for(const effect of [...p.pendingEffects])if(['skip_move','short_move'].concat(a.atStart?['no_mountain']:[]).includes(effect.kind)){if(effect.kind==='no_mountain')p.turnModifiers.noMountain=true;else if(effect.kind==='skip_move')p.turnModifiers.skipMove=true;else p.turnModifiers.distancePenalty=(p.turnModifiers.distancePenalty||0)+effect.value;discard(m,effect.cardId);p.pendingEffects.splice(p.pendingEffects.indexOf(effect),1);}
- if(!protectedBy)p.receivedCards=[...(p.receivedCards||[]),{cardId:c.id,from:a.solo?'':a.actorId,round:m.round}].slice(-6);
+ // Carte découverte au début de son tour : déjà vue dans la fenêtre « Réaction », pas de rappel « cartes reçues » (doublon signalé par Fi).
+ if(!protectedBy&&!a.atStart)p.receivedCards=[...(p.receivedCards||[]),{cardId:c.id,from:a.solo?'':a.actorId,round:m.round}].slice(-6);
  if(!deferred)discard(m,c.id);note(m,p,protectedBy?`${p.name} est protégé par ${protectedBy}.`:`${p.name} subit ${c.name} : ${c.effectText}`,'card-result',{cardId:c.id});m.pendingAttack=null;if(a.atStart&&p.flat&&m.phase==='move'&&!m.moved)m.phase='puncture';nextSoloEvent(m);nextIncoming(m);return true;
 }
 export function weatherFor(c){return {kind:({headwind_now:'extra_energy',storm_now:'stop',fog:'fog',crosswind:'short_move',morning_frost:'frost'}[c.effectType]||c.effectType),value:c.effectValue};}
