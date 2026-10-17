@@ -22,7 +22,7 @@ import {partiesScreen} from './menus.js';
 import * as NET from './online.js';
 import {europeBoard} from './europe.js';
 import {EVENT_CARDS,eventCardById as resolveEventCard,normalizeEventEdits} from './event-cards.js';
-import {eventFace} from './event-card-ui.js';
+import {eventFace,setCardSceneContext,startCardScenes} from './event-card-ui.js';
 import {EDITABLE_TERRAINS,normalizeMap,applyMap} from './map-library.js';
 import {WEATHER,REGIONS} from './weather.js';
 import * as CARNET from './carnet-data.js';
@@ -1341,3 +1341,6 @@ const TOWN_VIEW={velo:'velo',superette:'superette',resto:'resto',hotel:'hotel'};
  document.querySelectorAll('.tw-shop').forEach(g=>g.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();act(g.dataset.action);}});
  if(townReduce()){townTick();return;}
  if(!townRaf){const loop=()=>{if(modal!=='market'||!townTick()){townRaf=0;return;}townRaf=requestAnimationFrame(loop);};townRaf=requestAnimationFrame(loop);}}catch(err){console.error(err);}};}
+// ---------- Cartes Événement au style « carte d'aventure » (17 octobre) : la scène de chaque carte s'anime sur la case du joueur ----------
+{const priorRender=render;render=(...a)=>{try{if(m){const p=S.player(m),t=p&&m.board?.[p.pos];if(t)setCardSceneContext({x:t.x,y:t.y,color:p.color});}}catch{}
+ priorRender(...a);try{startCardScenes();}catch{}};}

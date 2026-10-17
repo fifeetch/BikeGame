@@ -2149,3 +2149,36 @@ body .modal.night-wrap .night-cards .imm-night.off{opacity:.45}
 .tw-pic .tw-inside{flex:1}
 .tw-bar .mk-foot label{display:inline-flex;gap:6px;align-items:center}
 @media (max-width:720px){.tw-pic{background:none}}
+/* ---------- Cartes Événement, style « carte d'aventure » (17 octobre) ---------- */
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.event-face{--face-bg:#f6e7c1;--face-border:#1f6642;--face-ink:#1d2b2b;--face-dark:#1f6642;--face-band:#2f8a5b;--face-band-ink:#fff;aspect-ratio:auto;min-height:0;width:min(236px,100%);border-radius:14px;border:2px solid var(--face-border);background:var(--face-bg);color:var(--face-ink);box-shadow:0 10px 22px #0b1a1d55;font-family:'Barlow Condensed','Arial Narrow',system-ui,sans-serif}
+.event-face.negative{--face-bg:#f6e7c1;--face-border:#8f2c20;--face-ink:#1d2b2b;--face-dark:#8f2c20;--face-band:#b8402f}
+.event-face.climatic{--face-bg:#f6e7c1;--face-border:#1d5379;--face-ink:#1d2b2b;--face-dark:#1d5379;--face-band:#2a6f9f}
+.event-face.permanent{--face-bg:#f6e7c1;--face-border:#9a6312;--face-ink:#1d2b2b;--face-dark:#9a6312;--face-band:#f2a541;--face-band-ink:#102226}
+.event-face .event-face-banner{background:var(--face-band);color:var(--face-band-ink);height:30px;padding:0 12px;font:700 13px 'Barlow Condensed','Arial Narrow',system-ui,sans-serif;letter-spacing:.16em}
+.event-face.permanent .event-face-banner{color:var(--face-band-ink)}
+.event-face-scene{margin:8px 8px 0;border-radius:9px;overflow:hidden;border:2px solid #102226;background:#7f9a62;aspect-ratio:2/1;flex-shrink:0}
+.event-face-scene svg{display:block;width:100%;height:100%}
+.event-face .event-face-body{padding:9px 11px 9px;gap:4px}
+.event-face h3{font:900 21px/1.05 'Fraunces',Georgia,serif;color:#102226;margin:0}
+.event-face .event-face-flavour{font:italic 400 12.5px/1.3 'Fraunces',Georgia,serif;color:#5f4b26;margin:0 0 6px}
+.event-face .event-face-effect{background:#fffaf0;border:1.5px solid var(--face-band);border-radius:9px;padding:6px 9px 8px;display:flex;flex-direction:column;gap:2px}
+.event-face .event-face-effect strong{font:700 11px 'Barlow Condensed','Arial Narrow',system-ui,sans-serif;letter-spacing:.16em;color:var(--face-dark)}
+.event-face .event-face-effect p{font:600 15px/1.2 'Barlow Condensed','Arial Narrow',system-ui,sans-serif;margin:0;color:#1d2b2b}
+.event-face .event-face-effect small{font:500 13px/1.2 'Barlow Condensed','Arial Narrow',system-ui,sans-serif;color:#5f4b26}
+.event-face-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:3px}
+.event-face-tags span{font:600 12px 'Barlow Condensed','Arial Narrow',system-ui,sans-serif;color:#5f4b26;border:1px solid #5f4b2659;border-radius:999px;padding:0 7px;white-space:nowrap}
+.event-face-who{display:flex;align-items:center;gap:7px;border-top:1px solid #10222630;padding:6px 11px;font:600 13px 'Barlow Condensed','Arial Narrow',system-ui,sans-serif;color:#3b4a46}
+.event-face-who i{width:9px;height:9px;border-radius:50%;background:var(--face-band);flex-shrink:0}
+.event-face .event-face-actions{border-top:1px solid #10222630}
+.event-face.compact{width:170px;min-height:0}
+.event-face.compact .event-face-banner{height:24px;font-size:11px;padding:0 9px}
+.event-face.compact .event-face-scene{margin:6px 6px 0}
+.event-face.compact .event-face-body{padding:6px 8px}
+.event-face.compact h3{font-size:16px}
+.event-face.compact .event-face-flavour{display:none}
+.event-face.compact .event-face-effect{padding:5px 7px 6px}
+.event-face.compact .event-face-effect p{font-size:13px}
+.event-face.compact .event-face-effect small,.event-face.compact .event-face-tags span{font-size:11px}
+.event-face.compact .event-face-who{font-size:11.5px;padding:5px 8px}
+@media(max-width:760px){.event-face{width:min(220px,100%);min-height:0}.event-face h3{font-size:19px}}
