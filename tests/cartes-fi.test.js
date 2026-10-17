@@ -9,10 +9,11 @@ import {eventCardsFor} from '../dist/event-cards.js';
 const roster=[{name:'Fi',bike:'gravel',voyage:'traversee',items:[]},{name:'Léa',bike:'gravel',voyage:'soleil',items:[]}];
 function game(){const m=S.createMatch(roster,'plateau',CLASSIC,13);m.pendingAttack=null;m.phase='move';m.cardChoices=[];
  for(const p of m.players){m.eventDiscard.push(...p.cardHand,...p.bonusCards);p.cardHand=[];p.bonusCards=[];p.pendingEffects=[];p.turnModifiers={};p.energy=10;}m.moved=0;return m;}
-// Fi (joueur actif) joue la carte <effet> contre Léa ; Léa subit.
+// Fi (joueur actif) joue la carte <effet> contre Léa ; Léa la découvre et la subit au début de son tour (règle du 17 octobre).
 function attack(m,effect){const fi=m.players[0],lea=m.players[1],id=eventCardsFor(m).find(c=>c.effectType===effect).id;
  fi.cardHand=[id];fi.cardPlayedTurn=-1;fi.negativePlayedTurn=-1;
- if(!C.beginAttack(m,fi.id,0,lea.id))throw Error('attaque refusée : '+effect);assert(C.resolveAttack(m));return lea;}
+ if(!C.beginAttack(m,fi.id,0,lea.id))throw Error('attaque refusée : '+effect);
+ assert.equal(m.pendingAttack,null,'Fi continue son tour');toLea(m);assert.equal(m.pendingAttack?.targetId,lea.id,'Léa découvre la carte à son tour');assert(C.resolveAttack(m));return lea;}
 // Passe au tour de Léa.
 function toLea(m){for(let i=0;i<6&&S.player(m).id!=='p2';i++){m.phase='move';m.cardChoices=[];m.pendingAttack=null;S.endTurn(m);
   if(m.phase==='card-choice'){S.chooseCard(m,0);if(m.phase==='card-discard')S.discardEventHand(m,0);}}
@@ -58,7 +59,7 @@ test('GPS de randonnée (bonus) : quitter la route sans pénalité',()=>{
 
 // ---------- Cartes 18, 24, 39 revues et fin de partie (15 octobre 2026) ----------
 test('Route barrée : 2 cases de moins au prochain tour',()=>{
- const m=game(),lea=attack(m,'road_closed');assert(lea.pendingEffects.some(e=>e.kind==='short_move'&&e.value===2));toLea(m);assert.equal(lea.turnModifiers.distancePenalty,2);
+ const m=game(),lea=attack(m,'road_closed');assert.equal(S.player(m).id,lea.id);assert.equal(lea.turnModifiers.distancePenalty,2,'2 cases de moins dans le tour où Léa découvre la carte');
 });
 test('Carnet de voyage : +1 pièce par nouvelle ville',()=>{
  const m=game(),p=S.player(m);p.bonusCards=[eventCardsFor(m).find(c=>c.effectType==='travel_journal').id];const money=p.money;

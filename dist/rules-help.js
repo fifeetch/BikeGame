@@ -58,7 +58,7 @@ export function rulesHelp(r,tab='route',{btn,eventGame=true}={}){const o=opts(r)
   :`<h3>Cartes Événement</h3>${li([
   `Main de ${r.eventCards.handLimit} cartes au plus. Fin de tour : pioche ${r.eventCards.drawPerTurn}, garde-en 1.`,
   '<b>Positives</b> (vertes) : pour toi, pendant ton tour, une par tour.',
-  '<b>Négatives</b> (rouges) : contre un autre joueur, pendant ton tour. Crevaison et casse : il répare avec le kit ou retourne à la dernière ville ; chute : trousse de secours ou retour.',
+  '<b>Négatives</b> (rouges) : contre un autre joueur, pendant ton tour ; il la découvre au début de son propre tour et y répond à ce moment-là. Crevaison et casse : il répare avec le kit ou retourne à la dernière ville ; chute : trousse de secours ou retour.',
   !o.forecast&&'<b>Climatiques</b> (bleues) : quand un autre joueur annonce son trajet, tu peux en jouer une sur lui.',
   `<b>Bonus permanents</b> (jaunes) : posés devant toi, ${r.eventCards.bonusLimit} au plus.`,
   '« Coup de pouce » annule une carte jouée contre toi.'])}`;

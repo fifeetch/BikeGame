@@ -320,6 +320,7 @@ function advance(m){player(m).turns++;m.stats.turns++;const r=m.rules.victory,bu
  }else m.phase=nextPlayer.voyageChoices?.length?'voyage-choice':nextPlayer.pendingCards?.length?'card-resolution':nextPlayer.flat?'puncture':m.mode==='tuiles'&&m.hand.length?'place':'move';
  arrivalCheck(m);
  if(m.immersion)immersionDayStart(m);
+ if(C.isEventGame(m))C.nextIncoming?.(m);
 }
 // Filet de sécurité (bug signalé par Fi) : déjà sur la ville d'arrivée avec tous les objectifs remplis, le voyage se termine sans devoir ressortir de la ville.
 export function arrivalCheck(m,p=player(m)){const v=findVoyage(p.voyage);if(!v||p.completed||m.done||m.pendingAttack||!['move','place'].includes(m.phase)||m.board[p.pos]?.name!==v.to||!progress(view(m,p)).ready)return false;
@@ -335,7 +336,7 @@ export function load(text){
  raw.customCards=normalizeCustomCards(raw.customCards||[]);
  if(raw.cardVersion===3){raw.soloEventQueue??=[];raw.eventCardIds??=EVENT_CARDS.filter(c=>raw.players.length>1||c.targetType==='self').map(c=>c.id);
   if(!Array.isArray(raw.eventCardIds)||!raw.eventCardIds.length&&!raw.encounters||new Set(raw.eventCardIds).size!==raw.eventCardIds.length||raw.eventCardIds.some(id=>!EVENT_CARDS.some(c=>c.id===id))||!Array.isArray(raw.soloEventQueue)||raw.players.length>1&&raw.soloEventQueue.length)throw Error('Bibliothèque Événement invalide.');
-  const ids=[...(raw.eventDeck||[]),...(raw.eventDiscard||[]),...(raw.cardChoices||[]),...raw.soloEventQueue,...(raw.pendingAttack?[raw.pendingAttack.cardId]:[]),...raw.players.flatMap(p=>[...(p.cardHand||[]),...(p.bonusCards||[]),...(p.pendingEffects||[]).map(e=>e.cardId)])],expected=raw.eventCardIds;
+  const ids=[...(raw.eventDeck||[]),...(raw.eventDiscard||[]),...(raw.cardChoices||[]),...raw.soloEventQueue,...(raw.pendingAttack?[raw.pendingAttack.cardId]:[]),...raw.players.flatMap(p=>[...(p.cardHand||[]),...(p.bonusCards||[]),...(p.pendingEffects||[]).map(e=>e.cardId),...(p.incomingAttacks||[]).map(a=>a.cardId)])],expected=raw.eventCardIds;
   if(!Array.isArray(raw.eventDeck)||!Array.isArray(raw.eventDiscard)||ids.length!==expected.length||new Set(ids).size!==expected.length||ids.some(id=>!expected.includes(id))||raw.players.some(p=>p.cardHand?.length>C.handLimit(raw)+1||p.bonusCards?.length>C.bonusLimit(raw)))throw Error('Pioche Événement invalide.');
   if(raw.pendingAttack&&(!raw.players.some(p=>p.id===raw.pendingAttack.actorId)||!raw.players.some(p=>p.id===raw.pendingAttack.targetId)||raw.pendingAttack.actorId===raw.pendingAttack.targetId&&!(raw.players.length===1&&raw.pendingAttack.solo===true)))throw Error('Attaque sauvegardée invalide.');
   if(raw.phase==='card-intervention'&&(!raw.cardWindow||!Array.isArray(raw.cardWindow.route)||!raw.cardWindow.route.length||!Array.isArray(raw.cardWindow.responders)||!Number.isInteger(raw.cardWindow.responderIndex)||raw.cardWindow.responderIndex<0||raw.cardWindow.responderIndex>=raw.cardWindow.responders.length||raw.cardWindow.route.some(key=>!raw.board[key])))throw Error('Intervention sauvegardée invalide.');

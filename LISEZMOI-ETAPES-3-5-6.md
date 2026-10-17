@@ -385,3 +385,9 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - Le premier cycliste qui réussit 3 voyages arrête la partie et reçoit +5 points d’aventure (`victory.voyagesBonus`, 5 par défaut).
 - Le gagnant est ensuite celui qui a le plus de points d’aventure (à égalité : le plus de voyages, puis celui qui a fini en premier). En solo, rien ne change à part le bonus.
 - Les conditions 35 points et 40 jours restent comme avant. Règles (onglet « Fin de partie ») et écran de choix de la fin de partie mis à jour. Code : checkMultiVictory (simulator.js).
+
+## 17 octobre, 18 h 20 (cache v101-cartes-tour) — Cartes négatives reçues à son propre tour (règle de Fi)
+- Une carte négative jouée contre un autre joueur ne bloque plus le tour de celui qui la joue : elle attend chez la cible (`incomingAttacks`) et s’ouvre au début de son propre tour (fenêtre « Réaction », parade possible), une carte après l’autre (`nextIncoming`, event-card-engine.js ; appelé à la fin d’advance dans simulator.js).
+- Les effets « au prochain tour » (pas de trajet, route barrée, neige) s’appliquent au tour où la cible découvre la carte ; une crevaison, une casse ou une chute ouvre la réparation tout de suite.
+- Celui qui joue la carte voit « Carte envoyée : … la découvrira au début de son tour ». Les cartes climatiques (jouées sur le trajet du joueur actif) ne changent pas.
+- Tests des cartes adaptés à la nouvelle règle (cartes-fi, event-cards-v3, event-card-editor-v3).

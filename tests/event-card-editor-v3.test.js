@@ -9,6 +9,8 @@ import {renderCardEditor} from '../dist/card-editor.js';
 const roster=[{name:'Alice',bike:'gravel',voyage:'traversee'},{name:'Bob',bike:'gravel',voyage:'soleil'}];
 const edit=(slotId,templateId,name='Ma variante')=>({slotId,templateId,name,description:'Texte personnel pour cette carte.'});
 const game=edits=>S.createMatch(roster,'plateau',CLASSIC,23,[],edits);
+// Règle du 17 octobre : une carte négative attend le début du tour de sa cible.
+function deliver(m,p){m.activeIndex=m.players.indexOf(p);m.phase='move';m.moved=0;assert(C.nextIncoming(m),'la cible découvre la carte à son tour');}
 function give(m,id,p){
  for(const q of m.players){const index=q.cardHand.indexOf(id);if(index>=0)q.cardHand.splice(index,1);}
  for(const zone of [m.eventDeck,m.eventDiscard,m.cardChoices]){const index=zone.indexOf(id);if(index>=0)zone.splice(index,1);}
@@ -41,7 +43,7 @@ test('edited positive and bonus cards apply their selected effects, not their fo
 test('a re-skinned Coup de pouce remains a playable defense',()=>{
  const m=game([edit('evt-02','evt-07','Parade')]),alice=m.players[0],bob=m.players[1];
  const attack=give(m,'evt-17',alice);give(m,'evt-02',bob);
- assert(S.playCard(m,attack,bob.id));assert(S.defendEventAttack(m));
+ assert(S.playCard(m,attack,bob.id));deliver(m,bob);assert(S.defendEventAttack(m));
  assert.equal(bob.energy,8);assert(m.eventDiscard.includes('evt-02'));
  assert(m.history.some(h=>h.kind==='card-defense'));
 });

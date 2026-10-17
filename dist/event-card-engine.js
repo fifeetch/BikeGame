@@ -72,10 +72,15 @@ export function beginAttack(m,actorId,index,targetId){const actor=m.players.find
  }
  actor.cardHand.splice(index,1);if(c.category==='negative'){actor.cardPlayedTurn=m.turn;actor.negativePlayedTurn=m.turn;}if(c.category==='climatic')actor.climatePlayedTurn=m.turn;
  if(c.category==='climatic'&&m.cardWindow)m.cardWindow.climateUsed=true;
+ // Carte négative contre un autre joueur : elle l'attend au début de son propre tour (règle de Fi, 17 octobre).
+ if(c.category==='negative'){target.incomingAttacks=[...(target.incomingAttacks||[]),{cardId:c.id,actorId,targetId}];note(m,actor,`${actor.name} joue ${c.name} contre ${target.name} : ${target.name} la découvrira au début de son tour.`,'card-attack-sent',{cardId:c.id,targetId});return true;}
  m.pendingAttack={cardId:c.id,actorId,targetId};note(m,actor,`${actor.name} joue ${c.name} contre ${target.name}.`,'card-attack',{cardId:c.id,targetId});return true;
 }
+// Début de tour : le joueur reçoit, une par une, les cartes jouées contre lui pendant les tours des autres.
+export function nextIncoming(m){const p=m.players[m.activeIndex];if(!p||m.pendingAttack||m.done||!p.incomingAttacks?.length||!['move','place','puncture'].includes(m.phase))return false;
+ const a=p.incomingAttacks.shift(),actor=m.players.find(q=>q.id===a.actorId);m.pendingAttack={...a,atStart:true};note(m,p,`${p.name} découvre ${card(a.cardId,m)?.name||'une carte'} jouée par ${actor?.name||'un autre joueur'}.`,'card-attack',{cardId:a.cardId,targetId:p.id});return true;}
 export function defend(m){const a=m.pendingAttack;if(!a)return false;const p=m.players.find(q=>q.id===a.targetId),i=p.cardHand.findIndex(id=>card(id,m)?.effectType==='cancel_attack');if(i<0)return false;
- const [id]=p.cardHand.splice(i,1);discard(m,id);discard(m,a.cardId);note(m,p,`${p.name} utilise ${card(id,m)?.name||'une défense'} : attaque annulée.`,'card-defense');m.pendingAttack=null;nextSoloEvent(m);return true;
+ const [id]=p.cardHand.splice(i,1);discard(m,id);discard(m,a.cardId);note(m,p,`${p.name} utilise ${card(id,m)?.name||'une défense'} : attaque annulée.`,'card-defense');m.pendingAttack=null;nextSoloEvent(m);nextIncoming(m);return true;
 }
 function loseEnergy(p,n){p.energy=Math.max(0,p.energy-n);}
 // Crevaison, casse et chute : au début de son tour, le joueur répare (kit) ou se soigne (trousse) ; sinon retour à la dernière ville.
@@ -104,9 +109,9 @@ export function resolveAttack(m,choice={}){const a=m.pendingAttack;if(!a)return 
   case 'storm_now':case 'fog':case 'crosswind':case 'heavy_rain':case 'morning_frost':case 'coastal_storm':
    if(a.solo){p.pendingEffects.push({cardId:c.id,kind:'solo_weather'});deferred=true;}else m.cardWindow.weather=weatherFor(c);break;
  }}
- if(a.solo&&['move','place'].includes(m.phase))for(const effect of [...p.pendingEffects])if(['skip_move','short_move'].includes(effect.kind)){if(effect.kind==='skip_move')p.turnModifiers.skipMove=true;else p.turnModifiers.distancePenalty=(p.turnModifiers.distancePenalty||0)+effect.value;discard(m,effect.cardId);p.pendingEffects.splice(p.pendingEffects.indexOf(effect),1);}
+ if((a.solo||a.atStart)&&['move','place','puncture'].includes(m.phase))for(const effect of [...p.pendingEffects])if(['skip_move','short_move'].concat(a.atStart?['no_mountain']:[]).includes(effect.kind)){if(effect.kind==='no_mountain')p.turnModifiers.noMountain=true;else if(effect.kind==='skip_move')p.turnModifiers.skipMove=true;else p.turnModifiers.distancePenalty=(p.turnModifiers.distancePenalty||0)+effect.value;discard(m,effect.cardId);p.pendingEffects.splice(p.pendingEffects.indexOf(effect),1);}
  if(!protectedBy)p.receivedCards=[...(p.receivedCards||[]),{cardId:c.id,from:a.solo?'':a.actorId,round:m.round}].slice(-6);
- if(!deferred)discard(m,c.id);note(m,p,protectedBy?`${p.name} est protégé par ${protectedBy}.`:`${p.name} subit ${c.name} : ${c.effectText}`,'card-result',{cardId:c.id});m.pendingAttack=null;nextSoloEvent(m);return true;
+ if(!deferred)discard(m,c.id);note(m,p,protectedBy?`${p.name} est protégé par ${protectedBy}.`:`${p.name} subit ${c.name} : ${c.effectText}`,'card-result',{cardId:c.id});m.pendingAttack=null;if(a.atStart&&p.flat&&m.phase==='move'&&!m.moved)m.phase='puncture';nextSoloEvent(m);nextIncoming(m);return true;
 }
 export function weatherFor(c){return {kind:({headwind_now:'extra_energy',storm_now:'stop',fog:'fog',crosswind:'short_move',morning_frost:'frost'}[c.effectType]||c.effectType),value:c.effectValue};}
 export function playOwnCard(m,index,replaceIndex){const p=m.players[m.activeIndex],c=card(p.cardHand[index],m);if(!c||m.done||!['move','place'].includes(m.phase)||!['positive','permanent'].includes(c.category))return false;

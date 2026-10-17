@@ -9,7 +9,10 @@ const roster=[{name:'Alice',bike:'gravel',voyage:'traversee'},{name:'Bob',bike:'
 const game=(seed=13)=>S.createMatch(roster,'plateau',CLASSIC,seed);
 function give(m,id,p){for(const q of m.players){const i=q.cardHand.indexOf(id);if(i>=0)q.cardHand.splice(i,1);const b=q.bonusCards.indexOf(id);if(b>=0)q.bonusCards.splice(b,1);}for(const zone of [m.eventDeck,m.eventDiscard,m.cardChoices]){const i=zone.indexOf(id);if(i>=0)zone.splice(i,1);}p.cardHand.push(id);return p.cardHand.length-1;}
 function nextTurn(m){m.turn++;}
-function conserved(m){const ids=[...m.eventDeck,...m.eventDiscard,...m.cardChoices,...(m.pendingAttack?[m.pendingAttack.cardId]:[]),...m.players.flatMap(p=>[...p.cardHand,...p.bonusCards,...p.pendingEffects.map(e=>e.cardId)])];assert.equal(ids.length,40);assert.equal(new Set(ids).size,40);}
+// Règle du 17 octobre : une carte négative attend le début du tour de sa cible.
+function deliver(m,p){m.activeIndex=m.players.indexOf(p);m.phase='move';m.moved=0;assert(C.nextIncoming(m),'la cible découvre la carte à son tour');}
+
+function conserved(m){const ids=[...m.eventDeck,...m.eventDiscard,...m.cardChoices,...(m.pendingAttack?[m.pendingAttack.cardId]:[]),...m.players.flatMap(p=>[...p.cardHand,...p.bonusCards,...p.pendingEffects.map(e=>e.cardId),...(p.incomingAttacks||[]).map(a=>a.cardId)])];assert.equal(ids.length,40);assert.equal(new Set(ids).size,40);}
 
 test('forty event cards are unique, complete and use four category colours',()=>{
  assert.equal(EVENT_CARDS.length,40);assert.equal(new Set(EVENT_CARDS.map(c=>c.id)).size,40);
@@ -37,8 +40,8 @@ test('permanent bonuses occupy two slots, can be replaced and lost to a fall',()
  let i=give(m,'evt-34',alice);assert(S.playCard(m,i,alice.id));nextTurn(m);
  i=give(m,'evt-35',alice);assert(S.playCard(m,i,alice.id));assert.deepEqual(alice.bonusCards,['evt-34','evt-35']);nextTurn(m);
  i=give(m,'evt-31',alice);assert(!S.playCard(m,i,alice.id));assert(S.playCard(m,i,alice.id,0));assert.deepEqual(alice.bonusCards,['evt-35','evt-31']);assert(m.eventDiscard.includes('evt-34'));nextTurn(m);
- i=give(m,'evt-16',alice);assert(S.playCard(m,i,bob.id));assert(m.pendingAttack);assert(S.resolveEventAttack(m,{}));assert.equal(bob.energy,6);nextTurn(m);
- i=give(m,'evt-20',bob);m.activeIndex=1;assert(S.playCard(m,i,alice.id));assert(!S.resolveEventAttack(m,{}));assert(S.resolveEventAttack(m,{bonusIndex:1}));assert.deepEqual(alice.bonusCards,['evt-35']);conserved(m);
+ i=give(m,'evt-16',alice);assert(S.playCard(m,i,bob.id));assert(!m.pendingAttack);deliver(m,bob);assert(m.pendingAttack);assert(S.resolveEventAttack(m,{}));assert.equal(bob.energy,6);nextTurn(m);
+ i=give(m,'evt-20',bob);m.activeIndex=1;m.phase='move';assert(S.playCard(m,i,alice.id));deliver(m,alice);assert(!S.resolveEventAttack(m,{}));assert(S.resolveEventAttack(m,{bonusIndex:1}));assert.deepEqual(alice.bonusCards,['evt-35']);conserved(m);
 });
 
 test('climate may be played by a non-active player before a route, once, and cancelled',()=>{
@@ -52,8 +55,8 @@ test('climate may be played by a non-active player before a route, once, and can
 test('immunities and save/load preserve public bonuses and pending effects',()=>{
  const m=game(),alice=m.players[0],bob=m.players[1];
  let i=give(m,'evt-31',alice);assert(S.playCard(m,i,alice.id));nextTurn(m);
- i=give(m,'evt-13',alice);assert(S.playCard(m,i,bob.id));assert(S.resolveEventAttack(m,{}));assert.equal(bob.pendingEffects[0].kind,'extra_energy');nextTurn(m);
- i=give(m,'evt-11',bob);m.activeIndex=1;assert(S.playCard(m,i,alice.id));assert(S.resolveEventAttack(m,{}));assert.equal(alice.energy,8);
+ i=give(m,'evt-13',alice);assert(S.playCard(m,i,bob.id));deliver(m,bob);assert(S.resolveEventAttack(m,{}));m.activeIndex=0;assert.equal(bob.pendingEffects[0].kind,'extra_energy');nextTurn(m);
+ i=give(m,'evt-11',bob);m.activeIndex=1;assert(S.playCard(m,i,alice.id));deliver(m,alice);assert(S.resolveEventAttack(m,{}));assert.equal(alice.energy,8);
  conserved(m);const loaded=S.load(S.serialize(m));assert.deepEqual(loaded.players[0].bonusCards,['evt-31']);assert.equal(loaded.players[1].pendingEffects[0].kind,'extra_energy');conserved(loaded);
 });
 
@@ -80,7 +83,7 @@ test('snow intervention forbids mountains on the target’s next turn, the curre
 
 test('negative target and once-per-turn limit are enforced',()=>{
  const m=game(),alice=m.players[0],bob=m.players[1];let i=give(m,'evt-17',alice);
- assert(!S.playCard(m,i,'missing'));assert(!S.playCard(m,i,alice.id));assert(S.playCard(m,i,bob.id));assert(S.resolveEventAttack(m,{}));
+ assert(!S.playCard(m,i,'missing'));assert(!S.playCard(m,i,alice.id));assert(S.playCard(m,i,bob.id));deliver(m,bob);assert(S.resolveEventAttack(m,{}));m.activeIndex=0;m.phase='move';
  i=give(m,'evt-19',alice);assert(!S.playCard(m,i,bob.id));assert.equal(bob.energy,6);conserved(m);
 });
 
