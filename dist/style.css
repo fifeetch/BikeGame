@@ -2236,3 +2236,14 @@ body .modal.night-wrap .night-cards .imm-night.off{opacity:.45}
 .modal .es-card .es-row .warn{color:#b74732}
 .modal .es-card .es-detail summary{color:#8a5a14}
 .modal .es-card .es-group>b{font-size:13px}
+
+/* Points gagnés par les autres joueurs, en ligne (17 octobre) */
+.pts-toasts{position:fixed;left:max(16px,env(safe-area-inset-left,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));display:grid;gap:8px;z-index:60;pointer-events:none;max-width:min(380px,calc(100vw - 32px))}
+.pts-toast{display:grid;grid-template-columns:auto auto 1fr;align-items:center;gap:4px 8px;background:#fbf1d8;color:#1b3b38;border:2px solid #f2a541;border-radius:14px;padding:8px 12px;box-shadow:0 8px 24px rgba(0,0,0,.35);animation:ptsIn .35s ease-out;transition:opacity .4s,transform .4s}
+.pts-toast.out{opacity:0;transform:translateY(8px)}
+.pts-toast .pts-dot{width:12px;height:12px;border-radius:50%;border:1.5px solid #1b3b38}
+.pts-toast b{font-family:Fraunces,Georgia,serif;font-size:16px}
+.pts-toast em{font-style:normal;font-weight:800;color:#2f6b3a;justify-self:end;font-size:16px}.pts-toast em.neg{color:#b74732}
+.pts-toast small{grid-column:1/-1;font-size:13px;color:#5a4a2c}
+@keyframes ptsIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){.pts-toast{animation:none}}

@@ -435,3 +435,8 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 
 ## 17 octobre, 20 h 15 (cache v110-mesure)
 - En ligne : si l’envoi d’un coup dépasse 4 secondes, un message indique la durée et la taille envoyée (pour comprendre une lenteur restante).
+
+## 17 octobre, 20 h 25 (cache v111-tour-rapide) — Passage du tour plus rapide et points visibles en ligne (choix A et B de Fi)
+- À plusieurs : après « Où dormir ce soir ? », le tour passe tout de suite au joueur suivant. La pioche des cartes Événement se fait au début de son tour (« DÉBUT DE TA JOURNÉE », m.resumePhase ; afterDraw dans simulator.js), puis il découvre les cartes jouées contre lui. La scène de la nuit ne retient plus le tour. En solo, rien ne change.
+- En ligne, quand un autre joueur gagne des points d’aventure (voyage, col, carte, lieu caché…), une bulle s’affiche en bas à gauche (« Marion +2 pts · Col du Stelvio franchi ») et la case du joueur brille sur la carte (pointToasts dans app.js, à partir du champ `pts` du journal).
+- Tests des cartes adaptés à la pioche en début de tour.

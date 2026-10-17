@@ -30,9 +30,10 @@ test('solo starts with all forty cards and resolves adverse starting draws autom
 
 test('common deck deals three each, keeps one of two and requires chosen overflow discard',()=>{
  const m=game();assert.equal(m.players[0].cardHand.length,3);assert.equal(m.players[1].cardHand.length,3);assert.equal(m.eventDeck.length,34);conserved(m);
- assert(S.endTurn(m));assert.equal(m.cardChoices.length,2);assert.equal(m.eventDeck.length,32);
- assert(S.chooseCard(m,0));assert.equal(m.phase,'card-discard');assert.equal(m.players[0].cardHand.length,4);
- assert(S.discardEventHand(m,2));assert.equal(m.players[0].cardHand.length,3);assert.equal(m.eventDiscard.length,2);conserved(m);
+ // À plusieurs : la pioche se fait au début du tour du joueur suivant (17 octobre).
+ assert(S.endTurn(m));assert.equal(m.activeIndex,1);assert.equal(m.cardChoices.length,2);assert.equal(m.eventDeck.length,32);
+ assert(S.chooseCard(m,0));assert.equal(m.phase,'card-discard');assert.equal(m.players[1].cardHand.length,4);
+ assert(S.discardEventHand(m,2));assert.equal(m.players[1].cardHand.length,3);assert.equal(m.phase,'move');assert.equal(m.eventDiscard.length,2);conserved(m);
 });
 
 test('permanent bonuses occupy two slots, can be replaced and lost to a fall',()=>{

@@ -22,8 +22,9 @@ test('defaults include forty cards, shuffle each fresh game and draw three at th
 test('custom composition, initial deal, turn draws and limits survive save/load',()=>{
  const r=rules({startingHand:5,handLimit:6,bonusLimit:4,drawPerTurn:4,shuffle:false,categories:{positive:true,negative:false,climatic:false,permanent:true}});
  const m=S.createMatch(pair,'plateau',r,1);assert.equal(m.eventCardIds.length,20);assert.equal(m.eventDeck.length,10);assert.equal(m.players[0].cardHand.length,5);assert.equal(m.players[0].cardHand[0],'evt-01');
- assert(S.endTurn(m));assert.equal(m.cardChoices.length,4);assert(S.chooseCard(m,3));
- assert.equal(m.players[0].cardHand.length,6);assert.equal(m.activeIndex,1);const loaded=S.load(S.serialize(m));assert.deepEqual(loaded.rules.eventCards,r.eventCards);conserved(loaded);
+ // À plusieurs (17 octobre) : le tour passe tout de suite, le joueur suivant pioche au début de son tour.
+ assert(S.endTurn(m));assert.equal(m.activeIndex,1);assert.equal(m.cardChoices.length,4);assert(S.chooseCard(m,3));
+ assert.equal(m.players[1].cardHand.length,6);assert.equal(m.activeIndex,1);assert.equal(m.phase,'move');const loaded=S.load(S.serialize(m));assert.deepEqual(loaded.rules.eventCards,r.eventCards);conserved(loaded);
  assert.throws(()=>validateRules(rules({handLimit:2})));
  assert.throws(()=>validateRules(rules({bonusLimit:1.5})));
  assert.throws(()=>validateRules(rules({categories:{positive:false,negative:false,climatic:false,permanent:false}})));

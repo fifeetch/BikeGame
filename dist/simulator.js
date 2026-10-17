@@ -258,12 +258,16 @@ export function endTurn(m){if(m.pendingAttack||m.done||!['move','place'].include
  if(!immersionOn(m))applyOrigNight(m,rider);
  rider.dayCols=0;
  record(m,'end','Fin du tour sur '+(m.board[player(m).pos].name||E.terrains[m.board[player(m).pos].type].name)+'.',{distance:m.moved,action:m.turnKind});
- if(C.isEventGame(m)){const p=player(m);C.onTurnEnd(m,p);if(p.blockedFirst){for(const effect of (p.pendingEffects||[]).filter(e=>e.kind==='road_closed'))C.discard(m,effect.cardId);p.pendingEffects=(p.pendingEffects||[]).filter(e=>e.kind!=='road_closed');p.blockedFirst=null;}p.freeSteps=0;p.freeGeneralSteps=0;p.freeRoadSteps=0;p.freeTailwindSteps=0;p.bonusDistanceUsed=0;p.shortcutActive=false;if(m.encounters){beginEncounter(m);return true;}C.drawChoices(m);if(!m.cardChoices.length&&!m.pendingAttack)advance(m);return true;}
+ if(C.isEventGame(m)){const p=player(m);C.onTurnEnd(m,p);if(p.blockedFirst){for(const effect of (p.pendingEffects||[]).filter(e=>e.kind==='road_closed'))C.discard(m,effect.cardId);p.pendingEffects=(p.pendingEffects||[]).filter(e=>e.kind!=='road_closed');p.blockedFirst=null;}p.freeSteps=0;p.freeGeneralSteps=0;p.freeRoadSteps=0;p.freeTailwindSteps=0;p.bonusDistanceUsed=0;p.shortcutActive=false;if(m.encounters){beginEncounter(m);return true;}// À plusieurs (17 octobre, choix de Fi) : le tour passe tout de suite ; la pioche se fait au début du tour suivant du joueur.
+ if(m.players.length>1&&!m.tutorial){advance(m);return true;}
+ C.drawChoices(m);if(!m.cardChoices.length&&!m.pendingAttack)advance(m);return true;}
  m.cardChoices=[drawCard(m),drawCard(m)];m.phase='card-choice';record(m,'draw','Deux cartes de jeu piochées : en garder une.');return true;
 }
-export function chooseCard(m,index){if(C.isEventGame(m)){if(!C.keepChoice(m,index))return false;if(m.phase!=='card-discard')advance(m);return true;}
+// Fin de la pioche : en début de tour, on reprend la journée (et on découvre les cartes jouées contre soi) ; sinon le tour passe.
+function afterDraw(m){if(m.resumePhase){m.phase=m.resumePhase;delete m.resumePhase;C.nextIncoming?.(m);}else advance(m);}
+export function chooseCard(m,index){if(C.isEventGame(m)){if(!C.keepChoice(m,index))return false;if(m.phase!=='card-discard')afterDraw(m);return true;}
  if(m.phase!=='card-choice'||![0,1].includes(index)||m.cardChoices.length!==2)return false;const kept=m.cardChoices[index],discarded=m.cardChoices[1-index],hand=player(m).cardHand;hand.push(kept);const overflow=hand.length>5?hand.shift():null;record(m,'card','Carte gardée : '+cardById(kept,m).title+' ; '+cardById(discarded,m).title+' défaussée.'+(overflow?' Main pleine : '+cardById(overflow,m).title+' défaussée.':''));m.cardChoices=[];advance(m);return true;}
-export function discardEventHand(m,index){if(!C.isEventGame(m)||!C.discardHand(m,index))return false;if(player(m).cardHand.length<=C.handLimit(m))advance(m);return true;}
+export function discardEventHand(m,index){if(!C.isEventGame(m)||!C.discardHand(m,index))return false;if(player(m).cardHand.length<=C.handLimit(m))afterDraw(m);return true;}
 export function canPlayCard(m,index){const p=player(m);if(C.isEventGame(m)){const c=C.card(p.cardHand[index],m);return !!c&&!m.pendingAttack&&!m.done&&['move','place'].includes(m.phase)&&p.cardPlayedTurn!==m.turn&&c.playTiming==='own_turn'&&(c.category!=='permanent'||C.bonusLimit(m)>0)&&(c.category!=='negative'||m.players.length>1&&p.negativePlayedTurn!==m.turn);}
  const c=cardById(p.cardHand[index],m);if(!c||m.done||!['move','place'].includes(m.phase))return false;if(c.effect?.repair)return !!(p.turnModifiers?.distancePenalty||p.turnModifiers?.extraMoveEnergy||p.flat);return true;}
 export function playCard(m,index,targetId,choice){if(C.isEventGame(m)){if(!canPlayCard(m,index))return false;const c=C.card(player(m).cardHand[index],m);return c.category==='negative'?C.beginAttack(m,player(m).id,index,targetId):C.playOwnCard(m,index,choice);}
@@ -337,6 +341,7 @@ function advance(m){player(m).turns++;m.stats.turns++;const r=m.rules.victory,bu
  }else m.phase=nextPlayer.voyageChoices?.length?'voyage-choice':nextPlayer.pendingCards?.length?'card-resolution':nextPlayer.flat?'puncture':m.mode==='tuiles'&&m.hand.length?'place':'move';
  arrivalCheck(m);
  if(m.immersion)immersionDayStart(m);
+ if(C.isEventGame(m)&&m.players.length>1&&!m.tutorial&&!m.done&&['move','place','puncture','voyage-choice'].includes(m.phase)){m.resumePhase=m.phase;C.drawChoices(m);if(!m.cardChoices.length){m.phase=m.resumePhase;delete m.resumePhase;}}
  if(C.isEventGame(m))C.nextIncoming?.(m);
 }
 // Filet de sécurité (bug signalé par Fi) : déjà sur la ville d'arrivée avec tous les objectifs remplis, le voyage se termine sans devoir ressortir de la ville.
