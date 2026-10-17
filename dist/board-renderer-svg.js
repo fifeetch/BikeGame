@@ -197,8 +197,8 @@ export function createSVGBoardRenderer(container,options={}){
  function drawAdventure(g,editMode){
   const cols=Object.values(g.board).filter(t=>t.type==='col'&&t.colName),marks=Object.entries(g.landmarks||{}),climbed=g.colsClimbed||{},colorOf=id=>(g.players||[]).find(p=>p.id===id)?.color||'';
   const sky=g.forecast&&g.mode==='plateau'&&!editMode?forecast(g.seed,g.round):null;
-  const beta=Boolean(g.beta&&g.immersion&&!editMode);svg.classList?.toggle('beta-water',beta);
-  const sig=JSON.stringify(sky)+editMode+beta+'|'+cols.map(t=>t.key+(climbed[t.key]||'')).join(',')+'|'+marks.map(([k,l])=>k+(l.found?'1':'0')).join(',');
+  const beta=Boolean(g.beta&&g.immersion&&!editMode);svg.classList?.toggle('beta-water',beta);const uv=g.ultraView&&!editMode?g.ultraView:null;
+  const sig=JSON.stringify(sky)+editMode+beta+(uv?uv.h:'')+'|'+cols.map(t=>t.key+(climbed[t.key]||'')).join(',')+'|'+marks.map(([k,l])=>k+(l.found?'1':'0')).join(',');
   if(sig===adventureSig)return;adventureSig=sig;
   if(editMode){adventure.innerHTML='';return;}
   let out='';
@@ -210,6 +210,11 @@ export function createSVGBoardRenderer(container,options={}){
   // Mode Bêta (17 octobre) : les fontaines des hameaux, points d'eau sûrs (goutte bleue).
   if(beta)for(const v of DECOR.villages){const t=g.board[`hex-${v.at(-2)}-${v.at(-1)}`];if(!t||t.type==='ville'||t.type==='mer')continue;
    out+=`<g class="water-spot" transform="translate(${f1(t.x)} ${f1(t.y+6)})"><title>Fontaine du hameau : eau sûre</title><g class="water-spot-inner"><circle r="5.6"/><path d="M0 -3.6C2.2 -1 3 .4 3 1.4a3 3 0 0 1 -6 0c0 -1 .8 -2.4 3 -5z"/></g></g>`;}
+  // Mode Ultra (17 octobre) : contrôles numérotés, arrivée, et les 10 rivaux à l'heure du joueur.
+  if(uv){const named=n=>Object.values(g.board).find(t=>t.name===n);
+   [['Zurich','1'],['Saint-Pétersbourg','2'],['Cap Nord','🏁']].forEach(([n,lab])=>{const t=named(n);if(t)out+=`<g class="ultra-cp" transform="translate(${f1(t.x)} ${f1(t.y-15)})"><title>${lab==='🏁'?'Arrivée':'Contrôle '+lab} · ${esc(n)}</title><g class="ultra-cp-inner"><circle r="7.5"/><text y="3.4">${lab}</text></g></g>`;});
+   if(uv){const at={};for(const r of uv.rivals){if(r.status==='abandon')continue;const t=g.board[r.key];if(!t)continue;const i=at[r.key]=(at[r.key]||0)+1,a=i*1.9;
+    out+=`<g class="ultra-rival" transform="translate(${f1(t.x+Math.cos(a)*8)} ${f1(t.y+Math.sin(a)*8)})"><title>${esc(r.name)} · ${esc(r.status)}</title><g class="ultra-rival-inner"><circle r="4.2" fill="${esc(r.color)}"/></g></g>`;}}}
   // Météo annoncée : temps du jour posé au centre de chaque région.
   if(sky)for(const [id,w]of Object.entries(sky)){const c=REGION_CENTRES[id],label=`${REGIONS[id].name} · ${WEATHER[w].name}`;
    out+=`<g class="weather-badge w-${w}" transform="translate(${f1(c.x)} ${f1(c.y)})" aria-label="${esc(label)} : ${esc(WEATHER[w].effect)}"><g class="weather-badge-inner"><circle r="8"/><text class="weather-icon" y="3.4">${WEATHER[w].icon}</text></g></g>`;}

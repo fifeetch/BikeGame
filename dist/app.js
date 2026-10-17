@@ -1,7 +1,7 @@
 import * as E from './engine.js';
 import * as S from './simulator.js';
 import {CLASSIC,COLORS,clone,validateRules,upgradeStoredRules,setPath,energyCap,isExhausted,fatigueMax} from './rules.js';
-import {drawVoyages,progress,voyages,voyageTier,findVoyage,TUTORIAL_VOYAGE} from './voyages.js';
+import {drawVoyages,progress,voyages,voyageTier,findVoyage,TUTORIAL_VOYAGE,ULTRA_VOYAGE} from './voyages.js';
 import {createBoardRenderer,boardSnapshotMarkup} from './board-renderer.js';
 import {artFor} from './tile-art.js';
 import {MAP_WIDTH,MAP_HEIGHT,FERRY_ROUTES} from './europe.js';
@@ -15,7 +15,7 @@ import {voyageCard,cardArtUrl} from './voyage-card.js';
 import {townSvg,townInsideSvg,townArrive,townGo,townOut,townSkip,townAct,townTick} from './town-scene.js';
 import {axialDistance as townDistance} from './europe.js';
 import {readDisplayPrefs,writeDisplayPref} from './display-prefs.js';
-import {titleScreen,plateauScreen,playersScreen,kindScreen,garageScreen,voyagesScreen,onlineScreen,editorHubScreen} from './menus.js';
+import {steps as menuSteps,titleScreen,plateauScreen,playersScreen,kindScreen,garageScreen,voyagesScreen,onlineScreen,editorHubScreen} from './menus.js';
 import {rulesIntro,rulesHelp,HELP_TABS} from './rules-help.js';
 import * as SAVES from './saves.js';
 import {partiesScreen} from './menus.js';
@@ -187,7 +187,7 @@ function overlay(){let content='',wide=false;
  else if(modal==='confirm'){const v=m?findVoyage(S.player(m).voyage):null;content=`<span class="modal-eyebrow">Nouveau carnet de route</span><h2>Nouvelle partie ?</h2>${m?`<div class="modal-save"><span aria-hidden="true">📔</span><div><small>Partie en cours</small><b>Jour ${m.round} · ${m.players.map(p=>esc(p.name)).join(' et ')}${v?' · '+esc(v.from)+' → '+esc(v.to):''}</b></div></div>`:''}<p>Cette partie sera remplacée quand la nouvelle commencera. Exporte-la d’abord si tu veux la garder.</p><div class="modal-actions">${btn('Choisir le plateau →','selectbike','modal-primary')}<div class="modal-pair">${btn('Exporter','export','light')}${btn('Règles du jeu','rules','light')}</div>${btn('Annuler, je reprends la route','close','modal-link')}</div>`;}
  else if(modal==='finish')content=`<h2>Terminer la partie ?</h2><p>Afficher le classement final et conserver l’historique.</p>${btn('Terminer','finish-confirm')}${btn('Annuler','close','light')}`;
  else if(m?.event&&screen==='game'){const e=m.event,p=S.player(m);content=`<span class="eyebrow">FIN DE JOURNÉE · ${esc(p.name)} · ${e.category==='negative'?'NÉGATIF':e.category==='positive'?'POSITIF':'DÉFI'}</span><h2>${esc(e.title)}</h2><p>${esc(e.text)}</p><p>Effets : ${Object.entries(e.effect).filter(([,v])=>v!==0).map(([k,v])=>(v>0?'+':'')+v+' '+({energy:'énergie',food:'nourriture',money:'pièces',points:'points Aventure'}[k])).join(' · ')||'aucun'}.</p>${e.protect?`<p>Équipement utile : ${esc(m.rules.equipment[e.protect]?.name||e.protect)}${e.consume?' (consommé)':''}.</p>`:''}${e.category==='challenge'?`<p>Coût sans équipement : ${Object.entries(e.cost||{}).filter(([,v])=>v>0).map(([k,v])=>v+' '+k).join(' · ')||'gratuit'}. Aucun dé.</p>${btn('Relever le défi','resolve','',!S.canChallenge(m))}${btn('Refuser le défi','decline','light')}`:btn('Résoudre et passer au joueur suivant →','resolve')}`;}
- else if(m?.done&&screen==='game')content=`<div class="es-end"><span class="eyebrow">JOUR ${m.round} · ${m.stats.turns} TOURS · PARTIE TERMINÉE</span><h2>🏆 ${m.winner?esc(m.players.find(p=>p.id===m.winner)?.name||'')+' gagne':'Partie terminée'}</h2>${S.immersionOn(m)?(()=>{const lv=S.immLevel(m);return `<p class="end-medal medal-${lv.medal}"><span aria-hidden="true">🏅</span> Niveau <b>${lv.icon} ${esc(lv.name)}</b> · médaille ${esc(lv.medal)}</p>`;})():''}${m.winner?`<p class="win-line"><b>${esc(m.players.find(p=>p.id===m.winner)?.name||'')}</b> gagne : ${esc(m.winReason||'')}.</p>`:''}${(()=>{try{return endStatsHtml(m,S.ranking(m));}catch(err){console.error(err);return leaderboard();}})()}<div class="es-foot">${btn('Retour à l’accueil','home')}${btn('Journal complet','stats','light')}${btn('Exporter la partie','export','light')}</div></div>`;
+ else if(m?.done&&screen==='game')content=`<div class="es-end"><span class="eyebrow">JOUR ${m.round} · ${m.stats.turns} TOURS · PARTIE TERMINÉE</span><h2>🏆 ${m.winner?esc(m.players.find(p=>p.id===m.winner)?.name||'')+' gagne':'Partie terminée'}</h2>${S.ultraOn(m)?ultraEndHtml():S.immersionOn(m)?(()=>{const lv=S.immLevel(m);return `<p class="end-medal medal-${lv.medal}"><span aria-hidden="true">🏅</span> Niveau <b>${lv.icon} ${esc(lv.name)}</b> · médaille ${esc(lv.medal)}</p>`;})():''}${m.winner?`<p class="win-line"><b>${esc(m.players.find(p=>p.id===m.winner)?.name||'')}</b> gagne : ${esc(m.winReason||'')}.</p>`:''}${(()=>{try{return endStatsHtml(m,S.ranking(m));}catch(err){console.error(err);return leaderboard();}})()}<div class="es-foot">${btn('Retour à l’accueil','home')}${btn('Journal complet','stats','light')}${btn('Exporter la partie','export','light')}</div></div>`;
  if(content&&modal!=='rules'&&modal!=='map-editor'&&modal!=='confirm')content+=`<p>${btn('⚙️ Modifier les règles','rules','light')}</p>`;
  return content?`<div class="modal-back"><section class="modal ${wide?'wide':''} ${modal==='confirm'?'modal-confirm':''}" role="dialog" aria-modal="true">${content}</section></div>`:'';
 }
@@ -567,8 +567,8 @@ function ficheJournee(p){const r=m.rules,here=m.board[p.pos],atCity=here?.type==
  const eatGain=S.eatGain(m,p),dist=S.distance(m);
  const why=(...checks)=>checks.find(([bad])=>bad)?.[1]||'';
  const eatWhy=why([!p.food,'plus de nourriture'],[p.energy>=cap,'énergie pleine'],[m.ate>=r.food.maxPerTurn,'déjà mangé']);
- const foodWhy=why([r.food.cityOnly&&!atCity,'en ville seulement'],[Boolean(S.shopClosed(m,p.pos,'superette')),'supérette fermée aujourd’hui'],[p.money<r.food.price,'pas assez de pièces']);
- const restoWhy=why([!atCity,'en ville seulement'],[p.money<r.food.restaurantPrice,'pas assez de pièces'],[p.energy>=cap,'énergie pleine'],[m.ate>=r.food.maxPerTurn,'déjà mangé']);
+ const foodWhy=S.ultraOn(m)?S.ultraFoodInfo(m,p).why:why([r.food.cityOnly&&!atCity,'en ville seulement'],[Boolean(S.shopClosed(m,p.pos,'superette')),'supérette fermée aujourd’hui'],[p.money<r.food.price,'pas assez de pièces']);
+ const restoWhy=why([!atCity,'en ville seulement'],[S.ultraOn(m)&&!S.ultraOpenNow(m,'resto'),'fermé (11 h – 22 h)'],[p.money<r.food.restaurantPrice,'pas assez de pièces'],[p.energy>=cap,'énergie pleine'],[m.ate>=r.food.maxPerTurn,'déjà mangé']);
  const sleep=S.immersionOn(m)?immersionSleepTiles(p,blocked):origSleepRows(p,blocked,rode,atCity);const sleepOld=()=>Object.entries(r.rest).map(([id,a0])=>{const a=S.restRule(m,p,id)||a0,free=id==='bivouac'&&p.turnModifiers?.freeBivouac,no=why([a.blocked,'interdit ici (imprévu)'],[rode,'déjà roulé aujourd’hui'],[a.cityOnly&&!atCity,'en ville seulement'],[!free&&a.tent&&!p.items.includes('tente'),'tente nécessaire'],[!free&&p.money<a.price,'pas assez de pièces']);
   const sub=no||(free?'gratuit':(a.price?a.price+' pièce'+(a.price>1?'s':''):'gratuit')+(a.tent?' · tente':'')+(id!=='bivouac'&&r.fatigue.enabled?' · repose':''));
   return ficheTile(a.name,sub,'rest-'+id,blocked||Boolean(no),id!=='bivouac'&&tired&&!no?'conseil':'');}).join('')+(S.immersionOn(m)?demandTile(p,blocked,rode):'');
@@ -581,7 +581,7 @@ function ficheJournee(p){const r=m.rules,here=m.board[p.pos],atCity=here?.type==
  const explain=lost?`Les ${lost} case${lost>1?'s':''} en pointillés ${lost>1?'sont perdues':'est perdue'}${reasons.length?' à cause de '+reasons.join(' et de '):''}.`:'';
  const hint=off.enabled&&!off.gps&&!off.off?`Sans ${esc(off.item)}, quitter la route limite la journée à ${off.max} case${off.max>1?'s':''}.`:off.enabled&&off.gps&&off.off?`Hors route avec ${esc(off.item)} : aucune limite.`:'';
  return `${meteoHere(p)}<section class="fiche-route-card"><div class="fiche-route-head"><b>Route du jour</b><span>${place?'depuis '+esc(place):''}</span></div><div class="fiche-rings"><span aria-hidden="true">${rings}</span><b>${m.moved} / ${dist} case${dist>1?'s':''}</b></div>${explain||hint?`<p>${esc(explain)}${explain&&hint?' ':''}${hint}</p>`:''}</section>${note?`<p class="fiche-note">${esc(note)}</p>`:''}
- <p class="fiche-label">Se ravitailler</p><div class="fiche-tiles">${ficheTile(S.mealInfo(m,p).label,eatWhy||'+'+eatGain+' énergie · '+S.mealInfo(m,p).dish,'eat',blocked||Boolean(eatWhy))}${ficheTile('Provisions',foodWhy||r.food.quantity+' repas · '+r.food.price+' pièce'+(r.food.price>1?'s':''),'food',blocked||Boolean(foodWhy))}${ficheTile('Restaurant',restoWhy||'+'+r.food.restaurantEnergy+' énergie · '+r.food.restaurantPrice+' pièce'+(r.food.restaurantPrice>1?'s':''),'restaurant',blocked||Boolean(restoWhy))}${work}${betaWaterTile(p,blocked)}</div>
+ <p class="fiche-label">Se ravitailler</p><div class="fiche-tiles">${ficheTile(S.mealInfo(m,p).label,eatWhy||'+'+eatGain+' énergie · '+S.mealInfo(m,p).dish,'eat',blocked||Boolean(eatWhy))}${ficheTile(S.ultraOn(m)?S.ultraFoodInfo(m,p).name:'Provisions',foodWhy||(S.ultraOn(m)?(()=>{const i=S.ultraFoodInfo(m,p);return `+${i.qty} repas froid${i.qty>1?'s':''} · ${i.note}`;})():r.food.quantity+' repas · '+r.food.price+' pièce'+(r.food.price>1?'s':'')),'food',blocked||Boolean(foodWhy))}${ficheTile('Restaurant',restoWhy||'+'+r.food.restaurantEnergy+' énergie · '+r.food.restaurantPrice+' pièce'+(r.food.restaurantPrice>1?'s':''),'restaurant',blocked||Boolean(restoWhy))}${work}${betaWaterTile(p,blocked)}</div>
  <p class="fiche-label">Dormir · termine la journée</p><div class="fiche-tiles">${sleep}</div>${immersionPanel(p)}${ferries?`<p class="fiche-label">Traversée</p><div class="fiche-tiles">${ferries}</div>`:''}
 `;}
 function ficheSacoches(p){const r=m.rules,b=r.bikes[p.bike],used=S.inventorySpace(m),atCity=m.board[p.pos]?.type==='ville',blocked=m.done||!['move','place'].includes(m.phase),cap=S.bagCapacity(m,p),free=Math.max(0,cap-used),off=S.offroadStatus(m,p);
@@ -1411,3 +1411,62 @@ function betaWaterTile(p,blocked){const i=S.waterInfo?.(m,p);if(!i)return '';
  const sub=i.why||(i.safe?`💧 ${i.label} · eau sûre`:`⚠ ${i.label} sans filtre · 1 risque sur 4`);
  return ficheTile('Remplir les gourdes',sub,'water-fill',blocked||Boolean(i.why),'beta-fill');}
 {const priorAct=act;act=a=>{if(a!=='water-fill')return priorAct(a);const out=priorAct(a);if(!m||!S.refillWater(m))message='Impossible de remplir ici : pas d’eau, ou gourdes déjà pleines.';else if(m.waterSick?.turn===m.turn){message='🤢 '+m.waterSick.text;m.waterSick=null;}else message='💧 Gourdes remplies.';persist();render();return out;};}
+// ---------- Mode Ultra (17 octobre) : course Lisbonne → Cap Nord ----------
+function saveSetupRules(){try{localStorage.setItem('velo-setup-rules',JSON.stringify(setupRules));}catch{}}
+{const priorAct=act;act=a=>{
+ if(a==='mode-ultra'){const out=priorAct('mode-immersion');setupRules.immersion={...(setupRules.immersion||{}),enabled:true,beta:true,ultra:true};roster=roster.slice(0,1);saveSetupRules();render();return out;}
+ if(a==='mode-original'||a==='mode-immersion'||a==='mode-beta')setupRules.immersion={...(setupRules.immersion||{}),ultra:false};
+ // En ligne : l'Ultra se joue seul pour l'instant.
+ if(a==='net-create-open'&&setupRules.immersion?.ultra){setupRules.immersion={...setupRules.immersion,ultra:false};saveSetupRules();}
+ if(a==='start'&&setupRules.immersion?.ultra&&roster.length>1){readRoster();roster=roster.slice(0,1);}
+ if(/^count-\d$/.test(a)&&setupRules.immersion?.ultra&&a!=='count-1')return;
+ if(a==='ultra-abandon'){ultraConfirm=true;render();return;}
+ if(a==='ultra-abandon-no'){ultraConfirm=false;render();return;}
+ if(a==='ultra-abandon-yes'){ultraConfirm=false;const out=priorAct('ultra-noop');if(m&&S.ultraAbandon(m)){persist();}render();return out;}
+ const out=priorAct(a);
+ if(a==='equipment-next'&&screen==='voyages'&&setupRules.immersion?.enabled&&setupRules.immersion?.ultra){drawn=[ULTRA_VOYAGE];render();}
+ return out;};}
+var ultraConfirm=false;
+// L'écran « voyage » devient la ligne de départ de la course.
+{const priorChoices=choices;choices=function(){if(!drawn[0]?.ultra)return priorChoices();const p=roster[choosing];
+ return `<main class="menu-c mc-page mc-start">${menuSteps('goal')}<header class="mc-head"><div><p class="mc-kicker">${esc(p.name)} · ligne de départ</p><h1>Ultra · Lisbonne → Cap Nord</h1><p class="mc-lead">Lundi, 6 h du matin, sur le port de Lisbonne. Dix coureurs d’ultra autour de toi. L’horloge démarre au premier coup de pédale et ne s’arrêtera plus.</p></div></header>
+  <section class="mc-block ultra-start"><p class="mc-block-title">La course</p><ul class="ultra-list">
+   <li><b>Contrôle 1 · Zurich</b> avant la fin du jour 12</li><li><b>Contrôle 2 · Saint-Pétersbourg</b> avant la fin du jour 26</li><li><b>Arrivée · Cap Nord</b> avant la fin du jour 34</li><li><b>3 cols mythiques</b> au choix parmi les 8 de la carte, avant l’arrivée</li></ul>
+   <p class="mc-block-hint">Une case ≈ 100 km. Plaine 5 h, montagne 7 h, col 8 h, +1 h la nuit ou hors route. Dors quand tu veux : la dette de sommeil fait monter la fatigue.</p></section>
+  <footer class="mc-foot">${btn('← Retour','setup','mc-ghost')}<span></span><button class="mc-go" data-voyage="${ULTRA_VOYAGE.id}">Prendre le départ →</button></footer></main>`;};}
+// La fiche : horloge, dette de sommeil, prochain but, classement en direct.
+function ultraNums(p){const u=S.ultraState(m,p),R=S.ULTRA_RACE_INFO,bi=Math.min(u.cp,R.barriers.length-1),left=S.ultraBarrierH(bi)-u.h,rem=S.ultraRemaining(m,p),lead=S.ultraGhost(m,u.h)-rem;
+ return {u,R,bi,left,leftTxt:left>0?`${Math.floor(left/24)} j ${Math.round(left%24)} h`:'dépassée',rem,lead,target:R.checkpoints[u.cp]||R.to,c:S.clockText(u.h),d:S.ultraDebt(m,p)};}
+const ultraRankRow=(r,i)=>`<li class="${r.me?'me':''}${r.out?' out':''}"><span class="n">${i+1}</span><i style="background:${esc(r.color||'#f2a541')}"></i><b>${esc(r.me?'Toi':r.name)}</b><span class="km">${r.finishH!=null?'🏁 '+esc(S.clockText(r.finishH).text.toLowerCase()):r.out?'abandon':'reste '+Math.round(r.rem)*100+' km · '+esc(r.status)}</span></li>`;
+// Sur la fiche principale : une bande compacte (horloge, dette, prochain but, barrière, place).
+function ultraBlock(p){const n=ultraNums(p);if(!m.ultraView)S.ultraRefreshView(m,p);const st=S.ultraStandings(m,p),me=st.findIndex(r=>r.me)+1;
+ const dots=Array.from({length:5},(_,i)=>`<i class="${i<n.d.level?'on':''}"></i>`).join('');
+ return `<section class="ultra-fiche" aria-label="Course Ultra">
+  <div class="uf-top"><span class="uf-clock">⏱ ${esc(n.c.text)}</span><span class="uf-cols" title="Place au classement">${me}ᵉ / ${st.length}</span><span class="uf-cols" title="Cols mythiques franchis">⛰ ${Math.min(n.u.cols.length,n.R.cols)}/${n.R.cols}</span><span class="uf-cp" title="Contrôles tamponnés">🛂 ${n.u.cp}/${n.R.checkpoints.length}</span></div>
+  <div class="uf-debt" title="Heures depuis ton dernier vrai sommeil. Paliers : 16 h, 24 h, 32 h (hallucinations), 40 h (micro-sommeils), 48 h."><span>Dette de sommeil</span><b>${Math.floor(n.d.awake)} h</b><span class="uf-dots">${dots}</span><em>${esc(n.d.name)}</em></div>
+  ${n.u.result?'':`<div class="uf-goal"><span><b>${esc(n.target)}</b> · reste ${n.rem*100} km · barrière fin du jour ${n.R.barriers[n.bi]} : <b class="${n.left<36?'warn':''}">${n.leftTxt}</b></span><span class="uf-ghost ${n.lead<0?'warn':''}">${n.lead>=0?`👻 ${Math.round(n.lead*100)} km d’avance sur le fantôme de la barrière`:`👻 le fantôme de la barrière a ${Math.round(-n.lead*100)} km d’avance sur toi`}</span></div>`}
+ </section>`;}
+// L'onglet « Course » (à la place de « Voyage ») : classement complet, contrôles, cols, abandon.
+{const priorVoyage=ficheVoyage;ficheVoyage=function(p){if(!S.ultraOn(m))return priorVoyage(p);const n=ultraNums(p),st=S.ultraStandings(m,p);
+ const cps=n.R.checkpoints.map((name,i)=>{const s=n.u.stamps.find(x=>x.cp===i);return `<li class="${s?'ok':''}">${s?'✓':'○'} Contrôle ${i+1} · <b>${esc(name)}</b> · ${s?`tampon ${esc(S.clockText(s.h).text.toLowerCase())}, ${s.rank}ᵉ`:`avant la fin du jour ${n.R.barriers[i]}`}</li>`;}).join('')+`<li class="${n.u.result?.kind==='finish'?'ok':''}">${n.u.result?.kind==='finish'?'✓':'○'} Arrivée · <b>${esc(n.R.to)}</b> · avant la fin du jour ${n.R.barriers[2]}</li>`;
+ const cols=n.u.cols.map(k=>esc(m.board[k]?.colName||'Col')).join(', ');
+ return `<div class="ultra-tab"><h4 class="fiche-label">Classement en direct</h4><ol class="uf-rank">${st.map(ultraRankRow).join('')}</ol>
+  <h4 class="fiche-label">La course</h4><ul class="ultra-cps">${cps}<li class="${n.u.cols.length>=n.R.cols?'ok':''}">${n.u.cols.length>=n.R.cols?'✓':'○'} Cols mythiques : <b>${Math.min(n.u.cols.length,n.R.cols)} / ${n.R.cols}</b>${cols?` (${cols})`:''}</li></ul>
+  ${n.u.result?'':ultraConfirm?`<div class="uf-quit"><span>Abandonner la course ?</span>${btn('Oui, j’abandonne','ultra-abandon-yes','light')}${btn('Non, je continue','ultra-abandon-no','light')}</div>`:`<div class="uf-quit">${btn('🏳️ Abandonner la course','ultra-abandon','light uf-link')}</div>`}</div>`;};}
+{const priorSheet2=playerSheet;playerSheet=(inline=false)=>{const h=priorSheet2(inline);if(!m||!S.ultraOn(m))return h;const u=S.ultraState(m);
+ return h.replace(/(<span class="[^"]*">)\s*🚲\s*Voyage\s*(<\/span>)/,'$1⏱ Ultra$2').replace(/(<button type="button" role="tab" data-sheet-tab="voyage"[^>]*>[\s\S]*?<span>)Voyage(<\/span>)/,'$1Course$2').replace('Dormir · termine la journée','Dormir · termine l’étape').replace(/<span><b>\d+<\/b>pièces(<small[^>]*>[^<]*<\/small>)?<\/span>/,`<span><b>${u.cases*100}</b>km</span>`);};}
+{const priorGame=game;game=function(){if(!m||!S.ultraOn(m))return priorGame();if(!m.ultraView)S.ultraRefreshView(m);return priorGame().replaceAll('Finir ma journée','M’arrêter pour dormir');};}
+{const priorAct=act;act=a=>{if(m&&S.ultraOn(m)&&(a==='endturn'||a==='endturn-ask')&&screen==='game'&&!m.done){modal='night';render();return;}return priorAct(a);};}
+{const priorGauges=immGauges;immGauges=function(p,fi,cells,cap){const h=priorGauges(p,fi,cells,cap);if(!S.ultraOn(m))return h;const i=h.lastIndexOf('</section>');return h.slice(0,i+10)+ultraBlock(p)+h.slice(i+10);};}
+// Dormir : les 5 choix de l'Ultra (durée, énergie, dette après).
+{const priorSleep=immersionSleepTiles;immersionSleepTiles=function(p,blocked){if(!S.ultraOn(m))return priorSleep(p,blocked);const info=S.sleepOptions(m,p);
+ return '<div class="imm-nights ultra-nights">'+info.options.map(o=>{const off=blocked||Boolean(o.why),dur=o.hours<1?Math.round(o.hours*60)+' min':String(o.hours).replace('.',',')+' h';
+  return `<button class="imm-night ultra-night${off?' off':''}" data-action="rest-${o.id}" ${off?'disabled':''} title="${esc(o.text)}"><span class="ic" aria-hidden="true">${o.icon}</span><span class="n">${esc(o.name)} <span class="p">· ${dur}</span></span><span class="e">${o.energy==='plein'?'⚡ plein':'+'+o.energy+' ⚡'}</span><span class="imm-pill ${o.awakeAfter>=24?'r':'z'}">dette ${o.awakeAfter} h</span>${o.why?`<span class="sub">${esc(o.why)}</span>`:''}</button>`;}).join('')+'</div>'
+  +`<p class="night-note">Dormir termine ton étape : l’horloge avance pendant que les rivaux roulent.</p>`;};}
+{const priorNight=nightModal;nightModal=function(){const h=priorNight();if(!m||!S.ultraOn(m))return h;const c=S.clockText(S.ultraState(m).h);
+ return h.replace(/<span class="nc-art"[\s\S]*?<\/svg><\/span>/g,'').replace('imm-nights night-cards','imm-nights').replace(/LE SOIR · JOUR \d+/,`${esc(c.text.toUpperCase())}`).replace('Où dormir ce soir ?','Dormir maintenant ?').replace('Continuer la journée','Continuer à rouler').replace(/<p class="night-sub">[\s\S]*?<\/p>/,'<p class="night-sub">Plus tu dors, plus tu récupères… et plus les rivaux s’éloignent.</p>');};}
+function ultraEndHtml(){const p=m.players[0],u=S.ultraState(m,p),r=u?.result;if(!r)return '';const c=S.clockText(r.h),st=S.ultraStandings(m,p);
+ const head=r.kind==='finish'?`<p class="ultra-end ok">🏁 Cap Nord · <b>${r.rank}ᵉ sur ${st.length}</b> · arrivée ${esc(c.text.toLowerCase())} (${(r.h-6)/24>=1?Math.floor((r.h-6)/24)+' j ':''}${Math.round((r.h-6)%24)} h de course)</p>`
+  :r.kind==='abandon'?`<p class="ultra-end out">🏳️ Abandon ${esc(c.text.toLowerCase())}, après ${u.cases*100} km.</p>`:`<p class="ultra-end out">⏱️ Hors délai ${esc(c.text.toLowerCase())}, après ${u.cases*100} km.</p>`;
+ const stamps=u.stamps.map(s=>`<li>🛂 ${esc(S.ULTRA_RACE_INFO.checkpoints[s.cp])} : ${esc(S.clockText(s.h).text.toLowerCase())} · ${s.rank}ᵉ</li>`).join('');
+ return head+`<ul class="ultra-end-list">${stamps}<li>⛰ ${Math.min(u.cols.length,3)} cols mythiques · ${u.cases*100} km</li></ul><ol class="uf-rank ultra-end-rank">${st.map((x,i)=>`<li class="${x.me?'me':''}${x.out?' out':''}"><span class="n">${i+1}</span><i style="background:${esc(x.color||'#f2a541')}"></i><b>${esc(x.me?'Toi':x.name)}</b><span class="km">${x.finishH!=null?S.clockText(x.finishH).text.toLowerCase():x.out?'abandon':'reste '+Math.round(x.rem)*100+' km'}</span></li>`).join('')}</ol>`;}

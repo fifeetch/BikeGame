@@ -2,6 +2,7 @@ import * as E from './engine.js';
 import {europeBoard,MAP_VERSION,axialDistance} from './europe.js';
 import {voyages,progress,voyagePoints,findVoyage} from './voyages.js';
 import {DECOR} from './assets/europe/decor-data.js';
+import {ULTRA_RACE,ULTRA_HOURS,ULTRA_OFFROAD_HOURS,ULTRA_NIGHT_HOURS,ULTRA_TIRED_HOURS,ULTRA_NIGHT,ULTRA_STEP_MAX,ULTRA_SLEEP,ULTRA_DEBT,ULTRA_DEBT_NAMES,ULTRA_HALLU,ULTRA_MICRO,ULTRA_LATE_NIGHT,ULTRA_SHOP_HOURS,ULTRA_RESTO_HOURS,ULTRA_FOOD,ULTRA_FERRY_MAX,ULTRA_FERRY_HOURS,ULTRA_RIVALS,ULTRA_RIVAL_PACE,ULTRA_COL_PLANS} from './ultra.js';
 import {CLASSIC,COLORS,clone,validateRules,energyCap,isExhausted,fatigueMax,IMM_FATIGUE_MAX} from './rules.js';
 import {cardById,effectiveCards,normalizeCustomCards} from './cards.js';
 import * as C from './event-card-engine.js';
@@ -25,7 +26,7 @@ const offroadLimited=(m,p,off)=>offroadEnabled(m)&&off&&!hasOffroadItem(m,p);
 function offroadAllows(m,p,from,t,movedBefore,off){if(!offroadEnabled(m)||hasOffroadItem(m,p))return true;return !(off||!roadStep(m,from,t))||movedBefore+1<=offroadMax(m,p);}
 export function offroadStatus(m,p=player(m)){const on=offroadEnabled(m),gps=hasOffroadItem(m,p),off=offroadToday(m,p),max=offroadMax(m,p);
  return {enabled:on,gps,off,limited:on&&off&&!gps,max,item:m.rules.equipment[m.rules.offroad?.item]?.name||'GPS',moved:m.moved,onRoad:on?hasRoad(m.board[p.pos]):true};}
-const baseDistance=m=>{const p=player(m),base=Math.min(5,m.rules.distance+m.rules.bikes[p.bike].extraDistance+(p.turnModifiers?.bonusDistance||0));return Math.max(0,base-(p.turnModifiers?.distancePenalty||0)-immLessDistance(m,p)+(C.isEventGame(m)&&p.frostTurn!==m.turn?(p.freeSteps||0)+(p.bonusDistanceUsed||0):0));};
+const baseDistance=m=>{if(ultraOn(m))return ULTRA_STEP_MAX;const p=player(m),base=Math.min(5,m.rules.distance+m.rules.bikes[p.bike].extraDistance+(p.turnModifiers?.bonusDistance||0));return Math.max(0,base-(p.turnModifiers?.distancePenalty||0)-immLessDistance(m,p)+(C.isEventGame(m)&&p.frostTurn!==m.turn?(p.freeSteps||0)+(p.bonusDistanceUsed||0):0));};
 // ---------- Météo annoncée ----------
 export const forecastOn=m=>Boolean(m.forecast&&m.mode==='plateau');
 export const regionAt=(m,key)=>regionOf(m.board[key]);
@@ -89,11 +90,13 @@ export function createMatch(roster,mode='plateau',rules=CLASSIC,seed=randomSeed(
  if(!Array.isArray(roster)||roster.length<1||roster.length>6)throw Error('Choisir de 1 à 6 joueurs.');
  if(!['plateau','tuiles'].includes(mode))throw Error('Mode inconnu.');
  const r=validateRules(rules);if(r.immersion?.enabled&&mode==='plateau'){r.weather={...r.weather,forecast:true};r.encounters={...r.encounters,enabled:true};
+  // Mode Ultra : Bêta compris (eau, calendrier), pas de fin aux points, pas d'argent à gérer (repas, restaurant et hôtel gratuits).
+  if(r.immersion.ultra){r.immersion={...r.immersion,beta:true,level:'voyage'};r.victory={...r.victory,mode:'multi',points:0,voyages:0,days:40};r.food={...r.food,price:0,restaurantPrice:0};r.rest={...r.rest,hotel:{...r.rest.hotel,price:0}};}
   // Niveau de difficulté (solo) : énergie de départ, jours, repas achetés pour 1 pièce.
   const lv=LEVELS[r.immersion.level]||LEVELS.voyage;r.startEnergy=Math.min(r.maxEnergy,lv.start);if(r.victory?.mode==='multi'&&r.victory.days)r.victory={...r.victory,days:lv.days};if(lv.foodQty)r.food={...r.food,quantity:lv.foodQty};}for(const p of roster)if(!r.bikes[p.bike]||!findVoyage(p.voyage))throw Error('Vélo ou objectif inconnu.');
  const base=E.makeGame(roster[0].bike,seed,roster[0].voyage,mode);
  const m={version:2,cardVersion:3,forecast:Boolean(r.weather?.forecast&&mode==='plateau'),encounters:Boolean(r.encounters?.enabled&&mode==='plateau'),customCards:normalizeCustomCards(customCards),eventCardEdits:normalizeEventEdits(eventCardEdits),mode,seed:base.seed,board:base.board,edges:base.edges||[],mapVersion:base.mapVersion,deck:base.deck,hand:base.hand,rules:r,players:[],activeIndex:0,round:1,turn:1,phase:mode==='plateau'?'move':'place',moved:0,ate:0,placed:false,event:null,cardChoices:[],turnKind:'travel',done:false,history:[],stats:{turns:0,events:0,categories:{negative:0,positive:0,challenge:0},terrain:{},work:0,rest:0,energySpent:0,moneySpent:0}};
- if(r.immersion?.enabled&&mode==='plateau'){m.immersion=true;m.beta=Boolean(r.immersion.beta);m.imm={rng:((base.seed^0x51ed27)>>>0)||1,situations:[],seq:0,level:LEVELS[r.immersion.level]?r.immersion.level:'voyage'};}
+ if(r.immersion?.enabled&&mode==='plateau'){m.immersion=true;m.beta=Boolean(r.immersion.beta);if(r.immersion.ultra)m.ultra={race:ULTRA_RACE.id,ferries:0};m.imm={rng:((base.seed^0x51ed27)>>>0)||1,situations:[],seq:0,level:LEVELS[r.immersion.level]?r.immersion.level:'voyage'};}
  roster.forEach((entry,i)=>{
   const v=findVoyage(entry.voyage);let pos;
   if(mode==='plateau')pos='city-'+v.from;
@@ -138,7 +141,7 @@ function adventureStep(m,p,k,t,first){const a=m.rules.adventure;
 function record(m,kind,text,extra={}){const p=player(m);m.history.push(C.stampPoints(m,{turn:m.turn,round:m.round,player:p.id,name:p.name,kind,text,...extra}));p.log.unshift(text);p.log=p.log.slice(0,8);}
 export function updateRules(m,input){const r=validateRules(input);if(C.isEventGame(m)&&m.players.some(p=>p.bonusCards.length>r.eventCards.bonusLimit||p.cardHand.length>r.eventCards.handLimit+1))throw Error('La nouvelle limite est inférieure aux cartes déjà détenues. Choisis une limite suffisante ou applique ce profil à une nouvelle partie.');m.rules=r;record(m,'rules','Règles modifiées : application aux prochaines actions.');return true;}
 export function cost(m,t){if(C.isEventGame(m))return eventStepCost(m,t);const p=player(m),discount=['moyenne_montagne','montagne','col'].includes(t.type)?m.rules.bikes[p.bike].mountainDiscount:0;return Math.max(0,(m.rules.terrain[t.type]??0)-discount);}
-export function ferryOptions(m,from=player(m).pos){return m.mode==='plateau'&&!m.pendingAttack&&!m.done&&m.phase==='move'?m.edges.filter(e=>e.ferry&&(e.a===from||e.b===from)).map(e=>m.board[e.a===from?e.b:e.a]):[];}
+export function ferryOptions(m,from=player(m).pos){if(ultraOn(m)&&(m.ultra.ferries||0)>=ULTRA_FERRY_MAX)return [];return m.mode==='plateau'&&!m.pendingAttack&&!m.done&&m.phase==='move'?m.edges.filter(e=>e.ferry&&(e.a===from||e.b===from)).map(e=>m.board[e.a===from?e.b:e.a]):[];}
 export function moves(m){if(m.pendingAttack||m.done||m.phase!=='move'||m.moved>=distance(m)||C.isEventGame(m)&&player(m).turnModifiers?.skipMove)return [];const out=E.moves(view(m));if(m.mode!=='plateau')return out;const p=player(m),off=offroadToday(m,p);return out.filter(t=>!m.edges.some(e=>e.ferry&&((e.a===p.pos&&e.b===t.key)||(e.b===p.pos&&e.a===t.key)))&&offroadAllows(m,p,p.pos,t,m.moved,off)&&!snowBlocked(m,p,t)&&!immBlocked(m,t));}
 export function routeCheck(m,route){if(C.isEventGame(m))return eventRouteCheck(m,route);if(!Array.isArray(route)||!route.length||m.done||m.phase!=='move'||route.length>distance(m)-m.moved)return {ok:false,reason:'Limite de 5 cases ou journée indisponible.'};let pos=player(m).pos,energy=player(m).energy;const p=player(m),normalDistance=Math.max(0,Math.min(5,m.rules.distance+m.rules.bikes[p.bike].extraDistance)-(p.turnModifiers?.distancePenalty||0)-m.moved);let off=offroadToday(m,p);for(let i=0;i<route.length;i++){const key=route[i],t=m.board[key];if(!t||key===pos)return {ok:false,reason:'Les cases doivent se suivre.'};const near=m.mode==='plateau'?m.board[pos].links.includes(key)&&!m.edges.some(e=>e.ferry&&((e.a===pos&&e.b===key)||(e.b===pos&&e.a===key))):E.moves({...view(m),pos}).some(n=>E.key(n.x,n.y)===key);if(!near)return {ok:false,reason:'Choisis des cases voisines ; les bateaux se prennent séparément.'};if(!offroadAllows(m,p,pos,t,m.moved+i,off))return {ok:false,reason:offroadReason(m,p)};off=off||!roadStep(m,pos,t);energy-=cost(m,t)+(i>=normalDistance?(p.turnModifiers?.extraMoveEnergy||0):0)+weatherExtra(m,p,pos,t,m.moved+i)+betaThirst(m,p,m.moved+i);if(energy<0)return {ok:false,reason:'Énergie insuffisante pour ce parcours.'};pos=key;}return {ok:true,energyUsed:p.energy-energy};}
 function offroadReason(m,p){const s=offroadStatus(m,p);return `Hors route sans ${s.item} : ${s.max} case${s.max>1?'s':''} maximum aujourd’hui.`;}
@@ -206,7 +209,7 @@ export function move(m,k){const p=player(m),t=m.board[k];if(C.isEventGame(m)&&m.
  const spent=(eventGame?eventStepCost(m,t,step,free):cost(m,t)+extra)+weatherExtra(m,p,p.pos,t,m.moved)+betaThirst(m,p,m.moved);
  if(p.energy<spent)return false;
   const usedFree=eventGame&&!!free,usedLight=eventGame&&C.hasBonusEffect(m,p,'light_bike')&&p.lightTurn!==m.turn&&!usedFree&&!p.shortcutActive&&terrainSurcharge(m,p,t);
- p.energy-=spent;m.stats.energySpent+=spent;p.stats.energySpent+=spent;if(m.moved===0)p.dayStart={turn:m.turn,pos:p.pos};if(m.mode==='plateau'&&!onRoad){p.offroadTurn=m.turn;p.stats.offroad=(p.stats.offroad||0)+1;}p.pos=k;if(t.type==='ville')p.lastCity=k;p.steps++;p.stats.steps++;m.moved++;m.stats.terrain[t.type]=(m.stats.terrain[t.type]||0)+1;betaStep(m,p,k,t);
+ p.energy-=spent;m.stats.energySpent+=spent;p.stats.energySpent+=spent;if(m.moved===0)p.dayStart={turn:m.turn,pos:p.pos};if(m.mode==='plateau'&&!onRoad){p.offroadTurn=m.turn;p.stats.offroad=(p.stats.offroad||0)+1;}p.pos=k;if(t.type==='ville')p.lastCity=k;p.steps++;p.stats.steps++;m.moved++;m.stats.terrain[t.type]=(m.stats.terrain[t.type]||0)+1;betaStep(m,p,k,t);ultraStep(m,p,k,t,onRoad);
  if(usedFree){p.freeSteps--;if(free==='road')p.freeRoadSteps--;else if(free==='tailwind')p.freeTailwindSteps--;else p.freeGeneralSteps--;p.bonusDistanceUsed=(p.bonusDistanceUsed||0)+1;}if(usedLight)p.lightTurn=m.turn;
  for(const weather of routeWeather(m))if(['mountain_snow','heavy_rain','coastal_storm'].includes(weather.kind)){
   if(weather.kind==='mountain_snow'&&['moyenne_montagne','montagne'].includes(t.type)||weather.kind==='heavy_rain'&&!hasRoad(t)||weather.kind==='coastal_storm'&&t.type==='cote')weather.used=true;
@@ -225,7 +228,7 @@ export function move(m,k){const p=player(m),t=m.board[k];if(C.isEventGame(m)&&m.
 // Repas (règle de Fi, 17 octobre) : sans réchaud, repas froid +2 partout ; avec réchaud, repas chaud +3. Un repas des sacoches dans les deux cas.
 const COLD_MEALS={ouest:'un sandwich',alpes:'du pain et du fromage',nord:'du pain de seigle et du poisson fumé',est:'des pirojkis',balkans:'un burek'};
 const HOT_MEALS={ouest:'des pâtes au réchaud',alpes:'une polenta au réchaud',nord:'une soupe au réchaud',est:'une soupe de légumes au réchaud',balkans:'un ragoût au réchaud'};
-const hasStove=(m,p)=>(p.items.includes('rechaud')||Boolean(C.isEventGame(m)&&C.hasBonusEffect(m,p,'efficient_stove')))&&!(betaOn(m)&&water(m,p)<1);// Bêta : le réchaud ne boit pas, mais il faut au moins 1 gourde
+const hasStove=(m,p)=>(p.items.includes('rechaud')||Boolean(C.isEventGame(m)&&C.hasBonusEffect(m,p,'efficient_stove')))&&!(betaOn(m)&&water(m,p)<1)&&!ultraOn(m);// Bêta : le réchaud ne boit pas, mais il faut au moins 1 gourde
 export function mealInfo(m,p=player(m)){const hot=hasStove(m,p),region=regionOf(m.board[p.pos]);return {hot,label:hot?'Repas chaud':'Repas froid',dish:(hot?HOT_MEALS:COLD_MEALS)[region]||(hot?'un repas chaud':'un repas froid')};}
 export function eatGain(m,p=player(m)){const f=m.rules.food,hot=hasStove(m,p);const base=hot?(f.hotEnergy??3)+(p.items.includes('rechaud')&&C.isEventGame(m)&&C.hasBonusEffect(m,p,'efficient_stove')?1:0):(f.coldEnergy??2);const g=Math.max(0,base-immMealPenalty(m,p));return immOn(m)&&immLevel(m).mealHalf?Math.max(1,Math.floor(g/2)):g;}
 export function eat(m){const p=player(m);if(m.pendingAttack||m.done||!['move','place'].includes(m.phase)||m.ate>=m.rules.food.maxPerTurn||p.food<1||p.energy>=energyCap(m,p))return false;p.food--;m.ate++;const base=C.isEventGame(m)?C.hasBonusEffect(m,p,'efficient_stove')?3:m.rules.cardBalance.foodEnergy:m.rules.food.energy;p.energy=Math.min(energyCap(m,p),p.energy+eatGain(m,p));{const meal=mealInfo(m,p);record(m,'food',`${meal.label} : ${meal.dish} (+${eatGain(m,p)} énergie).`);}return true;}
@@ -237,12 +240,12 @@ export function takeLoan(m){const p=player(m);if(!canTakeLoan(m,p))return false;
 export function canRepayLoan(m,p=player(m)){return Boolean(p.loan&&!m.done&&!m.pendingAttack&&['move','place'].includes(m.phase)&&m.board[p.pos]?.type==='ville'&&p.money>=p.loan.amount);}
 export function repayLoan(m){const p=player(m);if(!canRepayLoan(m,p))return false;const n=p.loan.amount;p.money-=n;p.loan=null;record(m,'loan',`${p.name} rembourse son prêt : −${n} pièces.`);return true;}
 export function settleLoans(m){const {penalty}=loanRule(m);for(const p of m.players)if(p.loan&&!p.loanSettled){p.points=Math.max(0,p.points-penalty);p.loanSettled=true;record(m,'loan',`${p.name} n’a pas remboursé son prêt : −${penalty} points d’aventure.`);}}
-export function buyFood(m){const p=player(m),r=m.rules.food;if(shopClosed(m,p.pos,'superette')||m.pendingAttack||m.done||!['move','place'].includes(m.phase)||(r.cityOnly&&m.board[p.pos].type!=='ville')||p.money<r.price||p.food>=C.foodCapacity(m,p))return false;p.money-=r.price;p.food+=Math.min(r.quantity,C.foodCapacity(m,p)-p.food);m.stats.moneySpent+=r.price;record(m,'buy','Achat de provisions.');return true;}
-export function restaurant(m){const p=player(m),r=m.rules.food;if(m.pendingAttack||m.done||!['move','place'].includes(m.phase)||m.board[p.pos].type!=='ville'||p.money<r.restaurantPrice||p.energy>=energyCap(m,p)||m.ate>=r.maxPerTurn)return false;p.money-=r.restaurantPrice;m.stats.moneySpent+=r.restaurantPrice;m.ate++;p.energy=Math.min(energyCap(m,p),p.energy+r.restaurantEnergy);record(m,'food','Repas au restaurant.');return true;}
+export function buyFood(m){if(ultraOn(m))return ultraBuyFood(m);const p=player(m),r=m.rules.food;if(shopClosed(m,p.pos,'superette')||m.pendingAttack||m.done||!['move','place'].includes(m.phase)||(r.cityOnly&&m.board[p.pos].type!=='ville')||p.money<r.price||p.food>=C.foodCapacity(m,p))return false;p.money-=r.price;p.food+=Math.min(r.quantity,C.foodCapacity(m,p)-p.food);m.stats.moneySpent+=r.price;record(m,'buy','Achat de provisions.');return true;}
+export function restaurant(m){const p=player(m),r=m.rules.food;if(ultraOn(m)&&!ultraOpen(m,ULTRA_RESTO_HOURS))return false;if(m.pendingAttack||m.done||!['move','place'].includes(m.phase)||m.board[p.pos].type!=='ville'||p.money<r.restaurantPrice||p.energy>=energyCap(m,p)||m.ate>=r.maxPerTurn)return false;p.money-=r.restaurantPrice;m.stats.moneySpent+=r.restaurantPrice;m.ate++;p.energy=Math.min(energyCap(m,p),p.energy+r.restaurantEnergy);record(m,'food','Repas au restaurant.');return true;}
 export function buy(m,id){const p=player(m),e=m.rules.equipment[id];if(!e||e.betaOnly&&!betaOn(m)||shopClosed(m,p.pos,'velo')||m.pendingAttack||m.done||!['move','place'].includes(m.phase)||m.board[p.pos].type!=='ville'||p.items.includes(id)||p.money<e.price||inventorySpace(m)+e.space>capacityFor(m.rules,p.bike,[...p.items,id]))return false;p.money-=e.price;p.items.push(id);p.food+=e.foodBonus||0;m.stats.moneySpent+=e.price;record(m,'buy','Équipement acheté : '+e.name);return true;}
 export function discard(m,id){const p=player(m);if(m.pendingAttack||m.done||!['move','place'].includes(m.phase)||!p.items.includes(id))return false;{const rest=p.items.filter(i=>i!==id);if(rest.reduce((n,k)=>n+(m.rules.equipment[k]?.space||0),0)>capacityFor(m.rules,p.bike,rest))return false;}p.items=p.items.filter(i=>i!==id);record(m,'equipment','Équipement déposé : '+m.rules.equipment[id].name);return true;}
 export function work(m){const p=player(m);if(!m.rules.workEnabled||m.pendingAttack||m.done||!['move','place'].includes(m.phase)||m.moved||m.placed||(m.rules.workCityOnly&&m.board[p.pos].type!=='ville'))return false;p.money+=m.rules.salary;p.stats.work++;m.stats.work++;m.turnKind='work';m.actionDays=m.rules.workDays;record(m,'work','Travail : +'+m.rules.salary+' pièces, '+m.actionDays+' jour(s) sans déplacement.');endTurn(m);return true;}
-export function rest(m,id){if(immersionOn(m)){const p0=player(m),ok=sleepNight(m,id);if(ok)betaNight(m,p0,id);return ok;}if(origNightsOn(m))return origSleep(m,id);const p=player(m),r=restRule(m,p,id),free=id==='bivouac'&&p.turnModifiers?.freeBivouac;if(!r||r.blocked||m.pendingAttack||m.done||!['move','place'].includes(m.phase)||m.moved||m.placed||(!free&&(p.money<r.price||(r.tent&&!p.items.includes('tente'))))||(r.cityOnly&&m.board[p.pos].type!=='ville'))return false;if(!free){p.money-=r.price;m.stats.moneySpent+=r.price;const bonus=p.items.reduce((n,i)=>n+(m.rules.equipment[i]?.energyBonus||0),0);const restEnergy=C.isEventGame(m)&&id==='bivouac'?C.hasBonusEffect(m,p,'comfortable_tent')?2:m.rules.cardBalance.bivouacEnergy:r.energy;p.energy=Math.min(energyCap(m,p),p.energy+restEnergy+bonus);}if(id!=='bivouac')p.fatigue=0;(p.nights||=[]).push({key:p.pos,kind:id,day:m.round});p.stats.rest++;m.stats.rest++;m.turnKind='rest';m.actionDays=r.days;record(m,'rest',(free?'Bivouac gratuit grâce à Abri trouvé':r.name)+' : '+r.days+' jour(s) sans déplacement.');endTurn(m);return true;}
+export function rest(m,id){if(ultraOn(m))return ultraSleep(m,id);if(immersionOn(m)){const p0=player(m),ok=sleepNight(m,id);if(ok)betaNight(m,p0,id);return ok;}if(origNightsOn(m))return origSleep(m,id);const p=player(m),r=restRule(m,p,id),free=id==='bivouac'&&p.turnModifiers?.freeBivouac;if(!r||r.blocked||m.pendingAttack||m.done||!['move','place'].includes(m.phase)||m.moved||m.placed||(!free&&(p.money<r.price||(r.tent&&!p.items.includes('tente'))))||(r.cityOnly&&m.board[p.pos].type!=='ville'))return false;if(!free){p.money-=r.price;m.stats.moneySpent+=r.price;const bonus=p.items.reduce((n,i)=>n+(m.rules.equipment[i]?.energyBonus||0),0);const restEnergy=C.isEventGame(m)&&id==='bivouac'?C.hasBonusEffect(m,p,'comfortable_tent')?2:m.rules.cardBalance.bivouacEnergy:r.energy;p.energy=Math.min(energyCap(m,p),p.energy+restEnergy+bonus);}if(id!=='bivouac')p.fatigue=0;(p.nights||=[]).push({key:p.pos,kind:id,day:m.round});p.stats.rest++;m.stats.rest++;m.turnKind='rest';m.actionDays=r.days;record(m,'rest',(free?'Bivouac gratuit grâce à Abri trouvé':r.name)+' : '+r.days+' jour(s) sans déplacement.');endTurn(m);return true;}
 function random(m){return E.random(m);}
 function weighted(m,list){let n=random(m)*list.reduce((s,e)=>s+e.weight,0);return list.find(e=>(n-=e.weight)<0)||list.at(-1);}
 export function drawEvent(m){let n=random(m)*100,category='challenge';for(const [k,value]of Object.entries(m.rules.probabilities)){n-=value;if(n<0){category=k;break;}}
@@ -253,7 +256,7 @@ export function drawEvent(m){let n=random(m)*100,category='challenge';for(const 
 export function drawCard(m){if(C.isEventGame(m))return C.draw(m);const pool=effectiveCards(m).filter(c=>c.weight>0&&(!c.legacy)&&(m.players.length>1||c.target==='self'));let n=E.random(m)*pool.reduce((sum,c)=>sum+c.weight,0);return (pool.find(c=>(n-=c.weight)<0)||pool.at(-1)).id;}
 export function endTurn(m){if(m.pendingAttack||m.done||!['move','place'].includes(m.phase))return false;
  const rider=player(m),fatigue=m.rules.fatigue;
- if(immersionOn(m))immersionRideFatigue(m,rider);
+ if(immersionOn(m)&&!ultraOn(m))immersionRideFatigue(m,rider);
  else if(fatigue?.enabled&&m.moved>0&&m.turnKind!=='rest'){const before=rider.fatigue||0;rider.fatigue=Math.min(fatigue.days,before+rideGain(m,rider,1+(rider.dayCols?fatigue.colExtra:0)));rider.energy=Math.min(rider.energy,energyCap(m,rider));
   if(rider.fatigue>before)record(m,'fatigue',isExhausted(m,rider)?`${rider.name} est fourbu : énergie maximale ${energyCap(m,rider)} jusqu’à une vraie nuit (camping ou hôtel).`:`${rider.name} : fatigue ${rider.fatigue}/${fatigue.days}, énergie maximale ${energyCap(m,rider)}.`);}
  if(!immersionOn(m))applyOrigNight(m,rider);
@@ -283,7 +286,7 @@ export function repairPuncture(m,choice=''){const p=player(m);if(m.phase!=='punc
  // Crevaison (règle de Fi, 16 octobre) : chambre à air (à usage unique) ou kit de réparation (réutilisable).
  if(kind==='puncture'&&p.items.includes('chambre')&&(choice==='chambre'||!choice&&!p.items.includes('kit'))){p.items.splice(p.items.indexOf('chambre'),1);p.flat=false;p.flatKind=null;record(m,'repair','Crevaison : chambre à air changée (elle est utilisée), la journée peut continuer.');m.phase=m.mode==='tuiles'&&m.hand.length?'place':'move';return true;}
  const b=breakdownOf(p),what=b.item==='secours'?'trousse de secours':'kit de réparation';p.flatKind=null;if(p.items.includes(b.item)){p.flat=false;record(m,'repair',`${b.title} : ${b.item==='secours'?'soigné':'réparé'} avec ${b.item==='secours'?'la':'le'} ${what}, la journée peut continuer.`);m.phase=m.mode==='tuiles'&&m.hand.length?'place':'move';return true;}p.flat=false;p.pos=p.lastCity&&m.board[p.lastCity]?p.lastCity:p.pos;record(m,'repair',`${b.title} sans ${what} : retour à la dernière ville et journée perdue.`);m.phase='move';m.turnKind='repair';endTurn(m);return true;}
-export function travelFerry(m,destination){const p=player(m),t=ferryOptions(m).find(t=>t.key===destination),fare=m.rules.ferryPrice;if(!t||p.money<fare)return false;p.money-=fare;m.stats.moneySpent+=fare;p.pos=t.key;if(t.type==='ville')p.lastCity=t.key;p.travel.push(t.key);const v=findVoyage(p.voyage);p.travelHistory.push({key:t.key,boardKey:t.key,type:t.type,endpoint:t.name===v.from||t.name===v.to,day:m.round});if(!p.visited.includes(t.key)){p.visited.push(t.key);p.points+=m.rules.points[t.type];}if(!p.completed&&t.name===v.to&&progress(view(m)).ready)completeVoyage(m,p,v);m.turnKind='ferry';record(m,'ferry','Bateau vers '+(t.name||t.key)+' : −'+fare+' pièces, journée terminée.');endTurn(m);return true;}
+export function travelFerry(m,destination){const p=player(m),t=ferryOptions(m).find(t=>t.key===destination),fare=ultraOn(m)?0:m.rules.ferryPrice;if(!t||p.money<fare)return false;if(ultraOn(m)){if((m.ultra.ferries||0)>=ULTRA_FERRY_MAX)return false;m.ultra.ferries=(m.ultra.ferries||0)+1;ultraAddHours(m,p,ULTRA_FERRY_HOURS,false);record(m,'ultra',`⛴ Le seul bateau autorisé de la course : ${ULTRA_FERRY_HOURS} h de traversée.`);}p.money-=fare;m.stats.moneySpent+=fare;p.pos=t.key;if(t.type==='ville')p.lastCity=t.key;p.travel.push(t.key);const v=findVoyage(p.voyage);p.travelHistory.push({key:t.key,boardKey:t.key,type:t.type,endpoint:t.name===v.from||t.name===v.to,day:m.round});if(!p.visited.includes(t.key)){p.visited.push(t.key);p.points+=m.rules.points[t.type];}if(!p.completed&&t.name===v.to&&progress(view(m)).ready)completeVoyage(m,p,v);m.turnKind='ferry';record(m,'ferry','Bateau vers '+(t.name||t.key)+' : −'+fare+' pièces, journée terminée.');endTurn(m);return true;}
 export function canChallenge(m){const p=player(m),e=m.event;if(!e||e.category!=='challenge')return false;if(e.protect&&p.items.includes(e.protect))return true;return Object.entries(e.cost||{}).every(([k,v])=>p[k]>=v);}
 export function resolve(m,choice='accept'){
  const p=player(m),e=m.event;if(m.phase!=='event'||!e)return false;
@@ -328,6 +331,7 @@ function advance(m){player(m).turns++;m.stats.turns++;const r=m.rules.victory,bu
  const nextDay=Math.min(...m.players.map(p=>p.availableDay));let next=m.activeIndex;
  for(let offset=1;offset<=m.players.length;offset++){const i=(m.activeIndex+offset)%m.players.length;if(m.players[i].availableDay===nextDay){next=i;break;}}
  m.activeIndex=next;m.round=nextDay;m.turn++;m.moved=0;m.ate=0;m.placed=false;m.turnKind='travel';m.actionDays=1;
+ if(ultraOn(m)){const up=player(m);m.round=ultraDayOf(pu(up).h);up.availableDay=m.round;}// Mode Ultra : le jour suit l'horloge
  if(checkMultiVictory(m))return;
  if(r.mode==='turns'&&m.round>r.turns){settleLoans(m);m.done=true;m.phase='finished';record(m,'finish','Nombre de manches atteint.');return;}
  const nextPlayer=player(m);nextPlayer.turnModifiers={};
@@ -347,7 +351,7 @@ function advance(m){player(m).turns++;m.stats.turns++;const r=m.rules.victory,bu
  if(C.isEventGame(m))C.nextIncoming?.(m);
 }
 // Filet de sécurité (bug signalé par Fi) : déjà sur la ville d'arrivée avec tous les objectifs remplis, le voyage se termine sans devoir ressortir de la ville.
-export function arrivalCheck(m,p=player(m)){const v=findVoyage(p.voyage);if(!v||p.completed||m.done||m.pendingAttack||!['move','place'].includes(m.phase)||m.board[p.pos]?.name!==v.to||!progress(view(m,p)).ready)return false;
+export function arrivalCheck(m,p=player(m)){if(ultraOn(m))return false;const v=findVoyage(p.voyage);if(!v||p.completed||m.done||m.pendingAttack||!['move','place'].includes(m.phase)||m.board[p.pos]?.name!==v.to||!progress(view(m,p)).ready)return false;
  completeVoyage(m,p,v);if(p.voyageChoices?.length)m.phase='voyage-choice';return true;}
 export const ranking=m=>[...m.players].sort((a,b)=>(m.winner?Number(b.id===m.winner)-Number(a.id===m.winner):0)||b.points-a.points||(b.voyagesDone?.length||0)-(a.voyagesDone?.length||0)||Number(b.completed)-Number(a.completed));
 export function serialize(m){return JSON.stringify(m);}
@@ -438,7 +442,7 @@ function applyNightRest(m,p,r,factor,restDay=false,city=false){const f=m.rules.f
  if(r.energy)p.energy=Math.min(energyCap(m,p),p.energy+r.energy*factor);
  if(r.food)p.food=Math.min(C.foodCapacity(m,p),p.food+r.food);if(r.points)p.points+=r.points;}
 const NIGHT_TITLES={bivouac:'Nuit tranquille sous la tente',camping:'Nuit tranquille au camping',hotel:'Une vraie nuit',dehors:'À la belle étoile'};
-function immersionEvening(m){const p=player(m),im=pim(p),ctx=immContext(m,p,p.pos),n=im.night?.turn===m.turn?im.night:{id:'dehors',rest:!m.moved,turn:m.turn};im.night=null;
+function immersionEvening(m){if(ultraOn(m))return ultraEvening(m);const p=player(m),im=pim(p),ctx=immContext(m,p,p.pos),n=im.night?.turn===m.turn?im.night:{id:'dehors',rest:!m.moved,turn:m.turn};im.night=null;
  (p.nights||=[]).push({key:p.pos,kind:n.demand?(n.demand.result==='refusDehors'?'dehors':n.demand.result==='refusCamping'?'camping':'demander'):n.id,day:m.round});if(p.nights.length>80)p.nights.splice(0,p.nights.length-80);
  const factor=n.rest?REST_DAY_FACTOR:1,r=n.demand?DEMAND_NIGHT[n.demand.result]:NIGHT[n.id],before=p.energy,fBefore=p.fatigue||0;applyNightRest(m,p,r,factor,n.rest,ctx.city);
  for(const s of sitsAt(m,p.pos)){const e=situationTemplate(s.id)?.effects||{};if(e.eveningEnergy)p.energy=Math.min(energyCap(m,p),p.energy+e.eveningEnergy);}
@@ -483,7 +487,7 @@ export function spawnSituation(m,p=player(m),forceId=''){const here=m.board[p.po
 // « Où dormir ce soir ? » (mode Immersion) : dormir termine toujours la journée.
 export function demandInfo(m,p=player(m)){const t=m.board[p.pos],im=pim(p),o=demandOdds({city:t.type==='ville',exhausted:isExhausted(m,p),region:regionOf(t),streak:im.demandStreak||0}),d=immLevel(m).refus||0;if(!d)return o;
  const refus=Math.max(5,Math.min(85,o.refus+d)),grand=Math.min(o.grand,100-refus),jardin=Math.max(0,100-grand-refus);return {...o,grand,jardin,refus};}
-export function sleepOptions(m,p=player(m)){const here=m.board[p.pos],city=here?.type==='ville',restDay=!m.moved,factor=restDay?REST_DAY_FACTOR:1,stormy=['orage','pluie'].includes(immContext(m,p,p.pos).weather),out=[];
+export function sleepOptions(m,p=player(m)){if(ultraOn(m))return ultraSleepOptions(m,p);const here=m.board[p.pos],city=here?.type==='ville',restDay=!m.moved,factor=restDay?REST_DAY_FACTOR:1,stormy=['orage','pluie'].includes(immContext(m,p,p.pos).weather),out=[];
  for(const id of ['bivouac','camping','hotel']){const r=restRule(m,p,id),nt=NIGHT[id],free=id==='bivouac'&&p.turnModifiers?.freeBivouac,price=free?0:r.price;
   const why=r.blocked?'interdit ici : '+r.blocked:r.cityOnly&&!city?'en ville seulement':id==='bivouac'&&!free&&!p.items.includes('tente')?'tente nécessaire':p.money<price?'pas assez de pièces':'';
   out.push({id,name:nt.name,price,energy:nt.energy*factor+(immersionOn(m)?0:equipBonus(m,p)),fatigue:immersionOn(m)?nightFatigue(nt,restDay,city,immLevel(m)):ORIG_NIGHT_FATIGUE[id],calm:(stormy?nt.stormy:nt.odds).calm,why});}
@@ -585,7 +589,7 @@ const countryAt=(m,key)=>{const t=m.board?.[key];return t?.type==='ville'?COUNTR
 function dayHash(seed,round,txt){let x=(seed>>>0)^Math.imul(round+1,374761393);for(const c of txt)x=Math.imul(x^c.charCodeAt(0),668265263);x^=x>>>13;x=Math.imul(x,1274126177);return ((x^x>>>16)>>>0)/4294967296;}
 export function holidayAt(m,key,round=m.round){if(!betaOn(m))return '';const c=countryAt(m,key);if(!c||weekday(m,round)==='dimanche')return '';return dayHash(m.seed||1,round,c)<HOLIDAY_ODDS?(HOLIDAY_NAME[c]||'Jour férié'):'';}
 // Pourquoi la boutique est fermée aujourd'hui ('' = ouverte). shop : 'superette' ou 'velo'.
-export function shopClosed(m,key,shop,round=m.round){if(!betaOn(m))return '';const c=countryAt(m,key);if(!c)return '';const d=weekday(m,round);
+export function shopClosed(m,key,shop,round=m.round){if(!betaOn(m))return '';if(ultraOn(m)&&m.board?.[key]?.type==='ville'&&!ultraOpen(m,ULTRA_SHOP_HOURS))return 'la nuit';const c=countryAt(m,key);if(!c)return '';const d=weekday(m,round);
  const h=holidayAt(m,key,round);if(h)return h;if(d==='dimanche'&&SUNDAY_CLOSED.has(c))return 'dimanche';if(d==='lundi'&&shop==='velo'&&c==='FR')return 'lundi';return '';}
 // Remplir ses gourdes (bouton « Remplir les gourdes », 17 octobre, demande de Fi) : on s'arrête sur la case.
 // Sûr : ville, hameau (fontaine). Rivière, lac, torrent : sûr avec le filtre, sinon 1 fois sur 4 eau contaminée.
@@ -598,3 +602,118 @@ export function refillWater(m){const p=player(m),i=waterInfo(m,p);if(!i||i.why||
  if(!i.safe&&irand(m)<WATER_RISK){p.energy=Math.max(0,p.energy+WATER_SICK.energy);if(m.rules.fatigue?.enabled){p.fatigue=Math.min(fatigueMax(m),(p.fatigue||0)+WATER_SICK.fatigue);p.energy=Math.min(p.energy,energyCap(m,p));}
   record(m,'eau','🤢 Eau contaminée ! Ventre retourné : −2 énergie, +1 fatigue. Un filtre t’aurait évité ça.');m.waterSick={turn:m.turn,text:'Eau contaminée ! Ventre retourné : −2 énergie, +1 fatigue.'};}
  return true;}
+
+// ---------- Mode Ultra (17 octobre, idée de Fi) : course Lisbonne → Cap Nord contre 10 rivaux ----------
+// Horloge en heures depuis le lundi 0 h (départ à 6 h). Un tour = une étape entre deux sommeils.
+export const ultraOn=m=>Boolean(immersionOn(m)&&m.ultra);
+export const ULTRA_RACE_INFO=ULTRA_RACE;
+function pu(p){if(!p.ultra)p.ultra={h:ULTRA_RACE.startHour,awake:0,cp:0,cols:[],stamps:[],cases:0,result:null};return p.ultra;}
+export const ultraState=(m,p=player(m))=>ultraOn(m)?pu(p):null;
+export const ultraDayOf=h=>1+Math.floor(h/24);
+export function clockText(h){const d=ultraDayOf(h),t=((h%24)+24)%24;let hh=Math.floor(t),mm=Math.round((t-hh)*60/10)*10;if(mm===60){hh=(hh+1)%24;mm=0;}
+ return {day:d,weekday:WEEKDAYS[(d-1)%7],hour:hh,min:mm,time:`${hh} h ${String(mm).padStart(2,'0')}`,text:`Jour ${d} · ${WEEKDAYS[(d-1)%7]} ${hh} h ${String(mm).padStart(2,'0')}`};}
+const hourOf=h=>((h%24)+24)%24;
+const inRange=(x,[a,b])=>a<b?x>=a&&x<b:x>=a||x<b;
+export const ultraNight=h=>inRange(hourOf(h),ULTRA_NIGHT);
+function ultraOpen(m,range,p=player(m)){return inRange(hourOf(pu(p).h),range);}
+export const ultraOpenNow=(m,kind)=>ultraOpen(m,kind==='resto'?ULTRA_RESTO_HOURS:ULTRA_SHOP_HOURS);
+export const ultraBarrierH=i=>ULTRA_RACE.barriers[i]*24;
+export function ultraDebt(m,p=player(m)){const u=pu(p);let l=0;for(const t of ULTRA_DEBT)if(u.awake>=t)l++;return {awake:u.awake,level:l,name:ULTRA_DEBT_NAMES[l],next:ULTRA_DEBT[l]??null};}
+function syncDebt(m,p){const u=pu(p),before=p.fatigue||0,l=ultraDebt(m,p).level;p.fatigue=Math.min(fatigueMax(m),l);p.energy=Math.min(p.energy,energyCap(m,p));
+ if(p.fatigue>before)record(m,'fatigue',`😵 ${Math.floor(u.awake)} h sans vraiment dormir : ${ULTRA_DEBT_NAMES[l].toLowerCase()} · énergie max ${energyCap(m,p)}.`);}
+// Faire avancer l'horloge (et le jour du jeu : météo, calendrier).
+function ultraAddHours(m,p,hours,awake=true){const u=pu(p);u.h+=hours;if(awake)u.awake+=hours;const d=ultraDayOf(u.h);if(d!==m.round){m.round=d;p.availableDay=d;}ultraRefreshView(m,p);}
+// Ce que la carte dessine : la position des rivaux à l'heure du joueur (recalculée à chaque changement d'heure).
+export function ultraRefreshView(m,p=player(m)){if(!ultraOn(m))return;const h=pu(p).h;m.ultraView={h,rivals:ultraRivals(m).map(r=>{const a=rivalAt(m,r,h);return {key:a.key,name:r.name,color:r.color,status:a.status};})};}
+// Distances (en cases) vers les contrôles et l'arrivée, par la carte (gardées en mémoire, pas dans la sauvegarde).
+const ULTRA_DIST=new Map();
+function distFrom(m,name){const id=(m.mapVersion||0)+'|'+name;if(ULTRA_DIST.has(id))return ULTRA_DIST.get(id);const start=Object.values(m.board).find(t=>t.name===name);const d=new Map();
+ if(start){d.set(start.key,0);const q=[start.key];while(q.length){const k=q.shift();for(const n of m.board[k]?.links||[]){const t=m.board[n];if(!t||t.type==='mer'||d.has(n))continue;d.set(n,d.get(k)+1);q.push(n);}}}
+ ULTRA_DIST.set(id,d);return d;}
+function legLength(m,a,b){const t=Object.values(m.board).find(x=>x.name===b);return t?distFrom(m,a).get(t.key)??0:0;}
+// Ce qu'il reste à parcourir (en cases) : prochain contrôle, puis les suivants, puis l'arrivée.
+export function ultraRemaining(m,p=player(m)){const u=pu(p),stops=[...ULTRA_RACE.checkpoints,ULTRA_RACE.to].slice(u.cp);if(u.result?.kind==='finish')return 0;
+ let rem=distFrom(m,stops[0]).get(p.pos)??0;for(let i=1;i<stops.length;i++)rem+=legLength(m,stops[i-1],stops[i]);return rem;}
+export function ultraTotal(m){const s=[ULTRA_RACE.from,...ULTRA_RACE.checkpoints,ULTRA_RACE.to];let n=0;for(let i=1;i<s.length;i++)n+=legLength(m,s[i-1],s[i]);return n;}
+// Le fantôme de la barrière : ce qu'il faudrait qu'il reste, au rythme minimum pour passer chaque barrière.
+export function ultraGhost(m,h){const s=[ULTRA_RACE.from,...ULTRA_RACE.checkpoints,ULTRA_RACE.to],legs=s.slice(1).map((x,i)=>legLength(m,s[i],x)),total=legs.reduce((a,b)=>a+b,0);
+ let prevH=ULTRA_RACE.startHour,prevRem=total;for(let i=0;i<legs.length;i++){const bh=ultraBarrierH(i),rem=prevRem-legs[i];if(h<=bh)return prevRem-(prevRem-rem)*Math.max(0,(h-prevH)/(bh-prevH));prevH=bh;prevRem=rem;}return 0;}
+// ---- Les rivaux : itinéraire avec 3 cols, rythme tiré au sort jour par jour, galères et abandons ----
+function seededRng(seed){let s=(seed>>>0)||1;return ()=>{s=(s+0x6D2B79F5)>>>0;let t=s;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return ((t^t>>>14)>>>0)/4294967296;};}
+function bfsPath(m,from,to){const prev=new Map([[from,null]]),q=[from];while(q.length){const k=q.shift();if(k===to)break;for(const n of m.board[k]?.links||[]){const t=m.board[n];if(!t||t.type==='mer'||prev.has(n))continue;prev.set(n,k);q.push(n);}}
+ if(!prev.has(to))return [from];const out=[];let k=to;while(k){out.unshift(k);k=prev.get(k);}return out;}
+const keyOfName=(m,name)=>Object.values(m.board).find(t=>t.name===name||t.colName===name)?.key;
+export function ultraRivals(m){if(!ultraOn(m))return [];if(m.ultra.rivals)return m.ultra.rivals;const rnd=seededRng((m.seed^0x7a11)>>>0);
+ m.ultra.rivals=ULTRA_RIVALS.map(base=>{const plan=ULTRA_COL_PLANS[Math.floor(rnd()*ULTRA_COL_PLANS.length)];
+  const names=[ULTRA_RACE.from,...plan.before,ULTRA_RACE.checkpoints[0],...plan.after,...ULTRA_RACE.checkpoints.slice(1),ULTRA_RACE.to],keys=names.map(n=>keyOfName(m,n)).filter(Boolean);
+  let route=[keys[0]];for(let i=1;i<keys.length;i++)route=route.concat(bfsPath(m,keys[i-1],keys[i]).slice(1));
+  const P=ULTRA_RIVAL_PACE,pace=P.min+rnd()*(P.max-P.min),cum=[0],bad=[];
+  for(let d=0;d<40;d++){let day=pace*(.8+rnd()*.4);if(rnd()<P.badDay){day*=P.badFactor;bad.push(d+1);}cum.push(Math.round((cum[d]+day)*100)/100);}
+  const dnfAt=rnd()<P.dnf?Math.floor((route.length-1)*(.2+rnd()*.65)):null;
+  const at=n=>{for(let d=1;d<cum.length;d++)if(cum[d]>=n)return ULTRA_RACE.startHour+(d-1+(n-cum[d-1])/(cum[d]-cum[d-1]))*24;return Infinity;};
+  const cpIdx=ULTRA_RACE.checkpoints.map(n=>route.indexOf(keyOfName(m,n)));
+  const finishH=dnfAt==null?at(route.length-1):null;
+  return {...base,route,cum,bad,dnfAt,cpH:cpIdx.map(i=>i>=0&&(dnfAt==null||i<=dnfAt)?at(i):null),finishH,cols:plan.before.length+plan.after.length};});
+ return m.ultra.rivals;}
+function rivalCases(r,h){const t=(h-ULTRA_RACE.startHour)/24;if(t<=0)return 0;const d=Math.floor(t),c=r.cum[Math.min(d,r.cum.length-1)],n=r.cum[Math.min(d+1,r.cum.length-1)];let v=c+(n-c)*(t-d);v=Math.min(v,r.route.length-1);if(r.dnfAt!=null)v=Math.min(v,r.dnfAt);return v;}
+export function rivalAt(m,r,h){const n=rivalCases(r,h),i=Math.floor(n),key=r.route[Math.min(i,r.route.length-1)],hr=hourOf(h),day=1+Math.floor((h-ULTRA_RACE.startHour)/24);
+ const done=r.finishH!=null&&h>=r.finishH,out=r.dnfAt!=null&&n>=r.dnfAt,cpDone=r.cpH.filter(x=>x!=null&&x<=h).length;
+ const status=done?'arrivé':out?'abandon':r.bad.includes(day)?'galère':inRange(hr,[1,4])?'dort':ultraNight(h)?'roule de nuit':'roule';
+ return {key,cases:n,rem:Math.max(0,r.route.length-1-n),status,cp:cpDone,done,out};}
+// Classement en direct (rivaux + joueur + fantôme de la barrière), trié par ce qu'il reste à parcourir.
+export function ultraStandings(m,p=player(m)){if(!ultraOn(m))return [];const u=pu(p),h=u.result?.h??u.h,rows=ultraRivals(m).map(r=>{const a=rivalAt(m,r,h);return {id:r.id,name:r.name,color:r.color,rem:a.rem,km:Math.round(a.cases)*100,status:a.status,cp:a.cp,finishH:a.done?r.finishH:null,out:a.out,me:false};});
+ const meRem=ultraRemaining(m,p);rows.push({id:p.id,name:p.name,color:p.color,rem:meRem,km:u.cases*100,status:u.result?.kind==='finish'?'arrivé':u.result?'hors course':'toi',cp:u.cp,finishH:u.result?.kind==='finish'?u.result.h:null,out:Boolean(u.result&&u.result.kind!=='finish'),me:true});
+ rows.sort((a,b)=>(a.out-b.out)||((a.finishH!=null?0:1)-(b.finishH!=null?0:1))||((a.finishH??0)-(b.finishH??0))||(a.rem-b.rem));
+ return rows;}
+// ---- Une case parcourue : l'horloge, la dette de sommeil, les cols, les contrôles, l'arrivée, les barrières ----
+function ultraStep(m,p,k,t,onRoad){if(!ultraOn(m)||m.done)return;const u=pu(p);
+ let hours=ULTRA_HOURS[t.type]??5;if(!onRoad)hours+=ULTRA_OFFROAD_HOURS;if(ultraNight(u.h))hours+=ULTRA_NIGHT_HOURS;if((p.fatigue||0)>=2)hours+=ULTRA_TIRED_HOURS;
+ ultraAddHours(m,p,hours);u.cases++;syncDebt(m,p);
+ if(t.type==='col'&&t.colName&&!u.cols.includes(k)){u.cols.push(k);record(m,'ultra',`⛰️ ${t.colName} : col mythique ${Math.min(u.cols.length,ULTRA_RACE.cols)} / ${ULTRA_RACE.cols}.`,{key:k});}
+ if(ultraBarrier(m,p))return;
+ const cpName=ULTRA_RACE.checkpoints[u.cp];
+ if(cpName&&t.name===cpName){const rank=1+ultraRivals(m).filter(r=>r.cpH[u.cp]!=null&&r.cpH[u.cp]<u.h).length,ahead=ultraBarrierH(u.cp)-u.h;
+  u.stamps.push({cp:u.cp,h:u.h,rank});u.cp++;const c=clockText(u.h);record(m,'ultra',`🛂 Contrôle ${u.cp} · ${cpName} : tampon à ${c.text.toLowerCase()} · ${rank}ᵉ.`,{key:k});
+  const best=ultraRivals(m).filter(r=>r.cpH[u.cp-1]!=null).sort((a,b)=>a.cpH[u.cp-1]-b.cpH[u.cp-1]).slice(0,2).map(r=>`${r.name} (${clockText(r.cpH[u.cp-1]).text.toLowerCase()})`);
+  const next=u.cp<ULTRA_RACE.checkpoints.length?`Prochain contrôle : ${ULTRA_RACE.checkpoints[u.cp]} avant la fin du jour ${ULTRA_RACE.barriers[u.cp]}.`:`Dernière étape : le Cap Nord avant la fin du jour ${ULTRA_RACE.barriers[u.cp]}${u.cols.length<ULTRA_RACE.cols?`, avec encore ${ULTRA_RACE.cols-u.cols.length} col${ULTRA_RACE.cols-u.cols.length>1?'s':''} mythique${ULTRA_RACE.cols-u.cols.length>1?'s':''}`:''}.`;
+  if(m.phase==='move')beginScene(m,p,{id:'ul-cp',title:`Contrôle ${u.cp} · ${cpName} : tampon !`,scene:'ville',kind:'belle',quote:`${c.text}. Tu passes ${rank}ᵉ, avec ${Math.floor(ahead/24)} j ${Math.round(ahead%24)} h d’avance sur la barrière. ${best.length?'Devant toi : '+best.join(', ')+'. ':''}${next}`,choices:[{label:'Tamponner et repartir',text:'Le bénévole te tend un café.',effect:{water:'fill'}}]},true,immContext(m,p,k));
+  return;}
+ if(t.name===ULTRA_RACE.to){if(u.cp<ULTRA_RACE.checkpoints.length){record(m,'ultra',`🚫 Le Cap Nord ne compte pas encore : il faut d’abord passer à ${ULTRA_RACE.checkpoints[u.cp]}.`);}
+  else if(u.cols.length<ULTRA_RACE.cols){record(m,'ultra',`🚫 Arrivée refusée : il manque ${ULTRA_RACE.cols-u.cols.length} col${ULTRA_RACE.cols-u.cols.length>1?'s':''} mythique${ULTRA_RACE.cols-u.cols.length>1?'s':''}.`);}
+  else{ultraFinish(m,p,'finish');return;}}
+ // Dette de sommeil : hallucinations, puis micro-sommeils (risques doublés entre 2 h et 6 h).
+ if(m.phase!=='move')return;const late=inRange(hourOf(u.h),ULTRA_LATE_NIGHT)?2:1;
+ if(u.awake>=ULTRA_MICRO.from&&irand(m)<ULTRA_MICRO.odds*late){ultraAddHours(m,p,ULTRA_MICRO.hours,false);p.energy=Math.max(0,p.energy+ULTRA_MICRO.energy);
+  beginScene(m,p,{id:'ul-micro',title:'Micro-sommeil',scene:MOUNTAIN.includes(t.type)?'montagne':'plaine',kind:'galere',quote:`Les yeux se ferment une seconde… la roue avant mord le bas-côté et tu te retrouves dans l’herbe. Rien de cassé, mais ${ULTRA_MICRO.hours} heures perdues à reprendre tes esprits (−${-ULTRA_MICRO.energy} énergie). Il faut dormir.`,choices:[{label:'Se relever',text:'Prochaine fois, une sieste avant.',effect:{}}]},true,immContext(m,p,k));return;}
+ if(u.awake>=ULTRA_HALLU.from&&irand(m)<ULTRA_HALLU.odds*late){const H=['Un mouton couché au milieu de la route… qui disparaît quand tu arrives dessus.','Les arbres du bord de route deviennent des spectateurs qui t’applaudissent.','Un panneau t’annonce le Cap Nord à 3 km. Il n’y a pas de panneau.','Tu entends quelqu’un t’appeler par ton prénom. Il n’y a personne.','Les lignes blanches se mettent à onduler comme des serpents.'];
+  beginScene(m,p,{id:'ul-hallu',title:'Hallucination',scene:'plaine',kind:'galere',quote:`${H[Math.floor(irand(m)*H.length)]} ${Math.floor(u.awake)} heures sans vraiment dormir : le cerveau commence à inventer.`,choices:[{label:'Secouer la tête et continuer',text:'Tu te concentres sur la ligne blanche.',effect:{energy:-1}},{label:'S’arrêter boire un coup',text:'Un peu d’eau sur le visage.',effect:{}}]},true,immContext(m,p,k));}}
+function ultraBarrier(m,p){const u=pu(p);if(u.result)return true;const i=Math.min(u.cp,ULTRA_RACE.barriers.length-1);if(u.h>ultraBarrierH(i)){ultraFinish(m,p,'horsdelai');return true;}return false;}
+function ultraFinish(m,p,kind){const u=pu(p);if(u.result)return;const rivals=ultraRivals(m);
+ const rank=kind==='finish'?1+rivals.filter(r=>r.finishH!=null&&r.finishH<u.h).length:null;u.result={kind,h:u.h,rank,finishers:rivals.filter(r=>r.finishH!=null).length+(kind==='finish'?1:0)};
+ const c=clockText(u.h);
+ const text=kind==='finish'?`🏁 Cap Nord ! Arrivée ${c.text.toLowerCase()} · ${rank}ᵉ sur ${ULTRA_RIVALS.length+1}.`:kind==='abandon'?`🏳️ Abandon ${c.text.toLowerCase()}, après ${u.cases*100} km.`:`⏱️ Hors délai : la barrière de ${u.cp<ULTRA_RACE.checkpoints.length?ULTRA_RACE.checkpoints[u.cp]:ULTRA_RACE.to} (fin du jour ${ULTRA_RACE.barriers[Math.min(u.cp,2)]}) est passée.`;
+ record(m,'finish',text);m.winReason=text.replace(/^[^ ]+ /,'');if(kind==='finish'&&rank===1)m.winner=p.id;m.done=true;m.phase='finished';}
+export function ultraAbandon(m){const p=player(m);if(!ultraOn(m)||m.done)return false;ultraFinish(m,p,'abandon');return true;}
+// ---- Dormir : sieste, cycle, nuit courte, vraie nuit, hôtel ----
+function ultraSleepOptions(m,p){const here=m.board[p.pos],city=here?.type==='ville',d=ultraDebt(m,p),cap=energyCap(m,{...p,fatigue:0});
+ return {restDay:false,factor:1,stormy:false,options:ULTRA_SLEEP.map(o=>{const awakeAfter=o.awake==='reset'?0:Math.max(0,d.awake+o.awake);let l=0;for(const t of ULTRA_DEBT)if(awakeAfter>=t)l++;
+  return {id:o.id,name:o.name,icon:o.icon,price:0,hours:o.hours,energy:o.energy==='full'?'plein':o.energy,awakeAfter,fatigue:l-(p.fatigue||0),text:o.text,why:o.city&&!city?'en ville seulement':''};})};}
+function ultraSleep(m,id){const p=player(m),u=pu(p),o=ULTRA_SLEEP.find(x=>x.id===id);if(!o||m.pendingAttack||m.done||!['move','place'].includes(m.phase))return false;if(o.city&&m.board[p.pos]?.type!=='ville')return false;
+ const before={energy:p.energy,awake:u.awake,h:u.h};ultraAddHours(m,p,o.hours,false);u.awake=o.awake==='reset'?0:Math.max(0,u.awake+o.awake);syncDebt(m,p);
+ p.energy=o.energy==='full'?energyCap(m,p):Math.min(energyCap(m,p),p.energy+o.energy);
+ if(o.id==='hotel'){p.water=waterCap(m,p);}
+ u.lastSleep={id:o.id,name:o.name,hours:o.hours,gain:p.energy-before.energy,awakeBefore:before.awake,awakeAfter:u.awake,from:before.h,to:u.h};
+ record(m,'night',`${o.icon} ${o.name} (${o.hours<1?Math.round(o.hours*60)+' min':o.hours+' h'}) : +${p.energy-before.energy} énergie · réveil ${clockText(u.h).text.toLowerCase()}.`);
+ m.actionDays=1;if(ultraBarrier(m,p))return true;endTurn(m);return true;}
+function ultraEvening(m){const p=player(m),u=pu(p),s=u.lastSleep,ctx=immContext(m,p,p.pos);
+ p.availableDay=ultraDayOf(u.h)-1;m.actionDays=1;
+ const c=clockText(u.h),d=ultraDebt(m,p),q=s?`${s.name} : ${s.hours<1?Math.round(s.hours*60)+' minutes':s.hours+' heures'} de sommeil, +${s.gain} énergie. Réveil ${c.text.toLowerCase()}. ${d.awake?`Encore ${Math.floor(d.awake)} h de dette de sommeil (${d.name.toLowerCase()}).`:'Dette de sommeil effacée.'}`:`Repos. ${c.text}.`;
+ const st=ultraStandings(m,p),me=st.findIndex(r=>r.me)+1,ahead=st.find((r,i)=>i===me-2);
+ beginScene(m,p,{id:'ul-reveil',title:ultraNight(u.h)?'Réveil dans la nuit':'Réveil',scene:ctx.city?'ville':ctx.type==='cote'?'cote':MOUNTAIN.includes(ctx.type)?'montagne':'plaine',kind:'belle',quote:`${q} Tu es ${me}ᵉ${ahead?`, juste derrière ${ahead.name}`:''}.`,choices:[{label:'Remonter en selle',text:'L’horloge tourne.',effect:{}}]},false,ctx,{});}
+// ---- Manger froid : supérette (8 h – 20 h), station-service la nuit en ville, épicerie de hameau ----
+export function ultraFoodInfo(m,p=player(m)){const t=m.board[p.pos],spot=waterSpot(m,p.pos),full=p.food>=C.foodCapacity(m,p);
+ if(t?.type==='ville'){const closed=shopClosed(m,p.pos,'superette');return closed?{where:'station',name:'Station-service',qty:ULTRA_FOOD.station,why:full?'sacoches pleines':'',note:`supérette fermée (${closed}) · station-service 24 h/24`}:{where:'superette',name:'Supérette',qty:ULTRA_FOOD.superette,why:full?'sacoches pleines':'',note:'ouverte 8 h – 20 h'};}
+ if(spot==='fontaine')return {where:'hameau',name:'Épicerie du hameau',qty:ULTRA_FOOD.hameau,why:full?'sacoches pleines':!ultraOpen(m,ULTRA_SHOP_HOURS,p)?'fermée la nuit':'',note:'8 h – 20 h'};
+ return {where:'',name:'Provisions',qty:0,why:'en ville ou au hameau seulement',note:''};}
+function ultraBuyFood(m){const p=player(m),i=ultraFoodInfo(m,p);if(m.pendingAttack||m.done||!['move','place'].includes(m.phase)||!i.qty||i.why)return false;
+ p.food=Math.min(C.foodCapacity(m,p),p.food+i.qty);ultraAddHours(m,p,ULTRA_FOOD.hours);record(m,'buy',`🥖 ${i.name} : +${i.qty} repas froid${i.qty>1?'s':''} (${Math.round(ULTRA_FOOD.hours*60)} min d’arrêt).`);return true;}

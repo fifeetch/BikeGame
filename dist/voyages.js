@@ -24,7 +24,9 @@ export const voyages=[
 // Carte Voyage de la partie guidée « Apprendre à jouer » : hors des 20 cartes, jamais tirée au hasard.
 export const TUTORIAL_VOYAGE={id:'apprentissage',title:'Premier voyage : vers la mer Égée',from:'Budapest',to:'Athènes',color:'#3b6fa8',cities:3,coast:3,mountain:1,tutorial:true};
 // Trouver une carte Voyage par son identifiant (les 20 cartes + celle de la partie guidée).
-export const findVoyage=id=>voyages.find(v=>v.id===id)||(id===TUTORIAL_VOYAGE.id?TUTORIAL_VOYAGE:undefined);
+// Mode Ultra (17 octobre) : la course Lisbonne → Cap Nord (pas d'objectifs de voyage : contrôles et cols gérés par le mode Ultra).
+export const ULTRA_VOYAGE={id:'ultra-lcn',title:'Ultra Lisbonne → Cap Nord',from:'Lisbonne',to:'Cap Nord',color:'#c8483a',ultra:true};
+export const findVoyage=id=>voyages.find(v=>v.id===id)||(id===TUTORIAL_VOYAGE.id?TUTORIAL_VOYAGE:id===ULTRA_VOYAGE.id?ULTRA_VOYAGE:undefined);
 // Points d'aventure selon l'EFFORT du voyage (barème de Fi, 17 octobre 2026 : 1 point = 2,5 d'effort).
 // Effort = cases + énergie du meilleur trajet qui remplit TOUS les objectifs (plaine 1, moyenne montagne 2, montagne 3, côte 1, ville 0, col 3).
 // 10 et plus → 4 · 20 et plus → 8 · 30 et plus → 12 · 40 et plus → 16 · 50 et plus → 20.
