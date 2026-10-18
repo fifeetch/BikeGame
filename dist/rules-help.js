@@ -4,6 +4,7 @@
 import {VOYAGE_TIERS} from './voyages.js';
 import {WEATHER} from './weather.js';
 import {NIGHT,DEMAND_NIGHT} from './immersion.js';
+import {ULTRA_RACE,ULTRA_HOURS,ULTRA_NIGHT,ULTRA_STEP_MAX,ULTRA_SLEEP,ULTRA_DEBT,ULTRA_SHOP_HOURS,ULTRA_RESTO_HOURS,ULTRA_FOOD,ULTRA_FERRY_MAX,ULTRA_RIVALS,ULTRA_WEIGHT,ULTRA_NEEDS} from './ultra.js';
 
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const plural=(n,one,many)=>`${n} ${n>1?many:one}`;
@@ -18,7 +19,7 @@ const foodMax=r=>Object.values(r.bikes).map(b=>`${esc(b.name)} ${b.maxFood??r.ma
 const meals=r=>`repas froid <b>+${r.food.coldEnergy??2}</b> partout, repas chaud <b>+${r.food.hotEnergy??3}</b> avec le réchaud`;
 
 // ---------- Résumé avant le départ ----------
-export function rulesIntro(r,{btn,eventGame=true}={}){const o=opts(r),t=r.terrain;
+export function rulesIntro(r,{btn,eventGame=true}={}){if(r.immersion?.ultra)return ultraIntro(r,{btn});const o=opts(r),t=r.terrain;
  const box=(icon,title,text)=>`<div class="ri-box"><b>${icon} ${title}</b><p>${text}</p></div>`;
  return `<div class="rules-intro"><span class="eyebrow">AVANT LE DÉPART · L’ESSENTIEL EN 1 MINUTE</span><h2>Comment on joue</h2><div class="ri-grid">
   ${box('🎯','Le but',`Réussir des <b>voyages de ville à ville</b> et gagner des <b>points d’aventure</b>. La partie s’arrête à ${victory(r)}.${r.victory?.mode==='multi'&&r.victory.voyages?` Le premier à ${r.victory.voyages} voyages gagne +${r.victory.voyagesBonus??5} points ; à la fin, <b>le plus de points gagne</b>.`:''}`)}
@@ -72,3 +73,23 @@ export function rulesHelp(r,tab='route',{btn,eventGame=true}={}){const o=opts(r)
   :`<h3>Météo</h3>${li([o.encounters?'Dans ce mode, pas de météo : les rencontres remplacent les cartes.':'La météo arrive par les <b>cartes climatiques</b> : les autres joueurs peuvent en jouer une quand tu annonces ton trajet (vent, pluie, orage, neige, brouillard…).','On peut choisir « Météo annoncée » au début d’une partie : un bulletin chaque soir, sans cartes climatiques.'])}`;
  else body=`<h3>Fin de partie</h3>${li([`La partie s’arrête dès qu’un cycliste atteint ${victory(r)}.`,r.victory?.voyages?`Le premier qui réussit ${r.victory.voyages} voyages arrête la partie et gagne <b>+${r.victory.voyagesBonus??5} points</b> d’aventure ; c’est ensuite celui qui a <b>le plus de points</b> qui gagne.`:'',r.victory?.days?`Au bout de ${r.victory.days} jours, celui qui a le plus de points gagne.`:'',`Un prêt de la banque non remboursé : −${r.loan?.penalty??3} points d’aventure à la fin.`,'Ces conditions se choisissent avant la partie (0 = condition non utilisée).'])}`;
  return `<div class="rules-help"><span class="eyebrow">RÈGLES DÉTAILLÉES</span><div class="rh-tabs" role="tablist">${tabs.map(([id,label])=>`<button type="button" role="tab" data-action="help-tab-${id}" aria-selected="${id===tab}" class="${id===tab?'on':''}">${esc(label)}</button>`).join('')}</div><div class="rh-body">${body}</div>${btn('Fermer et reprendre la partie','close','light')}</div>`;}
+
+// ---------- Résumé avant le départ : mode Ultra (18 octobre) ----------
+// Tous les nombres viennent de dist/ultra.js : le texte suit les réglages de la course.
+function ultraIntro(r,{btn}){const R=ULTRA_RACE,H=ULTRA_HOURS,N=ULTRA_NEEDS,t=r.terrain;
+ const box=(icon,title,text)=>`<div class="ri-box"><b>${icon} ${title}</b><p>${text}</p></div>`;
+ const lvl=k=>N[k].levels.filter(l=>l[2]).map(l=>`<b>${l[1]}</b> dès ${l[0]} (+${l[2]} h et −${l[3]} énergie par case)`).join(', ');
+ const sleep=ULTRA_SLEEP.map(o=>`${o.name.toLowerCase()} ${o.hours<1?Math.round(o.hours*60)+' min':String(o.hours).replace('.',',')+' h'}`).join(', ');
+ const stops=[...R.checkpoints.map((c,i)=>`<b>${c}</b> avant la fin du jour ${R.barriers[i]}`),`<b>${R.to}</b> avant la fin du jour ${R.barriers.at(-1)}`].join(', puis ');
+ return `<div class="rules-intro"><span class="eyebrow">MODE ULTRA · EN DÉVELOPPEMENT · L’ESSENTIEL EN 1 MINUTE</span><h2>Comment on court</h2><div class="ri-grid">
+  ${box('🏁','La course',`Une course d’ultra-distance contre <b>${ULTRA_RIVALS.length} coureurs</b>, en autonomie, de <b>${R.from}</b> au <b>${R.to}</b> (environ 6 000 km). Passe les contrôles dans l’ordre : ${stops}. Il faut aussi franchir <b>${R.cols} cols mythiques</b> au choix. <b>On gagne à l’ordre d’arrivée.</b> Une barrière ratée, c’est hors course.`)}
+  ${box('⏱','L’horloge ne s’arrête jamais',`Départ lundi à ${R.startHour} h. Une case ≈ 100 km et prend du temps : ville ${H.ville} h, plaine et côte ${H.plaine} h, moyenne montagne ${H.moyenne_montagne} h, montagne ${H.montagne} h, col ${H.col} h. De nuit (${ULTRA_NIGHT[0]} h – ${ULTRA_NIGHT[1]} h) et hors route, c’est plus long. Une étape = jusqu’à ${ULTRA_STEP_MAX} cases, puis tu t’arrêtes pour dormir. Le chrono est à côté du jour, sur ta fiche.`)}
+  ${box('⚡','L’énergie',`Chaque case coûte de l’énergie : plaine et côte ${t.plaine}, moyenne montagne ${t.moyenne_montagne}, montagne et col ${t.montagne}. <b>Trois besoins te la rendent : dormir, manger et boire.</b> On ne peut se passer d’aucun : chacun a sa dette, et une dette trop haute te ralentit et te vide.`)}
+  ${box('💤','Le sommeil',`Tu choisis quand et combien : ${sleep} (hôtel en ville seulement). La dette de sommeil, c’est ta fatigue : elle monte avec les heures sans dormir (paliers ${ULTRA_DEBT.join(', ')} h) et baisse ton énergie maximale. Dès ${ULTRA_DEBT[2]} h : hallucinations ; dès ${ULTRA_DEBT[3]} h : micro-sommeils et chutes.`)}
+  ${box('🍽','La faim',`+${N.faim.per} de faim par case. Un repas froid : <b>+${r.food.coldEnergy??2} énergie</b> et −${N.faim.meal} de faim (15 min). ${lvl('faim')}. Ravitaillement : supérette ${ULTRA_SHOP_HOURS[0]} h – ${ULTRA_SHOP_HOURS[1]} h (+${ULTRA_FOOD.superette} repas), station-service la nuit et épicerie de hameau (+${ULTRA_FOOD.station}), restaurant ${ULTRA_RESTO_HOURS[0]} h – ${ULTRA_RESTO_HOURS[1]} h. Fermé le dimanche dans beaucoup de pays.`)}
+  ${box('💧','La soif',`+${N.soif.per} de soif par case. Dès ${N.soif.auto}, une gourde se boit toute seule : <b>+${N.soif.energy} énergie</b> et −${N.soif.drink} de soif. Gourdes vides : ${lvl('soif')}. Remplis-les en ville, aux fontaines des hameaux (💧 sur la carte), aux rivières et torrents (avec un filtre, sinon risque d’eau contaminée).`)}
+  ${box('🚲','Ton vélo',`Choisi au garage. La route va vite sur le goudron mais souffre hors route ; le VTT, l’inverse ; le gravel passe partout. Chaque pièce d’équipement a son effet. Ici la monnaie, c’est <b>le poids</b> : dès ${ULTRA_WEIGHT.light} kg les cols coûtent +1 h, dès ${ULTRA_WEIGHT.heavy} kg la montagne aussi.`)}
+  ${box('🎒','L’autonomie','Comme dans les vraies courses : pas d’argent à compter, pas de train, pas de « Demander ». '+`${ULTRA_FERRY_MAX===1?'Un seul bateau':`${ULTRA_FERRY_MAX} bateaux`} pour toute la course. L’onglet « Course » de la fiche montre le classement en direct, les contrôles et les cols ; tu peux y abandonner.`)}
+ </div><p class="muted">Le mode Ultra est en développement : les chiffres peuvent changer à chaque mise à jour. Toutes les règles sont dans « 📖 Règles ».</p>
+ <div class="ri-actions">${btn('C’est parti →','intro-close')}${btn('📖 Règles détaillées','help','light')}</div>
+ <label class="ri-hide"><input type="checkbox" id="intro-hide"/> Ne plus afficher ce résumé au départ</label></div>`;}

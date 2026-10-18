@@ -478,3 +478,6 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - Trois besoins (règle de Fi) : sommeil (dette = fatigue), faim (+1 par case, repas +2 énergie −2 faim, fringale dès 4, à jeun dès 6), soif (+1 par case, gourde bue toute seule dès 2 : +1 énergie ; soif dès 3, déshydraté dès 5). ULTRA_NEEDS dans `dist/ultra.js`. Trois jauges côte à côte sur la fiche.
 - Grand départ à Lisbonne (`dist/ultra-start.js`) : la rue de la ville en fond, compte à rebours, 41 coureurs s'élancent.
 - Chrono à côté du jour, qui défile pendant le trajet ; la carte passe au soir puis à la nuit.
+
+## 18 octobre 2026 — Ultra : « Comment on court » (cache v118)
+- La fenêtre de départ en Ultra explique la course (contrôles, barrières, cols, ordre d’arrivée), l’horloge, l’énergie et les trois besoins (sommeil, faim, soif), le vélo et le poids, l’autonomie. Chiffres tirés de `dist/ultra.js` (ultraIntro dans `dist/rules-help.js`).
