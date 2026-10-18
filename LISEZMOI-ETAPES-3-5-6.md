@@ -510,3 +510,7 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 
 ## 18 octobre — Les petites règles en images (cache v126-regles-images)
 - Planche validée par Fi : 6 vignettes dans l'écran « Règles » (dist/rules-visuals.js). Se déplacer : une côte touche la mer · un col compte comme une montagne. Voyages & points : une case ne compte qu'une fois · « d'affilée » sans coupure · départ et arrivée ne comptent pas · points maxi / mini.
+
+## 18 octobre 2026 (soir) — Ultra : chaque rival sa route, et « L’Écho de l’Ultra » au réveil (cache v127)
+- Rivaux : chemin le moins coûteux avec un goût propre à chacun (bruit par case, montagne plus ou moins évitée, routes préférées) au lieu du même plus court chemin : recouvrement moyen entre deux rivaux 77 % → 43 % (weightedPath, hashUnit dans simulator.js). Les parties déjà commencées gardent leurs routes.
+- Journal du matin dans la fenêtre du réveil (ultraNews) : titre (vainqueur, abandon, tampon ou leader), jusqu’à 4 brèves depuis le dernier réveil (contrôles, cols, abandons, arrivées, galères), podium, ta place et l’écart avec la tête, places gagnées ou perdues, plus gros rouleur des 24 dernières heures.

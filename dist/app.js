@@ -1526,3 +1526,11 @@ const markFountains=()=>{try{
 {const fill=e=>{const el=e.target.closest?.('.water-spot.can-fill, .tw-fountain.can-fill');if(!el)return;e.preventDefault();e.stopPropagation();
  if(e.type==='click'){if(el.classList.contains('tw-fountain'))townAct({say:'Glou glou… gourdes pleines !',item:'💧',badge:'💧 Gourdes remplies'});act('water-fill');}};
  document.addEventListener?.('click',fill,true);document.addEventListener?.('pointerdown',e=>{if(e.target.closest?.('.water-spot.can-fill, .tw-fountain.can-fill'))e.stopPropagation();},true);}
+
+// ---------- Ultra : le journal du matin, dans la fenêtre du réveil (18 octobre, idée de Fi) ----------
+{const priorEnc=encounterModal;encounterModal=function(){const h=priorEnc();const n=m?.encounter?.id==='ul-reveil'&&m.encounter.news;if(!n||!h)return h;
+ const top=n.top.map(r=>`<li class="${r.me?'me':''}"><span>${r.n}</span><b>${esc(r.name)}</b><em>${esc(r.info)}</em></li>`).join('');
+ const box=`<section class="ul-news" aria-label="Le journal de la course"><header><span>Édition du jour ${n.edition}</span><b>L’Écho de l’Ultra</b><span>${esc(n.date.split(' · ')[1]||'')}</span></header>
+  <p class="ul-head">${n.headline}</p>${n.items.length?`<ul class="ul-items">${n.items.map(x=>`<li>${x}</li>`).join('')}</ul>`:''}
+  <div class="ul-foot"><ol>${top}</ol><p><b>Toi : ${n.me}ᵉ / ${n.total}</b>${n.gap?` · ${n.gap} km derrière la tête`:''}${n.moved?`<br>${esc(n.moved)}`:''}${n.perf?`<br>${n.perf}`:''}</p></div></section>`;
+ return h.replace('<div class="encounter">','<div class="encounter ul-morning">').replace(/LE SOIR · /g,'RÉVEIL · ').replace(/>Le soir · /,'>Réveil · ').replace('<div class="encounter-choices">',box+'<div class="encounter-choices">');};}

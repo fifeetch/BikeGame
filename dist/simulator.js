@@ -649,11 +649,21 @@ export function ultraGhost(m,h){const s=[ULTRA_RACE.from,...ULTRA_RACE.checkpoin
 function seededRng(seed){let s=(seed>>>0)||1;return ()=>{s=(s+0x6D2B79F5)>>>0;let t=s;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return ((t^t>>>14)>>>0)/4294967296;};}
 function bfsPath(m,from,to){const prev=new Map([[from,null]]),q=[from];while(q.length){const k=q.shift();if(k===to)break;for(const n of m.board[k]?.links||[]){const t=m.board[n];if(!t||t.type==='mer'||prev.has(n))continue;prev.set(n,k);q.push(n);}}
  if(!prev.has(to))return [from];const out=[];let k=to;while(k){out.unshift(k);k=prev.get(k);}return out;}
+// Chaque rival prend sa propre route (18 octobre, Fi : « les autres coureurs prennent tous la même route ») :
+// chemin le moins coûteux avec un « goût » propre à chacun (petit bruit par case, montagne plus ou moins évitée, routes préférées).
+function hashUnit(salt,k){let h=salt>>>0;for(let i=0;i<k.length;i++)h=Math.imul(h^k.charCodeAt(i),2654435761)>>>0;h^=h>>>15;h=Math.imul(h,2246822519)>>>0;h^=h>>>13;return (h>>>0)/4294967296;}
+function weightedPath(m,from,to,cost){const dist=new Map([[from,0]]),prev=new Map([[from,null]]),heap=[[0,from]],done=new Set();
+ const push=x=>{heap.push(x);let i=heap.length-1;while(i){const j=(i-1)>>1;if(heap[j][0]<=heap[i][0])break;[heap[i],heap[j]]=[heap[j],heap[i]];i=j;}};
+ const pop=()=>{const top=heap[0],last=heap.pop();if(heap.length){heap[0]=last;let i=0;for(;;){const l=2*i+1,r=l+1;let s=i;if(l<heap.length&&heap[l][0]<heap[s][0])s=l;if(r<heap.length&&heap[r][0]<heap[s][0])s=r;if(s===i)break;[heap[i],heap[s]]=[heap[s],heap[i]];i=s;}}return top;};
+ while(heap.length){const [d,k]=pop();if(done.has(k))continue;done.add(k);if(k===to)break;
+  for(const n of m.board[k]?.links||[]){const t=m.board[n];if(!t||t.type==='mer'||done.has(n))continue;const nd=d+cost(n);if(nd<(dist.get(n)??Infinity)){dist.set(n,nd);prev.set(n,k);push([nd,n]);}}}
+ if(!prev.has(to))return bfsPath(m,from,to);const out=[];let k=to;while(k){out.unshift(k);k=prev.get(k);}return out;}
 const keyOfName=(m,name)=>Object.values(m.board).find(t=>t.name===name||t.colName===name)?.key;
 export function ultraRivals(m){if(!ultraOn(m))return [];if(m.ultra.rivals)return m.ultra.rivals;const rnd=seededRng((m.seed^0x7a11)>>>0);
  m.ultra.rivals=ULTRA_RIVALS.map(base=>{const plan=ULTRA_COL_PLANS[Math.floor(rnd()*ULTRA_COL_PLANS.length)];
   const names=[ULTRA_RACE.from,...plan.before,ULTRA_RACE.checkpoints[0],...plan.after,...ULTRA_RACE.checkpoints.slice(1),ULTRA_RACE.to],keys=names.map(n=>keyOfName(m,n)).filter(Boolean);
-  let route=[keys[0]];for(let i=1;i<keys.length;i++)route=route.concat(bfsPath(m,keys[i-1],keys[i]).slice(1));
+  const amp=.5+rnd()*1.1,climb=rnd()*.8,salt=Math.floor(rnd()*1e9),cost=k=>{const t=m.board[k];return 1+amp*hashUnit(salt,k)+(MOUNTAIN.includes(t?.type)?climb:0)+(roadStep(m,k,t)?0:.6);};
+  let route=[keys[0]];for(let i=1;i<keys.length;i++)route=route.concat(weightedPath(m,keys[i-1],keys[i],cost).slice(1));
   const P=ULTRA_RIVAL_PACE,pace=P.min+rnd()*(P.max-P.min),cum=[0],bad=[];
   for(let d=0;d<40;d++){let day=pace*(.8+rnd()*.4);if(rnd()<P.badDay){day*=P.badFactor;bad.push(d+1);}cum.push(Math.round((cum[d]+day)*100)/100);}
   const dnfAt=rnd()<P.dnf?Math.floor((route.length-1)*(.2+rnd()*.65)):null;
@@ -726,7 +736,7 @@ function ultraEvening(m){const p=player(m),u=pu(p),s=u.lastSleep,ctx=immContext(
  p.availableDay=ultraDayOf(u.h)-1;m.actionDays=1;
  const c=clockText(u.h),d=ultraDebt(m,p),q=s?`${s.name} : ${s.hours<1?Math.round(s.hours*60)+' minutes':s.hours+' heures'} de sommeil, +${s.gain} énergie. Réveil ${c.text.toLowerCase()}. ${d.awake?`Encore ${Math.floor(d.awake)} h de dette de sommeil (${d.name.toLowerCase()}).`:'Dette de sommeil effacée.'}`:`Repos. ${c.text}.`;
  const st=ultraStandings(m,p),me=st.findIndex(r=>r.me)+1,ahead=st.find((r,i)=>i===me-2);
- beginScene(m,p,{id:'ul-reveil',title:ultraNight(u.h)?'Réveil dans la nuit':'Réveil',scene:ctx.city?'ville':ctx.type==='cote'?'cote':MOUNTAIN.includes(ctx.type)?'montagne':'plaine',kind:'belle',quote:`${q} Tu es ${me}ᵉ${ahead?`, juste derrière ${ahead.name}`:''}.`,choices:[{label:'Remonter en selle',text:'L’horloge tourne.',effect:{}}]},false,ctx,{});}
+ beginScene(m,p,{id:'ul-reveil',title:ultraNight(u.h)?'Réveil dans la nuit':'Réveil',scene:ctx.city?'ville':ctx.type==='cote'?'cote':MOUNTAIN.includes(ctx.type)?'montagne':'plaine',kind:'belle',quote:`${q} Tu es ${me}ᵉ${ahead?`, juste derrière ${ahead.name}`:''}.`,choices:[{label:'Remonter en selle',text:'L’horloge tourne.',effect:{}}]},false,ctx,{news:ultraNews(m,p)});}
 // ---- Manger froid : supérette (8 h – 20 h), station-service la nuit en ville, épicerie de hameau ----
 export function ultraFoodInfo(m,p=player(m)){const t=m.board[p.pos],spot=waterSpot(m,p.pos),full=p.food>=C.foodCapacity(m,p);
  if(t?.type==='ville'){const closed=shopClosed(m,p.pos,'superette');return closed?{where:'station',name:'Station-service',qty:ULTRA_FOOD.station,why:full?'sacoches pleines':'',note:`supérette fermée (${closed}) · station-service 24 h/24`}:{where:'superette',name:'Supérette',qty:ULTRA_FOOD.superette,why:full?'sacoches pleines':'',note:'ouverte 8 h – 20 h'};}
@@ -754,3 +764,29 @@ function ultraNeedsStep(m,p,k){const u=pu(p),N=ULTRA_NEEDS,before={f:ultraNeedLe
 function ultraEat(m){const p=player(m),u=pu(p);if(m.pendingAttack||m.done||!['move','place'].includes(m.phase)||p.food<1||(!(u.faim>0)&&p.energy>=energyCap(m,p))||m.ate>=Math.max(3,m.rules.food.maxPerTurn||1))return false;
  const g=eatGain(m,p),before=p.energy;p.food--;m.ate++;p.energy=Math.min(energyCap(m,p),p.energy+g);u.faim=Math.max(0,(u.faim||0)-ULTRA_NEEDS.faim.meal);ultraAddHours(m,p,ULTRA_NEEDS.faim.hours);
  const meal=mealInfo(m,p);record(m,'food',`${meal.label} : ${meal.dish} (+${p.energy-before} énergie, −${ULTRA_NEEDS.faim.meal} de faim, 15 min).`);return true;}
+
+// ---------- Ultra : le journal du matin (18 octobre, idée de Fi) ----------
+// À chaque réveil : ce qui s'est passé depuis le dernier journal (contrôles, cols, abandons, arrivées, galères),
+// le haut du classement, ta place, et la plus grosse performance des dernières 24 h.
+function rivalEventH(r,from,to,test){if(test(to)&&!test(from)){let a=from,b=to;for(let i=0;i<18;i++){const c=(a+b)/2;if(test(c))b=c;else a=c;}return b;}return null;}
+export function ultraNews(m,p=player(m)){const u=pu(p),to=u.h,from=u.newsH??ULTRA_RACE.startHour,R=ultraRivals(m),items=[],rnd=seededRng(((m.seed^Math.floor(to*7))>>>0)||1),pick=a=>a[Math.floor(rnd()*a.length)];
+ const t=h=>clockText(h).time,day=h=>clockText(h).weekday,when=h=>(ultraDayOf(h)===ultraDayOf(to)?'':day(h)+' ')+t(h);
+ for(const r of R){
+  r.cpH.forEach((h,i)=>{if(h!=null&&h>from&&h<=to){const rank=1+R.filter(x=>x!==r&&x.cpH[i]!=null&&x.cpH[i]<h).length+m.players.filter(q=>pu(q).stamps.some(s=>s.cp===i&&s.h<h)).length;items.push({h,kind:'cp',text:`🛂 <b>${r.name}</b> tamponne à ${ULTRA_RACE.checkpoints[i]} ${when(h)}, ${rank===1?'<b>premier au contrôle</b>':rank+'ᵉ'}.`});}});
+  if(r.finishH!=null&&r.finishH>from&&r.finishH<=to){const rank=1+R.filter(x=>x!==r&&x.finishH!=null&&x.finishH<r.finishH).length;items.push({h:r.finishH,kind:'fin',text:rank===1?`🏆 <b>${r.name} remporte la course</b> au ${ULTRA_RACE.to}, ${when(r.finishH)}, après ${Math.floor((r.finishH-ULTRA_RACE.startHour)/24)} jours ${Math.round((r.finishH-ULTRA_RACE.startHour)%24)} h.`:`🏁 <b>${r.name}</b> arrive au ${ULTRA_RACE.to}, ${rank}ᵉ.`});}
+  const hOut=r.dnfAt!=null?rivalEventH(r,from,to,h=>rivalCases(r,h)>=r.dnfAt):null;if(hOut!=null){const where=m.board[r.route[r.dnfAt]];items.push({h:hOut,kind:'out',text:`🏳️ <b>${r.name} abandonne</b>${where?.name?` à ${where.name}`:''}. ${pick(['Genou en vrac.','Le corps a dit stop.','Chute sans gravité, mais le vélo est cassé.','Trop de retard sur la barrière.'])}`});}
+  const a=Math.floor(rivalCases(r,from)),b=Math.floor(rivalCases(r,to));for(let i=a+1;i<=b;i++){const c=m.board[r.route[i]];if(c?.type==='col'&&c.colName){const h=rivalEventH(r,from,to,x=>rivalCases(r,x)>=i)??to;items.push({h,kind:'col',text:`⛰️ <b>${r.name}</b> passe ${/^[AEIOUÉ]/.test(c.colName)?'l’':'le '}${c.colName} ${ultraNight(h)?'en pleine nuit, à la frontale':pick(['sous le soleil','dans le vent','sans poser le pied'])}.`});}}
+  for(const d of r.bad){const h=ULTRA_RACE.startHour+(d-1)*24+14;if(h>from&&h<=to&&!(r.dnfAt!=null&&rivalCases(r,h)>=r.dnfAt)&&!(r.finishH!=null&&h>=r.finishH)){items.push({h,kind:'bad',text:`🔧 <b>${r.name}</b> ${pick(['a perdu des heures sur une casse de dérailleur','a lutté contre un vent de face toute la journée','a crevé trois fois','a dû s’arrêter chez un médecin','a pris une mauvaise route : 60 km de trop'])}.`});break;}}
+ }
+ // Les amis (partie à plusieurs) : leurs tampons et arrivées.
+ for(const q of m.players)if(q.id!==p.id){const uq=pu(q);for(const st of uq.stamps)if(st.h>from&&st.h<=to)items.push({h:st.h,kind:'cp',text:`🛂 <b>${q.name}</b> tamponne à ${ULTRA_RACE.checkpoints[st.cp]}, ${st.rank}ᵉ.`});}
+ items.sort((a,b)=>a.h-b.h);
+ // Classement et grosse performance (24 h).
+ const st=ultraStandings(m,p),me=st.findIndex(r=>r.me)+1,lead=st[0],prev=u.newsRank??null;
+ const perf=R.map(r=>{const a=rivalAt(m,r,Math.max(ULTRA_RACE.startHour,to-24)),b=rivalAt(m,r,to);return {name:r.name,km:Math.round((b.cases-a.cases)*100),out:b.out||b.done};}).filter(x=>!x.out).sort((a,b)=>b.km-a.km)[0];
+ const top=st.slice(0,3).map((r,i)=>({n:i+1,name:r.me?'Toi':r.name,me:r.me,info:r.finishH!=null?'arrivé':r.out?'abandon':`reste ${Math.round(r.rem)*100} km`}));
+ const moved=prev==null?'':prev>me?`Tu gagnes ${prev-me} place${prev-me>1?'s':''} depuis le dernier journal.`:prev<me?`Tu perds ${me-prev} place${me-prev>1?'s':''} depuis le dernier journal.`:'Tu gardes ta place.';
+ const gap=lead&&!lead.me?Math.max(0,Math.round(ultraRemaining(m,p)-lead.rem))*100:0;
+ const headline=items.find(x=>x.kind==='fin')||items.find(x=>x.kind==='out')||items.find(x=>x.kind==='cp')||null;
+ u.newsH=to;u.newsRank=me;
+ return {edition:ultraDayOf(to),date:clockText(to).text,headline:headline?.text||(lead?.me?'Tu mènes la course !':`<b>${lead?.name}</b> mène la course.`),items:items.filter(x=>x!==headline).slice(-4).map(x=>x.text),top,me,total:st.length,moved,gap,perf:perf&&perf.km>0?`📈 Plus gros rouleur des dernières 24 h : <b>${perf.name}</b>, ${perf.km} km.`:''};}
