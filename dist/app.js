@@ -1526,3 +1526,24 @@ const markFountains=()=>{try{
 {const fill=e=>{const el=e.target.closest?.('.water-spot.can-fill, .tw-fountain.can-fill');if(!el)return;e.preventDefault();e.stopPropagation();
  if(e.type==='click'){if(el.classList.contains('tw-fountain'))townAct({say:'Glou glou… gourdes pleines !',item:'💧',badge:'💧 Gourdes remplies'});act('water-fill');}};
  document.addEventListener?.('click',fill,true);document.addEventListener?.('pointerdown',e=>{if(e.target.closest?.('.water-spot.can-fill, .tw-fountain.can-fill'))e.stopPropagation();},true);}
+
+// ---------- Ultra : le journal du matin, dans la fenêtre du réveil (18 octobre, idée de Fi) ----------
+{const priorEnc=encounterModal;encounterModal=function(){const h=priorEnc();const n=m?.encounter?.id==='ul-reveil'&&m.encounter.news;if(!n||!h)return h;
+ const top=n.top.map(r=>`<li class="${r.me?'me':''}"><span>${r.n}</span><b>${esc(r.name)}</b><em>${esc(r.info)}</em></li>`).join('');
+ const box=`<section class="ul-news" aria-label="Le journal de la course"><header><span>Édition du jour ${n.edition}</span><b>L’Écho de l’Ultra</b><span>${esc(n.date.split(' · ')[1]||'')}</span></header>
+  <p class="ul-head">${n.headline}</p>${n.items.length?`<ul class="ul-items">${n.items.map(x=>`<li>${x}</li>`).join('')}</ul>`:''}
+  <div class="ul-foot"><ol>${top}</ol><p><b>Toi : ${n.me}ᵉ / ${n.total}</b>${n.gap?` · ${n.gap} km derrière la tête`:''}${n.moved?`<br>${esc(n.moved)}`:''}${n.perf?`<br>${n.perf}`:''}</p></div></section>`;
+ return h.replace('<div class="encounter">','<div class="encounter ul-morning">').replace(/LE SOIR · /g,'RÉVEIL · ').replace(/>Le soir · /,'>Réveil · ').replace('<div class="encounter-choices">',box+'<div class="encounter-choices">');};}
+
+// ---------- 18 octobre (demande de Fi) : le bouton « Manger » du bas ouvre le choix des repas au lieu de manger tout de suite ----------
+{const priorRender=render;render=(...a)=>{priorRender(...a);try{if(screen!=='game'||!m)return;const b=document.querySelector('.dock-ico[data-action="eat"]');
+ if(b){b.dataset.action='eat-menu';b.disabled=Boolean(m.done||m.pendingAttack||!['move','place'].includes(m.phase));}}catch(err){console.error(err);}};}
+{const priorAct=act;act=a=>{if(a==='eat-menu'){modal='eat-menu';render();return;}
+ if(a==='eat-menu-close'){modal='';render();return;}
+ if(modal==='eat-menu'&&['eat','food','restaurant','water-fill','town-open'].includes(a))modal='';
+ return priorAct(a);};}
+{const priorOverlay=overlay;overlay=()=>{if(modal!=='eat-menu'||!m||screen!=='game')return priorOverlay();
+ let tiles='';try{const p=S.player(m),h=ficheJournee(p),i=h.indexOf('<p class="fiche-label">Se ravitailler</p>');if(i>=0){const j=h.indexOf('<div class="fiche-tiles">',i),k=h.indexOf('</div>',j);tiles=h.slice(j,k+6);}
+  const t=m.board[p.pos];if(t?.type==='ville')tiles=tiles.replace('<div class="fiche-tiles">','<div class="fiche-tiles">'+ficheTile('🏙️ '+esc(t.name||'La ville'),'Boutiques, restaurant, hôtel','town-open',false,'town-open'));}catch(err){console.error(err);}
+ const p=S.player(m);
+ return `<div class="modal-back"><section class="modal eat-menu" role="dialog" aria-modal="true" aria-label="Manger"><span class="eyebrow">SE RAVITAILLER · ${esc(p.name)}</span><h2>Que veux-tu manger ?</h2><p class="eat-menu-state">🥖 ${p.food} repas dans les sacoches · ⚡ ${p.energy} / ${energyCap(m,p)} · ${p.money} pièce${p.money>1?'s':''}</p>${tiles||'<p>Rien à manger ici pour l’instant.</p>'}<div class="mk-foot">${btn('Fermer','eat-menu-close','light')}</div></section></div>`;};}

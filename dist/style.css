@@ -2469,3 +2469,32 @@ body .player-mat.fiche .fiche-voyage .ultra-cps li b{margin:0}
 .rv-card svg{width:100%;height:auto;display:block;background:#0c1b1f;border-radius:8px}
 .rv-card figcaption{font-size:14px;line-height:1.35;color:#c9bfa4}
 .rv-card figcaption b{display:block;font:600 17px 'Fraunces',Georgia,serif;color:#f6e7c1;margin-bottom:2px}
+
+/* Ultra : le journal du matin */
+.ul-news{background:#fbf3dc;color:#1b1406;border:1px solid #c9b48e;border-radius:6px;padding:8px 12px 10px;margin:8px 0 10px;box-shadow:2px 3px 0 #0002;font-size:13.5px;line-height:1.35}
+.ul-news header{display:flex;align-items:baseline;justify-content:space-between;gap:8px;border-bottom:3px double #1b1406;padding-bottom:3px;margin-bottom:6px}
+.ul-news header b{font:900 21px Fraunces,Georgia,serif;letter-spacing:.01em}
+.ul-news header span{font:600 11.5px 'Barlow Condensed',system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#6a5530}
+.ul-head{font:600 16px Fraunces,Georgia,serif;margin:0 0 5px}
+.ul-items{list-style:none;margin:0 0 6px;padding:0;display:flex;flex-direction:column;gap:2px;border-bottom:1px solid #c9b48e;padding-bottom:6px}
+.ul-foot{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:10px;align-items:start}
+.ul-foot ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1px}
+.ul-foot li{display:flex;gap:6px;align-items:baseline;font-size:13px}.ul-foot li span{font:700 13px 'Barlow Condensed',system-ui,sans-serif;color:#b8432e;width:12px}
+.ul-foot li em{font-style:normal;color:#6a5530;font-size:12px;margin-left:auto;white-space:nowrap}.ul-foot li.me b{color:#b8432e}
+.ul-foot p{margin:0;font-size:13px}
+@media(max-width:600px){.ul-foot{grid-template-columns:1fr}}
+
+.ul-morning .encounter-art svg{max-height:120px;object-fit:cover}.ul-morning .encounter-art{max-height:120px;overflow:hidden}.ul-morning .encounter-body>p,.ul-morning .encounter-body blockquote{font-size:15px}
+.encounter .ul-news,.encounter .ul-news p,.encounter .ul-news li,.encounter .ul-news b{color:#1b1406}
+.encounter .ul-news .ul-foot li em,.encounter .ul-news header span{color:#6a5530}.encounter .ul-news .ul-foot li.me b{color:#b8432e}
+/* Choix des repas depuis le bouton « Manger » (18 octobre) */
+.modal.eat-menu{max-width:620px}
+.modal.eat-menu .fiche-tiles{margin:12px 0}
+.eat-menu-state{margin:4px 0 0;opacity:.85}
+.modal.eat-menu .fiche-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.modal.eat-menu .fiche-tile{background:#f6e7c1;color:#1b3b38;border:2px solid #f2a541;border-radius:12px;padding:10px 12px;text-transform:none;letter-spacing:0;font:600 15px 'Barlow',system-ui,sans-serif;display:flex;flex-direction:column;gap:3px;text-align:left;cursor:pointer;box-shadow:none}
+.modal.eat-menu .fiche-tile b{font:600 18px 'Fraunces',Georgia,serif;color:#1b3b38}
+.modal.eat-menu .fiche-tile small{font-size:13px;color:#4b5a52;text-transform:none;letter-spacing:0}
+.modal.eat-menu .fiche-tile small.gain{color:#2c7a5b;font-weight:700}
+.modal.eat-menu .fiche-tile:disabled{opacity:.5;cursor:not-allowed;border-color:#c9bfa4}
+.modal.eat-menu .fiche-tile:not(:disabled):hover{background:#fff4d6}
