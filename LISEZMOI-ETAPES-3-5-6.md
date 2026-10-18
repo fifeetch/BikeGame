@@ -497,3 +497,8 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 ## 18 octobre — Points des cartes Voyage selon le tableau de Fi (cache v122-points)
 - Chaque carte a ses points max (tous les objectifs) et min (arrivé sans tous les objectifs) : VOYAGE_POINTS dans voyages.js. La règle des −40 % est remplacée par les points mini. La carte affiche « N points · M sans les objectifs ».
 - Bug corrigé : l'objectif « col mythique » (De la Provence à la lagune) ne se validait jamais depuis que le col compte comme une montagne.
+
+## 18 octobre — Carte : nouvelles villes, Lille déplacée, routes ajoutées (cache v123-carte, MAP_VERSION 14)
+- Villes ajoutées (demande de Fi) : Brest, Oulu, et à l'est de la Caspienne Atyraou, Aktaou, Türkmenbaşy, Noukous, Achgabat. Lille descend d'une case (sous Calais) ; son ancienne case redevient une plaine.
+- Routes ajoutées : Moscou → Voronej, Voronej → Samara, Orenburg → Volgograd (capture de Fi), et les routes des nouvelles villes (Brest → Paris, Brest → Bordeaux, Oulu → Luleå / Kuusamo / Helsinki, Astrakhan → Atyraou → Orenburg, Atyraou → Aktaou → Türkmenbaşy → Achgabat, Beyneu → Noukous → Achgabat).
+- tools/routes/construire-routes.mjs garde désormais les routes déjà figées telles quelles et ne trace que les nouvelles.

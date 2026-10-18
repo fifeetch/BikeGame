@@ -28,17 +28,20 @@ test('routes figées : chaque côté de route a son vis-à-vis, sur des cases de
  for(const [q,r,sides]of ROAD_CELLS){const a=byAxial.get(`${q},${r}`);assert(a&&a.type!=='mer',`${q},${r}`);
   for(const d of sides){const [dq,dr]=HEX_DIRECTIONS[d],b=byAxial.get(`${q+dq},${r+dr}`);assert(b&&b.type!=='mer');assert(b.roads.includes((d+3)%6),`${q},${r} côté ${d}`);assert(a.links.includes(b.key));}}
  // Toutes les grandes routes d'avant sont toujours là ; les chemins des hameaux ne comptent pas.
- const net=roadNetwork(board,{villages:DECOR.villages.map(v=>[v[3],v[4]])}),edges=roadEdges(board);
+ // Villes ajoutées ou déplacées le 18 octobre (demande de Fi) : leurs routes sont tracées à la main, on les ignore ici.
+ const NEW=['Brest','Oulu','Atyraou','Aktaou','Türkmenbaşy','Noukous','Achgabat','Lille'],old=Object.fromEntries(Object.entries(board).map(([k,t])=>[k,NEW.includes(t.name)?{...t,name:''}:t]));
+ const net=roadNetwork(old,{villages:DECOR.villages.map(v=>[v[3],v[4]])}),edges=roadEdges(board);
  for(const e of net.main)assert(edges.has(e),'grande route perdue : '+e);
  assert([...net.minor].some(e=>!edges.has(e)),'les petits chemins restent un décor');
 });
 
-test('les 10 routes ajoutées relient bien leurs villes, case par case',()=>{
+test('les routes ajoutées relient bien leurs villes, case par case',()=>{
  const {board}=europeBoard('Paris','Istanbul'),byAxial=new Map(Object.values(board).map(t=>[`${t.q},${t.r}`,t]));
- assert.equal(ROUTES_AJOUTEES.length,10);
+ assert(ROUTES_AJOUTEES.length>=25);const onBoard=n=>Object.values(board).some(t=>t.name===n);
  for(const route of ROUTES_AJOUTEES){const cities=route.name.split(' → '),cells=route.cells.map(([q,r])=>byAxial.get(`${q},${r}`));
-  assert.equal(cells[0].name,cities[0]);assert.equal(cells.at(-1).name,cities.at(-1));
-  for(const c of cities)assert(cells.some(t=>t.name===c),`${route.name} passe par ${c}`);
+  // une route peut finir sur un repère (ex. Luleå) qui rejoint une route existante
+  if(onBoard(cities[0]))assert.equal(cells[0].name,cities[0]);if(onBoard(cities.at(-1)))assert.equal(cells.at(-1).name,cities.at(-1));
+  for(const c of cities.filter(onBoard))assert(cells.some(t=>t.name===c),`${route.name} passe par ${c}`);
   for(let i=1;i<cells.length;i++)assert(isRoadStep(cells[i-1],cells[i]),`${route.name} : pas ${i} sans route`);}
 });
 

@@ -125,7 +125,9 @@ export function placeLandmarks(m){
  const roadDist=new Map(),queue=Object.values(m.board).filter(t=>t.type!=='mer'&&t.roads?.length).map(t=>t.key);for(const k of queue)roadDist.set(k,0);
  for(let i=0;i<queue.length;i++){const k=queue[i];for(const n of m.board[k].links)if(!roadDist.has(n)&&m.board[n].type!=='mer'){roadDist.set(n,roadDist.get(k)+1);queue.push(n);}}
  const pool=shuffle([...near.values()].filter(t=>['plaine','moyenne_montagne','montagne','cote'].includes(t.type)&&!t.name&&!t.colName)),chosen=[];
- for(const far of [2,1])for(const t of pool){if(chosen.length>=n)break;if((roadDist.get(t.key)??99)>=far&&!chosen.includes(t)&&chosen.every(c=>axialDistance(c,t)>=3))chosen.push(t);}
+ // Pas assez de cases loin des routes dans la zone : on cherche d'abord ailleurs sur le plateau, toujours à 2 cases des routes (18 octobre).
+ const wide=shuffle(Object.values(m.board).filter(t=>!near.has(t.key)&&t.x<=1000&&['plaine','moyenne_montagne','montagne','cote'].includes(t.type)&&!t.name&&!t.colName));
+ for(const [far,list] of [[2,pool],[2,wide],[1,pool]])for(const t of list){if(chosen.length>=n)break;if((roadDist.get(t.key)??99)>=far&&!chosen.includes(t)&&chosen.every(c=>axialDistance(c,t)>=3))chosen.push(t);}
  const o=a.landmarkOdds,c1=Math.round(chosen.length*o.one/100),c2=Math.round(chosen.length*o.two/100),c3=Math.max(0,chosen.length-c1-c2);
  const values=shuffle([...Array(c1).fill(1),...Array(c2).fill(2),...Array(c3).fill(3)]);
  chosen.forEach((t,i)=>{const v=values[i]||1,names=LANDMARK_NAMES[v];m.landmarks[t.key]={value:v,name:names[Math.floor(rnd()*names.length)],found:''};});

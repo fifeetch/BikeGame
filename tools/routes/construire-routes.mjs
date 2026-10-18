@@ -23,6 +23,22 @@ export const RED_ROUTES=[
  {name:'Madrid → Barcelone',via:['Madrid',[-3.17,40.63,'Guadalajara'],[-1.64,41.35,'Calatayud'],[-0.88,41.65,'Saragosse'],[0.62,41.62,'Lleida'],'Barcelone']},
  {name:'Oslo → Stockholm',via:['Oslo',[11.83,59.61,'Ørje'],[12.59,59.65,'Arvika'],[13.50,59.38,'Karlstad'],[15.21,59.27,'Örebro'],[16.54,59.61,'Västerås'],'Stockholm']},
  {name:'Stockholm → Narvik',via:['Stockholm',[17.64,59.86,'Uppsala'],[17.14,60.67,'Gävle'],[17.31,62.39,'Sundsvall'],[20.26,63.83,'Umeå'],[22.15,65.58,'Luleå'],[20.66,67.13,'Gällivare'],[20.23,67.86,'Kiruna'],[18.83,68.35,'Abisko'],'Narvik']},
+ // Ajouts du 18 octobre (capture de Fi « routes en rouge » + nouvelles villes).
+ {name:'Moscou → Voronej',via:['Moscou',[37.62,54.19,'Toula'],[38.50,52.62,'Ielets'],'Voronej']},
+ {name:'Voronej → Samara',via:['Voronej',[41.45,52.72,'Tambov'],[45.02,53.20,'Penza'],[48.47,53.16,'Syzran'],'Samara']},
+ {name:'Orenburg → Volgograd',via:['Orenburg',[51.37,51.23,'Ouralsk'],[46.03,51.53,'Saratov'],[45.40,50.08,'Kamychine'],'Volgograd']},
+ {name:'Brest → Paris',via:['Brest',[-2.76,48.51,'Saint-Brieuc'],[-1.68,48.11,'Rennes'],[0.20,48.00,'Le Mans'],[1.49,48.45,'Chartres'],'Paris']},
+ {name:'Brest → Bordeaux',via:['Brest',[-4.10,48.00,'Quimper'],[-3.37,47.75,'Lorient'],[-2.76,47.66,'Vannes'],[-1.55,47.22,'Nantes'],[-0.46,46.32,'Niort'],[-0.63,45.75,'Saintes'],'Bordeaux']},
+ {name:'Oulu → Luleå',via:['Oulu',[24.56,65.74,'Kemi'],[24.14,65.85,'Tornio'],[22.15,65.58,'Luleå']]},
+ {name:'Oulu → Kuusamo',via:['Oulu',[26.99,65.36,'Pudasjärvi'],[29.18,65.97,'Kuusamo']]},
+ {name:'Oulu → Helsinki',via:['Oulu',[27.73,64.22,'Kajaani'],[25.75,62.24,'Jyväskylä'],[25.66,60.98,'Lahti'],'Helsinki']},
+ {name:'Astrakhan → Atyraou',via:['Astrakhan',[48.0,46.6,'Ganiouchkino'],'Atyraou']},
+ {name:'Atyraou → Orenburg',via:['Atyraou',[51.37,51.23,'Ouralsk'],'Orenburg']},
+ {name:'Atyraou → Aktaou',via:['Atyraou',[55.20,45.30,'Beyneu'],[52.80,43.34,'Janaozen'],'Aktaou']},
+ {name:'Beyneu → Noukous',via:[[55.20,45.30,'Beyneu'],'Noukous']},
+ {name:'Aktaou → Türkmenbaşy',via:['Aktaou',[53.0,41.9,'Garabogaz'],'Türkmenbaşy']},
+ {name:'Türkmenbaşy → Achgabat',via:['Türkmenbaşy',[54.37,39.51,'Balkanabat'],'Achgabat']},
+ {name:'Noukous → Achgabat',via:['Noukous',[59.97,41.84,'Daşoguz'],'Achgabat']},
  {name:'Cap Nord → Petrozavodsk',via:['Cap Nord',[24.96,70.05,'Lakselv'],[25.51,69.47,'Karasjok'],[27.03,68.91,'Inari'],[26.59,67.42,'Sodankylä'],[27.43,66.71,'Kemijärvi'],[29.18,65.97,'Kuusamo'],[31.18,65.20,'Kalevala'],[34.58,64.95,'Kem'],[34.31,63.74,'Segueja'],[34.45,62.91,'Medvejiegorsk'],'Petrozavodsk']}
 ];
 
@@ -33,7 +49,12 @@ const edgeKey=(a,b)=>a<b?a+'|'+b:b+'|'+a;
 const neighbours=t=>HEX_DIRECTIONS.map(([dq,dr])=>byAxial.get(`${t.q+dq},${t.r+dr}`)).filter(Boolean);
 
 // 1. Grandes routes actuelles (sans les chemins des hameaux).
-const current=roadNetwork(board).main,edges=new Set(current);
+// Depuis le 18 octobre : on garde EXACTEMENT les routes déjà figées (ajouter des villes ne doit pas déplacer les anciennes routes).
+const {ROAD_CELLS:OLD_CELLS}=await import('../../dist/assets/europe/routes-data.js');
+const current=new Set();for(const [q,r,sides] of OLD_CELLS){const a=byAxial.get(`${q},${r}`);if(!a)continue;for(const d of sides){const [dq,dr]=HEX_DIRECTIONS[d],b=byAxial.get(`${q+dq},${r+dr}`);if(b)current.add(edgeKey(a.key,b.key));}}
+const edges=new Set(current);
+// Tronçons posés à la main : Lille déplacée d'une case (18 octobre) rejoint son ancienne case, où passent les routes.
+for(const [[qa,ra],[qb,rb]] of [[[1,26],[1,25]]]){const a=byAxial.get(`${qa},${ra}`),b=byAxial.get(`${qb},${rb}`);if(a&&b)edges.add(edgeKey(a.key,b.key));}
 
 // 2. Routes rouges : plus court chemin entre deux repères, en restant près de la ligne droite entre eux
 //    (comme la vraie route) ; le relief compte un peu, et on rejoint volontiers une route déjà tracée.
@@ -50,8 +71,9 @@ function segment(a,b){
  const path=[b.key];while(path[0]!==a.key){const p=prev.get(path[0]);if(!p)throw Error(`Pas de chemin ${a.key} → ${b.key}`);path.unshift(p);}
  return path;
 }
+const {ROUTES_AJOUTEES:OLD_ROUTES}=await import('../../dist/assets/europe/routes-data.js'),OLD_NAMES=new Set(OLD_ROUTES.map(r=>r.name)),REDO=false;
 const named=[];
-for(const route of RED_ROUTES){const stops=route.via.map(at),cells=[stops[0].key];
+for(const route of RED_ROUTES){if(OLD_NAMES.has(route.name)&&!REDO){named.push(OLD_ROUTES.find(r=>r.name===route.name));continue;}const stops=route.via.map(at),cells=[stops[0].key];
  for(let i=1;i<stops.length;i++){const part=segment(stops[i-1],stops[i]);cells.push(...part.slice(1));}
  for(let i=1;i<cells.length;i++)edges.add(edgeKey(cells[i-1],cells[i]));
  named.push({name:route.name,cells:cells.map(k=>[board[k].q,board[k].r])});}
