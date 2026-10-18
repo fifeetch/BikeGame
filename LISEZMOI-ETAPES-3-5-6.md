@@ -517,3 +517,7 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 ## 18 octobre — Partie guidée : la ville s'ouvre en arrivant à Belgrade (cache v128-tuto-repas)
 - La rue animée s'ouvre aussi dans la partie guidée ; la bulle du guide attend que la fenêtre de la ville soit fermée.
 - (v128) Bouton « Manger » du bas : ouvre « Que veux-tu manger ? » (ville, repas, provisions, restaurant, gourdes en Bêta) au lieu de manger tout de suite. Partie guidée : la bulle de la carte Événement explique les cartes du mode Original et l'absence de cartes en Immersion.
+
+## 18 octobre — Accueil vivant et vélos sans fanion (cache v129-accueil)
+- Écran d'accueil (choix B de la planche « Accueil plus vivant ») : la caméra suit un cycliste de Paris à Istanbul, la trace orange se dessine, les villes s'allument, le soir tombe puis le jour revient, confettis à l'arrivée et ça recommence (dist/home-anim.js). Rien ne bouge si l'appareil demande moins d'animations.
+- Demande de Fi : plus de fanion sur les vélos (pion de la carte et accueil) ; le numéro du joueur, qui était sur le fanion, disparaît aussi. La couleur du cycliste reste.

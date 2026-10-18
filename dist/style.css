@@ -2498,3 +2498,11 @@ body .player-mat.fiche .fiche-voyage .ultra-cps li b{margin:0}
 .modal.eat-menu .fiche-tile small.gain{color:#2c7a5b;font-weight:700}
 .modal.eat-menu .fiche-tile:disabled{opacity:.5;cursor:not-allowed;border-color:#c9bfa4}
 .modal.eat-menu .fiche-tile:not(:disabled):hover{background:#fff4d6}
+/* Accueil vivant (18 octobre, choix B) : caméra qui suit le cycliste, trace orange, villes qui s'allument, soir qui tombe */
+.mc-world.mc-live{animation:none;transform-origin:0 0;will-change:transform}
+.mc-world.mc-live .mc-rider,.mc-world.mc-live .mc-route,.mc-world.mc-live .mc-start{display:none}
+.mc-trace{fill:none;stroke:#f2a541;stroke-width:3;stroke-dasharray:6 5;stroke-linecap:round}
+.mc-city{font:700 11px 'Barlow Condensed',system-ui,sans-serif;fill:#f6e7c1;stroke:#0c1b1f;stroke-width:2.4;paint-order:stroke;transition:opacity .4s;transform-box:fill-box;transform-origin:center}
+.mc-night{position:absolute;inset:0;z-index:0;pointer-events:none;background:#06131c;opacity:0;mix-blend-mode:multiply}
+/* Plus de fanion sur les vélos (demande de Fi, 18 octobre) */
+.rider-token.free .rider-flag,.rider-token.free .player-number{display:none}

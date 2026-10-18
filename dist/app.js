@@ -1547,3 +1547,7 @@ const markFountains=()=>{try{
   const t=m.board[p.pos];if(t?.type==='ville')tiles=tiles.replace('<div class="fiche-tiles">','<div class="fiche-tiles">'+ficheTile('🏙️ '+esc(t.name||'La ville'),'Boutiques, restaurant, hôtel','town-open',false,'town-open'));}catch(err){console.error(err);}
  const p=S.player(m);
  return `<div class="modal-back"><section class="modal eat-menu" role="dialog" aria-modal="true" aria-label="Manger"><span class="eyebrow">SE RAVITAILLER · ${esc(p.name)}</span><h2>Que veux-tu manger ?</h2><p class="eat-menu-state">🥖 ${p.food} repas dans les sacoches · ⚡ ${p.energy} / ${energyCap(m,p)} · ${p.money} pièce${p.money>1?'s':''}</p>${tiles||'<p>Rien à manger ici pour l’instant.</p>'}<div class="mk-foot">${btn('Fermer','eat-menu-close','light')}</div></section></div>`;};}
+
+// ---------- 18 octobre (choix B de Fi) : écran d'accueil vivant — la caméra suit un cycliste de Paris à Istanbul ----------
+import {startHomeAnim,stopHomeAnim} from './home-anim.js';
+{const priorRender=render;render=(...a)=>{priorRender(...a);try{const root=document.querySelector('.mc-title');if(root)startHomeAnim(root);else stopHomeAnim();}catch(err){console.error(err);}};}
