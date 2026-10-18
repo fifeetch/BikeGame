@@ -507,3 +507,6 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 
 ## 18 octobre — Carte « L’Extrême » Lisbonne → Saint-Pétersbourg (cache v125-extreme)
 - 5 villes · 3 montagnes d’affilée · 1 col mythique · 3 côtes ; environ 47 cases ; 35 points réussie (maximum du tableau, fin de partie), 28 sans tous les objectifs. Pas encore d’illustration.
+
+## 18 octobre — Les petites règles en images (cache v126-regles-images)
+- Planche validée par Fi : 6 vignettes dans l'écran « Règles » (dist/rules-visuals.js). Se déplacer : une côte touche la mer · un col compte comme une montagne. Voyages & points : une case ne compte qu'une fois · « d'affilée » sans coupure · départ et arrivée ne comptent pas · points maxi / mini.

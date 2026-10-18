@@ -2462,3 +2462,10 @@ body .player-mat.fiche .fiche-voyage .ultra-cps li b{margin:0}
 .mc-kind[data-action="mode-beta"]{position:relative;overflow:hidden}
 .mc-kind[data-action="mode-beta"]::before{content:"EN DÉVELOPPEMENT";position:absolute;top:16px;right:-40px;width:170px;transform:rotate(35deg);text-align:center;font:700 11px 'Barlow Condensed',system-ui,sans-serif;letter-spacing:.1em;color:#1b1406;background:repeating-linear-gradient(-45deg,#f2a541 0 10px,#e2902a 10px 20px);border-block:2px solid #1b1406;padding:2px 0;z-index:2}
 .vcard-pts small{display:block;font-size:.72em;opacity:.75;font-weight:600;white-space:nowrap}
+/* Petites règles en images (18 octobre) */
+.rv-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px}
+@media (max-width:640px){.rv-grid{grid-template-columns:1fr}}
+.rv-card{margin:0;background:#16303a;border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:8px;color:#f6e7c1}
+.rv-card svg{width:100%;height:auto;display:block;background:#0c1b1f;border-radius:8px}
+.rv-card figcaption{font-size:14px;line-height:1.35;color:#c9bfa4}
+.rv-card figcaption b{display:block;font:600 17px 'Fraunces',Georgia,serif;color:#f6e7c1;margin-bottom:2px}

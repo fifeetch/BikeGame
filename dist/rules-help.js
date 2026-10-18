@@ -2,6 +2,7 @@
 // et les règles détaillées (bouton « 📖 Règles »). Les nombres viennent des règles de la partie,
 // donc le texte suit toujours les réglages choisis (vélos, météo, rencontres, fin de partie…).
 import {VOYAGE_POINTS} from './voyages.js';
+import {ruleVisuals} from './rules-visuals.js';
 const VP=Object.entries(VOYAGE_POINTS).filter(([k])=>k!=='apprentissage').map(([,v])=>v),VMIN=Math.min(...VP.map(v=>v[1])),VMAX=Math.max(...VP.map(v=>v[1]));
 import {WEATHER} from './weather.js';
 import {NIGHT,DEMAND_NIGHT} from './immersion.js';
@@ -73,7 +74,7 @@ export function rulesHelp(r,tab='route',{btn,eventGame=true}={}){const o=opts(r)
  else if(tab==='meteo')body=o.forecast?`<h3>Météo annoncée</h3>${li(['Chaque soir, le bulletin du lendemain pour 5 régions (Ouest, Alpes, Nord, Est, Balkans). Les pastilles sont sur la carte.',...Object.values(WEATHER).map(w=>`${w.icon} <b>${esc(w.name)}</b> : ${esc(w.effect)}.`)])}`
   :`<h3>Météo</h3>${li([o.encounters?'Dans ce mode, pas de météo : les rencontres remplacent les cartes.':'La météo arrive par les <b>cartes climatiques</b> : les autres joueurs peuvent en jouer une quand tu annonces ton trajet (vent, pluie, orage, neige, brouillard…).','On peut choisir « Météo annoncée » au début d’une partie : un bulletin chaque soir, sans cartes climatiques.'])}`;
  else body=`<h3>Fin de partie</h3>${li([`La partie s’arrête dès qu’un cycliste atteint ${victory(r)}.`,r.victory?.voyages?`Le premier qui réussit ${r.victory.voyages} voyages arrête la partie et gagne <b>+${r.victory.voyagesBonus??5} points</b> d’aventure ; c’est ensuite celui qui a <b>le plus de points</b> qui gagne.`:'',r.victory?.days?`Au bout de ${r.victory.days} jours, celui qui a le plus de points gagne.`:'',`Un prêt de la banque non remboursé : −${r.loan?.penalty??3} points d’aventure à la fin.`,'Ces conditions se choisissent avant la partie (0 = condition non utilisée).'])}`;
- return `<div class="rules-help"><span class="eyebrow">RÈGLES DÉTAILLÉES</span><div class="rh-tabs" role="tablist">${tabs.map(([id,label])=>`<button type="button" role="tab" data-action="help-tab-${id}" aria-selected="${id===tab}" class="${id===tab?'on':''}">${esc(label)}</button>`).join('')}</div><div class="rh-body">${body}</div>${btn('Fermer et reprendre la partie','close','light')}</div>`;}
+ return `<div class="rules-help"><span class="eyebrow">RÈGLES DÉTAILLÉES</span><div class="rh-tabs" role="tablist">${tabs.map(([id,label])=>`<button type="button" role="tab" data-action="help-tab-${id}" aria-selected="${id===tab}" class="${id===tab?'on':''}">${esc(label)}</button>`).join('')}</div><div class="rh-body">${body}${ruleVisuals(tab)}</div>${btn('Fermer et reprendre la partie','close','light')}</div>`;}
 
 // ---------- Résumé avant le départ : mode Ultra (18 octobre) ----------
 // Tous les nombres viennent de dist/ultra.js : le texte suit les réglages de la course.
