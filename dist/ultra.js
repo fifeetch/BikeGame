@@ -67,3 +67,50 @@ export const ULTRA_COL_PLANS=[
  {before:['Col du Galibier'],after:['Col du Stelvio','Grossglockner']},
  {before:['Alto de l’Angliru','Col du Tourmalet'],after:['Grossglockner']}
 ];
+
+// ---------- Le garage de l'ultra (18 octobre, choix de Fi : la monnaie, c'est le poids) ----------
+// Montures : la route va vite sur le goudron mais souffre beaucoup hors route ; le VTT l'inverse.
+// road : heures en plus ou en moins sur plaine, côte et ville ; offroad : heures en plus hors route (remplace le +1 h).
+export const ULTRA_BIKES={
+ route:{name:'Route endurance',kg:8.5,road:-1,offroad:3,tag:'Rapide sur le goudron',line:'Plaine, côte, ville : −1 h par case. Hors route : +3 h par case.'},
+ gravel:{name:'Gravel d’ultra',kg:9.5,road:0,offroad:1,tag:'Passe partout',line:'Même allure partout. Hors route : +1 h.'},
+ vtt:{name:'VTT semi-rigide',kg:11.5,road:1,offroad:0,fork:true,tag:'Roi des pistes',line:'Hors route : aucune heure en plus, fourche suspendue montée. Plaine, côte, ville : +1 h par case.'}
+};
+export const ULTRA_GEAR={
+ aero:{name:'Prolongateurs',kg:.4,text:'Plaine et côte : −½ h par case. Les mains se reposent.'},
+ dynamo:{name:'Moyeu dynamo + phare',kg:.6,text:'La nuit ne coûte plus que +½ h par case.'},
+ camel:{name:'Sac d’hydratation',kg:.4,text:'+1 gourde : moins d’arrêts pour l’eau.'},
+ tige:{name:'Tige de selle suspendue',kg:.5,text:'Hors route : −½ h par case.'},
+ fourche:{name:'Fourche suspendue',kg:1.3,text:'Hors route : −1 h par case. Gravel seulement (déjà sur le VTT).',not:['route','vtt']},
+ tubeless:{name:'Pneus tubeless',kg:.2,text:'Crevaisons 2 fois moins souvent.'},
+ bivy:{name:'Sac de bivouac',kg:.5,text:'« Nuit courte » : +2 énergie de plus.'},
+ couverture:{name:'Couverture de survie',kg:.05,text:'« Un cycle » : +1 énergie de plus.'},
+ gps:{name:'GPS + batterie',kg:.3,text:'Hors route sans limite de cases.'}
+};
+export const ULTRA_BASE_KG=5.4;            // sacoches 2,4 kg + vêtements, nourriture et outils 3 kg
+export const ULTRA_WEIGHT={light:15,heavy:18}; // < 15 kg léger ; 15 à 18 : cols +1 h ; ≥ 18 : cols et montagne +1 h
+export const ULTRA_DEFAULT={bike:'gravel',gear:['tubeless','dynamo']};
+export function ultraKit(bike,gear){const b=ULTRA_BIKES[bike]?bike:'gravel';const g=[...new Set((gear||[]).filter(id=>ULTRA_GEAR[id]&&!(ULTRA_GEAR[id].not||[]).includes(b)))];return {bike:b,gear:g};}
+export function ultraKg(bike,gear){const k=ultraKit(bike,gear);return Math.round((ULTRA_BIKES[k.bike].kg+ULTRA_BASE_KG+k.gear.reduce((n,id)=>n+ULTRA_GEAR[id].kg,0))*100)/100;}
+export function ultraLoad(kg){return kg>=ULTRA_WEIGHT.heavy?{id:'lourd',name:'Lourd',text:'cols et montagne +1 h'}:kg>=ULTRA_WEIGHT.light?{id:'charge',name:'Chargé',text:'cols +1 h'}:{id:'leger',name:'Léger',text:'les cols coûtent leurs heures normales'};}
+// Heures pour une case selon le vélo, l'équipement et le poids (le reste — nuit, fatigue — est ajouté par le moteur).
+export function ultraKitHours(kit,type,onRoad,night){const k=ultraKit(kit?.bike,kit?.gear),b=ULTRA_BIKES[k.bike],has=id=>k.gear.includes(id)||(id==='fourche'&&b.fork);
+ let h=ULTRA_HOURS[type]??5;
+ if(['plaine','cote','ville'].includes(type))h+=b.road;
+ if(has('aero')&&['plaine','cote'].includes(type))h-=.5;
+ if(!onRoad){let o=b.offroad;if(has('tige'))o-=.5;if(has('fourche'))o-=1;h+=Math.max(0,o);}
+ if(night)h+=has('dynamo')?.5:ULTRA_NIGHT_HOURS;
+ const load=ultraLoad(ultraKg(k.bike,k.gear)).id;if(type==='col'&&load!=='leger')h+=1;else if(type==='montagne'&&load==='lourd')h+=1;
+ return Math.max(2,h);}
+
+// Les trois besoins (18 octobre, règle de Fi) : le sommeil, la nourriture et l'eau rendent tous de l'énergie,
+// et chacun a sa dette : on ne peut se passer d'aucun.
+// Faim : +1 par case ; un repas = +2 énergie (froid), −2 de faim, 15 minutes.
+// Soif : +1 par case ; une gourde se boit toute seule dès 2 de soif : +1 énergie, −2 de soif.
+// Paliers : [seuil, nom, heures en plus par case, énergie en plus par case].
+export const ULTRA_NEEDS={
+ faim:{per:1,meal:2,hours:.25,levels:[[0,'Calé',0,0],[2,'Petit creux',0,0],[4,'Fringale',1,1],[6,'À jeun',2,2]]},
+ soif:{per:1,drink:2,auto:2,energy:1,levels:[[0,'Désaltéré',0,0],[2,'Gorge sèche',0,0],[3,'Soif',1,1],[5,'Déshydraté',2,2]]},
+ wake:{faim:1}   // après une nuit courte ou une vraie nuit (l'hôtel sert le petit-déjeuner : faim 0, gourdes pleines, soif 0)
+};
+export function ultraNeedLevel(kind,v){const L=ULTRA_NEEDS[kind].levels;let i=0;L.forEach((l,j)=>{if(v>=l[0])i=j;});const l=L[i];return {level:i,max:L.length-1,name:l[1],hours:l[2],energy:l[3],next:L[i+1]?.[0]??null};}

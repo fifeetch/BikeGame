@@ -2,7 +2,7 @@ import * as E from './engine.js';
 import {europeBoard,MAP_VERSION,axialDistance} from './europe.js';
 import {voyages,progress,voyagePoints,findVoyage} from './voyages.js';
 import {DECOR} from './assets/europe/decor-data.js';
-import {ULTRA_RACE,ULTRA_HOURS,ULTRA_OFFROAD_HOURS,ULTRA_NIGHT_HOURS,ULTRA_TIRED_HOURS,ULTRA_NIGHT,ULTRA_STEP_MAX,ULTRA_SLEEP,ULTRA_DEBT,ULTRA_DEBT_NAMES,ULTRA_HALLU,ULTRA_MICRO,ULTRA_LATE_NIGHT,ULTRA_SHOP_HOURS,ULTRA_RESTO_HOURS,ULTRA_FOOD,ULTRA_FERRY_MAX,ULTRA_FERRY_HOURS,ULTRA_RIVALS,ULTRA_RIVAL_PACE,ULTRA_COL_PLANS} from './ultra.js';
+import {ULTRA_NEEDS,ultraNeedLevel,ultraKit,ultraKitHours,ultraKg,ultraLoad,ULTRA_GEAR,ULTRA_BIKES,ULTRA_RACE,ULTRA_HOURS,ULTRA_OFFROAD_HOURS,ULTRA_NIGHT_HOURS,ULTRA_TIRED_HOURS,ULTRA_NIGHT,ULTRA_STEP_MAX,ULTRA_SLEEP,ULTRA_DEBT,ULTRA_DEBT_NAMES,ULTRA_HALLU,ULTRA_MICRO,ULTRA_LATE_NIGHT,ULTRA_SHOP_HOURS,ULTRA_RESTO_HOURS,ULTRA_FOOD,ULTRA_FERRY_MAX,ULTRA_FERRY_HOURS,ULTRA_RIVALS,ULTRA_RIVAL_PACE,ULTRA_COL_PLANS} from './ultra.js';
 import {CLASSIC,COLORS,clone,validateRules,energyCap,isExhausted,fatigueMax,IMM_FATIGUE_MAX} from './rules.js';
 import {cardById,effectiveCards,normalizeCustomCards} from './cards.js';
 import * as C from './event-card-engine.js';
@@ -17,7 +17,7 @@ export const player=m=>m.players[m.activeIndex];
 // Sans l'objet protecteur (le GPS), dès qu'un pas de la journée quitte la route, la journée entière est limitée
 // à rules.offroad.maxDistance[vélo] cases (toutes les cases de la journée comptent, y compris celles offertes par une carte).
 export const offroadEnabled=m=>Boolean(m.mode==='plateau'&&m.rules.offroad?.enabled);
-export const hasOffroadItem=(m,p=player(m))=>Boolean(m.rules.offroad?.item&&p.items.includes(m.rules.offroad.item)||C.isEventGame(m)&&C.hasBonusEffect(m,p,'gps_immunity'));
+export const hasOffroadItem=(m,p=player(m))=>Boolean(ultraOn(m)&&ultraHas(p,'gps')||m.rules.offroad?.item&&p.items.includes(m.rules.offroad.item)||C.isEventGame(m)&&C.hasBonusEffect(m,p,'gps_immunity'));
 export const offroadMax=(m,p=player(m))=>m.rules.offroad?.maxDistance?.[p.bike]??5;
 export const offroadToday=(m,p=player(m))=>p.offroadTurn===m.turn;
 // Le pas de la case from vers la case t suit-il une route ? (en mode Tuiles : toujours vrai, la règle ne s'applique pas)
@@ -105,6 +105,7 @@ export function createMatch(roster,mode='plateau',rules=CLASSIC,seed=randomSeed(
   const space=items.reduce((n,id)=>n+r.equipment[id].space,0),price=items.reduce((n,id)=>n+r.equipment[id].price,0);
   const bikePrice=r.bikes[entry.bike].price||0;if(space>capacityFor(r,entry.bike,items)||price+bikePrice>r.startMoney)throw Error('Le vélo et le matériel de départ dépassent le budget ou les emplacements.');
   m.players.push({ptsSeen:0,id:'p'+(i+1),name:String(entry.name||'Joueur '+(i+1)).slice(0,40),color:COLORS[i],bike:entry.bike,voyage:entry.voyage,pos,energy:r.startEnergy,food:r.startFood+(r.bikes[entry.bike].extraFood||0),money:r.startMoney-bikePrice-price+r.budget.startBonus,points:0,fatigue:0,dayCols:0,items,cardHand:[],pendingCards:[],turnModifiers:{},flat:false,lastCity:pos,visited:[pos],travel:[],travelHistory:[],steps:0,cols:0,cities:1,discoveries:0,completed:false,voyageWon:false,turns:0,availableDay:1,log:[],stats:{steps:0,energySpent:0,work:0,rest:0,events:0}});
+  if(m.ultra)m.players.at(-1).ultraKit=ultraKit(entry.ultraBike,entry.ultraGear);
  });if(m.immersion){const lv=immLevel(m);if(lv.money)for(const p of m.players)p.money=Math.max(0,p.money+lv.money);}
  placeLandmarks(m);C.setup(m);record(m,'setup','Partie créée : '+roster.length+' joueur(s), '+r.eventCards.startingHand+' cartes piochées chacun parmi '+m.eventCardIds.length+'.');return m;
 }
@@ -206,7 +207,7 @@ export function move(m,k){const p=player(m),t=m.board[k];if(C.isEventGame(m)&&m.
  if(!offroadAllows(m,p,p.pos,t,m.moved,offroadToday(m,p)))return false;
  if(snowBlocked(m,p,t)||immBlocked(m,t))return false;
  const onRoad=roadStep(m,p.pos,t);
- const spent=(eventGame?eventStepCost(m,t,step,free):cost(m,t)+extra)+weatherExtra(m,p,p.pos,t,m.moved)+betaThirst(m,p,m.moved);
+ const spent=(eventGame?eventStepCost(m,t,step,free):cost(m,t)+extra)+weatherExtra(m,p,p.pos,t,m.moved)+betaThirst(m,p,m.moved)+ultraHunger(m,p);
  if(p.energy<spent)return false;
   const usedFree=eventGame&&!!free,usedLight=eventGame&&C.hasBonusEffect(m,p,'light_bike')&&p.lightTurn!==m.turn&&!usedFree&&!p.shortcutActive&&terrainSurcharge(m,p,t);
  p.energy-=spent;m.stats.energySpent+=spent;p.stats.energySpent+=spent;if(m.moved===0)p.dayStart={turn:m.turn,pos:p.pos};if(m.mode==='plateau'&&!onRoad){p.offroadTurn=m.turn;p.stats.offroad=(p.stats.offroad||0)+1;}p.pos=k;if(t.type==='ville')p.lastCity=k;p.steps++;p.stats.steps++;m.moved++;m.stats.terrain[t.type]=(m.stats.terrain[t.type]||0)+1;betaStep(m,p,k,t);ultraStep(m,p,k,t,onRoad);
@@ -231,7 +232,7 @@ const HOT_MEALS={ouest:'des pâtes au réchaud',alpes:'une polenta au réchaud',
 const hasStove=(m,p)=>(p.items.includes('rechaud')||Boolean(C.isEventGame(m)&&C.hasBonusEffect(m,p,'efficient_stove')))&&!(betaOn(m)&&water(m,p)<1)&&!ultraOn(m);// Bêta : le réchaud ne boit pas, mais il faut au moins 1 gourde
 export function mealInfo(m,p=player(m)){const hot=hasStove(m,p),region=regionOf(m.board[p.pos]);return {hot,label:hot?'Repas chaud':'Repas froid',dish:(hot?HOT_MEALS:COLD_MEALS)[region]||(hot?'un repas chaud':'un repas froid')};}
 export function eatGain(m,p=player(m)){const f=m.rules.food,hot=hasStove(m,p);const base=hot?(f.hotEnergy??3)+(p.items.includes('rechaud')&&C.isEventGame(m)&&C.hasBonusEffect(m,p,'efficient_stove')?1:0):(f.coldEnergy??2);const g=Math.max(0,base-immMealPenalty(m,p));return immOn(m)&&immLevel(m).mealHalf?Math.max(1,Math.floor(g/2)):g;}
-export function eat(m){const p=player(m);if(m.pendingAttack||m.done||!['move','place'].includes(m.phase)||m.ate>=m.rules.food.maxPerTurn||p.food<1||p.energy>=energyCap(m,p))return false;p.food--;m.ate++;const base=C.isEventGame(m)?C.hasBonusEffect(m,p,'efficient_stove')?3:m.rules.cardBalance.foodEnergy:m.rules.food.energy;p.energy=Math.min(energyCap(m,p),p.energy+eatGain(m,p));{const meal=mealInfo(m,p);record(m,'food',`${meal.label} : ${meal.dish} (+${eatGain(m,p)} énergie).`);}return true;}
+export function eat(m){if(ultraOn(m))return ultraEat(m);const p=player(m);if(m.pendingAttack||m.done||!['move','place'].includes(m.phase)||m.ate>=m.rules.food.maxPerTurn||p.food<1||p.energy>=energyCap(m,p))return false;p.food--;m.ate++;const base=C.isEventGame(m)?C.hasBonusEffect(m,p,'efficient_stove')?3:m.rules.cardBalance.foodEnergy:m.rules.food.energy;p.energy=Math.min(energyCap(m,p),p.energy+eatGain(m,p));{const meal=mealInfo(m,p);record(m,'food',`${meal.label} : ${meal.dish} (+${eatGain(m,p)} énergie).`);}return true;}
 // Prêt de la banque (règle de Fi, 17 octobre) : un seul prêt de 5 pièces, sans intérêts ; on l'obtient à la banque d'une ville
 // ou dans la fenêtre du train ; on le rembourse en une fois dans une banque ; non remboursé à la fin : −3 points d'aventure.
 export const loanRule=m=>({amount:m.rules.loan?.amount??5,penalty:m.rules.loan?.penalty??3});
@@ -417,7 +418,7 @@ function immersionStep(m,p,k,t,onRoad){if(!immersionOn(m)||m.done||m.phase!=='mo
  if(!im.planStep||m.moved!==im.planStep)return;im.planStep=0;
  // La fatigue décide : galère ou belle surprise, et quelles galères sont possibles (inattention dès la fatigue 2).
  const ctx=immContext(m,p,k,onRoad),lvl=fatigueLevel(m,p),rested=(p.fatigue||0)<=1,fits=SCENES.filter(s=>s.when==='route'&&sceneFits(m,p,s,ctx));
- const galeres=fits.filter(s=>s.kind==='galere'&&lvl.causes.includes(s.cause||'route')),belles=fits.filter(s=>s.kind!=='galere');
+ const galeres=fits.filter(s=>s.kind==='galere'&&lvl.causes.includes(s.cause||'route')).filter(s=>!(ultraOn(m)&&/crev/.test(s.id)&&ultraHas(p,'tubeless')&&irand(m)<.5)),belles=fits.filter(s=>s.kind!=='galere');
  let want=irand(m)<Math.min(.95,lvl.galere*immLevel(m).galere)?'galere':'belle';if(want==='galere'&&rested&&im.last==='galere')want='belle';
  const s=pickScene(m,want==='galere'?(galeres.length?galeres:belles):(belles.length?belles:rested&&im.last==='galere'?[]:galeres));
  if(s)beginScene(m,p,s,true,ctx);}
@@ -562,7 +563,7 @@ function applyOrigNight(m,p){const n=p.origNight;p.origNight=null;if(!n||n.turn!
 // Eau sûre : ville, hameau (fontaine), camping, hôtel, habitant. Rivière, lac, torrent de montagne : sûr avec le filtre, sinon 1 fois sur 4 eau contaminée.
 export const WATER_CAP={gravel:2,randonneur:3};
 export const WATER_RISK=.25,WATER_SICK={energy:-2,fatigue:1};
-export const waterCap=(m,p)=>WATER_CAP[p.bike]??2;
+export const waterCap=(m,p)=>(WATER_CAP[p.bike]??2)+(ultraOn(m)&&ultraHas(p,'camel')?1:0);
 export function water(m,p){if(p.water===undefined||p.water===null)p.water=waterCap(m,p);return p.water;}
 let WATER_CELLS=null;
 function waterCells(){if(WATER_CELLS)return WATER_CELLS;const k=(q,r)=>`hex-${q}-${r}`,river=new Set(),fountain=new Set();
@@ -570,10 +571,11 @@ function waterCells(){if(WATER_CELLS)return WATER_CELLS;const k=(q,r)=>`hex-${q}
  return WATER_CELLS={river,fountain};}
 // '' (pas d'eau), 'ville', 'fontaine' (hameau), 'riviere' (rivière ou lac), 'torrent' (montagne).
 export function waterSpot(m,key){const t=m.board?.[key];if(!t)return '';if(t.type==='ville')return 'ville';const w=waterCells();if(w.fountain.has(key))return 'fontaine';if(w.river.has(key))return 'riviere';if(['moyenne_montagne','montagne','col'].includes(t.type))return 'torrent';return '';}
-export function betaThirst(m,p,step){return betaOn(m)&&step===0&&water(m,p)<1?1:0;}
+export function betaThirst(m,p,step){if(ultraOn(m))return 0;return betaOn(m)&&step===0&&water(m,p)<1?1:0;}
 function fillWater(m,p,why){const cap=waterCap(m,p),before=water(m,p);if(before>=cap)return false;p.water=cap;record(m,'eau',`💧 Gourdes remplies (${why}) : ${cap} / ${cap}.`);return true;}
 function betaStep(m,p,k,t){if(!betaOn(m))return;
- if(m.moved===1){if(water(m,p)>0){p.water--;record(m,'eau',`💧 Tu bois une gourde : ${p.water} / ${waterCap(m,p)}.`);}else record(m,'eau','🥵 Plus d’eau : −1 énergie, et pas de repas chaud tant que tu n’as pas rempli une gourde.');}
+ if(ultraOn(m)){}
+ else if(m.moved===1){if(water(m,p)>0){p.water--;record(m,'eau',`💧 Tu bois une gourde : ${p.water} / ${waterCap(m,p)}.`);}else record(m,'eau','🥵 Plus d’eau : −1 énergie, et pas de repas chaud tant que tu n’as pas rempli une gourde.');}
  const h=t.type==='ville'?holidayAt(m,k):'';if(h&&p.feteRound!==m.round){p.feteRound=m.round;p.points+=1;record(m,'fete',`🎉 ${h} à ${t.name||'la ville'} : on t’invite à la fête (+1 point). Supérette et magasin de vélo fermés.`,{points:1});}}
 function betaNight(m,p,id){if(!betaOn(m))return;if(['camping','hotel','demander'].includes(id)){const cap=waterCap(m,p);if(water(m,p)<cap){p.water=cap;p.log?.unshift(`💧 Gourdes remplies pour la nuit : ${cap} / ${cap}.`);}}}
 // Le calendrier : la partie commence un lundi. Jours de fermeture selon le pays (supérette et magasin de vélo).
@@ -667,7 +669,7 @@ export function ultraStandings(m,p=player(m)){if(!ultraOn(m))return [];const u=p
  return rows;}
 // ---- Une case parcourue : l'horloge, la dette de sommeil, les cols, les contrôles, l'arrivée, les barrières ----
 function ultraStep(m,p,k,t,onRoad){if(!ultraOn(m)||m.done)return;const u=pu(p);
- let hours=ULTRA_HOURS[t.type]??5;if(!onRoad)hours+=ULTRA_OFFROAD_HOURS;if(ultraNight(u.h))hours+=ULTRA_NIGHT_HOURS;if((p.fatigue||0)>=2)hours+=ULTRA_TIRED_HOURS;
+ let hours=ultraKitHours(ultraKitOf(p),t.type,onRoad,ultraNight(u.h));if((p.fatigue||0)>=2)hours+=ULTRA_TIRED_HOURS;hours+=ultraNeedsStep(m,p,k);
  ultraAddHours(m,p,hours);u.cases++;syncDebt(m,p);
  if(t.type==='col'&&t.colName&&!u.cols.includes(k)){u.cols.push(k);record(m,'ultra',`⛰️ ${t.colName} : col mythique ${Math.min(u.cols.length,ULTRA_RACE.cols)} / ${ULTRA_RACE.cols}.`,{key:k});}
  if(ultraBarrier(m,p))return;
@@ -700,8 +702,9 @@ function ultraSleepOptions(m,p){const here=m.board[p.pos],city=here?.type==='vil
   return {id:o.id,name:o.name,icon:o.icon,price:0,hours:o.hours,energy:o.energy==='full'?'plein':o.energy,awakeAfter,fatigue:l-(p.fatigue||0),text:o.text,why:o.city&&!city?'en ville seulement':''};})};}
 function ultraSleep(m,id){const p=player(m),u=pu(p),o=ULTRA_SLEEP.find(x=>x.id===id);if(!o||m.pendingAttack||m.done||!['move','place'].includes(m.phase))return false;if(o.city&&m.board[p.pos]?.type!=='ville')return false;
  const before={energy:p.energy,awake:u.awake,h:u.h};ultraAddHours(m,p,o.hours,false);u.awake=o.awake==='reset'?0:Math.max(0,u.awake+o.awake);syncDebt(m,p);
- p.energy=o.energy==='full'?energyCap(m,p):Math.min(energyCap(m,p),p.energy+o.energy);
- if(o.id==='hotel'){p.water=waterCap(m,p);}
+ const bonus=(o.id==='court'&&ultraHas(p,'bivy')?2:0)+(o.id==='cycle'&&ultraHas(p,'couverture')?1:0);
+ p.energy=o.energy==='full'?energyCap(m,p):Math.min(energyCap(m,p),p.energy+o.energy+bonus);
+ if(o.id==='hotel'){p.water=waterCap(m,p);u.faim=0;u.soif=0;}else if(['court','nuit'].includes(o.id))u.faim=(u.faim||0)+ULTRA_NEEDS.wake.faim;
  u.lastSleep={id:o.id,name:o.name,hours:o.hours,gain:p.energy-before.energy,awakeBefore:before.awake,awakeAfter:u.awake,from:before.h,to:u.h};
  record(m,'night',`${o.icon} ${o.name} (${o.hours<1?Math.round(o.hours*60)+' min':o.hours+' h'}) : +${p.energy-before.energy} énergie · réveil ${clockText(u.h).text.toLowerCase()}.`);
  m.actionDays=1;if(ultraBarrier(m,p))return true;endTurn(m);return true;}
@@ -717,3 +720,23 @@ export function ultraFoodInfo(m,p=player(m)){const t=m.board[p.pos],spot=waterSp
  return {where:'',name:'Provisions',qty:0,why:'en ville ou au hameau seulement',note:''};}
 function ultraBuyFood(m){const p=player(m),i=ultraFoodInfo(m,p);if(m.pendingAttack||m.done||!['move','place'].includes(m.phase)||!i.qty||i.why)return false;
  p.food=Math.min(C.foodCapacity(m,p),p.food+i.qty);ultraAddHours(m,p,ULTRA_FOOD.hours);record(m,'buy',`🥖 ${i.name} : +${i.qty} repas froid${i.qty>1?'s':''} (${Math.round(ULTRA_FOOD.hours*60)} min d’arrêt).`);return true;}
+
+// ---------- Ultra : garage (vélo, équipement, poids) et repas (18 octobre) ----------
+export function ultraKitOf(p){if(!p.ultraKit)p.ultraKit=ultraKit('gravel',['tubeless','dynamo']);return p.ultraKit;}
+export function ultraHas(p,id){const k=ultraKitOf(p);return k.gear.includes(id)||(id==='fourche'&&Boolean(ULTRA_BIKES[k.bike]?.fork));}
+export function ultraKitInfo(p){const k=ultraKitOf(p),kg=ultraKg(k.bike,k.gear);return {bike:ULTRA_BIKES[k.bike],gear:k.gear.map(id=>ULTRA_GEAR[id]),kg,load:ultraLoad(kg)};}
+// Ultra : les trois besoins (sommeil, faim, soif). La dette de sommeil est la fatigue ; faim et soif ont leurs paliers.
+export function ultraNeeds(m,p=player(m)){const u=pu(p),f=ultraNeedLevel('faim',u.faim||0),w=ultraNeedLevel('soif',u.soif||0);return {faim:{...f,value:u.faim||0},soif:{...w,value:u.soif||0},water:water(m,p)};}
+export function ultraHunger(m,p=player(m)){if(!ultraOn(m))return 0;const u=pu(p);return ultraNeedLevel('faim',(u.faim||0)).energy+ultraNeedLevel('soif',(u.soif||0)).energy;}
+// Une case : faim et soif montent ; une gourde se boit toute seule ; renvoie les heures en plus (paliers).
+function ultraNeedsStep(m,p,k){const u=pu(p),N=ULTRA_NEEDS,before={f:ultraNeedLevel('faim',u.faim||0),s:ultraNeedLevel('soif',u.soif||0)};
+ const extra=before.f.hours+before.s.hours;
+ u.faim=(u.faim||0)+N.faim.per;u.soif=(u.soif||0)+N.soif.per;
+ if(u.soif>=N.soif.auto&&water(m,p)>0){p.water--;u.soif=Math.max(0,u.soif-N.soif.drink);const g=Math.min(N.soif.energy,Math.max(0,energyCap(m,p)-p.energy));p.energy+=g;record(m,'eau',`💧 Tu bois une gourde (+${g} énergie) : ${p.water} / ${waterCap(m,p)}.`);}
+ const f=ultraNeedLevel('faim',u.faim),w=ultraNeedLevel('soif',u.soif);
+ if(f.level>before.f.level&&f.hours)record(m,'food',`🥴 ${f.name} : +${f.hours} h et −${f.energy} énergie par case tant que tu ne manges pas.`,{key:k});
+ if(w.level>before.s.level&&w.hours)record(m,'eau',`🥵 ${w.name} : +${w.hours} h et −${w.energy} énergie par case jusqu’au prochain point d’eau.`,{key:k});
+ return extra;}
+function ultraEat(m){const p=player(m),u=pu(p);if(m.pendingAttack||m.done||!['move','place'].includes(m.phase)||p.food<1||(!(u.faim>0)&&p.energy>=energyCap(m,p))||m.ate>=Math.max(3,m.rules.food.maxPerTurn||1))return false;
+ const g=eatGain(m,p),before=p.energy;p.food--;m.ate++;p.energy=Math.min(energyCap(m,p),p.energy+g);u.faim=Math.max(0,(u.faim||0)-ULTRA_NEEDS.faim.meal);ultraAddHours(m,p,ULTRA_NEEDS.faim.hours);
+ const meal=mealInfo(m,p);record(m,'food',`${meal.label} : ${meal.dish} (+${p.energy-before} énergie, −${ULTRA_NEEDS.faim.meal} de faim, 15 min).`);return true;}

@@ -16,6 +16,8 @@ import {townSvg,townInsideSvg,townArrive,townGo,townOut,townSkip,townAct,townTic
 import {axialDistance as townDistance} from './europe.js';
 import {readDisplayPrefs,writeDisplayPref} from './display-prefs.js';
 import {steps as menuSteps,titleScreen,plateauScreen,playersScreen,kindScreen,garageScreen,voyagesScreen,onlineScreen,editorHubScreen} from './menus.js';
+import {ultraGarageScreen} from './ultra-garage.js';
+import {ultraStartOpen} from './ultra-start.js';
 import {rulesIntro,rulesHelp,HELP_TABS} from './rules-help.js';
 import * as SAVES from './saves.js';
 import {partiesScreen} from './menus.js';
@@ -1470,3 +1472,36 @@ function ultraEndHtml(){const p=m.players[0],u=S.ultraState(m,p),r=u?.result;if(
   :r.kind==='abandon'?`<p class="ultra-end out">🏳️ Abandon ${esc(c.text.toLowerCase())}, après ${u.cases*100} km.</p>`:`<p class="ultra-end out">⏱️ Hors délai ${esc(c.text.toLowerCase())}, après ${u.cases*100} km.</p>`;
  const stamps=u.stamps.map(s=>`<li>🛂 ${esc(S.ULTRA_RACE_INFO.checkpoints[s.cp])} : ${esc(S.clockText(s.h).text.toLowerCase())} · ${s.rank}ᵉ</li>`).join('');
  return head+`<ul class="ultra-end-list">${stamps}<li>⛰ ${Math.min(u.cols.length,3)} cols mythiques · ${u.cases*100} km</li></ul><ol class="uf-rank ultra-end-rank">${st.map((x,i)=>`<li class="${x.me?'me':''}${x.out?' out':''}"><span class="n">${i+1}</span><i style="background:${esc(x.color||'#f2a541')}"></i><b>${esc(x.me?'Toi':x.name)}</b><span class="km">${x.finishH!=null?S.clockText(x.finishH).text.toLowerCase():x.out?'abandon':'reste '+Math.round(x.rem)*100+' km'}</span></li>`).join('')}</ol>`;}
+
+// ---------- Ultra, la suite (18 octobre, choix de Fi sur la planche « Ultra · garage, départ, chrono ») ----------
+// Le garage de l'ultra : le vélo sur le pied d'atelier, l'équipement au mur, la monnaie c'est le poids.
+{const priorEquip=equipmentSetup;equipmentSetup=function(){if(!setupRules.immersion?.ultra)return priorEquip();const p=roster[choosing];if(!p.ultraBike){p.ultraBike='gravel';p.ultraGear=['tubeless','dynamo'];}
+ return ultraGarageScreen({btn,steps:menuSteps,player:p,index:choosing,total:roster.length});};}
+document.addEventListener?.('click',e=>{const el=e.target?.closest?.('[data-ultra-bike],[data-ultra-gear]');if(!el||screen!=='equipment'&&!document.querySelector('.ug-page'))return;const p=roster[choosing];if(!p)return;
+ if(el.dataset.ultraBike){p.ultraBike=el.dataset.ultraBike;p.ultraGear=(p.ultraGear||[]).filter(id=>!(ULTRA_GEAR_NOT[id]||[]).includes(p.ultraBike));}
+ else{const id=el.dataset.ultraGear,g=new Set(p.ultraGear||[]);g.has(id)?g.delete(id):g.add(id);p.ultraGear=[...g];}
+ render();});
+const ULTRA_GEAR_NOT={fourche:['route','vtt']};
+// La fiche : le chrono à côté du jour ; une seule jauge de fatigue (la dette de sommeil) et le ventre (les repas).
+function ultraClockPill(h){const c=S.clockText(h);return `${c.weekday[0].toUpperCase()+c.weekday.slice(1,3)}. ${String(c.hour).padStart(2,'0')}:${String(c.min).padStart(2,'0')}`;}
+{const priorSheet3=playerSheet;playerSheet=(inline=false)=>{const h=priorSheet3(inline);if(!m||!S.ultraOn(m))return h;const u=S.ultraState(m),night=S.ultraNight(u.h);
+ const kit=S.ultraKitInfo(S.player(m));return h.replace(/<span class="lvl-badge[^"]*"[^>]*>[^<]*<\/span>/,'<span class="lvl-badge lvl-ultra" title="Mode Ultra, en développement">⏱ Ultra</span>').replace(/<small>(Gravel|Randonneuse) · /,`<small>${esc(kit.bike.name)} · ${String(kit.kg).replace('.',',')} kg · `).replace(/<span class="mat-day">JOUR (\d+)<\/span>/i,(x,d)=>`<span class="mat-daybox"><span class="mat-day">JOUR ${S.ultraDayOf(u.h)}</span><span class="mat-clock${night?' night':''}" data-ultra-h="${u.h}" title="Heure de la course · ${Math.floor(u.h-6)} h depuis le départ">⏱ <b>${ultraClockPill(u.h)}</b></span></span>`);};}
+{const priorGauges2=immGauges;immGauges=function(p,fi,cells,cap){const h=priorGauges2(p,fi,cells,cap);if(!S.ultraOn(m))return h;const d=S.ultraDebt(m,p),n=S.ultraNeeds(m,p);
+ const dots=(lv,max)=>`<span class="imm-dots">${Array.from({length:max},(_,i)=>`<i class="${i<lv?'on':''}"></i>`).join('')}</span>`;
+ const need=(cls,ico,lab,name,lv,max,sub,warn,tip)=>`<span class="un-need ${cls}${warn?' warn':''}" title="${esc(tip)}"><span class="un-lab">${ico} ${lab}</span><b>${esc(name)}</b>${dots(lv,max)}<small>${esc(sub)}</small></span>`;
+ const row=`<div class="imm-fatl ultra-needs">${need('sleep','💤','Sommeil',d.name,d.level,5,`${Math.floor(d.awake)} h sans dormir`,d.level>=3,'La dette de sommeil, c’est la fatigue : heures depuis ton dernier vrai sommeil. Paliers 16, 24, 32 (hallucinations), 40 (micro-sommeils), 48 h. Elle baisse ton énergie maximale. Dormir rend de l’énergie.')}${need('food','🍽','Faim',n.faim.name,n.faim.level,n.faim.max,n.faim.hours?`+${n.faim.hours} h et −${n.faim.energy} énergie par case`:n.faim.next!=null?`palier suivant dans ${n.faim.next-n.faim.value} case${n.faim.next-n.faim.value>1?'s':''}`:'',n.faim.hours>0,'+1 de faim par case. Un repas : +2 énergie et −2 de faim (15 min). Fringale dès 4 : +1 h et −1 énergie par case ; à jeun dès 6 : +2 h et −2 énergie.')}${need('water','💧','Soif',n.soif.name,n.soif.level,n.soif.max,n.soif.hours?`+${n.soif.hours} h et −${n.soif.energy} énergie par case`:n.water?'une gourde se boit toute seule':'gourdes vides : trouve un point d’eau',n.soif.hours>0||!n.water,'+1 de soif par case. Dès 2, une gourde se boit toute seule : +1 énergie, −2 de soif. Gourdes vides : soif dès 3 (+1 h et −1 énergie par case), déshydraté dès 5 (+2 h et −2 énergie).')}</div>`;
+ return h.replace(/<div class="imm-fatl">[\s\S]*?<\/div><\/div>/,row+'</div>');};}
+{const priorBlock=ultraBlock;ultraBlock=function(p){return priorBlock(p).replace(/<span class="uf-clock">[^<]*<\/span>/,'<span class="uf-dev">🚧 Mode en développement</span>').replace(/<div class="uf-debt"[\s\S]*?<\/em><\/div>/,'');};}
+// L'horloge qui file pendant le trajet (idée A) et la carte qui s'assombrit la nuit.
+var ultraShownH=null,ultraShownCases=null,ultraShownPhase='';
+const ultraPhase=h=>{const t=((h%24)+24)%24;return t>=21||t<5?'nuit':t>=18||t<7?'soir':'jour';};
+{const priorRender=render;render=function(...a){const out=priorRender(...a);try{ultraAfterRender();}catch{}return out;};}
+function ultraAfterRender(){if(typeof document==='undefined'||!m||!S.ultraOn(m)||screen!=='game'){ultraShownH=null;return;}
+ const u=S.ultraState(m),wrap=document.querySelector('.map-wrap'),pill=document.querySelector('.mat-clock b'),to=u.h,from=ultraShownH??to,cases=Math.max(0,u.cases-(ultraShownCases??u.cases));
+ const dur=to>from?Math.min(7000,Math.max(500,650*Math.max(1,cases))):0,phase=ultraPhase(to);
+ if(wrap){wrap.classList.add('ultra-sky');wrap.dataset.sky=ultraShownPhase||phase;wrap.style.setProperty('--sky-dur',(dur||600)+'ms');requestAnimationFrame(()=>{wrap.dataset.sky=phase;});}
+ if(pill&&dur){const t0=performance.now(),tick=now=>{const k=Math.min(1,(now-t0)/dur),cur=from+(to-from)*k,el=document.querySelector('.mat-clock b');if(!el)return;el.textContent=ultraClockPill(cur);el.parentElement.classList.toggle('night',S.ultraNight(cur));el.parentElement.classList.toggle('run',k<1);if(k<1)requestAnimationFrame(tick);};requestAnimationFrame(tick);}
+ ultraShownH=to;ultraShownCases=u.cases;ultraShownPhase=phase;
+ // Le grand départ : une fois, avant le premier coup de pédale.
+ if(!m.ultra.startSeen&&!u.cases&&!m.done&&!modal&&!document.querySelector('.us-back')){const n=1+(S.ultraRivals(m).length||10)+30;ultraStartOpen({names:n,onClose:()=>{if(m?.ultra){m.ultra.startSeen=true;persist();}}});}}
+

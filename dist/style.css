@@ -2360,3 +2360,60 @@ body .player-mat.fiche .fiche-voyage .ultra-tab .uf-rank li.me{background:#2a2a1
 body .player-mat.fiche .fiche-voyage .ultra-cps li{display:block;padding:5px 10px;font-size:15px;background:var(--f-card);border:2px solid var(--f-line);color:var(--f-ink)}
 body .player-mat.fiche .fiche-voyage .ultra-cps li.ok{background:#e6f0d6;border-color:#9cc48a}
 body .player-mat.fiche .fiche-voyage .ultra-cps li b{margin:0}
+/* ---------- Ultra, la suite (18 octobre) : ruban « en développement », garage au poids, départ, chrono, carte la nuit ---------- */
+.mc-kind[data-action="mode-ultra"]{position:relative;overflow:hidden}
+.mc-kind[data-action="mode-ultra"]::before{content:"EN DÉVELOPPEMENT";position:absolute;top:16px;right:-40px;width:170px;transform:rotate(35deg);text-align:center;font:700 11px 'Barlow Condensed',system-ui,sans-serif;letter-spacing:.1em;color:#1b1406;background:repeating-linear-gradient(-45deg,#f2a541 0 10px,#e2902a 10px 20px);border-block:2px solid #1b1406;padding:2px 0;z-index:2}
+.uf-dev{font:700 12px 'Barlow Condensed',system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#7a4a12;background:repeating-linear-gradient(-45deg,#f6d79a 0 8px,#f2c879 8px 16px);border:1px dashed #b8792a;border-radius:6px;padding:1px 7px}
+.ug-page .mc-lead{max-width:62ch}
+.ug-mounts{display:flex;gap:10px;flex-wrap:wrap}
+.ug-mount{flex:1 1 200px;text-align:left;border:2px solid #2c4a4e;background:#102226;color:#f6e7c1;border-radius:12px;padding:8px 12px;display:flex;flex-direction:column;gap:2px;cursor:pointer}
+.ug-mount b{font:900 17px Fraunces,Georgia,serif}.ug-mount span{font:600 13px 'Barlow Condensed',system-ui,sans-serif;color:#f2a541}.ug-mount small{font-size:12px;color:#c9bd9f;line-height:1.3}
+.ug-mount.on{border-color:#f2a541;background:#2a2a1a}
+.ug-grid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:16px;align-items:start}
+@media(max-width:900px){.ug-grid{grid-template-columns:1fr}}
+.ug-atelier{background:radial-gradient(ellipse at 50% 85%,#2b4a46 0,#173236 60%);border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:8px}
+.ug-bike{width:100%;height:auto;display:block;max-height:46vh}
+.ug-bike .ug-eq{opacity:0;transition:opacity .35s,transform .35s;transform:translateY(-14px)}.ug-bike .ug-eq.on{opacity:1;transform:none}
+.ug-bike .ug-mt{display:none}.ug-bike .ug-mt.on{display:inline}
+.ug-scale{display:flex;flex-direction:column;gap:5px;color:#f6e7c1}
+.ug-scale-top{display:flex;align-items:baseline;gap:10px}.ug-scale-top span{font:600 13px 'Barlow Condensed',system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#c9bd9f}
+.ug-scale-top b{font:900 26px Fraunces,Georgia,serif;margin-left:auto}.ug-scale-top em{font:700 13px 'Barlow Condensed',system-ui,sans-serif;font-style:normal;border-radius:99px;padding:1px 9px;background:#7fb28a;color:#102226}
+.ug-scale-top em.charge{background:#f2a541}.ug-scale-top em.lourd{background:#c8483a;color:#f6e7c1}
+.ug-bar{height:12px;border-radius:6px;background:#102226;border:1px solid #2c4a4e;position:relative;overflow:hidden}
+.ug-bar i{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,#7fb28a,#f2a541 70%,#c8483a);transition:width .4s}.ug-bar s{position:absolute;top:-2px;bottom:-2px;width:2px;background:#f6e7c1}
+.ug-scale-lab{display:flex;justify-content:space-between;font:500 12px 'Barlow Condensed',system-ui,sans-serif;color:#9fb3ae}
+.ug-side{display:flex;flex-direction:column;gap:10px;min-width:0}
+.ug-peg{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:7px;background:radial-gradient(circle,#3a5552 1.4px,transparent 1.6px) 0 0/18px 18px,#1d3a3d;border-radius:14px;padding:9px}
+.ug-item{background:#f6e7c1;color:#1b1406;border:2px solid transparent;border-radius:10px;padding:6px 9px;text-align:left;display:flex;flex-direction:column;gap:1px;position:relative;cursor:pointer}
+.ug-item b{font:700 15px 'Barlow Condensed',system-ui,sans-serif;line-height:1.1}.ug-item span{font-size:11.5px;line-height:1.25;color:#4a3a20}.ug-item em{font:600 12px 'Barlow Condensed',system-ui,sans-serif;font-style:normal;color:#7a4a12}
+.ug-item.on{border-color:#f2a541;box-shadow:0 0 0 3px #f2a54155;background:#fff4d8}.ug-item.on::after{content:"✓ monté";position:absolute;top:5px;right:7px;font:700 11px 'Barlow Condensed',system-ui,sans-serif;color:#c8483a}
+.ug-item:disabled{opacity:.45;cursor:not-allowed}
+.ug-sum{background:#102226;border-radius:12px;padding:10px 13px;color:#f6e7c1}.ug-sum h3{font:900 17px Fraunces,Georgia,serif;margin:0 0 6px}
+.ug-sum ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:4px;font-size:13px}.ug-sum li{display:flex;gap:7px}.ug-sum li::before{content:"";flex:none;width:8px;height:8px;margin-top:6px;border-radius:50%;background:#7fb28a}.ug-sum li.minus::before{background:#c8483a}
+/* Fiche : chrono à côté du jour, dette de sommeil, ventre, soif */
+.mat-daybox{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex:none}
+.mat-clock{font:700 17px 'Barlow Condensed',system-ui,sans-serif;background:#1b1406;color:#f2a541;border-radius:9px;padding:1px 9px;font-variant-numeric:tabular-nums;white-space:nowrap;transition:background .6s,color .6s}
+.mat-clock.night{background:#1d2f4a;color:#f6e7c1}.mat-clock.run b{text-shadow:0 0 6px #f2a54199}
+.ultra-fatl{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
+.uf-awake,.uf-belly{font:600 13.5px 'Barlow Condensed',system-ui,sans-serif;color:#4a3a20}
+.uf-belly.hungry,.bw-note.thirsty{color:#b8432e;font-weight:700}
+/* Carte : le ciel suit l'horloge (le soir, puis la nuit) */
+.map-wrap.ultra-sky .map{transition:filter var(--sky-dur,600ms) linear}
+.map-wrap.ultra-sky[data-sky="soir"] .map{filter:brightness(.82) sepia(.25) saturate(1.1)}
+.map-wrap.ultra-sky[data-sky="nuit"] .map{filter:brightness(.55) saturate(.6) hue-rotate(15deg)}
+/* Le grand départ, dans la fenêtre, carte en fond */
+.us-back{position:fixed;inset:0;z-index:950;display:grid;place-items:center;background:rgba(16,34,38,.55);padding:16px}
+.us-modal{width:min(880px,100%);background:#102226;border:3px solid #f6e7c1;border-radius:18px;overflow:hidden;box-shadow:0 20px 60px #0009}
+.us-stage{position:relative;aspect-ratio:640/300}.us-stage svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.us-bar{display:flex;gap:14px;align-items:center;padding:12px 16px;color:#f6e7c1}.us-bar>div{flex:1;min-width:0}
+.us-bar h2{font:900 24px Fraunces,Georgia,serif;margin:2px 0}.us-bar p{margin:0;font-size:14px;color:#c9bd9f}
+.us-go{background:#f2a541;color:#1b1406;border:0;border-radius:99px;padding:9px 18px;font:700 16px 'Barlow Condensed',system-ui,sans-serif;cursor:pointer}
+
+.ultra-needs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.un-need{display:flex;flex-direction:column;gap:1px;background:#f6ecd0;border:1px solid #e3cf9f;border-radius:9px;padding:4px 7px;min-width:0}
+.un-lab{font:600 11.5px 'Barlow Condensed',system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#7a5a30}
+.un-need b{font:900 15px Fraunces,Georgia,serif;color:#1b3b38;line-height:1.1}
+.un-need small{font:500 12px 'Barlow Condensed',system-ui,sans-serif;color:#5a4a2a;line-height:1.15}
+.un-need.warn{background:#f6d8c8;border-color:#d9937a}.un-need.warn b,.un-need.warn small{color:#9a3020}
+.un-need .imm-dots i{width:8px;height:8px}
+.un-need .imm-dots i{border-color:#1b3b38}.un-need .imm-dots i.on{background:#1b3b38}
