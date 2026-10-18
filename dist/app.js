@@ -1505,3 +1505,24 @@ function ultraAfterRender(){if(typeof document==='undefined'||!m||!S.ultraOn(m)|
  // Le grand départ : une fois, avant le premier coup de pédale.
  if(!m.ultra.startSeen&&!u.cases&&!m.done&&!modal&&!document.querySelector('.us-back')){const n=1+(S.ultraRivals(m).length||10)+30;ultraStartOpen({names:n,onClose:()=>{if(m?.ultra){m.ultra.startSeen=true;persist();}}});}}
 
+
+// ---------- 18 octobre (demandes de Fi) : rouvrir la ville, cliquer la fontaine pour remplir ses gourdes (Bêta) ----------
+// Tous les modes : une tuile « La ville » dans « Se ravitailler » rouvre la rue animée, même après l'avoir fermée.
+{const priorSheetTown=playerSheet;playerSheet=(inline=false)=>{const h=priorSheetTown(inline);try{if(!m||m.done)return h;const p=S.player(m),t=m.board[p.pos];
+ if(t?.type!=='ville'||!['move','place'].includes(m.phase)||m.pendingAttack||!myTurn())return h;
+ const tile=ficheTile('🏙️ '+esc(t.name||'La ville'),'Rouvrir la rue : boutiques, hôtel, banque','town-open',false,'town-open');
+ return h.replace('<p class="fiche-label">Se ravitailler</p><div class="fiche-tiles">','<p class="fiche-label">Se ravitailler</p><div class="fiche-tiles">'+tile);}catch(err){console.error(err);return h;}};}
+{const priorAct=act;act=a=>{if(a!=='town-open')return priorAct(a);if(!m)return;const p=S.player(m);if(m.board[p.pos]?.type!=='ville')return;
+ marketSeen=m.turn+'|'+p.id+'|'+p.pos;townKey='';marketView='';modal='market';render();};}
+// Mode Bêta : la goutte 💧 de la fontaine (carte) et la fontaine de la place (ville) se cliquent pour remplir les gourdes.
+const canFillHere=()=>{try{if(!m||!S.betaOn?.(m)||!myTurn())return false;const i=S.waterInfo?.(m,S.player(m));return Boolean(i&&!i.why&&['move','place'].includes(m.phase)&&!m.pendingAttack&&!m.done);}catch{return false;}};
+const markFountains=()=>{try{
+ document.querySelectorAll('.water-spot.can-fill').forEach(e=>e.classList.remove('can-fill'));
+ document.querySelectorAll('.tw-street .tw-fountain').forEach(f=>f.classList.remove('can-fill'));if(screen!=='game'||!m||!canFillHere())return;const k=S.player(m).pos;
+ document.querySelectorAll(`.water-spot[data-key="${k}"]`).forEach(e=>{e.classList.add('can-fill');e.setAttribute('role','button');e.querySelector('title')&&(e.querySelector('title').textContent='Clique pour remplir tes gourdes');});
+ // fontaine de la place : en Bêta, quand on peut remplir ici
+ document.querySelectorAll('.tw-street .tw-fountain').forEach(f=>f.classList.toggle('can-fill',canFillHere()));}catch(err){console.error(err);}};
+{const priorRender=render;render=(...a)=>{priorRender(...a);markFountains();setTimeout(markFountains,60);};}
+{const fill=e=>{const el=e.target.closest?.('.water-spot.can-fill, .tw-fountain.can-fill');if(!el)return;e.preventDefault();e.stopPropagation();
+ if(e.type==='click'){if(el.classList.contains('tw-fountain'))townAct({say:'Glou glou… gourdes pleines !',item:'💧',badge:'💧 Gourdes remplies'});act('water-fill');}};
+ document.addEventListener?.('click',fill,true);document.addEventListener?.('pointerdown',e=>{if(e.target.closest?.('.water-spot.can-fill, .tw-fountain.can-fill'))e.stopPropagation();},true);}

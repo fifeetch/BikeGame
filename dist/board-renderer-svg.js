@@ -209,7 +209,7 @@ export function createSVGBoardRenderer(container,options={}){
     :`<g class="landmark" transform="translate(${f1(t.x)} ${f1(t.y)})"><title>Lieu remarquable caché</title><g class="landmark-inner"><circle r="7.5"/><text y="3.6">?</text></g></g>`;}
   // Mode Bêta (17 octobre) : les fontaines des hameaux, points d'eau sûrs (goutte bleue).
   if(beta)for(const v of DECOR.villages){const t=g.board[`hex-${v.at(-2)}-${v.at(-1)}`];if(!t||t.type==='ville'||t.type==='mer')continue;
-   out+=`<g class="water-spot" transform="translate(${f1(t.x)} ${f1(t.y+6)})"><title>Fontaine du hameau : eau sûre</title><g class="water-spot-inner"><circle r="5.6"/><path d="M0 -3.6C2.2 -1 3 .4 3 1.4a3 3 0 0 1 -6 0c0 -1 .8 -2.4 3 -5z"/></g></g>`;}
+   out+=`<g class="water-spot" data-key="${t.key}" transform="translate(${f1(t.x)} ${f1(t.y+6)})"><title>Fontaine du hameau : eau sûre</title><g class="water-spot-inner"><circle r="5.6"/><path d="M0 -3.6C2.2 -1 3 .4 3 1.4a3 3 0 0 1 -6 0c0 -1 .8 -2.4 3 -5z"/></g></g>`;}
   // Mode Ultra (17 octobre) : contrôles numérotés, arrivée, et les 10 rivaux à l'heure du joueur.
   if(uv){const named=n=>Object.values(g.board).find(t=>t.name===n);
    [['Zurich','1'],['Saint-Pétersbourg','2'],['Cap Nord','🏁']].forEach(([n,lab])=>{const t=named(n);if(t)out+=`<g class="ultra-cp" transform="translate(${f1(t.x)} ${f1(t.y-15)})"><title>${lab==='🏁'?'Arrivée':'Contrôle '+lab} · ${esc(n)}</title><g class="ultra-cp-inner"><circle r="7.5"/><text y="3.4">${lab}</text></g></g>`;});
@@ -223,13 +223,28 @@ export function createSVGBoardRenderer(container,options={}){
 
  // ---------- Jetons des cyclistes, avec déplacement case par case ----------
  function tokenTarget(g,p){const t=g.board[p.pos];if(!t)return null;const same=(g.players||[]).filter(a=>a.pos===p.pos),offset=(same.indexOf(p)-(same.length-1)/2)*22;return {x:t.x+offset,y:t.y};}
+ // Train du voyage rapide (18 octobre, demande de Fi) : il suit les routes de case en case ; s'il faut passer la mer, il prend le ferry.
+ let trainRoads=null,trainRoadsBoard=null;
+ function trainRoute(g,fromKey,toKey){
+  const b=g.board;if(trainRoadsBoard!==b){trainRoadsBoard=b;trainRoads=roadEdges(b);}
+  const ek=(a,c)=>a<c?a+'|'+c:c+'|'+a,ferries=new Set((g.edges||[]).filter(e=>e.ferry).map(e=>ek(e.a,e.b)));
+  const nb=k=>{const out=new Set((b[k]?.links)||[]);for(const e of g.edges||[])if(e.ferry){if(e.a===k)out.add(e.b);if(e.b===k)out.add(e.a);}return out;};
+  const dist=new Map([[fromKey,0]]),prev=new Map(),todo=new Set([fromKey]);
+  while(todo.size){let k=null,d=Infinity;for(const t of todo){const v=dist.get(t);if(v<d){d=v;k=t;}}todo.delete(k);if(k===toKey)break;
+   for(const n of nb(k)){const t=b[n];if(!t||t.type==='mer')continue;const e=ek(k,n),w=ferries.has(e)?3:trainRoads.has(e)?1:2.6,nd=d+w;if(nd<(dist.get(n)??Infinity)){dist.set(n,nd);prev.set(n,k);todo.add(n);}}}
+  if(!dist.has(toKey))return null;const keys=[toKey];while(keys[0]!==fromKey){keys.unshift(prev.get(keys[0]));if(!keys[0])return null;}
+  const pts=[{x:b[fromKey].x,y:b[fromKey].y,veh:'train'}];let cases=0;
+  for(let i=1;i<keys.length;i++){const a=b[keys[i-1]],c=b[keys[i]];
+   if(ferries.has(ek(a.key,c.key))){const arc=ferryArc(a,c);for(let j=1;j<=12;j++){const q=arc.point(j/12);pts.push({x:q.x,y:q.y,veh:'ferry'});}cases+=2;}
+   else{pts.push({x:c.x,y:c.y,veh:'train'});cases++;}}
+  return {pts,cases};}
  function animateToken(record,points,stepMs){
   record.anim&&(record.anim.cancelled=true);
   const anim={cancelled:false};record.anim=anim;
   // Pente : on monte lentement (danseuse), on descend vite ; fatigué, tout va plus lentement.
   const info=record.info||{},slope=points.slice(1).map((b,i)=>{const ra=MOUNT_RANK[points[i].type]||0,rb=MOUNT_RANK[b.type]||0;return rb>ra||(rb&&rb===ra)?'up':rb<ra?'down':'flat';});
   const lens=[];let total=0;for(let i=1;i<points.length;i++){const l=Math.hypot(points[i].x-points[i-1].x,points[i].y-points[i-1].y)*(slope[i-1]==='up'?1.6:slope[i-1]==='down'?.6:1);lens.push(l);total+=l;}
-  const duration=Math.min(7000,stepMs*(points.length-1)*(info.tired?1.3:1)),start=clock();
+  const duration=record.duration||Math.min(7000,stepMs*(points.length-1)*(info.tired?1.3:1)),start=clock();record.duration=0;const zoomTo=record.zoom||ZOOM_FOLLOW;record.zoom=0;
   const follow=record.follow&&!reduced();let camS=camera.scale;const backTo=camera.scale;
   const step=()=>{if(anim.cancelled||destroyed)return;const k=Math.min(1,(clock()-start)/duration),e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
    let dist=e*total,i=0;while(i<lens.length-1&&dist>lens[i]){dist-=lens[i];i++;}
@@ -237,9 +252,9 @@ export function createSVGBoardRenderer(container,options={}){
    const bob=Math.abs(Math.sin(clock()*.012))*1.1;attrsTo(record.el,{transform:`translate(${f1(a.x+(b.x-a.x)*t)} ${f1(a.y+(b.y-a.y)*t-bob)})`});
    if(record.flip&&Math.abs(b.x-a.x)>1){const face=b.x<a.x?-1:1;if(face!==record.facing){record.facing=face;attrsTo(record.flip,{transform:face<0?'scale(-1 1)':''});}}
    const sl=slope[i]||'flat',speed=(sl==='down'?0:sl==='up'?.007:.012)*(info.tired?.55:1);record.crank=(record.crank||0)+speed*16;
-   if(record.flip)record.flip.innerHTML=record.vehicle==='train'?trainArt(clock()/1000):(record.vehicle==='boat'?boatArt(clock()/1000):'')+riderFree(record.vehicle==='boat'?.6:record.crank,{stand:sl==='up'&&!record.vehicle,tuck:sl==='down'&&!record.vehicle,low:info.tired,sweat:info.tired?1:0,cape:info.cape});
+   const veh=b.veh||a.veh||record.vehicle;if(record.flip)record.flip.innerHTML=veh==='ferry'?ferryShipArt(clock()/1000):veh==='train'?trainArt(clock()/1000):(veh==='boat'?boatArt(clock()/1000):'')+riderFree(veh==='boat'?.6:record.crank,{stand:sl==='up'&&!veh,tuck:sl==='down'&&!veh,low:info.tired,sweat:info.tired?1:0,cape:info.cape});
    if(record.flag)attrsTo(record.flag,{d:flagPath(sl==='down'||info.windy?2.4:.7,clock()/1000)});
-   if(follow){camS+=(ZOOM_FOLLOW-camS)*.08;camera.focus(a.x+(b.x-a.x)*t,a.y+(b.y-a.y)*t,{scale:Math.max(backTo,camS),animate:false});}
+   if(follow){camS+=(zoomTo-camS)*.08;camera.focus(a.x+(b.x-a.x)*t,a.y+(b.y-a.y)*t,{scale:Math.max(backTo,camS),animate:false});}
    if(k<1)raf(step);else{record.anim=null;record.vehicle='';record.el.classList?.remove('moving');record.follow=false;if(follow){clearTimeout(glideTimer);glideTimer=setTimeout(()=>{if(!destroyed)camera.focus(b.x,b.y,{scale:backTo,duration:1100});},1400);}idleDraw(record,clock()/1000);}};
   record.el.classList?.add('moving');raf(step);
   return duration;
@@ -278,6 +293,9 @@ export function createSVGBoardRenderer(container,options={}){
   return s;}
  // Ferry : une coque sous le vélo et une petite vague derrière. Voyage rapide : un petit train à la place du vélo.
  function boatArt(t){const w=Math.sin(t*6)*.8;return `<path class="fx-wake" d="M-26 ${(12+w).toFixed(2)} q4 -2 8 0 t8 0 M-30 ${(15-w).toFixed(2)} q4 -2 8 0 t8 0"/><path class="fx-hull" d="M-17 8 L17 8 L13 14 L-13 14Z"/>`;}
+ // Le ferry du train (18 octobre) : un petit bateau à passagers, cheminée orange, sillage.
+ function ferryShipArt(t){const r=Math.sin(t*3)*1.6,w=Math.sin(t*6)*.8;
+  return `<g transform="rotate(${r.toFixed(2)})"><path class="fx-wake" d="M-34 ${(10+w).toFixed(2)} q4 -2 8 0 t8 0 M-38 ${(13-w).toFixed(2)} q4 -2 8 0 t8 0"/><path class="fs-hull" d="M-22 2 H23 L17 11 H-18Z"/><path class="fs-line" d="M-19 6 H20"/><rect class="fs-deck" x="-14" y="-6" width="26" height="8" rx="1.5"/><rect class="fs-deck" x="-8" y="-12" width="14" height="6" rx="1.2"/>${[-11,-6,-1,4,9].map(x=>`<rect class="fx-window" x="${x}" y="-4" width="2.6" height="2.4" rx=".6"/>`).join('')}<rect class="fs-funnel" x="0" y="-18" width="4.4" height="6.5" rx=".8"/><circle class="fx-puff" cx="${(1-((t*1.2)%1)*8).toFixed(1)}" cy="${(-21-((t*1.2)%1)*5).toFixed(1)}" r="${(1.4+((t*1.2)%1)*2.2).toFixed(2)}" style="opacity:${(1-((t*1.2)%1)).toFixed(2)}"/></g>`;}
  function trainArt(t){const b=Math.sin(t*20)*.3,puff=(t*1.5)%1;
   return `<g transform="translate(0 ${b.toFixed(2)})"><rect class="fx-wagon" x="-24" y="-6" width="16" height="11" rx="2"/><rect class="fx-loco" x="-6" y="-9" width="20" height="14" rx="2.5"/><rect class="fx-window" x="-2" y="-6" width="5" height="4" rx="1"/><rect class="fx-window" x="5" y="-6" width="5" height="4" rx="1"/><rect class="fx-window" x="-21" y="-3" width="4" height="3" rx="1"/><rect class="fx-window" x="-14" y="-3" width="4" height="3" rx="1"/><rect class="fx-chimney" x="9" y="-14" width="3.5" height="5"/>
    <circle class="fx-wheel" cx="-20" cy="6" r="2.4"/><circle class="fx-wheel" cx="-12" cy="6" r="2.4"/><circle class="fx-wheel" cx="-1" cy="6" r="2.8"/><circle class="fx-wheel" cx="9" cy="6" r="2.8"/></g>
@@ -353,8 +371,9 @@ export function createSVGBoardRenderer(container,options={}){
     if(steps)pts=[from,...steps].map(t=>({x:t.x,y:t.y,type:t.type}));
     else if(prev.activeId===p.id&&r.length&&r.at(-1)===p.pos)pts=[from,...r.map(k=>g.board[k]).filter(Boolean)].map(t=>({x:t.x,y:t.y,type:t.type}));
     else if(ferry){const arc=ferryArc(g.board[ferry.a],g.board[ferry.b]),fwd=ferry.a===from.key;pts=Array.from({length:17},(_,i)=>arc.point(fwd?i/16:1-i/16));stepMs=130;record.vehicle='boat';}
+    else if(record.info?.train&&(()=>{const tr=trainRoute(g,from.key,p.pos);if(!tr||tr.pts.length<3)return false;pts=tr.pts;record.vehicle='train';record.duration=Math.max(3200,Math.min(16000,tr.cases*480));record.zoom=1.9;record.trainRide=true;return true;})()){}
     else{pts=[{x:from.x,y:from.y},{x:target.x,y:target.y}];if(record.info?.train){record.vehicle='train';stepMs=2600;}}
-    pts[pts.length-1]={x:target.x,y:target.y,type:pts[pts.length-1].type};record.follow=p.id===g.id&&!ferry&&pts.length>2;
+    pts[pts.length-1]={x:target.x,y:target.y,type:pts[pts.length-1].type,veh:pts[pts.length-1].veh};record.follow=(p.id===g.id||record.trainRide)&&!ferry&&pts.length>2;record.trainRide=false;
     if(pts.length>1){longest=Math.max(longest,animateToken(record,pts,pts.length===2&&record.vehicle!=='train'?Math.min(1100,Math.max(STEP_MS,Math.hypot(pts[1].x-pts[0].x,pts[1].y-pts[0].y)*6)):stepMs));continue;}
    }
    if(record.anim&&!moved)continue;// une animation en cours garde la main jusqu'au bout

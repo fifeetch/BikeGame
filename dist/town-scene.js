@@ -116,6 +116,7 @@ function worldLayer(){rnd=mulberry(seed*97+Object.keys(REG).indexOf(region));let
  // réverbère (celui de l'hôtel du soir) et panneau des villes voisines
  s+=`<rect x="-15.6" y="-18" width="1.2" height="21" fill="#26343c"/><rect x="-17.2" y="-20" width="4.4" height="2.4" rx="1" fill="#26343c"/>`;
  const [a,b]=signs;s+=`<rect x="14.4" y="-15" width="1.2" height="18" fill="#7a4a2c"/><path d="M15.6 -14 h${a.length*1.6+3} l2 1.6 l-2 1.6 h-${a.length*1.6+3}Z" fill="#f6e7c1" ${o4}/><text x="16.4" y="-11.6" font-size="2.3" font-weight="800" fill="#1b3b38" font-family="Barlow, sans-serif">${a} →</text><path d="M14.4 -9.6 h-${b.length*1.6+3} l-2 1.6 l2 1.6 h${b.length*1.6+3}Z" fill="#f6e7c1" ${o4}/><text x="13.6" y="-7.2" text-anchor="end" font-size="2.3" font-weight="800" fill="#1b3b38" font-family="Barlow, sans-serif">← ${b}</text>`;
+ s+=`<g class="tw-fountain" role="button" aria-label="Fontaine : remplir les gourdes"><ellipse class="tw-fill-ring" cx="0" cy="-3" rx="9" ry="3.4" fill="none" stroke="#7cc4ee" stroke-width=".8"/><g class="tw-fill-hint"><rect x="-6" y="-21" width="18" height="5.6" rx="2.8" fill="#102226" stroke="#7cc4ee" stroke-width=".5"/><text x="3" y="-17.1" text-anchor="middle" font-size="3.2" font-weight="700" fill="#f6e7c1" font-family="Barlow, sans-serif">💧 Remplir</text></g><rect x="-9" y="-13" width="18" height="13" fill="transparent"/></g>`;// fontaine cliquable (Bêta), par-dessus le panneau
  return s;}
 
 // ---- animation de la rue ----

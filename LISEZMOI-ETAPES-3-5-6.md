@@ -481,3 +481,9 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 
 ## 18 octobre 2026 — Ultra : « Comment on court » (cache v118)
 - La fenêtre de départ en Ultra explique la course (contrôles, barrières, cols, ordre d’arrivée), l’horloge, l’énergie et les trois besoins (sommeil, faim, soif), le vélo et le poids, l’autonomie. Chiffres tirés de `dist/ultra.js` (ultraIntro dans `dist/rules-help.js`).
+
+## 18 octobre — Ville à rouvrir, fontaines cliquables, train sur les routes, vélos du garage (cache v119-ville-train)
+- Tous les modes : en ville, tuile « 🏙️ <ville> » dans « Se ravitailler » pour rouvrir la rue animée après l'avoir fermée (action `town-open`, fin de app.js).
+- Bêta : la goutte 💧 de la fontaine sur la carte (case du joueur) et la fontaine de la place en ville se cliquent pour remplir les gourdes, quand c'est possible (classe `can-fill`, `data-key` sur `.water-spot`).
+- Train du voyage rapide : suit les routes de case en case (trainRoute dans board-renderer-svg.js), prend le ferry pour passer la mer (icône bateau `ferryShipArt`), 0,48 s par case, caméra qui suit avec un petit zoom (1,9). Règles et prix inchangés.
+- Garage : gravel et randonneuse redessinés au trait (modèles de Fi), sacoches qui se remplissent ; avec l'objet « Sacoches », une sacoche de plus dessinée (fourche sur le gravel, tube sur la randonneuse). Dessin seulement.

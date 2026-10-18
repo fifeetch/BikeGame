@@ -26,14 +26,17 @@ const GEAR_KG={tente:2.4,rechaud:0.8,chambre:0.3,kit:0.5,gps:0.2,duvet:1.8,secou
 
 // ---------- Sacoches dessinées sur chaque vélo ----------
 // x, y : position de l'étiquette sur le dessin (en % de la zone du vélo).
+const BAG_EXTRA={gravel:{id:'fork',label:'Sacoches de fourche',x:66,y:88},randonneur:{id:'top',label:'Sacoche de tube',x:50,y:10}};
 const BAG_LAYOUT={
  gravel:[{id:'seat',label:'Sacoche de selle',cap:2,x:6,y:8},{id:'frame',label:'Sacoche de cadre',cap:1,x:40,y:22},{id:'roll',label:'Rouleau de cintre',cap:1,x:70,y:4}],
  randonneur:[{id:'rack',label:'Porte-bagages',cap:2,x:8,y:4},{id:'rear',label:'Sacoche arrière',cap:2,x:2,y:86},{id:'frame',label:'Sacoche de cadre',cap:1,x:38,y:26},{id:'bar',label:'Sacoche de guidon',cap:1,x:70,y:0},{id:'front',label:'Sacoches avant',cap:2,x:68,y:86}]
 };
 // Répartit la capacité du vélo (réglable dans les règles) entre ses sacoches dessinées.
 export function bagsFor(bikeId,capacity){
- const layout=BAG_LAYOUT[bikeId]||BAG_LAYOUT[capacity>5?'randonneur':'gravel'];let left=capacity;
- const bags=layout.map((b,i)=>{const cap=i===layout.length-1?Math.max(0,left):Math.min(b.cap,left);left-=cap;return {...b,cap};});
+ const kind=BAG_LAYOUT[bikeId]?bikeId:capacity>5?'randonneur':'gravel',layout=BAG_LAYOUT[kind];let left=capacity;
+ const bags=layout.map(b=>{const cap=Math.min(b.cap,Math.max(0,left));left-=cap;return {...b,cap};});
+ // Places en plus (objet « Sacoches ») : une sacoche de plus dessinée sur le vélo (dessin seulement).
+ if(left>0)bags.push({...BAG_EXTRA[kind],cap:left});
  return bags.filter(b=>b.cap>0||b===bags[0]);
 }
 // Range chaque objet dans la première sacoche où il tient (même ordre que les achats).
@@ -43,15 +46,62 @@ export function packBags(bags,items,equipment){
  return {free,content};
 }
 
+// Vélos du garage au trait (planche de Fi, 18 octobre : 1 gravel, 2 randonneuse « Ultraromance »), sacoches qui se remplissent.
+const n1=v=>Math.round(v*10)/10;
+function wheel(cx,cy,{knobs=false,disc=true,cassette=false}={}){
+ let s=`<circle class="bk-tire" cx="${cx}" cy="${cy}" r="62"/><circle class="bk-thin" cx="${cx}" cy="${cy}" r="56"/><circle class="bk-thin" cx="${cx}" cy="${cy}" r="53"/>`;
+ // rayons croisés : 24 rayons tangents au moyeu
+ let sp='';for(let i=0;i<24;i++){const a=i*Math.PI/12,h=a+(i%2?.5:-.5);sp+=`M${n1(cx+Math.cos(h)*5)} ${n1(cy+Math.sin(h)*5)}L${n1(cx+Math.cos(a)*53)} ${n1(cy+Math.sin(a)*53)}`;}
+ s+=`<path class="bk-spoke" d="${sp}"/><circle class="bk-hub" cx="${cx}" cy="${cy}" r="4.5"/>`;
+ if(disc)s+=`<circle class="bk-thin" cx="${cx}" cy="${cy}" r="13"/><circle class="bk-thin" cx="${cx}" cy="${cy}" r="9.5" stroke-dasharray="2 2.4"/>`;
+ if(cassette)s+=`<circle class="bk-thin" cx="${cx}" cy="${cy}" r="11"/><circle class="bk-thin" cx="${cx}" cy="${cy}" r="8"/>`;
+ if(knobs){let k='';for(let i=0;i<56;i++){const a=i*Math.PI/28,c=Math.cos(a),d=Math.sin(a);k+=`M${n1(cx+c*62)} ${n1(cy+d*62)}L${n1(cx+c*66.5)} ${n1(cy+d*66.5)}`;}s+=`<path class="bk-knob" d="${k}"/>`;}
+ return s;}
+function drive(bx,by,rx,ry){const crank=`<circle class="bk-line" cx="${bx}" cy="${by}" r="17"/><circle class="bk-thin" cx="${bx}" cy="${by}" r="13" stroke-dasharray="1.6 1.6"/><circle class="bk-hub" cx="${bx}" cy="${by}" r="4"/><path class="bk-line" d="M${bx} ${by}L${bx+20} ${by+14}"/><path class="bk-pedal" d="M${bx+14} ${by+16}h13"/>`;
+ const chain=`<path class="bk-chain" d="M${bx} ${by-17}L${rx} ${ry-10} M${bx} ${by+17}L${rx+6} ${ry+16} L${rx-2} ${ry+9}"/><path class="bk-thin" d="M${rx-2} ${ry+2}l2 18 l8 -2 z"/><circle class="bk-hub" cx="${rx+2}" cy="${ry+18}" r="2.5"/>`;
+ return chain+crank;}
+const bag=(cls,id,shape,lines='')=>`<g class="mc-bag-g"><path class="mc-bag ${cls(id)}" d="${shape}"/><path class="mc-bag-line" d="${lines}"/></g>`;
 function bikeSvg(bikeId,content,cls=''){
- const filled=id=>content?.[id]?.length?'is-full':'is-empty';
- const common=`<g class="mc-wheels"><circle cx="100" cy="180" r="64"/><circle cx="320" cy="180" r="64"/></g>`;
- const parts=`<g class="mc-parts"><path d="M182 92 L178 80"/><path class="mc-saddle" d="M164 77 L202 77"/><path d="M292 98 L306 88 L322 88 C338 88 338 112 324 114"/><path d="M205 184 L222 204"/></g>`;
- if(bikeId==='randonneur')return `<svg class="mc-bike ${cls}" viewBox="0 0 420 250" role="img" aria-label="Randonneuse avec porte-bagages et sacoches"><ellipse class="mc-shadow" cx="210" cy="248" rx="196" ry="6"/>${common}<g class="mc-frame rando"><path d="M100 180 L205 184 L182 92 L100 180"/><path d="M182 92 L292 98 L300 124 L205 184"/><path d="M300 124 L314 160 L320 180"/></g>${parts}<g class="mc-parts thin"><path d="M100 124 L178 120 M108 124 L100 180 M170 120 L182 104"/><path d="M44 158 A64 64 0 0 1 150 130 M282 134 A64 64 0 0 1 372 150"/></g>
-  <rect class="mc-bag ${filled('rear')}" x="82" y="118" width="76" height="64" rx="10"/><rect class="mc-bag ${filled('rack')}" x="94" y="100" width="76" height="20" rx="10"/><rect class="mc-bag ${filled('front')}" x="296" y="134" width="40" height="46" rx="8"/><rect class="mc-bag ${filled('bar')}" x="306" y="62" width="40" height="30" rx="6"/><path class="mc-bag ${filled('frame')}" d="M196 104 L280 107 L286 120 L218 160 L204 142 Z"/></svg>`;
- return `<svg class="mc-bike ${cls}" viewBox="0 0 420 250" role="img" aria-label="Gravel de bikepacking avec sacoches de selle, de cadre et de cintre"><ellipse class="mc-shadow" cx="210" cy="248" rx="196" ry="6"/>${common}<g class="mc-frame gravel"><path d="M100 180 L205 184 L182 92 L100 180"/><path d="M182 92 L292 98 L300 124 L205 184"/><path d="M300 124 L314 160 L320 180"/></g>${parts}
-  <path class="mc-bag ${filled('frame')}" d="M192 102 L284 105 L292 122 L214 168 L200 148 Z"/><path class="mc-bag ${filled('seat')}" d="M176 82 L128 70 L112 80 L128 96 L176 94 Z"/><ellipse class="mc-bag ${filled('roll')}" cx="334" cy="96" rx="14" ry="22"/></svg>`;
-}
+ const filled=id=>content?.[id]?.length?'is-full':'is-empty',has=id=>content&&id in content;
+ if(bikeId==='randonneur'){
+  const R={x:100,y:180},F={x:322,y:180},B={x:204,y:186},ST={x:180,y:96},HT={x:298,y:96},HB={x:304,y:122};
+  let s=`<ellipse class="mc-shadow" cx="211" cy="249" rx="196" ry="5"/>`;
+  s+=wheel(R.x,R.y,{knobs:true,disc:false,cassette:true})+wheel(F.x,F.y,{knobs:true,disc:false});
+  // garde-boue et porte-bagages
+  s+=`<path class="bk-thin2" d="M44 152 A66 66 0 0 1 156 126 M276 132 A66 66 0 0 1 384 166"/>`;
+  s+=`<path class="bk-line" d="M84 108 L176 106 M90 108 L100 180 M84 108 L94 180 M150 107 L180 112"/><path class="bk-line" d="M300 150 L340 150 M312 150 L304 124 M336 150 L322 180"/>`;
+  // cadre acier à tube horizontal
+  s+=`<g class="mc-frame rando"><path d="M${R.x} ${R.y}L${B.x} ${B.y}L${ST.x} ${ST.y}L${R.x} ${R.y}"/><path d="M${ST.x+1} ${ST.y+4}L${HT.x} ${HT.y+4}L${HB.x} ${HB.y}L${B.x} ${B.y}"/><path d="M${HT.x-1} ${HT.y-4}L${HB.x} ${HB.y}"/><path class="fork" d="M${HB.x} ${HB.y}Q${HB.x+6} 160 ${F.x} ${F.y}"/></g>`;
+  s+=drive(B.x,B.y,R.x,R.y);
+  // bidons sur le tube oblique et le tube de selle
+  s+=`<g class="bk-bottle"><rect x="226" y="172" width="34" height="12" rx="5" transform="rotate(-33 243 178)"/><path class="bk-thin" d="M258 166 l5 -3"/><rect x="178" y="128" width="12" height="36" rx="5" transform="rotate(-14 184 146)"/><path class="bk-thin" d="M181 126 l4 -1"/></g>`;
+  // tige de selle, selle cuir à ressorts, potence haute et cintre papillon
+  s+=`<path class="bk-line" d="M${ST.x} ${ST.y}L176 78"/><path class="bk-saddle" d="M150 76 Q150 68 166 68 L196 70 Q202 72 196 76 Q178 80 150 76Z"/><path class="bk-thin" d="M164 78 c-2 4 4 4 2 8 M172 78 c-2 4 4 4 2 8"/>`;
+  s+=`<path class="bk-line" d="M${HT.x-1} ${HT.y-4}L302 78 L314 74"/><path class="bk-line" d="M314 74 C326 66 344 68 348 78 C350 86 338 90 326 86 C318 84 314 80 314 74"/><path class="bk-grip" d="M330 86 l14 4"/><path class="bk-thin" d="M318 74 l-8 10"/>`;
+  // sacoches : porte-bagages, sacoches arrière, cadre, guidon, avant (+ sacoche de tube avec « Sacoches »)
+  s+=bag(filled,'rear','M72 114 H150 Q156 114 156 120 V168 Q156 174 150 174 H78 Q72 174 72 168Z','M72 132 H156 M92 132 V150 M134 132 V150 M80 160 h68');
+  s+=bag(filled,'rack','M88 90 H170 Q178 90 178 98 V102 Q178 106 170 106 H88 Q82 106 82 98 Q82 90 88 90Z','M108 90 V106 M150 90 V106');
+  s+=bag(filled,'frame',`M192 106 L284 108 L290 122 L216 166 L198 140Z`,'M200 112 L282 113 M214 150 L278 120');
+  s+=bag(filled,'bar','M318 88 H346 Q350 88 350 92 V112 Q350 116 346 116 H318 Q314 116 314 112 V92 Q314 88 318 88Z','M314 98 H350 M326 98 v6');
+  s+=bag(filled,'front','M298 130 H330 Q336 130 336 136 V170 Q336 176 330 176 H300 Q294 176 294 170 V136 Q294 130 298 130Z','M294 144 H336 M306 144 V156');
+  if(has('top'))s+=bag(filled,'top','M246 88 H290 Q294 88 294 92 V100 L242 100 Q240 92 246 88Z','M262 88 V100');
+  return `<svg class="mc-bike bk ${cls}" viewBox="0 0 420 250" role="img" aria-label="Randonneuse en acier avec porte-bagages et sacoches">${s}</svg>`;}
+ const R={x:100,y:180},F={x:322,y:180},B={x:202,y:186},ST={x:182,y:92},HT={x:300,y:94},HB={x:307,y:120};
+ let s=`<ellipse class="mc-shadow" cx="211" cy="249" rx="196" ry="5"/>`;
+ s+=wheel(R.x,R.y,{cassette:true})+wheel(F.x,F.y);
+ s+=`<g class="mc-frame gravel"><path d="M${R.x} ${R.y}L${B.x} ${B.y}L${ST.x} ${ST.y}"/><path d="M${R.x} ${R.y}L${ST.x+2} ${ST.y+12}"/><path d="M${ST.x+1} ${ST.y+6}L${HT.x} ${HT.y+3}L${HB.x} ${HB.y}L${B.x} ${B.y}"/><path d="M${HT.x} ${HT.y-2}L${HB.x} ${HB.y}"/><path class="fork" d="M${HB.x} ${HB.y}Q${HB.x+4} 162 ${F.x} ${F.y}"/></g>`;
+ s+=drive(B.x,B.y,R.x,R.y);
+ // étriers de frein à disque
+ s+=`<path class="bk-thin" d="M108 166 h12 v8 h-12z M326 166 h-12 v8 h12z"/>`;
+ // tige de selle, selle fine, potence et cintre à poignées
+ s+=`<path class="bk-line" d="M${ST.x} ${ST.y}L178 72"/><path class="bk-saddle" d="M152 70 Q154 64 170 64 L198 66 Q204 68 198 71 Q176 74 152 70Z"/>`;
+ s+=`<path class="bk-line" d="M${HT.x} ${HT.y-2}L304 84 L322 80"/><path class="bk-line" d="M322 80 C336 78 344 84 344 94 C344 108 336 116 328 114 M330 82 C334 86 336 90 334 96"/><path class="bk-thin" d="M336 86 l6 -6 l4 2"/><path class="bk-thin" d="M328 114 l-6 4"/>`;
+ // sacoches : selle, cadre, rouleau de cintre (+ sacoches de fourche avec « Sacoches »)
+ s+=bag(filled,'seat','M176 78 L130 74 Q114 78 116 88 Q120 96 132 94 L176 92Z','M150 76 V93 M160 77 V92 M124 86 h8');
+ s+=bag(filled,'frame',`M194 104 L290 106 L296 120 L218 166 L202 146Z`,'M202 110 L288 111 M216 150 L284 118');
+ s+=bag(filled,'roll','M336 88 a17 17 0 1 0 34 0 a17 17 0 1 0 -34 0Z','M344 73 v30 M362 73 v30 M347 88 a6 6 0 1 0 12 0 a6 6 0 1 0 -12 0');
+ if(has('fork'))s+=bag(filled,'fork','M314 132 H330 Q334 132 334 136 V160 Q334 164 330 164 H316 Q312 164 312 160 V136 Q312 132 314 132Z','M312 142 H334 M312 154 H334');
+ return `<svg class="mc-bike bk ${cls}" viewBox="0 0 420 250" role="img" aria-label="Gravel de bikepacking au trait avec sacoches de selle, de cadre et de cintre">${s}</svg>`;}
 
 // ---------- Fond commun : la carte peinte ----------
 const backdrop=(mode='blur')=>`<div class="mc-backdrop mc-${mode}" aria-hidden="true"><img src="${MAP_IMG}" alt=""/></div>`;

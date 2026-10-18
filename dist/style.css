@@ -2417,3 +2417,44 @@ body .player-mat.fiche .fiche-voyage .ultra-cps li b{margin:0}
 .un-need.warn{background:#f6d8c8;border-color:#d9937a}.un-need.warn b,.un-need.warn small{color:#9a3020}
 .un-need .imm-dots i{width:8px;height:8px}
 .un-need .imm-dots i{border-color:#1b3b38}.un-need .imm-dots i.on{background:#1b3b38}
+
+/* ---------- Garage : vélos au trait (18 octobre, modèles de Fi : 1 gravel, 2 randonneuse) ---------- */
+.mc-bike.bk .bk-tire{fill:none;stroke:#f6e7c1;stroke-width:4.2}
+.mc-bike.bk .bk-thin,.mc-bike.bk .bk-thin2{fill:none;stroke:#f6e7c1;stroke-width:1.2;stroke-linecap:round;stroke-linejoin:round;opacity:.85}
+.mc-bike.bk .bk-thin2{stroke-width:2}
+.mc-bike.bk .bk-spoke{fill:none;stroke:#f6e7c1;stroke-width:.7;opacity:.6}
+.mc-bike.bk .bk-knob{fill:none;stroke:#f6e7c1;stroke-width:1.6;opacity:.75}
+.mc-bike.bk .bk-hub{fill:#102226;stroke:#f6e7c1;stroke-width:1.4}
+.mc-bike.bk .bk-line{fill:none;stroke:#f6e7c1;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.mc-bike.bk .bk-pedal,.mc-bike.bk .bk-grip{fill:none;stroke:#f6e7c1;stroke-width:4.5;stroke-linecap:round}
+.mc-bike.bk .bk-chain{fill:none;stroke:#f6e7c1;stroke-width:1.4;stroke-dasharray:2 1.6;opacity:.8}
+.mc-bike.bk .bk-saddle{fill:#1b1406;stroke:#f6e7c1;stroke-width:2;stroke-linejoin:round}
+.mc-bike.bk .bk-bottle rect{fill:#7fb6c8;stroke:#f6e7c1;stroke-width:1.5}
+.mc-bike.bk .mc-frame{stroke-width:4.4}
+.mc-bike.bk .mc-frame .fork{stroke-width:3.6}
+.mc-bike.bk .mc-bag{stroke-width:2;stroke-linejoin:round}
+.mc-bike.bk .mc-bag.is-full{fill:#f2a541;stroke:#1b1406}
+.mc-bike.bk .mc-bag.is-empty{fill:#102226b3;stroke:#f6e7c1;stroke-dasharray:4 3}
+.mc-bike.bk .mc-bag-line{fill:none;stroke:#1b1406;stroke-width:1.1;stroke-linecap:round;opacity:0}
+.mc-bike.bk .mc-bag.is-full+.mc-bag-line{opacity:.55}
+.mc-bike.bk.mini .mc-bag{fill:#f2a541;stroke:#1b1406;stroke-dasharray:none}
+.mc-bike.bk.mini .bk-spoke,.mc-bike.bk.mini .bk-knob{display:none}
+
+/* ---------- 18 octobre : rouvrir la ville ; fontaines cliquables en Bêta ---------- */
+.fiche-tile.town-open b{color:var(--mc-amber,#f2a541)}
+.water-spot.can-fill{pointer-events:auto;cursor:pointer}
+.water-spot.can-fill .water-spot-inner{animation:waterPulse 1.3s ease-in-out infinite;transform-origin:center;transform-box:fill-box}
+.water-spot.can-fill circle{stroke:#f6e7c1;stroke-width:1.8;fill:#1d5f86}
+@keyframes waterPulse{0%,100%{transform:scale(var(--sym,1))}50%{transform:scale(calc(var(--sym,1)*1.35))}}
+.tw-fountain .tw-fill-ring,.tw-fountain .tw-fill-hint{display:none}
+.tw-fountain.can-fill{cursor:pointer}
+.tw-fountain.can-fill .tw-fill-ring,.tw-fountain.can-fill .tw-fill-hint{display:inline}
+.tw-fountain.can-fill .tw-fill-ring{animation:twRing 1.4s ease-in-out infinite;transform-origin:center;transform-box:fill-box}
+@keyframes twRing{0%,100%{opacity:.4}50%{opacity:1}}
+@media (prefers-reduced-motion: reduce){.water-spot.can-fill .water-spot-inner,.tw-fountain.can-fill .tw-fill-ring{animation:none}}
+/* Ferry du train (18 octobre) */
+.rider-token.free .fs-hull{fill:#1b3b38;stroke:#1b1406;stroke-width:.8}
+.rider-token.free .fs-line{stroke:#f2a541;stroke-width:1.2}
+.rider-token.free .fs-deck{fill:#f6e7c1;stroke:#1b1406;stroke-width:.6}
+.rider-token.free .fs-deck~.fx-window{fill:#2c6f86}
+.rider-token.free .fs-funnel{fill:#f2a541;stroke:#1b1406;stroke-width:.6}
