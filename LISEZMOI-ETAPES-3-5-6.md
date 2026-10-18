@@ -487,3 +487,6 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - Bêta : la goutte 💧 de la fontaine sur la carte (case du joueur) et la fontaine de la place en ville se cliquent pour remplir les gourdes, quand c'est possible (classe `can-fill`, `data-key` sur `.water-spot`).
 - Train du voyage rapide : suit les routes de case en case (trainRoute dans board-renderer-svg.js), prend le ferry pour passer la mer (icône bateau `ferryShipArt`), 0,48 s par case, caméra qui suit avec un petit zoom (1,9). Règles et prix inchangés.
 - Garage : gravel et randonneuse redessinés au trait (modèles de Fi), sacoches qui se remplissent ; avec l'objet « Sacoches », une sacoche de plus dessinée (fourche sur le gravel, tube sur la randonneuse). Dessin seulement.
+
+## 18 octobre — Ruban « En développement » sur la carte Bêta (cache v120-beta-ruban)
+- Même ruban que l’Ultra sur la carte Bêta de « À quoi veux-tu jouer ? », étiquette « Pour tester · en développement ».
