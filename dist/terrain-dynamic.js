@@ -15,6 +15,9 @@ export const PATCHES_SRC='./assets/terrain/patches.webp';
 const DIRS=[[1,0],[1,1],[0,1],[-1,0],[-1,-1],[0,-1]];
 const baked=new Map(MAP_CELLS.map(c=>[`${c.q},${c.r}`,c.type]));
 for(const c of NAMED_COLS)if(baked.has(`${c.q},${c.r}`))baked.set(`${c.q},${c.r}`,'col');
+// Cases changées APRÈS la peinture (18 octobre, demande de Fi : nouvelles villes, Lille déplacée) : ce que l'image montre encore.
+export const PAINTED_BEFORE={'1,25':'ville','1,26':'plaine','-4,28':'cote','11,6':'cote','41,31':'cote','43,36':'cote','45,40':'cote','45,34':'plaine','49,42':'plaine'};
+for(const [k,type] of Object.entries(PAINTED_BEFORE))baked.set(k,type);
 // Cases d'origine qui ont des motifs, rangées par type : elles servent de modèles quand une case change de type.
 const models={};
 for(const [key,type] of baked)if(CELL_PATCHES[key])(models[type]??=[]).push(key);
@@ -36,7 +39,9 @@ export function stylesFor(t,info={}){
   return {ground,motif};
  }
  const key=v?`${t.type}:${v}`:groundGroup(t.type),wasKey=was?groundGroup(was,depth):'';
- if(v||key!==wasKey){const list=GROUND_PATCHES[key]||GROUND_PATCHES[groundGroup(t.type)];if(list?.length)ground.push({rect:pick(list,t),pass:0});}
+ // Nouvelle ville posée sur une case peinte (18 octobre) : on garde le sol peint (côte, plaine) et on pose seulement les maisons.
+ const keepGround=!v&&t.type==='ville'&&was&&was!=='ville'&&was!=='mer';
+ if(!keepGround&&(v||key!==wasKey)){const list=GROUND_PATCHES[key]||GROUND_PATCHES[groundGroup(t.type)];if(list?.length)ground.push({rect:pick(list,t),pass:0});}
  const mlist=v&&MOTIF_PATCHES[`${t.type}:${v}`];
  if(mlist?.length)motif=pick(mlist,t,3);
  else{const model=pick(models[t.type==='col'?'montagne':t.type],t,7);if(model)motif=CELL_PATCHES[model];}

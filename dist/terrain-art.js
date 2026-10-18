@@ -5,7 +5,7 @@
 // (en attendant que ses images soient chargées, ou si elles échouent, on retombe sur l'ancien dessin à pictogrammes).
 import {MAP_CELLS} from './assets/europe/board-data.js';
 import {NAMED_COLS} from './europe.js';
-import {createDynamicLayer} from './terrain-dynamic.js';
+import {createDynamicLayer,PAINTED_BEFORE} from './terrain-dynamic.js';
 import {validVariant} from './terrain-variants.js';
 
 export const TERRAIN_ART_SRC='./assets/terrain/europe-terrain.webp';
@@ -13,6 +13,9 @@ export const TERRAIN_ART_STORAGE='aventure-velo-illustrations';
 
 // Type de chaque case au moment où l'image a été fabriquée.
 const baked=new Map(MAP_CELLS.map(c=>[`${c.q},${c.r}`,c.type]));
+// Cases changées APRÈS la peinture (18 octobre, demande de Fi : nouvelles villes, Lille déplacée) :
+// on note ici ce que l'image montre encore, pour que terrain-dynamic.js les redessine en direct.
+for(const [k,type] of Object.entries(PAINTED_BEFORE))baked.set(k,type);
 // Les cols nommés sont peints comme la montagne qui les porte : la peinture reste valable.
 for(const c of NAMED_COLS)if(baked.has(`${c.q},${c.r}`))baked.set(`${c.q},${c.r}`,'col');
 // La clé du jeu est "hex-q-r" ; on la convertit pour comparer.
