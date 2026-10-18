@@ -33,6 +33,7 @@ import * as TUTO from './tutorial.js';
 import {endStatsHtml} from './end-stats.js';
 import {drawVariantPreview} from './terrain-dynamic.js';
 import {oddsLabel,DEMAND} from './immersion.js';
+import {WIKI_CATEGORIES,wikiEntries} from './wikibike.js';
 const app=document.querySelector('#app');
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let artPref=readArtPreference(),displayPrefs=readDisplayPrefs(),sheetDrawer=false;
@@ -614,7 +615,7 @@ playerSheet=(inline=false)=>{const p=S.player(m),r=m.rules,v=findVoyage(p.voyage
  ${ficheGauges(p)}
  <div class="fiche-tabs" role="tablist" aria-label="Fiche du cycliste">${ficheTabs().map(([id,label])=>`<button type="button" role="tab" data-sheet-tab="${id}" aria-selected="${id===tab}" class="${id===tab?'on':''}">${svgI(TAB_SVG[id],20)}<span>${label}${id==='cartes'?' '+p.cardHand.length:''}</span></button>`).join('')}</div>
  ${ficheTabs().map(([id,label])=>`<section class="fiche-panel fiche-${id}" role="tabpanel" aria-label="${label}" data-sheet-panel="${id}" ${id===tab?'':'hidden'}>${panels[id]}</section>`).join('')}
- <div class="fiche-footer">${btn('💾 Sauvegarder','save','fiche-link')}${btn(auto?'Sauvegarde auto : oui':'Sauvegarde auto : non','autosave','fiche-link')}${btn('Journal de route','stats','fiche-link')}${btn('Fin de partie','finish','fiche-link')}</div>`;
+ <div class="fiche-footer"><details class="fiche-save-menu"><summary>💾 Sauvegarde</summary><div class="fiche-save-actions">${btn('Sauvegarder maintenant','save','fiche-link')}${btn(auto?'Sauvegarde auto : oui':'Sauvegarde auto : non','autosave','fiche-link')}${btn('Exporter la partie','export','fiche-link')}</div></details>${btn('📖 WikiBike','wiki','fiche-link')}${btn('Journal de route','stats','fiche-link')}${btn('Fin de partie','finish','fiche-link')}</div>`;
  return inline?`<section class="player-sheet-inline player-mat fiche">${body}</section>`:`<div class="player-mat fiche">${body}</div>`;};
 {const bindBeforeFiche=bind;bind=()=>{bindBeforeFiche();document.body?.classList?.toggle('en-partie',screen==='game');document.querySelectorAll('[data-sheet-tab]').forEach(el=>el.onclick=()=>{sheetTab=el.dataset.sheetTab;const root=el.closest('.fiche')||document;root.querySelectorAll('[data-sheet-tab]').forEach(t=>{const on=t.dataset.sheetTab===sheetTab;t.classList.toggle('on',on);t.setAttribute('aria-selected',String(on));});root.querySelectorAll('[data-sheet-panel]').forEach(panel=>{panel.hidden=panel.dataset.sheetPanel!==sheetTab;});});};}
 render();if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
@@ -725,13 +726,13 @@ async function netAction(a){
  if(!onlineGame()||myTurn())return priorSheet(inline);
  const mine=m.players.findIndex(p=>p.id===online.seat);if(mine<0)return priorSheet(inline);
  const keep=m.activeIndex;m.activeIndex=mine;try{return priorSheet(inline).replace('class="player-mat fiche','class="player-mat fiche net-mine-sheet').replace('class="player-sheet-inline player-mat fiche','class="player-sheet-inline player-mat fiche net-mine-sheet');}finally{m.activeIndex=keep;}};}
-{const priorOverlay=overlay;overlay=()=>{if(onlineGame()&&screen==='game'&&!myTurn()&&!m?.done&&!['meteo','stats'].includes(modal))return '';return priorOverlay();};}
+{const priorOverlay=overlay;overlay=()=>{if(onlineGame()&&screen==='game'&&!myTurn()&&!m?.done&&!['meteo','stats','wiki'].includes(modal))return '';return priorOverlay();};}
 // Hors de son tour : seuls les boutons « pour regarder » marchent.
-const NET_VIEW_ACTIONS=new Set(['net-resync','zoomin','zoomout','center','art','sheet-toggle','split-view','meteo','close','home','settings','stats','online','net-play','net-leave','reveal-close']);
+const NET_VIEW_ACTIONS=new Set(['net-resync','zoomin','zoomout','center','art','sheet-toggle','split-view','meteo','close','home','settings','stats','wiki','wiki-back','online','net-play','net-leave','reveal-close']);
 globalThis.document?.addEventListener?.('click',e=>{
  if(!onlineGame()||screen!=='game'||myTurn())return;
  const el=e.target.closest?.('[data-action],[data-sheet-tab],button,a,input,select,[data-board-key],svg,.map-wrap');if(!el)return;
- if(el.closest('[data-sheet-tab]')||NET_VIEW_ACTIONS.has(el.dataset?.action)||/^(help|intro-close|help-tab-|meteo-day-|chat-)/.test(el.dataset?.action||'')||el.closest('.chat-drawer')||el.closest('.chat-toast')||el.closest('.maptools')||el.closest('header')||el.closest('.split-size'))return;
+ if(el.closest('[data-sheet-tab]')||NET_VIEW_ACTIONS.has(el.dataset?.action)||/^(help|intro-close|help-tab-|meteo-day-|chat-|wiki-entry-)/.test(el.dataset?.action||'')||el.closest('.chat-drawer')||el.closest('.chat-toast')||el.closest('.maptools')||el.closest('header')||el.closest('.split-size'))return;
  e.stopPropagation();e.preventDefault();message=`C’est au tour de ${seatName(NET.actorId(m))}.`;const toast=document.querySelector('.toast');if(toast)toast.textContent=message;
 },true);
 // Au démarrage : reprendre l'écoute de la partie en ligne, ou ouvrir l'écran « Rejoindre » si le lien contient un code.
@@ -1551,3 +1552,15 @@ const markFountains=()=>{try{
 // ---------- 18 octobre (choix B de Fi) : écran d'accueil vivant — la caméra suit un cycliste de Paris à Istanbul ----------
 import {startHomeAnim,stopHomeAnim} from './home-anim.js';
 {const priorRender=render;render=(...a)=>{priorRender(...a);try{const root=document.querySelector('.mc-title');if(root)startHomeAnim(root);else stopHomeAnim();}catch(err){console.error(err);}};}
+
+// WikiBike : définitions consultables depuis le pied de la fiche, sans quitter la partie.
+let wikiEntry='',wikiQuery='';
+const wikiNormalize=s=>String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('fr');
+function wikiMarkup(){
+ const entries=wikiEntries(helpRules()),entry=entries.find(e=>e.id===wikiEntry);
+ if(entry)return `<div class="wiki-entry"><span class="wiki-icon" aria-hidden="true">${entry.icon}</span><span class="eyebrow">${esc(WIKI_CATEGORIES.find(c=>c.id===entry.category)?.label||'WikiBike')}</span><h2>${esc(entry.name)}</h2><p class="wiki-short">${esc(entry.short)}</p><p>${esc(entry.body)}</p><div class="wiki-actions">${btn('← Toutes les définitions','wiki-back','light')}${btn('Fermer','close','light')}</div></div>`;
+ return `<div class="wikibike"><span class="eyebrow">LE DICTIONNAIRE DU JEU</span><h2>📖 WikiBike</h2><p>Retrouve une explication sans quitter ta partie. Les coûts indiqués suivent tes règles actuelles.</p><label for="wiki-search">Rechercher un mot</label><input id="wiki-search" type="search" autocomplete="off" placeholder="Énergie, col, repas…" value="${esc(wikiQuery)}"/><div class="wiki-categories">${WIKI_CATEGORIES.map(category=>`<section class="wiki-category"><h3>${esc(category.label)}</h3><div class="wiki-grid">${entries.filter(e=>e.category===category.id).map(e=>`<button type="button" class="wiki-term" data-action="wiki-entry-${e.id}" data-wiki-search="${esc(wikiNormalize(e.name+' '+e.short+' '+e.body))}"><span aria-hidden="true">${e.icon}</span><span><b>${esc(e.name)}</b><small>${esc(e.short)}</small></span><span aria-hidden="true">→</span></button>`).join('')}</div></section>`).join('')}</div><p class="wiki-empty" hidden>Aucune définition trouvée.</p><div class="wiki-actions">${btn('Fermer','close','light')}</div></div>`;
+}
+{const beforeWikiAction=act;act=a=>{if(a==='wiki'){wikiEntry='';wikiQuery='';modal='wiki';render();return;}if(a==='wiki-back'){wikiEntry='';render();return;}if(a.startsWith('wiki-entry-')){wikiEntry=a.slice('wiki-entry-'.length);render();return;}return beforeWikiAction(a);};}
+{const beforeWikiOverlay=overlay;overlay=()=>modal==='wiki'?`<div class="modal-back"><section class="modal wide wiki-modal" role="dialog" aria-modal="true" aria-label="WikiBike">${wikiMarkup()}</section></div>`:beforeWikiOverlay();}
+{const beforeWikiBind=bind;bind=()=>{beforeWikiBind();const input=document.querySelector('#wiki-search');if(!input)return;const filter=()=>{wikiQuery=input.value;const query=wikiNormalize(wikiQuery.trim());let visible=0;document.querySelectorAll('.wiki-category').forEach(section=>{let count=0;section.querySelectorAll('.wiki-term').forEach(term=>{const match=term.dataset.wikiSearch.includes(query);term.hidden=!match;if(match)count++;});section.hidden=!count;visible+=count;});document.querySelector('.wiki-empty').hidden=visible>0;};input.addEventListener('input',filter);filter();};}
