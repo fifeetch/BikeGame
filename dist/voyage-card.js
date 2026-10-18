@@ -48,7 +48,7 @@ export function voyageCard(v,opts={}){
    <div class="vcard-art"${art?` style="background-image:url('${art}')"`:''} role="img" aria-label="${esc(v.title)} : de ${esc(v.from)} à ${esc(v.to)}"><span class="vcard-tag">Carte voyage</span></div>
    <header class="vcard-head"><h3>${esc(v.title)}</h3><p class="vcard-route">${esc(v.from)}<i aria-hidden="true"></i>${esc(v.to)}</p></header>
    <ul class="vcard-obj">${objs.map(([k,a,b],i)=>`<li class="${done[i]?'done':''}">${objectiveIcon(k)}<span>${esc(a)}<b>${esc(b)}</b></span><em aria-hidden="true"></em></li>`).join('')}</ul>
-   <footer class="vcard-foot"><span>${len?`Environ ${len} cases`:''}</span><span class="vcard-tier">${esc(t.name)}</span><span class="vcard-pts"><b>${t.points}</b> points</span></footer>
+   <footer class="vcard-foot"><span>${len?`Environ ${len} cases`:''}</span><span class="vcard-tier">${esc(t.name)}</span><span class="vcard-pts" title="${t.points} points avec tous les objectifs · ${t.min} si tu arrives sans tous les objectifs"><b>${t.points}</b> points <small>· ${t.min} sans les objectifs</small></span></footer>
   </div>
  </article>`;
 }

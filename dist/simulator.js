@@ -1,6 +1,6 @@
 import * as E from './engine.js';
 import {europeBoard,MAP_VERSION,axialDistance} from './europe.js';
-import {voyages,progress,voyagePoints,findVoyage} from './voyages.js';
+import {voyages,progress,voyagePoints,voyageMinPoints,findVoyage} from './voyages.js';
 import {DECOR} from './assets/europe/decor-data.js';
 import {ULTRA_NEEDS,ultraNeedLevel,ultraKit,ultraKitHours,ultraKg,ultraLoad,ULTRA_GEAR,ULTRA_BIKES,ULTRA_RACE,ULTRA_HOURS,ULTRA_OFFROAD_HOURS,ULTRA_NIGHT_HOURS,ULTRA_TIRED_HOURS,ULTRA_NIGHT,ULTRA_STEP_MAX,ULTRA_SLEEP,ULTRA_DEBT,ULTRA_DEBT_NAMES,ULTRA_HALLU,ULTRA_MICRO,ULTRA_LATE_NIGHT,ULTRA_SHOP_HOURS,ULTRA_RESTO_HOURS,ULTRA_FOOD,ULTRA_FERRY_MAX,ULTRA_FERRY_HOURS,ULTRA_RIVALS,ULTRA_RIVAL_PACE,ULTRA_COL_PLANS} from './ultra.js';
 import {CLASSIC,COLORS,clone,validateRules,energyCap,isExhausted,fatigueMax,IMM_FATIGUE_MAX} from './rules.js';
@@ -44,13 +44,13 @@ export const bagCapacity=(m,p=player(m))=>capacityFor(m.rules,p.bike,p.items);
 export const inventorySpace=(m,p=player(m))=>p.items.reduce((sum,id)=>sum+(m.rules.equipment[id]?.space||0),0);
 // ---------- Fin de partie (mode « multi ») : 50 points, 3 voyages ou 40 jours (réglable) ----------
 export const multiVictory=m=>m.rules.victory?.mode==='multi';
-// Arrivé à la ville d'arrivée sans tous les objectifs : on peut terminer quand même, avec 40 % de points en moins (règle de Fi).
+// Arrivé à la ville d'arrivée sans tous les objectifs : on peut terminer quand même, avec les points mini de la carte (tableau de Fi, 18 octobre ; avant : −40 %).
 export const PARTIAL_PENALTY=.4;
 export function canFinishVoyageEarly(m,p=player(m)){const v=findVoyage(p.voyage);return Boolean(multiVictory(m)&&v&&!p.completed&&!m.done&&['move','place'].includes(m.phase)&&!m.pendingAttack&&m.board[p.pos]?.name===v.to&&!progress(view(m,p)).ready);}
-export const earlyVoyagePoints=(m,p=player(m))=>Math.round(voyagePoints(p.voyage)*(1-PARTIAL_PENALTY));
+export const earlyVoyagePoints=(m,p=player(m))=>voyageMinPoints(p.voyage);
 export function finishVoyageEarly(m){const p=player(m);if(!canFinishVoyageEarly(m,p))return false;completeVoyage(m,p,findVoyage(p.voyage),true);return true;}
-function completeVoyage(m,p,v,partial=false){p.completed=true;p.voyageWon=true;const pts=partial?Math.round(voyagePoints(v)*(1-PARTIAL_PENALTY)):voyagePoints(v);p.points+=pts;p.voyagesDone=[...(p.voyagesDone||[]),{id:v.id,day:m.round,points:pts,partial}];
- record(m,'objective',(partial?'Voyage terminé sans tous les objectifs : ':'Objectif accompli : ')+v.title+' (+'+pts+' points'+(partial?', −40 %':'')+')');
+function completeVoyage(m,p,v,partial=false){p.completed=true;p.voyageWon=true;const pts=partial?voyageMinPoints(v):voyagePoints(v);p.points+=pts;p.voyagesDone=[...(p.voyagesDone||[]),{id:v.id,day:m.round,points:pts,partial}];
+ record(m,'objective',(partial?'Voyage terminé sans tous les objectifs : ':'Objectif accompli : ')+v.title+' (+'+pts+' points'+(partial?', points mini':'')+')');
  if(multiVictory(m)){const r=m.rules.victory;if(!(r.voyages&&p.voyagesDone.length>=r.voyages))p.voyageChoices=newVoyageChoices(m,p);}}
 // 3 nouvelles cartes : jamais une carte déjà faite, ni une carte qui arrive là où l'on est.
 export function newVoyageChoices(m,p){const here=m.board[p.pos]?.name,done=new Set((p.voyagesDone||[]).map(d=>d.id));

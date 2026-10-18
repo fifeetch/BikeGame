@@ -81,12 +81,12 @@ test('fin de partie après 40 jours : le plus de points gagne',()=>{
  S.endTurn(m);if(m.phase==='card-choice')S.chooseCard(m,0);if(m.phase==='card-discard')S.discardEventHand(m,0);
  assert(m.done);assert.equal(m.winner,'p2');
 });
-test('arrivé sans tous les objectifs : on peut terminer le voyage avec 40 % de points en moins',()=>{
+test('arrivé sans tous les objectifs : on peut terminer le voyage avec les points mini de la carte',()=>{
  const m=game(),p=S.player(m);
  const voyage=S.view(m).voyage,dest=Object.values(m.board).find(t=>t.type==='ville'&&t.name===({traversee:'Istanbul',soleil:'Rome'}[voyage]));
  p.pos=dest.key;p.travelHistory=[];p.voyageFrom=0;m.phase='move';
- assert(S.canFinishVoyageEarly(m));const before=p.points,full={traversee:20,soleil:12}[voyage];
- assert(S.finishVoyageEarly(m));assert.equal(p.points-before,Math.round(full*.6));assert(p.completed);assert.equal(p.voyageChoices.length,3);assert(p.voyagesDone.at(-1).partial);
+ assert(S.canFinishVoyageEarly(m));const before=p.points,mini={traversee:10,soleil:6}[voyage];
+ assert(S.finishVoyageEarly(m));assert.equal(p.points-before,mini);assert(p.completed);assert.equal(p.voyageChoices.length,3);assert(p.voyagesDone.at(-1).partial);
  assert(!S.canFinishVoyageEarly(m),'une seule fois');
 });
 

@@ -493,3 +493,7 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 
 ## 18 octobre — La traversée ibérique : 1 ville au lieu de 2 (cache v121-iberique)
 - Demande de Fi : le seul chemin à 2 villes passait par Bordeaux. Objectifs : 1 ville · 4 plaines · 2 moyennes montagnes. Effort (cases + énergie) 44 → 27 : 16 → 8 points. Trajet complet 12 cases.
+
+## 18 octobre — Points des cartes Voyage selon le tableau de Fi (cache v122-points)
+- Chaque carte a ses points max (tous les objectifs) et min (arrivé sans tous les objectifs) : VOYAGE_POINTS dans voyages.js. La règle des −40 % est remplacée par les points mini. La carte affiche « N points · M sans les objectifs ».
+- Bug corrigé : l'objectif « col mythique » (De la Provence à la lagune) ne se validait jamais depuis que le col compte comme une montagne.

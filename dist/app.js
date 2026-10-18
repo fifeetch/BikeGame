@@ -280,7 +280,7 @@ function act(a){
  else if(a==='ferry-confirm'){if(!S.travelFerry(m,ferryTarget))message='Traversée indisponible : port ou argent insuffisant.';else{modal='';route=[];mapSelection='';}}
  else if(a==='ferry-cancel')modal='';
  else if(a==='repair'||a==='repair-chambre'||a==='repair-kit'){if(!S.repairPuncture(m,a==='repair'?'':a.slice(7)))message='Réparation indisponible.';}
- else if(a==='finish-voyage-early'){if(!S.finishVoyageEarly(m))message='Impossible de terminer le voyage ici.';else message='Voyage terminé (−40 %). Au début de ton prochain tour, tu choisiras un nouveau voyage.';}
+ else if(a==='finish-voyage-early'){if(!S.finishVoyageEarly(m))message='Impossible de terminer le voyage ici.';else message='Voyage terminé (points mini de la carte). Au début de ton prochain tour, tu choisiras un nouveau voyage.';}
  else if(a.startsWith('fasttravel-')){if(!S.fastTravel(m,a.slice(11)))message='Voyage rapide impossible.';else{mapSelection='';route=[];message='En train jusqu’au départ du nouveau voyage : ta journée est passée.';}}
  else if(a.startsWith('newvoyage-')){if(!S.chooseNewVoyage(m,a.slice(10)))message='Choix du voyage impossible.';else{mapSelection='';route=[];}}
  else if(a==='cards')modal='cards';

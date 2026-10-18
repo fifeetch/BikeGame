@@ -11,8 +11,8 @@ test('20 voyages, villes existantes, longueur enregistrée = trajet le plus cour
  assert.equal(voyages.length,20);assert.equal(new Set(voyages.map(v=>v.id)).size,20);
  for(const v of voyages){assert.equal(VOYAGE_LENGTHS[v.id],shortest(v.from,v.to),v.id);assert(progress({voyage:v.id,travelHistory:[],mode:'plateau'}).rows.length>=2,v.id);}
 });
-test('points selon l’effort (barème de Fi) : 4, 8, 12, 16, 20',()=>{
- assert.equal(voyagePoints('grece'),4);assert.equal(voyagePoints('manche'),4);assert.equal(voyagePoints('rhin'),8);assert.equal(voyagePoints('alpes'),12);
- assert.equal(voyagePoints('iberique'),8);assert.equal(voyagePoints('fjords'),16);assert.equal(voyagePoints('traversee'),20);assert.equal(voyagePoints('nord'),20);
- for(const v of voyages)assert([4,8,12,16,20].includes(voyagePoints(v)),v.id);
+test('points des cartes Voyage (tableau de Fi, 18 octobre) : min et max',()=>{
+ assert.equal(voyagePoints('grece'),6);assert.equal(voyagePoints('manche'),6);assert.equal(voyagePoints('rhin'),10);assert.equal(voyagePoints('alpes'),14);
+ assert.equal(voyagePoints('iberique'),10);assert.equal(voyagePoints('fjords'),18);assert.equal(voyagePoints('traversee'),18);assert.equal(voyagePoints('nord'),22);
+ for(const v of voyages){const t=voyageTier(v);assert(t.min>0&&t.min<t.points,v.id);}
 });

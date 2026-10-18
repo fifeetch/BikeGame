@@ -1,7 +1,8 @@
 // Règles du jeu expliquées au joueur : le résumé « Comment on joue » (avant le jour 1)
 // et les règles détaillées (bouton « 📖 Règles »). Les nombres viennent des règles de la partie,
 // donc le texte suit toujours les réglages choisis (vélos, météo, rencontres, fin de partie…).
-import {VOYAGE_TIERS} from './voyages.js';
+import {VOYAGE_POINTS} from './voyages.js';
+const VP=Object.entries(VOYAGE_POINTS).filter(([k])=>k!=='apprentissage').map(([,v])=>v),VMIN=Math.min(...VP.map(v=>v[1])),VMAX=Math.max(...VP.map(v=>v[1]));
 import {WEATHER} from './weather.js';
 import {NIGHT,DEMAND_NIGHT} from './immersion.js';
 import {ULTRA_RACE,ULTRA_HOURS,ULTRA_NIGHT,ULTRA_STEP_MAX,ULTRA_SLEEP,ULTRA_DEBT,ULTRA_SHOP_HOURS,ULTRA_RESTO_HOURS,ULTRA_FOOD,ULTRA_FERRY_MAX,ULTRA_RIVALS,ULTRA_WEIGHT,ULTRA_NEEDS} from './ultra.js';
@@ -26,7 +27,7 @@ export function rulesIntro(r,{btn,eventGame=true}={}){if(r.immersion?.ultra)retu
   ${box('🚲','Ta journée',`Cases par jour : ${bikeDays(r)}. Chaque case coûte de l’énergie : plaine et côte ${t.plaine}, moyenne montagne ${t.moyenne_montagne}, montagne et col ${t.montagne}, ville ${t.ville}.`)}
   ${box('⚡','Énergie et repos',`${r.startEnergy} au départ, ${r.maxEnergy} au plus. On roule, puis on dort : <b>dormir termine la journée</b>. Nuits : ${nights()} ; une journée sans rouler, la nuit rend deux fois plus. Repas : ${meals(r)}. Repas au maximum : ${foodMax(r)} (+2 avec les sacoches), ${r.startFood} au départ.${r.fatigue?.enabled?` Chaque jour de route fatigue : −${r.fatigue.maxEnergyPenalty} d’énergie maximum par niveau, jusqu’à une vraie nuit.`:''}`)}
   ${o.offroad?box('🛣','Route ou hors route',`Sans ${esc(r.equipment[r.offroad.item]?.name||'GPS')}, quitter la route limite la journée à ${Object.entries(r.offroad.maxDistance).map(([id,n])=>`${n} cases (${esc(r.bikes[id]?.name||id)})`).join(' ou ')}.`):box('🛣','Routes','Routes et chemins : on roule partout, la route ne change rien.')}
-  ${box('⭐','Les points',`Voyage réussi +${VOYAGE_TIERS[0].points} à +${VOYAGE_TIERS.at(-1).points} selon l’effort demandé · col mythique +${r.points.col} · ${r.adventure.climberCols} cols +${r.adventure.climberBonus} · jeton « ? » +1 à +3.`)}
+  ${box('⭐','Les points',`Voyage réussi +${VMIN} à +${VMAX} selon la carte (moins si tu arrives sans tous les objectifs) · col mythique +${r.points.col} · ${r.adventure.climberCols} cols +${r.adventure.climberBonus} · jeton « ? » +1 à +3.`)}
   ${r.immersion?.enabled?box('🧭','Le mode Immersion','Plus de cartes : la route décide. Des scènes en route (plus souvent, et plus de galères, quand tu es fatigué), des imprévus visibles sur la carte, et chaque soir tu choisis où dormir : bivouac, camping, hôtel ou « Demander ». Dormir termine la journée, et chaque nuit est un pari.'):o.encounters?box('🤝','Les rencontres','Chaque soir, une rencontre liée à l’endroit où tu t’arrêtes : tu choisis ce que tu fais.'):box('🃏','Les cartes',`Fin de tour : pioche ${r.eventCards.drawPerTurn}, garde-en 1. Positives pour toi, négatives contre un autre (il la découvre au début de son tour)${o.forecast?'':', météo pendant son trajet'}, bonus posés devant toi.`)}
  </div><p class="muted">${o.forecast?'Météo annoncée : chaque soir, le bulletin du lendemain pour 5 régions. ':''}Toutes les règles sont dans « 📖 Règles », à tout moment de la partie.</p>
  <div class="ri-actions">${btn('C’est parti →','intro-close')}${btn('📖 Règles détaillées','help','light')}</div>
@@ -56,8 +57,8 @@ export function rulesHelp(r,tab='route',{btn,eventGame=true}={}){const o=opts(r)
  else if(tab==='voyages')body=`<h3>Voyages & points</h3>${li([
   'Ta <b>carte Voyage</b> donne une ville d’arrivée et des objectifs de cases (villes, côtes, montagnes…). Remplis-les, puis rejoins la ville d’arrivée.',
   'Un <b>col</b> compte comme une montagne. Pour les objectifs « consécutives », une case déjà traversée ne compte pas mais ne casse pas la série ; un autre terrain la casse.',
-  `Points du voyage selon l’effort demandé : ${VOYAGE_TIERS.map(x=>`${x.name} +${x.points}`).join(' · ')}.`,
-  'Arrivé sans tous les objectifs : « 🏁 Terminer le voyage ici », avec 40 % de points en moins.',
+  `Points du voyage écrits sur la carte : de +${VMIN} à +${VMAX} avec tous les objectifs, selon l’effort demandé.`,
+  'Arrivé sans tous les objectifs : « 🏁 Terminer le voyage ici », avec les points mini écrits sur la carte.',
   'Voyage réussi : au début de ton tour suivant, tire 3 cartes Voyage et garde-en 1. Tu pars d’où tu es ; seules les cases parcourues ensuite comptent.',
   `Col mythique : +${r.points.col} · ${r.adventure.climberCols} cols franchis : +${r.adventure.climberBonus} (une fois).`,
   'Jetons « ? » (lieux cachés, loin des routes) : le premier qui passe dessus gagne +1, +2 ou +3.'])}`;

@@ -35,8 +35,14 @@ export const VOYAGE_TIERS=[{max:19,name:'Facile',points:4},{max:29,name:'Modér�
 export const VOYAGE_EFFORT={traversee:57,soleil:34,alpes:36,campagne:39,nord:58,atlantique:37,est:47,balkans:29,iberique:27,manche:16,iles:17,rhin:26,danube:38,adriatique:26,grece:19,anatolie:25,fjords:47,baltique:26,riviera:26,carpates:29,apprentissage:26};
 // Longueur du trajet le plus court (affichée « environ N cases »).
 export const VOYAGE_LENGTHS={traversee:27,soleil:14,alpes:13,campagne:11,nord:21,atlantique:11,est:16,balkans:12,iberique:11,manche:10,iles:9,rhin:9,danube:12,adriatique:10,grece:6,anatolie:9,fjords:15,baltique:12,riviera:8,carpates:10,apprentissage:13};
-export const voyageTier=v=>{const id=typeof v==='string'?v:v?.id,effort=VOYAGE_EFFORT[id]||0;return VOYAGE_TIERS.find(t=>effort<=t.max);};
+// Points des cartes Voyage (tableau de Fi, 18 octobre 2026) : max = tous les objectifs remplis, min = arrivé sans tous les objectifs.
+// Calcul de Fi : effort = énergie des cases (plaine 1, côte 1, moyenne montagne 2, montagne 3, col 3, ville 0) ;
+// min selon l'effort du trajet le plus court, max selon l'effort du trajet qui remplit tous les objectifs, grille par tranches de 5.
+export const VOYAGE_POINTS={traversee:[10,18],soleil:[6,10],alpes:[6,14],campagne:[4,10],nord:[10,22],atlantique:[4,10],est:[6,18],balkans:[4,8],iberique:[4,10],manche:[3,6],iles:[2,6],rhin:[4,10],danube:[4,14],adriatique:[3,8],grece:[3,6],anatolie:[4,10],fjords:[6,18],baltique:[4,8],riviera:[3,8],carpates:[4,8],apprentissage:[3,8]};
+const tierName=pts=>pts<=6?'Facile':pts<=10?'Modéré':pts<=14?'Difficile':pts<=18?'Très difficile':'Épique';
+export const voyageTier=v=>{const id=typeof v==='string'?v:v?.id,[min,max]=VOYAGE_POINTS[id]||[2,4];return {name:tierName(max),points:max,min};};
 export const voyagePoints=v=>voyageTier(v).points;
+export const voyageMinPoints=v=>voyageTier(v).min;
 export function drawVoyages(rng=Math.random){const cards=[...voyages];for(let i=cards.length-1;i>0;i--){let j=Math.floor(rng()*(i+1));[cards[i],cards[j]]=[cards[j],cards[i]];}return cards.slice(0,3);}
 export function progress(g){const v=findVoyage(g.voyage);if(!v)return null;const history=g.travelHistory||(g.travel||[]).map(k=>({key:k,type:g.board[k]?.type,endpoint:g.board[k]?.id===0||g.board[k]?.id===g.arrivalId}));// Règle de Fi (17 octobre) : un col compte comme une montagne (objectifs montagne et montagnes consécutives).
 const mt=t=>t.type==='col'?{...t,type:'montagne'}:t;const first=new Map();for(const t of history)if(!first.has(t.key))first.set(t.key,mt(t));const unique=[...first.values()];const count=type=>unique.filter(t=>t.type===type&&!t.endpoint).length;
@@ -52,5 +58,5 @@ if(v.plainRun)add('Plaines consécutives',runs.plaine,v.plainRun);
 if(v.mountain)add(v.mountain===1?'Tuile montagne':'Tuiles montagne',count('montagne'),v.mountain);
 if(v.chains)add('Chaînes distinctes de 2 montagnes',chains,v.chains);
 if(v.hills)add('Tuiles moyenne montagne',count('moyenne_montagne'),v.hills);
-if(v.cols)add(v.cols===1?'Col mythique':'Cols mythiques',count('col'),v.cols);
+if(v.cols){const cols=new Set(history.filter(t=>t.type==='col'&&!t.endpoint).map(t=>t.key)).size;add(v.cols===1?'Col mythique':'Cols mythiques',cols,v.cols);}
 if(g.mode==='plateau')for(const r of rows)r.label=r.label.replace('Tuiles','Cases').replace('Tuiles','Cases').replace('tuiles','cases').replace('Tuile','Case');return {v,rows,ready:rows.every(r=>r.done),won:!!g.voyageWon};}
