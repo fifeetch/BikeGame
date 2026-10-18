@@ -33,7 +33,7 @@ import * as TUTO from './tutorial.js';
 import {endStatsHtml} from './end-stats.js';
 import {drawVariantPreview} from './terrain-dynamic.js';
 import {oddsLabel,DEMAND} from './immersion.js';
-import {WIKI_CATEGORIES,wikiEntries} from './wikibike.js';
+import {WIKI_CATEGORIES,wikiEntries} from './wikibike.js?v=full1';
 const app=document.querySelector('#app');
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let artPref=readArtPreference(),displayPrefs=readDisplayPrefs(),sheetDrawer=false;
@@ -1557,9 +1557,10 @@ import {startHomeAnim,stopHomeAnim} from './home-anim.js';
 let wikiEntry='',wikiQuery='';
 const wikiNormalize=s=>String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('fr');
 function wikiMarkup(){
- const entries=wikiEntries(helpRules()),entry=entries.find(e=>e.id===wikiEntry);
+ const rules=helpRules(),boardMode=m?.mode||mode,entries=wikiEntries(rules,{boardMode}),entry=entries.find(e=>e.id===wikiEntry);
+ const activeMode=boardMode==='tuiles'?'Tuiles':rules.immersion?.ultra?'Ultra':rules.immersion?.enabled?(rules.immersion.beta?'Bêta':'Immersion'):'Original';
  if(entry)return `<div class="wiki-entry"><span class="wiki-icon" aria-hidden="true">${entry.icon}</span><span class="eyebrow">${esc(WIKI_CATEGORIES.find(c=>c.id===entry.category)?.label||'WikiBike')}</span><h2>${esc(entry.name)}</h2><p class="wiki-short">${esc(entry.short)}</p><p>${esc(entry.body)}</p><div class="wiki-actions">${btn('← Toutes les définitions','wiki-back','light')}${btn('Fermer','close','light')}</div></div>`;
- return `<div class="wikibike"><span class="eyebrow">LE DICTIONNAIRE DU JEU</span><h2>📖 WikiBike</h2><p>Retrouve une explication sans quitter ta partie. Les coûts indiqués suivent tes règles actuelles.</p><label for="wiki-search">Rechercher un mot</label><input id="wiki-search" type="search" autocomplete="off" placeholder="Énergie, col, repas…" value="${esc(wikiQuery)}"/><div class="wiki-categories">${WIKI_CATEGORIES.map(category=>`<section class="wiki-category"><h3>${esc(category.label)}</h3><div class="wiki-grid">${entries.filter(e=>e.category===category.id).map(e=>`<button type="button" class="wiki-term" data-action="wiki-entry-${e.id}" data-wiki-search="${esc(wikiNormalize(e.name+' '+e.short+' '+e.body))}"><span aria-hidden="true">${e.icon}</span><span><b>${esc(e.name)}</b><small>${esc(e.short)}</small></span><span aria-hidden="true">→</span></button>`).join('')}</div></section>`).join('')}</div><p class="wiki-empty" hidden>Aucune définition trouvée.</p><div class="wiki-actions">${btn('Fermer','close','light')}</div></div>`;
+ return `<div class="wikibike"><span class="eyebrow">LE DICTIONNAIRE DU JEU</span><h2>📖 WikiBike</h2><p class="wiki-intro">${entries.length} articles · mode actif : <b>${activeMode}</b>. Les coûts et bonus indiqués suivent tes règles ; les rubriques des autres modes sont signalées.</p><label for="wiki-search">Rechercher un mot</label><input id="wiki-search" type="search" autocomplete="off" placeholder="Énergie, col, repas…" value="${esc(wikiQuery)}"/><div class="wiki-categories">${WIKI_CATEGORIES.map(category=>{const group=entries.filter(e=>e.category===category.id);return `<section class="wiki-category"><h3>${esc(category.label)} <small>${group.length}</small></h3><div class="wiki-grid">${group.map(e=>`<button type="button" class="wiki-term" data-action="wiki-entry-${e.id}" data-wiki-search="${esc(wikiNormalize(category.label+' '+e.name+' '+e.short+' '+e.body))}"><span aria-hidden="true">${e.icon}</span><span><b>${esc(e.name)}</b><small>${esc(e.short)}</small></span><span aria-hidden="true">→</span></button>`).join('')}</div></section>`;}).join('')}</div><p class="wiki-empty" hidden>Aucune définition trouvée.</p><div class="wiki-actions">${btn('Fermer','close','light')}</div></div>`;
 }
 {const beforeWikiAction=act;act=a=>{if(a==='wiki'){wikiEntry='';wikiQuery='';modal='wiki';render();return;}if(a==='wiki-back'){wikiEntry='';render();return;}if(a.startsWith('wiki-entry-')){wikiEntry=a.slice('wiki-entry-'.length);render();return;}return beforeWikiAction(a);};}
 {const beforeWikiOverlay=overlay;overlay=()=>modal==='wiki'?`<div class="modal-back"><section class="modal wide wiki-modal" role="dialog" aria-modal="true" aria-label="WikiBike">${wikiMarkup()}</section></div>`:beforeWikiOverlay();}

@@ -1969,6 +1969,8 @@ body .player-mat.fiche .fiche-save-actions .fiche-link{width:100%;min-height:40p
 /* La modale générale est sombre : ses variables et ses boutons clairs ne conviennent pas au papier du WikiBike. */
 .modal-back .modal.wiki-modal{--c-text:#1b3b38;--c-light:#1b3b38;--c-cream:#1b3b38;background:#fff8e5;color:#1b3b38}
 .modal-back .modal.wiki-modal .eyebrow{color:#8a5a14}
+.modal-back .modal.wiki-modal .wiki-intro{padding:10px 14px;border-radius:10px;background:#efe2bc;color:#1b3b38;font-size:17px}
+.modal-back .modal.wiki-modal .wiki-category h3 small{margin-left:6px;color:#795d30;font:700 14px 'Barlow Condensed',system-ui,sans-serif}
 .modal-back .modal.wiki-modal .wiki-term{background:#fffdf3;color:#1b3b38;border:1px solid #dbc99e;text-transform:none;letter-spacing:normal;font:600 16px/1.2 'Barlow',system-ui,sans-serif;box-shadow:none}
 .modal-back .modal.wiki-modal .wiki-term:hover,.modal-back .modal.wiki-modal .wiki-term:focus-visible{background:#fff2cf;border-color:#a46519}
 .modal-back .modal.wiki-modal .wiki-actions button.light{background:#1b3b38;color:#fff8e5;border:2px solid #1b3b38}
