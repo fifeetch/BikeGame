@@ -510,3 +510,6 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 
 ## 18 octobre — Les petites règles en images (cache v126-regles-images)
 - Planche validée par Fi : 6 vignettes dans l'écran « Règles » (dist/rules-visuals.js). Se déplacer : une côte touche la mer · un col compte comme une montagne. Voyages & points : une case ne compte qu'une fois · « d'affilée » sans coupure · départ et arrivée ne comptent pas · points maxi / mini.
+
+## 18 octobre — Partie guidée : la ville s'ouvre en arrivant à Belgrade (cache v127-tuto-ville)
+- La rue animée s'ouvre aussi dans la partie guidée ; la bulle du guide attend que la fenêtre de la ville soit fermée.

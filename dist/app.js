@@ -988,7 +988,7 @@ function tutoPlace(){const b=document.querySelector('.tuto-layer .tuto-bubble');
  priorRender();
  document.querySelectorAll('.tuto-layer').forEach(e=>e.remove());document.querySelectorAll('.tuto-target').forEach(e=>e.classList.remove('tuto-target'));
  clearInterval(tutoTimer);tutoTimer=null;
- if(screen!=='game'||!m||!TUTO.tutorialOn(m)||!TUTO.currentStep(m))return;
+ if(screen!=='game'||!m||!TUTO.tutorialOn(m)||!TUTO.currentStep(m)||modal==='market')return;// la bulle attend que la fenêtre de la ville soit fermée
  const s=TUTO.currentStep(m);document.body.insertAdjacentHTML('beforeend',tutoBubble(s));
  document.querySelectorAll('.tuto-layer [data-action]').forEach(el=>el.onclick=()=>act(el.dataset.action));
  if(tutoFocusStep!==m.tutorial.step){tutoFocusStep=m.tutorial.step;const t=m.board[tutoFocusKey()];if(t&&boardRenderer)boardRenderer.focusOn(t.x,t.y,{minScale:1.7});}
@@ -1198,7 +1198,7 @@ function marketWindow(){const p=S.player(m),r=m.rules,here=m.board[p.pos],region
  if(a==='market-resto')return priorAct('restaurant');
  if(a==='market-hotel'){modal='';return priorAct('rest-hotel');}};}
 {const priorRender=render;render=(...a)=>{priorRender(...a);try{
- if(screen!=='game'||!m||m.done||modal||m.tutorial||marketOff()||!['move','place'].includes(m.phase)||!m.moved)return;
+ if(screen!=='game'||!m||m.done||modal||marketOff()||!['move','place'].includes(m.phase)||!m.moved)return;// partie guidée : la ville s'ouvre aussi (demande de Fi, 18 octobre)
  if(typeof onlineGame==='function'&&onlineGame()&&typeof myTurn==='function'&&!myTurn())return;
  const p=S.player(m),t=m.board[p.pos],seen=m.turn+'|'+p.id+'|'+p.pos;if(t?.type!=='ville'||marketSeen===seen)return;
  marketSeen=seen;marketView='';modal='market';setTimeout(()=>{if(modal==='market')render();},0);}catch(err){console.error(err);}};}
