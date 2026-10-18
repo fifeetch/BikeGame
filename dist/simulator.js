@@ -257,7 +257,8 @@ export function drawEvent(m){let n=random(m)*100,category='challenge';for(const 
 export function drawCard(m){if(C.isEventGame(m))return C.draw(m);const pool=effectiveCards(m).filter(c=>c.weight>0&&(!c.legacy)&&(m.players.length>1||c.target==='self'));let n=E.random(m)*pool.reduce((sum,c)=>sum+c.weight,0);return (pool.find(c=>(n-=c.weight)<0)||pool.at(-1)).id;}
 export function endTurn(m){if(m.pendingAttack||m.done||!['move','place'].includes(m.phase))return false;
  const rider=player(m),fatigue=m.rules.fatigue;
- if(immersionOn(m)&&!ultraOn(m))immersionRideFatigue(m,rider);
+ if(ultraOn(m)){}// Mode Ultra : la fatigue vient de la dette de sommeil
+ else if(immersionOn(m))immersionRideFatigue(m,rider);
  else if(fatigue?.enabled&&m.moved>0&&m.turnKind!=='rest'){const before=rider.fatigue||0;rider.fatigue=Math.min(fatigue.days,before+rideGain(m,rider,1+(rider.dayCols?fatigue.colExtra:0)));rider.energy=Math.min(rider.energy,energyCap(m,rider));
   if(rider.fatigue>before)record(m,'fatigue',isExhausted(m,rider)?`${rider.name} est fourbu : énergie maximale ${energyCap(m,rider)} jusqu’à une vraie nuit (camping ou hôtel).`:`${rider.name} : fatigue ${rider.fatigue}/${fatigue.days}, énergie maximale ${energyCap(m,rider)}.`);}
  if(!immersionOn(m))applyOrigNight(m,rider);
@@ -331,6 +332,8 @@ function advance(m){player(m).turns++;m.stats.turns++;const r=m.rules.victory,bu
  player(m).availableDay=(player(m).availableDay||m.round)+(m.actionDays||1);
  const nextDay=Math.min(...m.players.map(p=>p.availableDay));let next=m.activeIndex;
  for(let offset=1;offset<=m.players.length;offset++){const i=(m.activeIndex+offset)%m.players.length;if(m.players[i].availableDay===nextDay){next=i;break;}}
+ // Mode Ultra à plusieurs : la main passe au coureur le plus en retard sur l'horloge (les arrivés et les hors course ne jouent plus).
+ if(ultraOn(m)){const alive=m.players.map((q,i)=>[q,i]).filter(([q])=>!pu(q).result);if(alive.length)next=alive.sort((a,b)=>pu(a[0]).h-pu(b[0]).h||((a[1]-m.activeIndex+m.players.length-1)%m.players.length)-((b[1]-m.activeIndex+m.players.length-1)%m.players.length))[0][1];}
  m.activeIndex=next;m.round=nextDay;m.turn++;m.moved=0;m.ate=0;m.placed=false;m.turnKind='travel';m.actionDays=1;
  if(ultraOn(m)){const up=player(m);m.round=ultraDayOf(pu(up).h);up.availableDay=m.round;}// Mode Ultra : le jour suit l'horloge
  if(checkMultiVictory(m))return;
@@ -664,7 +667,7 @@ export function rivalAt(m,r,h){const n=rivalCases(r,h),i=Math.floor(n),key=r.rou
  return {key,cases:n,rem:Math.max(0,r.route.length-1-n),status,cp:cpDone,done,out};}
 // Classement en direct (rivaux + joueur + fantôme de la barrière), trié par ce qu'il reste à parcourir.
 export function ultraStandings(m,p=player(m)){if(!ultraOn(m))return [];const u=pu(p),h=u.result?.h??u.h,rows=ultraRivals(m).map(r=>{const a=rivalAt(m,r,h);return {id:r.id,name:r.name,color:r.color,rem:a.rem,km:Math.round(a.cases)*100,status:a.status,cp:a.cp,finishH:a.done?r.finishH:null,out:a.out,me:false};});
- const meRem=ultraRemaining(m,p);rows.push({id:p.id,name:p.name,color:p.color,rem:meRem,km:u.cases*100,status:u.result?.kind==='finish'?'arrivé':u.result?'hors course':'toi',cp:u.cp,finishH:u.result?.kind==='finish'?u.result.h:null,out:Boolean(u.result&&u.result.kind!=='finish'),me:true});
+ for(const q of m.players){const uq=pu(q),me=q.id===p.id;rows.push({id:q.id,name:q.name,color:q.color,rem:ultraRemaining(m,q),km:uq.cases*100,status:uq.result?.kind==='finish'?'arrivé':uq.result?(uq.result.kind==='abandon'?'abandon':'hors délai'):me?'toi':'ami',cp:uq.cp,finishH:uq.result?.kind==='finish'?uq.result.h:null,out:Boolean(uq.result&&uq.result.kind!=='finish'),me,human:true});}
  rows.sort((a,b)=>(a.out-b.out)||((a.finishH!=null?0:1)-(b.finishH!=null?0:1))||((a.finishH??0)-(b.finishH??0))||(a.rem-b.rem));
  return rows;}
 // ---- Une case parcourue : l'horloge, la dette de sommeil, les cols, les contrôles, l'arrivée, les barrières ----
@@ -691,11 +694,20 @@ function ultraStep(m,p,k,t,onRoad){if(!ultraOn(m)||m.done)return;const u=pu(p);
   beginScene(m,p,{id:'ul-hallu',title:'Hallucination',scene:'plaine',kind:'galere',quote:`${H[Math.floor(irand(m)*H.length)]} ${Math.floor(u.awake)} heures sans vraiment dormir : le cerveau commence à inventer.`,choices:[{label:'Secouer la tête et continuer',text:'Tu te concentres sur la ligne blanche.',effect:{energy:-1}},{label:'S’arrêter boire un coup',text:'Un peu d’eau sur le visage.',effect:{}}]},true,immContext(m,p,k));}}
 function ultraBarrier(m,p){const u=pu(p);if(u.result)return true;const i=Math.min(u.cp,ULTRA_RACE.barriers.length-1);if(u.h>ultraBarrierH(i)){ultraFinish(m,p,'horsdelai');return true;}return false;}
 function ultraFinish(m,p,kind){const u=pu(p);if(u.result)return;const rivals=ultraRivals(m);
- const rank=kind==='finish'?1+rivals.filter(r=>r.finishH!=null&&r.finishH<u.h).length:null;u.result={kind,h:u.h,rank,finishers:rivals.filter(r=>r.finishH!=null).length+(kind==='finish'?1:0)};
+ const rank=kind==='finish'?1+rivals.filter(r=>r.finishH!=null&&r.finishH<u.h).length+m.players.filter(q=>q!==p&&pu(q).result?.kind==='finish'&&pu(q).result.h<u.h).length:null;u.result={kind,h:u.h,rank,finishers:rivals.filter(r=>r.finishH!=null).length+(kind==='finish'?1:0)};
  const c=clockText(u.h);
  const text=kind==='finish'?`🏁 Cap Nord ! Arrivée ${c.text.toLowerCase()} · ${rank}ᵉ sur ${ULTRA_RIVALS.length+1}.`:kind==='abandon'?`🏳️ Abandon ${c.text.toLowerCase()}, après ${u.cases*100} km.`:`⏱️ Hors délai : la barrière de ${u.cp<ULTRA_RACE.checkpoints.length?ULTRA_RACE.checkpoints[u.cp]:ULTRA_RACE.to} (fin du jour ${ULTRA_RACE.barriers[Math.min(u.cp,2)]}) est passée.`;
- record(m,'finish',text);m.winReason=text.replace(/^[^ ]+ /,'');if(kind==='finish'&&rank===1)m.winner=p.id;m.done=true;m.phase='finished';}
-export function ultraAbandon(m){const p=player(m);if(!ultraOn(m)||m.done)return false;ultraFinish(m,p,'abandon');return true;}
+ const total=ULTRA_RIVALS.length+m.players.length,text2=kind==='finish'?text.replace(`sur ${ULTRA_RIVALS.length+1}.`,`sur ${total}.`):text;record(m,'finish',`${m.players.length>1?p.name+' : ':''}${text2}`);
+ // À plusieurs : la course continue pour les autres ; on annonce l'arrivée (ou l'abandon) et la main passe.
+ if(m.players.some(q=>!pu(q).result)){const c2=clockText(u.h);beginScene(m,p,{id:'ul-fin-'+kind,title:kind==='finish'?'Cap Nord !':kind==='abandon'?'Abandon':'Hors délai',scene:kind==='finish'?'cote':'plaine',kind:kind==='finish'?'belle':'galere',quote:`${text2.replace(/^[^ ]+ /,'')} ${kind==='finish'?'Tu regardes la mer de Barents. ':''}La course continue pour les autres : tu suis le classement depuis la fiche.`,choices:[{label:kind==='finish'?'Savourer':'D’accord',text:'',effect:{}}]},false,immContext(m,p,p.pos));return;}
+ ultraEndAll(m);}
+// Tout le monde a fini : classement final des joueurs (l'ordre d'arrivée réel, rivaux compris), vainqueur entre amis.
+function ultraEndAll(m){const st=ultraStandings(m,m.players[0]);for(const q of m.players){const uq=pu(q);if(uq.result?.kind==='finish')uq.result.rank=1+st.findIndex(r=>r.id===q.id);}
+ const humans=m.players.filter(q=>pu(q).result?.kind==='finish').sort((a,b)=>pu(a).result.h-pu(b).result.h);
+ if(humans.length){const w=humans[0],uw=pu(w);m.winner=w.id;m.winReason=m.players.length>1?`premier de vous au Cap Nord, ${uw.result.rank}ᵉ de la course (${clockText(uw.result.h).text.toLowerCase()})`:`Cap Nord ${clockText(uw.result.h).text.toLowerCase()} · ${uw.result.rank}ᵉ sur ${ULTRA_RIVALS.length+m.players.length}`;}
+ else{m.winner=null;m.winReason=m.players.length>1?'personne n’a atteint le Cap Nord':'course non terminée';}
+ m.done=true;m.phase='finished';}
+export function ultraAbandon(m){const p=player(m);if(!ultraOn(m)||m.done||pu(p).result||!['move','place'].includes(m.phase))return false;ultraFinish(m,p,'abandon');return true;}
 // ---- Dormir : sieste, cycle, nuit courte, vraie nuit, hôtel ----
 function ultraSleepOptions(m,p){const here=m.board[p.pos],city=here?.type==='ville',d=ultraDebt(m,p),cap=energyCap(m,{...p,fatigue:0});
  return {restDay:false,factor:1,stormy:false,options:ULTRA_SLEEP.map(o=>{const awakeAfter=o.awake==='reset'?0:Math.max(0,d.awake+o.awake);let l=0;for(const t of ULTRA_DEBT)if(awakeAfter>=t)l++;
