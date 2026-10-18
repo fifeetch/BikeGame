@@ -8,7 +8,7 @@ export const voyages=[
 {id:'est',title:'Les routes de l’Est',from:'Berlin',to:'Bucarest',color:'#935836',cities:4,plain:4,mountain:4,art:'routes-est.png'},
 {id:'balkans',title:'Le tour des Balkans',from:'Venise',to:'Thessalonique',color:'#287a80',cities:3,coast:3,mountainRun:2,art:'balkans.png'},
 // Nouveaux voyages (15 octobre 2026). Sans illustration : une petite carte du trajet est dessinée à la place.
-{id:'iberique',title:'La traversée ibérique',from:'Lisbonne',to:'Barcelone',color:'#b5652b',cities:2,plain:4,hills:2},
+{id:'iberique',title:'La traversée ibérique',from:'Lisbonne',to:'Barcelone',color:'#b5652b',cities:1,plain:4,hills:2},
 {id:'manche',title:'Par-delà la Manche',from:'Londres',to:'Bordeaux',color:'#3f6f8f',cities:3,plain:4,coast:2},
 {id:'iles',title:'Des îles au continent',from:'Dublin',to:'Paris',color:'#3d7a4f',cities:4,plain:3,coast:3},
 {id:'rhin',title:'Le long du Rhin',from:'Amsterdam',to:'Milan',color:'#6a5a8c',cities:2,hills:3,mountainRun:2},
@@ -32,7 +32,7 @@ export const findVoyage=id=>voyages.find(v=>v.id===id)||(id===TUTORIAL_VOYAGE.id
 // 10 et plus → 4 · 20 et plus → 8 · 30 et plus → 12 · 40 et plus → 16 · 50 et plus → 20.
 // Le 17 octobre, 5 cartes trop faciles dans leur tranche ont reçu un objectif de plus (Nord, Est, îles, mer Égée, Danube).
 export const VOYAGE_TIERS=[{max:19,name:'Facile',points:4},{max:29,name:'Modéré',points:8},{max:39,name:'Difficile',points:12},{max:49,name:'Très difficile',points:16},{max:Infinity,name:'Épique',points:20}];
-export const VOYAGE_EFFORT={traversee:57,soleil:34,alpes:36,campagne:39,nord:58,atlantique:37,est:47,balkans:29,iberique:44,manche:16,iles:17,rhin:26,danube:38,adriatique:26,grece:19,anatolie:25,fjords:47,baltique:26,riviera:26,carpates:29,apprentissage:26};
+export const VOYAGE_EFFORT={traversee:57,soleil:34,alpes:36,campagne:39,nord:58,atlantique:37,est:47,balkans:29,iberique:27,manche:16,iles:17,rhin:26,danube:38,adriatique:26,grece:19,anatolie:25,fjords:47,baltique:26,riviera:26,carpates:29,apprentissage:26};
 // Longueur du trajet le plus court (affichée « environ N cases »).
 export const VOYAGE_LENGTHS={traversee:27,soleil:14,alpes:13,campagne:11,nord:21,atlantique:11,est:16,balkans:12,iberique:11,manche:10,iles:9,rhin:9,danube:12,adriatique:10,grece:6,anatolie:9,fjords:15,baltique:12,riviera:8,carpates:10,apprentissage:13};
 export const voyageTier=v=>{const id=typeof v==='string'?v:v?.id,effort=VOYAGE_EFFORT[id]||0;return VOYAGE_TIERS.find(t=>effort<=t.max);};

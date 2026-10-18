@@ -490,3 +490,6 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 
 ## 18 octobre — Ruban « En développement » sur la carte Bêta (cache v120-beta-ruban)
 - Même ruban que l’Ultra sur la carte Bêta de « À quoi veux-tu jouer ? », étiquette « Pour tester · en développement ».
+
+## 18 octobre — La traversée ibérique : 1 ville au lieu de 2 (cache v121-iberique)
+- Demande de Fi : le seul chemin à 2 villes passait par Bordeaux. Objectifs : 1 ville · 4 plaines · 2 moyennes montagnes. Effort (cases + énergie) 44 → 27 : 16 → 8 points. Trajet complet 12 cases.
