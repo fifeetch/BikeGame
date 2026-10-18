@@ -8,7 +8,7 @@ function shortest(from,to){const b=europeBoard(from,to),arr=Object.values(b.boar
  while(q.length){const k=q.shift();for(const n of b.board[k].links){if(d.has(n)||b.board[n].type==='mer')continue;d.set(n,d.get(k)+1);q.push(n);}}return d.get(arr.key);}
 
 test('20 voyages, villes existantes, longueur enregistrée = trajet le plus court',()=>{
- assert.equal(voyages.length,20);assert.equal(new Set(voyages.map(v=>v.id)).size,20);
+ assert.equal(voyages.length,21);assert.equal(new Set(voyages.map(v=>v.id)).size,21);
  for(const v of voyages){assert.equal(VOYAGE_LENGTHS[v.id],shortest(v.from,v.to),v.id);assert(progress({voyage:v.id,travelHistory:[],mode:'plateau'}).rows.length>=2,v.id);}
 });
 test('points des cartes Voyage (tableau de Fi, 18 octobre) : min et max',()=>{

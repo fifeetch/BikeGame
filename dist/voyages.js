@@ -19,11 +19,13 @@ export const voyages=[
 {id:'fjords',title:'La route des fjords',from:'Bergen',to:'Narvik',color:'#3c6475',cities:2,coastRun:4,mountain:1},
 {id:'baltique',title:'Les rivages baltes',from:'Varsovie',to:'Saint-Pétersbourg',color:'#5a6f3a',cities:3,plainRun:4,coast:2},
 {id:'riviera',title:'De la Provence à la lagune',from:'Marseille',to:'Venise',color:'#c0703a',cities:2,cols:1,coast:2},
-{id:'carpates',title:'Au pied des Carpates',from:'Budapest',to:'Odessa',color:'#7a6a2e',cities:2,plainRun:3,mountainRun:2}
+{id:'carpates',title:'Au pied des Carpates',from:'Budapest',to:'Odessa',color:'#7a6a2e',cities:2,plainRun:3,mountainRun:2},
+// Carte « Extrême » (idée de Fi, 18 octobre) : traverser toute l'Europe. Réussie, elle vaut le maximum du tableau (35 points = fin de partie).
+{id:'extreme',title:'L’Extrême',from:'Lisbonne',to:'Saint-Pétersbourg',color:'#7a2e3a',cities:5,mountainRun:3,cols:1,coast:3}
 ];
-// Carte Voyage de la partie guidée « Apprendre à jouer » : hors des 20 cartes, jamais tirée au hasard.
+// Carte Voyage de la partie guidée « Apprendre à jouer » : hors des 21 cartes, jamais tirée au hasard.
 export const TUTORIAL_VOYAGE={id:'apprentissage',title:'Premier voyage : vers la mer Égée',from:'Budapest',to:'Athènes',color:'#3b6fa8',cities:3,coast:3,mountain:1,tutorial:true};
-// Trouver une carte Voyage par son identifiant (les 20 cartes + celle de la partie guidée).
+// Trouver une carte Voyage par son identifiant (les 21 cartes + celle de la partie guidée).
 // Mode Ultra (17 octobre) : la course Lisbonne → Cap Nord (pas d'objectifs de voyage : contrôles et cols gérés par le mode Ultra).
 export const ULTRA_VOYAGE={id:'ultra-lcn',title:'Ultra Lisbonne → Cap Nord',from:'Lisbonne',to:'Cap Nord',color:'#c8483a',ultra:true};
 export const findVoyage=id=>voyages.find(v=>v.id===id)||(id===TUTORIAL_VOYAGE.id?TUTORIAL_VOYAGE:id===ULTRA_VOYAGE.id?ULTRA_VOYAGE:undefined);
@@ -34,11 +36,11 @@ export const findVoyage=id=>voyages.find(v=>v.id===id)||(id===TUTORIAL_VOYAGE.id
 export const VOYAGE_TIERS=[{max:19,name:'Facile',points:4},{max:29,name:'Modéré',points:8},{max:39,name:'Difficile',points:12},{max:49,name:'Très difficile',points:16},{max:Infinity,name:'Épique',points:20}];
 export const VOYAGE_EFFORT={traversee:57,soleil:34,alpes:36,campagne:39,nord:58,atlantique:37,est:47,balkans:29,iberique:27,manche:16,iles:17,rhin:26,danube:38,adriatique:26,grece:19,anatolie:25,fjords:47,baltique:26,riviera:26,carpates:29,apprentissage:26};
 // Longueur du trajet le plus court (affichée « environ N cases »).
-export const VOYAGE_LENGTHS={traversee:27,soleil:14,alpes:13,campagne:11,nord:21,atlantique:11,est:16,balkans:12,iberique:11,manche:10,iles:9,rhin:9,danube:12,adriatique:10,grece:6,anatolie:9,fjords:15,baltique:12,riviera:8,carpates:10,apprentissage:13};
+export const VOYAGE_LENGTHS={extreme:47,traversee:27,soleil:14,alpes:13,campagne:11,nord:21,atlantique:11,est:16,balkans:12,iberique:11,manche:10,iles:9,rhin:9,danube:12,adriatique:10,grece:6,anatolie:9,fjords:15,baltique:12,riviera:8,carpates:10,apprentissage:13};
 // Points des cartes Voyage (tableau de Fi, 18 octobre 2026) : max = tous les objectifs remplis, min = arrivé sans tous les objectifs.
 // Calcul de Fi : effort = énergie des cases (plaine 1, côte 1, moyenne montagne 2, montagne 3, col 3, ville 0) ;
 // min selon l'effort du trajet le plus court, max selon l'effort du trajet qui remplit tous les objectifs, grille par tranches de 5.
-export const VOYAGE_POINTS={traversee:[10,18],soleil:[6,10],alpes:[6,14],campagne:[4,10],nord:[10,22],atlantique:[4,10],est:[6,18],balkans:[4,8],iberique:[4,10],manche:[3,6],iles:[2,6],rhin:[4,10],danube:[4,14],adriatique:[3,8],grece:[3,6],anatolie:[4,10],fjords:[6,18],baltique:[4,8],riviera:[3,8],carpates:[4,8],apprentissage:[3,8]};
+export const VOYAGE_POINTS={traversee:[10,18],soleil:[6,10],alpes:[6,14],campagne:[4,10],nord:[10,22],atlantique:[4,10],est:[6,18],balkans:[4,8],iberique:[4,10],manche:[3,6],iles:[2,6],rhin:[4,10],danube:[4,14],adriatique:[3,8],grece:[3,6],anatolie:[4,10],fjords:[6,18],baltique:[4,8],riviera:[3,8],carpates:[4,8],extreme:[28,35],apprentissage:[3,8]};
 const tierName=pts=>pts<=6?'Facile':pts<=10?'Modéré':pts<=14?'Difficile':pts<=18?'Très difficile':'Épique';
 export const voyageTier=v=>{const id=typeof v==='string'?v:v?.id,[min,max]=VOYAGE_POINTS[id]||[2,4];return {name:tierName(max),points:max,min};};
 export const voyagePoints=v=>voyageTier(v).points;

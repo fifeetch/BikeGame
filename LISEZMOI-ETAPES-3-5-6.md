@@ -504,3 +504,6 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - tools/routes/construire-routes.mjs garde désormais les routes déjà figées telles quelles et ne trace que les nouvelles.
 - (v124) Les nouvelles villes ont leurs maisons peintes : PAINTED_BEFORE (terrain-dynamic.js) liste les cases changées après la peinture, que le dessin en direct refait ; sol peint gardé sous une nouvelle ville. Noukous placée une case plus à l'ouest (le nom sortait de la carte). Jetons « ? » : s'il manque des cases loin des routes dans la zone des voyages, on en cherche ailleurs (hors fond de la Russie).
 - (v124, poussé, pas encore publié) Maisons peintes des nouvelles villes (PAINTED_BEFORE dans terrain-dynamic.js), Noukous une case plus à l'ouest, jetons « ? » toujours loin des routes.
+
+## 18 octobre — Carte « L’Extrême » Lisbonne → Saint-Pétersbourg (cache v125-extreme)
+- 5 villes · 3 montagnes d’affilée · 1 col mythique · 3 côtes ; environ 47 cases ; 35 points réussie (maximum du tableau, fin de partie), 28 sans tous les objectifs. Pas encore d’illustration.

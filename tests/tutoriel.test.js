@@ -7,7 +7,7 @@ import {weatherOn} from '../dist/weather.js';
 
 // La partie guidée « Apprendre à jouer » : Budapest → Athènes en 5 jours, toutes les étapes du guide.
 test('partie guidée : la carte du didacticiel reste hors des 20 cartes Voyage',()=>{
- assert.equal(voyages.length,20);assert.ok(!voyages.some(v=>v.id==='apprentissage'));
+ assert.equal(voyages.length,21);assert.ok(!voyages.some(v=>v.id==='apprentissage'));
  assert.equal(findVoyage('apprentissage').from,'Budapest');assert.equal(findVoyage('apprentissage').to,'Athènes');
 });
 
