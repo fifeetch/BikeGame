@@ -31,7 +31,9 @@ test('partie guidée (mode Immersion, 19 octobre) : le chemin conseillé mène a
  assert.equal(m.round,2);assert.equal(m.forecast,true);
  ride(2);assert.ok(m.tutorial.scene.done,'la scène préparée du jour 2');sleep('bivouac');
  ride(3);assert.ok(S.buyFood(m));assert.ok(S.eat(m));tick();sleep('camping');
- assert.equal(m.round,4);assert.equal(T.currentStep(m).id,'repos');sleep('camping');assert.equal(m.round,5);
+ assert.equal(m.round,4);
+ // jour 4 : repos si fatigué, sinon on roule directement (19 octobre)
+ if(T.currentStep(m).id==='repos'){sleep('camping');assert.equal(m.round,5);}else assert.equal(T.currentStep(m).id,'cotes');
  ride(5);assert.ok(p.completed);assert.ok(progress(S.view(m,p)).rows.every(r=>r.done));
  assert.equal(T.currentStep(m).id,'bravo');
  T.endTutorial(m);assert.equal(T.tutorialOn(m),false);

@@ -956,33 +956,54 @@ function tutoTargetEl(s){for(const sel of s.target||[]){if(sel.startsWith('hex:'
 function tutoEffect(e){if(e==='meteo'){modal='meteo';meteoDay='today';}
  // Sur petit écran, la fiche ne s'ouvre que pour les bulles qui la montrent ; sinon on laisse voir le plateau.
  if(e.startsWith('tab:')){const [,tab,open]=e.split(':');sheetTab=tab;if(narrowScreen())sheetDrawer=open==='open';else if(!displayPrefs.sheet)displayPrefs=writeDisplayPref('sheet',true);}}
-function tutoBubble(s){const i=m.tutorial.step,n=TUTO.steps(m).length-1;
- const actions=s.final?btn('📖 Ouvrir le WikiBike','tuto-wiki','tuto-primary')+(TUTO.guideTwoReady&&m.tutorial?.guide!==2?btn('Guide 2 : le mode Original →','tuto-start-2','tuto-light'):'')+btn('Continuer la partie','tuto-continue','tuto-light')+btn('Retour au menu','tuto-menu','tuto-light')
-  :(s.wait?`<span class="tuto-wait">${esc(s.waiting||'')}</span>`:btn(s.next||'Compris →','tuto-next','tuto-primary'))+(s.button&&!document.querySelector('.fiche-journee')?btn(esc(s.button.label),s.button.action,'tuto-light'):'')+btn('Passer le guide','tuto-skip','tuto-skip');
- return `<div class="tuto-layer${s.center?' tuto-centered':''}${s.wide?' tuto-wide':''}"><aside class="tuto-bubble" role="dialog" aria-live="polite" aria-label="Guide : ${esc(s.title)}"><span class="tuto-arrow" aria-hidden="true"></span><small class="tuto-eyebrow">🎓 ${s.final?'Fin du guide':`Étape ${i+1} sur ${n}`} · Jour ${m.round}</small><b class="tuto-title">${esc(s.title)}</b><div class="tuto-text">${s.text(m)}</div><div class="tuto-actions">${actions}</div></aside></div>`;}
-function tutoPlace(){const b=document.querySelector('.tuto-layer .tuto-bubble');if(!b||!m)return;const s=TUTO.currentStep(m);
+// Relire les étapes déjà passées (demande de Fi, 19 octobre) : tutoBack = nombre d'étapes en arrière, la partie ne change pas.
+let tutoBack=0,tutoBackAt=-1,tutoDrag=null;
+function tutoShown(){const L=TUTO.steps(m),i=m.tutorial.step;if(tutoBackAt!==i){tutoBack=0;tutoBackAt=i;}const k=Math.max(0,i-tutoBack);return {s:tutoBack?L[k]:TUTO.currentStep(m),k};}
+function tutoBubble(cur){let {s,k}=tutoShown();const i=k,n=TUTO.steps(m).length-1,back=k>0?btn('← Retour','tuto-back','tuto-light tuto-backbtn'):'';
+ if(tutoBack){const actions=back+btn('Suivant →','tuto-fwd','tuto-primary')+btn('Reprendre ici','tuto-here','tuto-light');
+  return `<div class="tuto-layer tuto-review${s.wide?' tuto-wide':''}"><aside class="tuto-bubble" role="dialog" aria-live="polite" aria-label="Guide : ${esc(s.title)}"><span class="tuto-arrow" aria-hidden="true"></span><small class="tuto-eyebrow"><span class="tuto-grip" aria-hidden="true">⠿</span>🎓 Relecture · étape ${i+1} sur ${n}</small><b class="tuto-title">${esc(s.title)}</b><div class="tuto-text">${s.text(m)}</div><div class="tuto-actions">${actions}</div></aside></div>`;}
+ s=cur;
+ const actions=(s.final?'':back)+(s.final?btn('📖 Ouvrir le WikiBike','tuto-wiki','tuto-primary')+(TUTO.guideTwoReady&&m.tutorial?.guide!==2?btn('Guide 2 : le mode Original →','tuto-start-2','tuto-light'):'')+btn('Continuer la partie','tuto-continue','tuto-light')+btn('Retour au menu','tuto-menu','tuto-light')
+  :(s.wait?`<span class="tuto-wait">${esc(s.waiting||'')}</span>`:btn(s.next||'Compris →','tuto-next','tuto-primary'))+(s.button&&!document.querySelector('.fiche-journee')?btn(esc(s.button.label),s.button.action,'tuto-light'):'')+btn('Passer le guide','tuto-skip','tuto-skip'));
+ return `<div class="tuto-layer${s.center?' tuto-centered':''}${s.wide?' tuto-wide':''}"><aside class="tuto-bubble" role="dialog" aria-live="polite" aria-label="Guide : ${esc(s.title)}"><span class="tuto-arrow" aria-hidden="true"></span><small class="tuto-eyebrow"><span class="tuto-grip" aria-hidden="true" title="Déplacer la bulle">⠿</span>🎓 ${s.final?'Fin du guide':`Étape ${i+1} sur ${n}`} · Jour ${m.round}</small><b class="tuto-title">${esc(s.title)}</b><div class="tuto-text">${s.text(m)}</div><div class="tuto-actions">${actions}</div></aside></div>`;}
+function tutoPlace(){const b=document.querySelector('.tuto-layer .tuto-bubble');if(!b||!m)return;const s=tutoShown().s;
  document.querySelectorAll('.tuto-target').forEach(e=>e.classList.remove('tuto-target'));
  if(!s){b.hidden=true;return;}
- if(s.center){b.hidden=false;b.dataset.side='center';b.style.left='';b.style.top='';return;}
+ // La bulle a été déplacée à la main : elle reste où le joueur l'a mise pour cette étape.
+ const dragKey=m.tutorial.step+'|'+tutoBack;
+ if(tutoDrag&&tutoDrag.key===dragKey){b.hidden=false;b.dataset.side='free';b.style.left=tutoDrag.x+'px';b.style.top=tutoDrag.y+'px';return;}
+ if(s.center&&!tutoBack){b.hidden=false;b.dataset.side='center';b.style.left='';b.style.top='';return;}
  const t=tutoTargetEl(s),back=document.querySelector('.modal-back');
  // Une autre fenêtre est ouverte (découverte, choix…) : la bulle attend qu'on la ferme.
- b.hidden=Boolean(back&&!(t&&back.contains(t.el)));if(b.hidden)return;
- if(t&&!t.key)t.el.classList.add('tuto-target');
+ b.hidden=Boolean(!tutoBack&&back&&!(t&&back.contains(t.el)));if(b.hidden)return;
+ if(t&&!t.key&&!tutoBack)t.el.classList.add('tuto-target');
  const W=innerWidth,H=innerHeight,bw=b.offsetWidth,bh=b.offsetHeight,gap=16,dock=()=>{b.dataset.side='dock';b.style.left='';b.style.top='';};
  if(!t||W<720)return dock();
  const r=t.el.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;
  if(r.bottom<0||r.top>H||r.right<0||r.left>W)return dock();
- let side,x,y;
- if(r.bottom+gap+bh<H-8){side='below';y=r.bottom+gap;x=cx-bw/2;}
- else if(r.top-gap-bh>8){side='above';y=r.top-gap-bh;x=cx-bw/2;}
- else if(r.right+gap+bw<W-8){side='right';x=r.right+gap;y=cy-bh/2;}
- else if(r.left-gap-bw>8){side='left';x=r.left-gap-bw;y=cy-bh/2;}
- else return dock();
- x=Math.max(8,Math.min(W-bw-8,x));y=Math.max(8,Math.min(H-bh-8,y));
- b.dataset.side=side;b.style.left=Math.round(x)+'px';b.style.top=Math.round(y)+'px';
- const arrow=b.querySelector('.tuto-arrow');
+ // Ce que la bulle ne doit pas cacher : la cible, les cases du chemin à cliquer, la liste des articles d'une boutique.
+ const avoid=[{r,w:12}];
+ if(t.key){const keys=new Set([...(TUTO.guidePath(m)||[]),...(route||[])]);for(const k of keys){const el=document.querySelector(`.playable-europe [data-board-key="${k}"]`);if(el)avoid.push({r:el.getBoundingClientRect(),w:4});}}
+ const win=document.querySelector('.market-win');
+ if(win)for(const el of win.querySelectorAll('.mk-what,[data-action]:not(.tw-shop),.tw-shop'))avoid.push({r:el.getBoundingClientRect(),w:el.closest('.tw-pic')&&!el.classList.contains('tw-shop')?1:3});
+ const cand=[];const add=(side,x,y,d=0)=>cand.push({side,x:Math.max(8,Math.min(W-bw-8,x)),y:Math.max(8,Math.min(H-bh-8,y)),d});
+ add('below',cx-bw/2,r.bottom+gap);add('above',cx-bw/2,r.top-gap-bh);add('right',r.right+gap,cy-bh/2);add('left',r.left-gap-bw,cy-bh/2);
+ // dans une boutique : sur le dessin de la boutique, à gauche, là où il n'y a rien à cliquer
+ const pic=win&&[...win.querySelectorAll('.tw-pic')].find(e=>e.getClientRects().length&&!e.querySelector('.tw-shop'));
+ if(pic){const q=pic.getBoundingClientRect();add('free',q.left+(q.width-bw)/2,q.bottom-bh-16,0);}
+ for(const [x,y] of [[16,70],[W-bw-16,70],[16,H-bh-16],[W-bw-16,H-bh-16]])add('free',x,y,400);
+ const over=(a,c)=>Math.max(0,Math.min(a.right,c.x+bw)-Math.max(a.left,c.x))*Math.max(0,Math.min(a.bottom,c.y+bh)-Math.max(a.top,c.y));
+ for(const c of cand){c.score=avoid.reduce((n,a)=>n+a.w*over(a.r,c),0)+c.d*40+Math.hypot(c.x+bw/2-cx,c.y+bh/2-cy)*3;}
+ const best=cand.sort((a,b)=>a.score-b.score)[0];
+ b.dataset.side=best.side;b.style.left=Math.round(best.x)+'px';b.style.top=Math.round(best.y)+'px';
+ const arrow=b.querySelector('.tuto-arrow'),{x,y,side}=best;
  if(side==='below'||side==='above'){arrow.style.left=Math.round(Math.max(20,Math.min(bw-20,cx-x)))+'px';arrow.style.top='';}
  else{arrow.style.top=Math.round(Math.max(20,Math.min(bh-20,cy-y)))+'px';arrow.style.left='';}}
+// On attrape la bulle (ailleurs que sur un bouton) pour la déplacer.
+function tutoDragOn(b){b.addEventListener('pointerdown',e=>{if(e.target.closest('button,a,input')||e.button>0)return;const r=b.getBoundingClientRect(),dx=e.clientX-r.left,dy=e.clientY-r.top;b.classList.add('tuto-dragging');b.setPointerCapture?.(e.pointerId);
+ const key=m.tutorial.step+'|'+tutoBack,move=ev=>{const x=Math.max(0,Math.min(innerWidth-r.width,ev.clientX-dx)),y=Math.max(0,Math.min(innerHeight-40,ev.clientY-dy));tutoDrag={key,x:Math.round(x),y:Math.round(y)};b.dataset.side='free';b.style.left=tutoDrag.x+'px';b.style.top=tutoDrag.y+'px';b.style.transform='none';};
+ const up=()=>{b.classList.remove('tuto-dragging');removeEventListener('pointermove',move);removeEventListener('pointerup',up);};
+ addEventListener('pointermove',move);addEventListener('pointerup',up);e.preventDefault();});}
 // Le plateau reçoit le chemin conseillé et la case à cliquer.
 {const prior=boardSurfaceMarkup;boardSurfaceMarkup=state=>prior(screen==='game'&&TUTO.tutorialOn(m)?{...state,guidePath:TUTO.guidePath(m),guideFocus:tutoFocusKey()}:state);}
 {const priorRender=render;render=()=>{
@@ -992,7 +1013,7 @@ function tutoPlace(){const b=document.querySelector('.tuto-layer .tuto-bubble');
  clearInterval(tutoTimer);tutoTimer=null;
  if(screen!=='game'||!m||!TUTO.tutorialOn(m)||!TUTO.currentStep(m)||(modal==='market'&&!TUTO.currentStep(m).town))return;// la bulle attend que la fenêtre de la ville soit fermée
  const s=TUTO.currentStep(m);document.body.insertAdjacentHTML('beforeend',tutoBubble(s));
- document.querySelectorAll('.tuto-layer [data-action]').forEach(el=>el.onclick=()=>act(el.dataset.action));
+ document.querySelectorAll('.tuto-layer [data-action]').forEach(el=>el.onclick=()=>act(el.dataset.action));{const bb=document.querySelector('.tuto-layer .tuto-bubble');if(bb)tutoDragOn(bb);}
  if(tutoFocusStep!==m.tutorial.step){tutoFocusStep=m.tutorial.step;const t=m.board[tutoFocusKey()];if(t&&boardRenderer)boardRenderer.focusOn(t.x,t.y,{minScale:1.7});}
  tutoPlace();tutoTimer=setInterval(tutoPlace,250);};}
 {const priorAct=act;act=a=>{
@@ -1003,6 +1024,9 @@ function tutoPlace(){const b=document.querySelector('.tuto-layer .tuto-bubble');
   screen='game';zoom=1;route=[];mapSelection='';selected=0;message='';tutoFocusStep=-1;privacyCover=false;render();center();return;}
  if(a==='tuto-start'){if(onlineGame())leaveOnline();try{m=TUTO.createTutorialMatch(customCards,eventEdits);}catch(e){message=e.message;render();return;}
   screen='game';zoom=1;modal='';route=[];mapSelection='';selected=0;message='';tutoFocusStep=-1;render();center();return;}
+ if(m&&a==='tuto-back'){for(const e of TUTO.tutorialTick(m,tutoUi()))tutoEffect(e);tutoShown();tutoBack=Math.min(m.tutorial.step,tutoBack+1);render();return;}
+ if(m&&a==='tuto-fwd'){tutoBack=Math.max(0,tutoBack-1);render();return;}
+ if(m&&a==='tuto-here'){tutoBack=0;render();return;}
  if(m&&a==='tuto-next'){const was=TUTO.currentStep(m)?.id;for(const e of TUTO.tutorialNext(m,tutoUi()))tutoEffect(e);if(was==='meteo'&&modal==='meteo')modal='';render();return;}
  if(m&&a==='tuto-skip'){TUTO.endTutorial(m);message='Guide arrêté : la partie continue normalement, avec la météo et les cartes.';render();return;}
  if(m&&a==='tuto-continue'){TUTO.endTutorial(m);message='À toi de jouer : finis ta journée, puis choisis ton prochain voyage !';render();return;}

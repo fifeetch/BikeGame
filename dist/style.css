@@ -2559,3 +2559,20 @@ button.wiki-q.wiki-q{flex:none;width:18px;height:18px;min-height:0;min-width:0;p
 .modal .tuto-choice-card small{color:#5d4b26;font-size:13px}
 .modal .tuto-choice-card:disabled{opacity:.5;border-color:#c9bfa4;background:#e8dcbc;cursor:not-allowed}
 .modal .tuto-choice-card:not(:disabled):hover{background:#fff4d6}
+/* Bulle du guide : déplaçable, bouton Retour, relecture (19 octobre) */
+.tuto-bubble{cursor:grab;touch-action:none}
+.tuto-bubble.tuto-dragging{cursor:grabbing;opacity:.92}
+.tuto-bubble[data-side="free"]{transform:none}
+.tuto-bubble[data-side="free"] .tuto-arrow{display:none}
+.tuto-grip{display:inline-block;margin-right:6px;color:#b08a3e;font-size:14px;letter-spacing:-1px}
+.tuto-bubble .tuto-backbtn{padding:0 10px}
+.tuto-review .tuto-bubble{box-shadow:0 0 0 3px #7fc8a9,0 18px 40px rgba(0,0,0,.45)}
+.tuto-review .tuto-eyebrow{color:#2c7a5b}
+.tuto-bubble{max-height:calc(100vh - 24px);overflow:auto}
+.tuto-bubble .tuto-check{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:4px}
+.tuto-bubble .tuto-ok{color:#2c7a5b}
+.tuto-bubble .tuto-todo{color:#b08a3e}
+@media (max-height:760px){.tuto-bubble{font-size:14px;padding:12px 14px 10px;gap:4px}.tuto-bubble .tuto-table td,.tuto-bubble .tuto-table th{padding:2px 6px}}
+/* la flèche dépasse de la bulle : on ne fait défiler que le texte */
+.tuto-bubble{overflow:visible}
+.tuto-bubble .tuto-text{overflow:auto;min-height:0;flex:0 1 auto}

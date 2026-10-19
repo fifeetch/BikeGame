@@ -530,3 +530,9 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - Guide 1 : vrai mode Immersion, niveau Voyage. Nouvelles bulles : but du jeu, une journée = un tour, cases hexagonales, visite guidée de Belgrade (vélo, supérette, restaurant, hôtel, bulles par-dessus la ville : step.town), tableau des nuits, exemples de météo, cadre du bas, rouvrir la ville, une scène en route, fatigue en 6 niveaux, cols mythiques, fin avec bouton WikiBike. Bulle « carte Événement » retirée.
 - Hasard préparé pendant la partie guidée (simulator.js, m.tutorial) : une seule scène (« Hello ! », jour 2, 3ᵉ case), pas d'imprévu qui dure, nuits calmes, « Demander » donne toujours le jardin.
 - (v135-guide2) Guide 2 « Le mode Original et ses cartes » : 3 jours Lyon → Venise (Mont Ventoux, Galibier, Milan), contre Max joué par l'ordinateur (tutoBot dans app.js). Mains et pioche préparées (tutorial.js : HAND2, DRAWS2) : Belle descente, Vent de face sur Max, Crevaison de Max (Coup de pouce ou kit), Erreur d'itinéraire sur Max, Panneau solaire posé. Carte Voyage du guide : TUTORIAL_VOYAGE_2 (1 ville, 2 cols, 3/8 points). En guide 2, le tour passe comme à plusieurs (simulator.js : m.tutorial.guide===2), sans écran « passage de main ».
+
+## v136 (19 octobre) — bulle du tutoriel
+- Bouton « ← Retour » : relire les étapes passées (sans changer la partie).
+- La bulle évite les cases du chemin et la liste des articles en boutique ; on peut la déplacer à la main.
+- Nouvelles bulles : « Tes pièces », « Les imprévus » (risque de galère selon la fatigue), « Et maintenant ? Une nouvelle carte » (pioche + train).
+- « Hors route » devient « Sur la route de Sofia » (les cases ont maintenant une route) ; « Presque ! » est une liste qui se coche ; « Un jour de repos » seulement si fatigué, sinon « Pas besoin de repos ».
