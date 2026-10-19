@@ -33,7 +33,7 @@ import * as TUTO from './tutorial.js';
 import {tipTick,tipById} from './tips.js';
 import {endStatsHtml} from './end-stats.js';
 import {drawVariantPreview} from './terrain-dynamic.js';
-import {oddsLabel,DEMAND} from './immersion.js';
+import {oddsLabel,DEMAND,FATIGUE as IMM_FATIGUE} from './immersion.js';
 import {WIKI_CATEGORIES,wikiEntries} from './wikibike.js?v=full2';
 import {wikiExtra} from './wiki-plus.js';
 const app=document.querySelector('#app');
@@ -1709,3 +1709,53 @@ function tipShow(){const bar=document.querySelector('#tip-bar');
  if(a==='tuto-start-3'||a==='tuto-start-tips'){modal='';if(onlineGame())leaveOnline();try{m=a==='tuto-start-3'?TUTO.createTutorialMatch3(customCards,eventEdits):TUTO.createTipsMatch(customCards,eventEdits);}catch(e){message=e.message;render();return;}
   screen='game';zoom=1;route=[];mapSelection='';selected=0;message='';tutoFocusStep=-1;tipState=null;render();center();return;}
  return priorAct(a);};}
+
+// ---------- Audit, lot 2 (19 octobre, validé par Fi : point 2 seulement) ----------
+// Dans la fiche, la liste des nuits devient un aperçu : toucher une nuit ouvre la fenêtre « Où dormir ce soir ? »
+// (avant, elle faisait dormir tout de suite, sans voir les chances). La fenêtre de la nuit elle-même ne change pas.
+function nightRowsToWindow(){if(screen!=='game'||!m)return;
+ for(const el of document.querySelectorAll('.imm-nights:not(.night-cards):not(.ultra-nights) .imm-night[data-action^="rest-"]')){
+  if(el.closest('.night-wrap,.night-cards'))continue;el.dataset.restChoice=el.dataset.action;el.dataset.action='night-open';el.title='Ouvrir « Où dormir ce soir ? »';}}
+{const priorRender=render;render=(...a)=>{const out=priorRender(...a);try{nightRowsToWindow();}catch{}return out;};}
+
+// ---------- Audit, lot 3 (19 octobre, planche « Fiche allégée » validée par Fi) : la fiche allégée ----------
+// L'essentiel en 3 lignes (énergie ; fatigue en détail ; météo + réserves), le reste derrière « + Détails ».
+// Rien ne change dans les règles : on réarrange seulement l'affichage de la fiche, après chaque rendu.
+let ficheDetails=(()=>{try{return localStorage.getItem('velo-fiche-details')==='1';}catch{return false;}})();
+const WX_ICON={beau:'☀',vent:'💨',pluie:'🌧',orage:'⛈',neige:'❄'};
+function ficheLight(root){if(!root||root.dataset.light)return;root.dataset.light='1';root.classList.add('fiche-light');
+ const d=document.createElement('div');d.className='fiche-details';d.hidden=!ficheDetails;
+ const add=(html,cls='')=>{const s=document.createElement('span');if(cls)s.className=cls;s.innerHTML=html;d.appendChild(s);return s;};
+ // fatigue : on garde le nom et les 5 ronds, et on dit ce qu'elle change (énergie max, risque de galère)
+ const fat=root.querySelector('.imm-fatl'),cap=root.querySelector('.imm-nrg b small')?.textContent.replace('/','');
+ const risk=root.querySelector('.imm-risk-txt');
+ if(fat){const eff=document.createElement('span');eff.className='fat-effect';const r=risk?risk.textContent.replace(/\s*·.*$/,''):'';eff.textContent=[cap?`énergie max ${cap}`:'',/galère/.test(r)?r:''].filter(Boolean).join(' · ');fat.appendChild(eff);
+  if(risk&&/galère/.test(risk.textContent))add('Risque de galère : '+risk.textContent.replace(/^galère\s*/,''));
+  // Immersion : le niveau suivant et comment la faire baisser (demande de Fi : « un peu plus de détail » sur la fatigue)
+  const lvl=fat.querySelectorAll('.imm-dots i.on').length,next=IMM_FATIGUE[lvl+1];
+  if(S.immersionOn(m)&&fat.querySelector('.imm-dots')){const n=document.createElement('span');n.className='fat-next';
+   n.innerHTML=(next?`Niveau suivant : <b>${esc(next.name)}</b> (énergie max ${10-(lvl+1)}${next.risk?' · galères : '+esc(next.risk):''})`:'Niveau maximum')+` · <b>camping, hôtel</b> ou <b>journée de repos</b> la font baisser.`;fat.appendChild(n);}
+  else if(S.origNightsOn?.(m)&&fat.querySelector('.imm-dots')&&cap){const n=document.createElement('span');n.className='fat-next';const tot=fat.querySelectorAll('.imm-dots i').length,lv=fat.querySelectorAll('.imm-dots i.on').length;
+   n.innerHTML=(lv<tot?`Niveau suivant : énergie max <b>${Math.max(0,Number(cap)-2)}</b>${lv+1===tot?' (fourbu)':''}`:'Fourbu')+` · <b>camping</b> ou <b>hôtel</b> l'effacent, le bivouac non.`;fat.appendChild(n);}}
+ // ligne 3 : météo + réserves en pastilles
+ const counts=root.querySelector('.imm-counts'),met=root.querySelector('.fiche-meteo');
+ if(counts){const ic=['🍎','🪙','⭐'];[...counts.children].forEach((s,i)=>{if(ic[i]&&!s.dataset.ic){s.dataset.ic='1';s.insertAdjacentText('afterbegin',ic[i]+' ');}});
+  if(met){const w=(met.className.match(/w-(\w+)/)||[])[1],name=met.querySelector('b')?.textContent||'';const chip=document.createElement('span');chip.className='wx-chip';chip.textContent=`${WX_ICON[w]||'🌤'} ${name}`;counts.prepend(chip);
+   const tomorrow=met.querySelector('small')?.textContent;const line=add(tomorrow?esc(tomorrow)+' · ':'');const bt=met.querySelector('[data-action="meteo"]');if(bt){bt.classList.add('details-link');line.appendChild(bt);}met.hidden=true;}}
+ // règles du jour : derrière « + Détails »
+ const gps=root.querySelector('.fiche-route-card > p');if(gps){add(esc(gps.textContent));gps.hidden=true;}
+ const note=root.querySelector('.fiche-journee .night-note');if(note){add(esc(note.textContent));note.hidden=true;}
+ // tuiles « Se ravitailler » : une ligne et le gain
+ for(const sm of root.querySelectorAll('.fiche-journee .fiche-tile small')){const t=sm.textContent;
+  if(sm.closest('.town-open'))sm.textContent='rouvrir la ville';
+  else if(t.includes(' · ')){const keep=t.split(' · ').filter(x=>/\d/.test(x));if(keep.length)sm.textContent=keep.join(' · ').replace(/ énergie/g,' ⚡');}
+  else sm.textContent=t.replace(/ énergie/g,' ⚡');}
+ // les nuits : prix et énergie seulement ; les pastilles restent dans la fenêtre de la nuit
+ const nights=root.querySelector('.fiche-journee .imm-nights:not(.night-cards):not(.ultra-nights)');
+ if(nights&&!nights.querySelector('.night-go')){const go=document.createElement('button');go.type='button';go.className='imm-night night-go';go.dataset.action='night-open';go.textContent='Choisir ma nuit →';go.onclick=()=>act('night-open');nights.appendChild(go);}
+ // le bouton « + Détails »
+ if(d.children.length){const gauges=root.querySelector('.fiche-gauges')||root.querySelector('.fiche-head');gauges.appendChild(d);
+  const b=document.createElement('button');b.type='button';b.className='details-btn';b.setAttribute('aria-expanded',String(ficheDetails));b.textContent=ficheDetails?'− Détails':'+ Détails';
+  b.onclick=()=>{ficheDetails=!ficheDetails;try{localStorage.setItem('velo-fiche-details',ficheDetails?'1':'0');}catch{}d.hidden=!ficheDetails;b.textContent=ficheDetails?'− Détails':'+ Détails';b.setAttribute('aria-expanded',String(ficheDetails));};
+  (counts||gauges).appendChild(b);}}
+{const priorRender=render;render=(...a)=>{const out=priorRender(...a);try{if(screen==='game'&&m&&!S.ultraOn?.(m))document.querySelectorAll('.fiche.player-mat').forEach(ficheLight);}catch(e){console.error(e);}return out;};}

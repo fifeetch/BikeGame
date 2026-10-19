@@ -556,3 +556,7 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - Contour clavier orange sur tous les boutons, liens et champs.
 - Contrastes : étiquettes TRACER / ROULER / FINIR et gains d’énergie des nuits assombris.
 - Lecteurs d’écran : chaque case de la carte a un rôle, chaque fenêtre un nom.
+
+## v141 (19 octobre) — lots 2 et 3 de l’audit
+- Lot 2 (point 2 seulement, validé par Fi) : dans la fiche, toucher une nuit ouvre la fenêtre « Où dormir ce soir ? » au lieu de dormir tout de suite.
+- Lot 3, fiche allégée : énergie ; fatigue avec ses ronds, énergie max, risque de galère et niveau suivant ; météo + repas + pièces + aventure en pastilles ; « + Détails » (risque, demain, sans GPS, repos ×2) qui garde son état ; tuiles d’une ligne ; nuits sans pastilles + « Choisir ma nuit → ». Aussi en mode Original.

@@ -2608,3 +2608,25 @@ button.wiki-q.wiki-q{flex:none;width:18px;height:18px;min-height:0;min-width:0;p
  .wiki-q{position:relative}
  .wiki-q::after{content:"";position:absolute;inset:-13px}
 }
+/* ---------- Audit, lot 3 : la fiche allégée ---------- */
+.fiche-light .fiche-head .eyebrow{display:none}
+.fiche-light .imm-risk-bar,.fiche-light .imm-risk-txt{display:none}
+.fiche-light .imm-fatl{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
+.fiche-light .fat-effect{font:600 14px 'Barlow',system-ui,sans-serif;color:#5a4a2c}
+.fiche-light .imm-counts{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.fiche-light .imm-counts>span{display:inline-flex;align-items:center;gap:4px;min-height:34px;padding:0 12px;border-radius:999px;background:#fff3cf;border:1px solid #e2cf9f;font-size:14px}
+.fiche-light .imm-counts>span b{font-size:16px}
+.fiche-light .imm-counts>.wx-chip{font-weight:600;color:#1b3b38}
+.fiche-light .details-btn{margin-left:auto;min-height:34px;padding:0 6px;border:0;background:none;color:#1b3b38;font:700 14px 'Barlow',system-ui,sans-serif;text-decoration:underline;cursor:pointer}
+.fiche-light .fiche-details{display:flex;flex-direction:column;gap:4px;margin-top:8px;padding-top:8px;border-top:1px dashed #c9b88d;font:500 14px/1.4 'Barlow',system-ui,sans-serif;color:#5a4a2c}
+.fiche-light .fiche-details[hidden]{display:none}
+.fiche-light .fiche-details .details-link{display:inline;min-height:0;padding:0;border:0;background:none;color:#1b3b38;font:700 14px 'Barlow',system-ui,sans-serif;text-decoration:underline;cursor:pointer}
+.fiche-light .fiche-journee .fiche-tile{min-height:52px}
+.fiche-light .fiche-journee .imm-nights:not(.night-cards) .imm-pill,.fiche-light .fiche-journee .imm-nights:not(.night-cards) .sub{display:none}
+.fiche-light .night-go{justify-content:center;font-weight:700;color:#1b3b38}
+.fiche-light [hidden]{display:none!important}
+.fiche-light .imm-counts>span{white-space:nowrap}
+.fiche-light .imm-nights .night-go{display:flex;grid-column:1/-1;width:100%;min-height:44px;align-items:center;justify-content:center;white-space:nowrap}
+.fiche-light .fiche-details .details-link{color:#1b3b38!important;background:none!important;border:0!important;min-height:0!important;padding:0!important;font:700 14px 'Barlow',system-ui,sans-serif!important}
+.fiche-light .fat-next{flex-basis:100%;font:500 13px/1.35 'Barlow',system-ui,sans-serif;color:#5a4a2c}
+.fiche-light .fat-next b{color:#1b3b38}
