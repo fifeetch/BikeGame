@@ -545,3 +545,7 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - « Apprendre à jouer » propose 4 choix : On apprend en jouant (conseillé), Guide express, Guide complet, Mode Original.
 - Guide express (tutorial.js, STEPS3, guide 3) : 13 bulles courtes, Budapest → Sofia, petits points de progression.
 - On apprend en jouant (tips.js) : vraie partie Budapest → Athènes, 17 conseils d’une ligne qui apparaissent au bon moment (bandeau avec ? WikiBike et ✕), chacun une seule fois (m.tips.seen).
+
+## v139 (19 octobre) — corrections de l’audit
+- Bandeau des conseils pleine largeur sur téléphone.
+- Le résumé « Comment on joue » ne s’ouvre plus dans « On apprend en jouant ».

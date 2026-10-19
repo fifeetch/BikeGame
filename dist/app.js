@@ -833,7 +833,7 @@ const helpRules=()=>m&&screen==='game'?m.rules:setupRules,helpEvent=()=>m&&scree
  return priorOverlay();};}
 // Le résumé s'affiche une fois par partie, au premier jour (en ligne : sur chaque appareil).
 {const priorRender=render;render=()=>{
- try{if(screen==='game'&&m&&!m.done&&!m.tutorial&&!modal&&m.round===1&&localStorage.getItem('velo-hide-intro')!=='1'){const seen=JSON.parse(localStorage.getItem('velo-intro-seen')||'[]'),id=String(m.seed);
+ try{if(screen==='game'&&m&&!m.done&&!m.tutorial&&!m.tips&&!modal&&m.round===1&&localStorage.getItem('velo-hide-intro')!=='1'){const seen=JSON.parse(localStorage.getItem('velo-intro-seen')||'[]'),id=String(m.seed);
   if(!seen.includes(id)){localStorage.setItem('velo-intro-seen',JSON.stringify([...seen.slice(-20),id]));modal='rules-intro';}}}catch{}
  priorRender();};}
 

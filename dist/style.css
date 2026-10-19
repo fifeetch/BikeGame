@@ -2594,4 +2594,4 @@ button.wiki-q.wiki-q{flex:none;width:18px;height:18px;min-height:0;min-width:0;p
 .tip-target{outline:3px solid #f2a541!important;outline-offset:3px;border-radius:12px;animation:tipPulse 1.6s ease-in-out infinite}
 @keyframes tipPulse{50%{outline-color:#f2a54144;box-shadow:0 0 18px #f2a541}}
 @media (prefers-reduced-motion:reduce){.tip-bar,.tip-target{animation:none}}
-@media (max-width:719px){.tip-bar{bottom:auto;top:10px;border-radius:16px}}
+@media (max-width:719px){.tip-bar{bottom:auto;top:10px;left:12px;right:12px;transform:none;max-width:none;border-radius:16px;animation:none}}
