@@ -536,3 +536,7 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - La bulle évite les cases du chemin et la liste des articles en boutique ; on peut la déplacer à la main.
 - Nouvelles bulles : « Tes pièces », « Les imprévus » (risque de galère selon la fatigue), « Et maintenant ? Une nouvelle carte » (pioche + train).
 - « Hors route » devient « Sur la route de Sofia » (les cases ont maintenant une route) ; « Presque ! » est une liste qui se coche ; « Un jour de repos » seulement si fatigué, sinon « Pas besoin de repos ».
+
+## v137 (19 octobre) — le guide 1 commence au garage
+- 5 bulles : le garage, les deux vélos (choisir le Gravel), la bourse, le matériel (prendre la tente), puis « Choisir les voyages » lance la partie guidée.
+- Bulle « Tes pièces » : +5 pièces tous les 5 jours.

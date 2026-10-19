@@ -1000,8 +1000,8 @@ function tutoPlace(){const b=document.querySelector('.tuto-layer .tuto-bubble');
  if(side==='below'||side==='above'){arrow.style.left=Math.round(Math.max(20,Math.min(bw-20,cx-x)))+'px';arrow.style.top='';}
  else{arrow.style.top=Math.round(Math.max(20,Math.min(bh-20,cy-y)))+'px';arrow.style.left='';}}
 // On attrape la bulle (ailleurs que sur un bouton) pour la déplacer.
-function tutoDragOn(b){b.addEventListener('pointerdown',e=>{if(e.target.closest('button,a,input')||e.button>0)return;const r=b.getBoundingClientRect(),dx=e.clientX-r.left,dy=e.clientY-r.top;b.classList.add('tuto-dragging');b.setPointerCapture?.(e.pointerId);
- const key=m.tutorial.step+'|'+tutoBack,move=ev=>{const x=Math.max(0,Math.min(innerWidth-r.width,ev.clientX-dx)),y=Math.max(0,Math.min(innerHeight-40,ev.clientY-dy));tutoDrag={key,x:Math.round(x),y:Math.round(y)};b.dataset.side='free';b.style.left=tutoDrag.x+'px';b.style.top=tutoDrag.y+'px';b.style.transform='none';};
+function tutoDragOn(b,keyFn=()=>m.tutorial.step+'|'+tutoBack){b.addEventListener('pointerdown',e=>{if(e.target.closest('button,a,input')||e.button>0)return;const r=b.getBoundingClientRect(),dx=e.clientX-r.left,dy=e.clientY-r.top;b.classList.add('tuto-dragging');b.setPointerCapture?.(e.pointerId);
+ const key=keyFn(),move=ev=>{const x=Math.max(0,Math.min(innerWidth-r.width,ev.clientX-dx)),y=Math.max(0,Math.min(innerHeight-40,ev.clientY-dy));tutoDrag={key,x:Math.round(x),y:Math.round(y)};b.dataset.side='free';b.style.left=tutoDrag.x+'px';b.style.top=tutoDrag.y+'px';b.style.transform='none';};
  const up=()=>{b.classList.remove('tuto-dragging');removeEventListener('pointermove',move);removeEventListener('pointerup',up);};
  addEventListener('pointermove',move);addEventListener('pointerup',up);e.preventDefault();});}
 // Le plateau reçoit le chemin conseillé et la case à cliquer.
@@ -1633,3 +1633,52 @@ function tutoBotStep(){tutoBotTimer=0;if(!m||screen!=='game'||!TUTO.tutorialOn(m
  privacyCover=false;modal=modal==='cards'?'':modal;persist();render();}
 {const priorRender=render;render=(...a)=>{if(m&&TUTO.tutorialOn(m)&&m.tutorial.guide===2)privacyCover=false;priorRender(...a);
  try{if(!tutoBotTimer&&m&&screen==='game'&&TUTO.tutorialOn(m)&&m.tutorial.guide===2&&!m.done){const max=m.players[1],responder=m.cardWindow?.responders?.[m.cardWindow.responderIndex];if((m.activeIndex===1&&m.phase!=='card-intervention')||(m.phase==='card-intervention'&&responder===max.id)||m.pendingAttack?.targetId===max.id)tutoBotTimer=setTimeout(tutoBotStep,1300);}}catch(err){console.error(err);}};}
+
+// ---------- Guide 1 : on commence au garage (demande de Fi, 19 octobre) ----------
+// Le guide fait choisir le Gravel et la tente (le parcours prévu en dépend) et explique les autres choix.
+let tutoGarage=null;
+const GARAGE_STEPS=[
+ {target:'.mc-head h1',title:'Le garage',text:()=>`Avant chaque partie, tu prépares ton vélo ici : la <b>monture</b>, puis le <b>matériel</b> rangé dans les sacoches. Tout se paie avec ta <b>bourse</b>.`},
+ {target:'.mc-bikes',title:'Deux vélos',text:r=>`<b>Gravel</b> (${r.bikes.gravel.price} pièces) : léger, <b>5 cases par jour</b>, ${r.bikes.gravel.capacity} places de sacoche, ${r.bikes.gravel.maxFood} repas au plus.<br><b>Randonneuse</b> (${r.bikes.randonneur.price} pièces) : lourde mais autonome, <b>4 cases par jour</b>, ${r.bikes.randonneur.capacity} places, ${r.bikes.randonneur.maxFood} repas.<small>Pour ce guide, choisis le <b>Gravel</b>.</small>`,wait:p=>p.bike==='gravel',waiting:'Choisis le Gravel…'},
+ {target:'.mc-hud',title:'Ta bourse',text:r=>`Tu as <b>${r.startMoney} pièces</b>, vélo compris. Ce qu'il te reste part avec toi, plus <b>${r.budget?.startBonus??0} pièces</b> au départ${r.budget?.amount?`, puis <b>+${r.budget.amount}</b> tous les ${r.budget.every} jours`:''}.`},
+ {target:'[data-equipment="tente"]',title:'Le matériel',text:r=>`Prends la <b>Tente</b> (${r.equipment.tente.price} pièces, ${r.equipment.tente.space} places) : elle permet le <b>bivouac</b>, la nuit gratuite.<small>Les autres objets : réchaud = repas chaud (+3 au lieu de +2), GPS = quitter la route sans limite, kit de réparation = répare crevaisons et casses… Tu pourras en acheter plus tard en ville.</small>`,wait:p=>(p.items||[]).length===1&&p.items[0]==='tente',waiting:p=>(p.items||[]).some(i=>i!=='tente')?'Pour ce guide, garde seulement la tente…':'Clique la tente…'},
+ {target:'[data-action="equipment-next"]',title:'Ton vélo est prêt !',text:()=>`Clique « <b>Choisir les voyages →</b> ». Pour ce guide, le voyage est déjà choisi : <b>Budapest → Athènes</b>.`,go:true}
+];
+function garageEnd(){if(!tutoGarage)return;const s=tutoGarage.saved;roster=s.roster;setupRules=s.setupRules;choosing=s.choosing;tutoGarage=null;}
+function garageBubble(){const g=tutoGarage,p=roster[0],st=GARAGE_STEPS[g.k],done=st.wait?st.wait(p):true,n=GARAGE_STEPS.length;
+ const acts=(g.k>0?btn('← Retour','tuto-g-back','tuto-light tuto-backbtn'):'')+(st.go?'':st.wait&&!done?`<span class="tuto-wait">${esc(typeof st.waiting==='function'?st.waiting(p):st.waiting)}</span>`:btn(st.wait?'Suivant →':'Compris →','tuto-g-next','tuto-primary'))+btn('Passer le garage','tuto-g-skip','tuto-skip');
+ return `<div class="tuto-layer"><aside class="tuto-bubble" role="dialog" aria-live="polite" aria-label="Guide : ${esc(st.title)}"><span class="tuto-arrow" aria-hidden="true"></span><small class="tuto-eyebrow"><span class="tuto-grip" aria-hidden="true">⠿</span>🎓 Le garage · ${g.k+1} sur ${n}</small><b class="tuto-title">${esc(st.title)}</b><div class="tuto-text">${st.text(setupRules)}</div><div class="tuto-actions">${acts}</div></aside></div>`;}
+function garagePlace(){const b=document.querySelector('.tuto-layer .tuto-bubble');if(!b||!tutoGarage)return;const st=GARAGE_STEPS[tutoGarage.k];
+ document.querySelectorAll('.tuto-target').forEach(e=>e.classList.remove('tuto-target'));
+ const key='g'+tutoGarage.k;if(tutoDrag&&tutoDrag.key===key){b.dataset.side='free';b.style.left=tutoDrag.x+'px';b.style.top=tutoDrag.y+'px';return;}
+ const t=document.querySelector(st.target),W=innerWidth,H=innerHeight,bw=b.offsetWidth,bh=b.offsetHeight,gap=16;
+ if(!t||W<720){b.dataset.side='dock';b.style.left='';b.style.top='';return;}
+ t.classList.add('tuto-target');const r=t.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;
+ const avoid=[{r,w:12},...[...document.querySelectorAll('.mc-bike-card,.mc-item,.mc-hud,.mc-foot button')].map(e=>({r:e.getBoundingClientRect(),w:2}))];
+ const cand=[],add=(side,x,y,d=0)=>cand.push({side,x:Math.max(8,Math.min(W-bw-8,x)),y:Math.max(8,Math.min(H-bh-8,y)),d});
+ add('below',cx-bw/2,r.bottom+gap);add('above',cx-bw/2,r.top-gap-bh);add('right',r.right+gap,cy-bh/2);add('left',r.left-gap-bw,cy-bh/2);
+ for(const [x,y] of [[16,16],[W-bw-16,16],[16,H-bh-16],[W-bw-16,H-bh-16]])add('free',x,y,400);
+ const over=(a,c)=>Math.max(0,Math.min(a.right,c.x+bw)-Math.max(a.left,c.x))*Math.max(0,Math.min(a.bottom,c.y+bh)-Math.max(a.top,c.y));
+ for(const c of cand)c.score=avoid.reduce((n,a)=>n+a.w*over(a.r,c),0)+c.d*40+Math.hypot(c.x+bw/2-cx,c.y+bh/2-cy)*3;
+ const best=cand.sort((a,b)=>a.score-b.score)[0];b.dataset.side=best.side;b.style.left=Math.round(best.x)+'px';b.style.top=Math.round(best.y)+'px';
+ const arrow=b.querySelector('.tuto-arrow');if(best.side==='below'||best.side==='above'){arrow.style.left=Math.round(Math.max(20,Math.min(bw-20,cx-best.x)))+'px';arrow.style.top='';}else{arrow.style.top=Math.round(Math.max(20,Math.min(bh-20,cy-best.y)))+'px';arrow.style.left='';}}
+{const priorRender=render;render=(...a)=>{const out=priorRender(...a);
+ if(tutoGarage&&screen!=='equipment')garageEnd();
+ if(tutoGarage&&screen==='equipment'){const p=roster[0],st=GARAGE_STEPS[tutoGarage.k];
+  document.querySelectorAll('.tuto-layer').forEach(e=>e.remove());document.body.insertAdjacentHTML('beforeend',garageBubble());
+  document.querySelectorAll('.tuto-layer [data-action]').forEach(el=>el.onclick=()=>act(el.dataset.action));
+  const bb=document.querySelector('.tuto-layer .tuto-bubble');if(bb)tutoDragOn(bb,()=>'g'+tutoGarage.k);
+  // pendant le guide, le bouton de fin du garage n'est actif qu'à la dernière bulle
+  const go=document.querySelector('[data-action="equipment-next"]');if(go&&!st.go)go.disabled=true;
+  if(tutoGarage.seen!==tutoGarage.k){tutoGarage.seen=tutoGarage.k;const el=document.querySelector(st.target);const r=el?.getBoundingClientRect();if(r&&(r.bottom>innerHeight-20||r.top<0))el.scrollIntoView({block:'center'});}
+  garagePlace();clearInterval(tutoTimer);tutoTimer=setInterval(garagePlace,250);}
+ return out;};}
+{const priorAct=act;act=a=>{
+ if(a==='tuto-start-1'&&!(m&&screen==='game')){modal='';const tm=TUTO.createTutorialMatch(customCards,eventEdits);
+  tutoGarage={k:0,saved:{roster,setupRules,choosing}};setupRules=clone(tm.rules);roster=[{...(roster[0]||{}),name:'Toi',bike:'randonneur',items:[]}];choosing=0;tutoDrag=null;screen='equipment';render();scrollTo(0,0);return;}
+ if(tutoGarage){
+  if(a==='tuto-g-next'){const st=GARAGE_STEPS[tutoGarage.k];if(!st.wait||st.wait(roster[0]))tutoGarage.k=Math.min(GARAGE_STEPS.length-1,tutoGarage.k+1);render();return;}
+  if(a==='tuto-g-back'){tutoGarage.k=Math.max(0,tutoGarage.k-1);render();return;}
+  if(a==='tuto-g-skip'||a==='equipment-next'){garageEnd();clearInterval(tutoTimer);document.querySelectorAll('.tuto-layer').forEach(e=>e.remove());screen='game';return act('tuto-start');}
+ }
+ return priorAct(a);};}
