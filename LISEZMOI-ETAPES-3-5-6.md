@@ -549,3 +549,10 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 ## v139 (19 octobre) — corrections de l’audit
 - Bandeau des conseils pleine largeur sur téléphone.
 - Le résumé « Comment on joue » ne s’ouvre plus dans « On apprend en jouant ».
+
+## v140 (19 octobre) — lot 1 de l’audit
+- Textes : 64 règles de style passées de 7-11 px à 12 px (hors étiquettes de la carte).
+- Boutons : 44 px minimum sur écran tactile (le petit « ? » garde sa taille mais sa zone de clic fait 44 px).
+- Contour clavier orange sur tous les boutons, liens et champs.
+- Contrastes : étiquettes TRACER / ROULER / FINIR et gains d’énergie des nuits assombris.
+- Lecteurs d’écran : chaque case de la carte a un rôle, chaque fenêtre un nom.

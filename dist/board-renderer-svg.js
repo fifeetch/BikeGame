@@ -400,7 +400,7 @@ export function createSVGBoardRenderer(container,options={}){
   for(const t of nodes){if(t.type==='mer')continue;landKeys.add(t.key);const p=tilePresentation(context,t),stale=art&&!dyn&&isCellStale(t),signature=JSON.stringify([p,t.type,t.x,t.y,art,stale]);let record=cells.get(t.key);
    if(!record){const el=make('g',{'data-board-key':t.key}),polygon=make('polygon',{class:'terrain-face'}),icon=make('use',{class:'terrain-icon',width:14,height:14,'aria-hidden':true});el.append(polygon,icon);lands.append(el);record={el,polygon,icon,signature:''};cells.set(t.key,record);diagnostics.createdCells++;}
    if(record.signature===signature)continue;record.signature=signature;diagnostics.changedCells++;
-   attrsTo(record.el,{class:art&&!stale?`${p.className} art-cell`:p.className,'aria-label':p.label,'aria-pressed':p.pressed,'aria-disabled':p.canSelect?null:true,'data-move':p.canSelect?t.key:null,role:p.canSelect?'button':null,tabindex:p.canSelect?'0':null});
+   attrsTo(record.el,{class:art&&!stale?`${p.className} art-cell`:p.className,'aria-label':p.label,'aria-pressed':(p.canSelect||p.pressed)?p.pressed:null,'aria-disabled':p.canSelect?null:true,'data-move':p.canSelect?t.key:null,role:(p.canSelect||p.pressed)?'button':'img',tabindex:p.canSelect?'0':null});
    attrsTo(record.polygon,{points:polygonPoints(t)});attrsTo(record.icon,{href:`#tile-icon-${t.type}`,x:t.x-7,y:t.y-7});
   }
   diagnostics.removedCells=[...cells.keys()].filter(k=>!landKeys.has(k)).length;prune(cells,landKeys);
