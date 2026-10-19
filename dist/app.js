@@ -949,7 +949,7 @@ globalThis.document?.addEventListener?.('keydown',e=>{if(e.target?.id==='chat-in
 // ---------- Partie guidée « Apprendre à jouer » (bouton de l'écran titre) ----------
 // Une bulle crème pointe l'endroit concerné et attend que le joueur fasse la chose demandée.
 let tutoTimer=null,tutoFocusStep=-1;
-const tutoUi=()=>({route});
+const tutoUi=()=>({route,town:modal==='market',view:typeof marketView==='string'?marketView:'',townOpened:Boolean(m&&typeof marketSeen==='string'&&marketSeen.startsWith(m.turn+'|'))});
 const tutoKeyOf=sel=>sel==='hex:next'?TUTO.nextGuideKey(m,route):sel.slice(4);
 function tutoFocusKey(){const s=TUTO.currentStep(m);for(const sel of s?.target||[])if(sel.startsWith('hex:')){const k=tutoKeyOf(sel);if(k)return k;}return '';}
 function tutoTargetEl(s){for(const sel of s.target||[]){if(sel.startsWith('hex:')){const key=tutoKeyOf(sel);const el=key&&document.querySelector(`.playable-europe [data-board-key="${key}"]`);if(el)return {el,key};continue;}const el=[...document.querySelectorAll(sel)].find(e=>e.getClientRects().length&&!e.closest('[hidden]'));if(el)return {el};}return null;}
@@ -957,9 +957,9 @@ function tutoEffect(e){if(e==='meteo'){modal='meteo';meteoDay='today';}
  // Sur petit écran, la fiche ne s'ouvre que pour les bulles qui la montrent ; sinon on laisse voir le plateau.
  if(e.startsWith('tab:')){const [,tab,open]=e.split(':');sheetTab=tab;if(narrowScreen())sheetDrawer=open==='open';else if(!displayPrefs.sheet)displayPrefs=writeDisplayPref('sheet',true);}}
 function tutoBubble(s){const i=m.tutorial.step,n=TUTO.STEPS.length-1;
- const actions=s.final?btn('Continuer la partie →','tuto-continue','tuto-primary')+btn('Retour au menu','tuto-menu','tuto-light')
+ const actions=s.final?btn('📖 Ouvrir le WikiBike','tuto-wiki','tuto-primary')+(TUTO.guideTwoReady&&m.tutorial?.guide!==2?btn('Guide 2 : le mode Original →','tuto-start-2','tuto-light'):'')+btn('Continuer la partie','tuto-continue','tuto-light')+btn('Retour au menu','tuto-menu','tuto-light')
   :(s.wait?`<span class="tuto-wait">${esc(s.waiting||'')}</span>`:btn(s.next||'Compris →','tuto-next','tuto-primary'))+(s.button&&!document.querySelector('.fiche-journee')?btn(esc(s.button.label),s.button.action,'tuto-light'):'')+btn('Passer le guide','tuto-skip','tuto-skip');
- return `<div class="tuto-layer${s.center?' tuto-centered':''}"><aside class="tuto-bubble" role="dialog" aria-live="polite" aria-label="Guide : ${esc(s.title)}"><span class="tuto-arrow" aria-hidden="true"></span><small class="tuto-eyebrow">🎓 ${s.final?'Fin du guide':`Étape ${i+1} sur ${n}`} · Jour ${m.round}</small><b class="tuto-title">${esc(s.title)}</b><p>${s.text(m)}</p><div class="tuto-actions">${actions}</div></aside></div>`;}
+ return `<div class="tuto-layer${s.center?' tuto-centered':''}${s.wide?' tuto-wide':''}"><aside class="tuto-bubble" role="dialog" aria-live="polite" aria-label="Guide : ${esc(s.title)}"><span class="tuto-arrow" aria-hidden="true"></span><small class="tuto-eyebrow">🎓 ${s.final?'Fin du guide':`Étape ${i+1} sur ${n}`} · Jour ${m.round}</small><b class="tuto-title">${esc(s.title)}</b><div class="tuto-text">${s.text(m)}</div><div class="tuto-actions">${actions}</div></aside></div>`;}
 function tutoPlace(){const b=document.querySelector('.tuto-layer .tuto-bubble');if(!b||!m)return;const s=TUTO.currentStep(m);
  document.querySelectorAll('.tuto-target').forEach(e=>e.classList.remove('tuto-target'));
  if(!s){b.hidden=true;return;}
@@ -990,12 +990,15 @@ function tutoPlace(){const b=document.querySelector('.tuto-layer .tuto-bubble');
  priorRender();
  document.querySelectorAll('.tuto-layer').forEach(e=>e.remove());document.querySelectorAll('.tuto-target').forEach(e=>e.classList.remove('tuto-target'));
  clearInterval(tutoTimer);tutoTimer=null;
- if(screen!=='game'||!m||!TUTO.tutorialOn(m)||!TUTO.currentStep(m)||modal==='market')return;// la bulle attend que la fenêtre de la ville soit fermée
+ if(screen!=='game'||!m||!TUTO.tutorialOn(m)||!TUTO.currentStep(m)||(modal==='market'&&!TUTO.currentStep(m).town))return;// la bulle attend que la fenêtre de la ville soit fermée
  const s=TUTO.currentStep(m);document.body.insertAdjacentHTML('beforeend',tutoBubble(s));
  document.querySelectorAll('.tuto-layer [data-action]').forEach(el=>el.onclick=()=>act(el.dataset.action));
  if(tutoFocusStep!==m.tutorial.step){tutoFocusStep=m.tutorial.step;const t=m.board[tutoFocusKey()];if(t&&boardRenderer)boardRenderer.focusOn(t.x,t.y,{minScale:1.7});}
  tutoPlace();tutoTimer=setInterval(tutoPlace,250);};}
 {const priorAct=act;act=a=>{
+ if(a==='tuto-start'&&screen!=='game'){modal='tuto-choice';render();return;}
+ if(m&&a==='tuto-wiki'){TUTO.endTutorial(m);wikiEntry='';wikiQuery='';modal='wiki';render();return;}
+ if(a==='tuto-start-1'){modal='';a='tuto-start';}
  if(a==='tuto-start'){if(onlineGame())leaveOnline();try{m=TUTO.createTutorialMatch(customCards,eventEdits);}catch(e){message=e.message;render();return;}
   screen='game';zoom=1;modal='';route=[];mapSelection='';selected=0;message='';tutoFocusStep=-1;render();center();return;}
  if(m&&a==='tuto-next'){const was=TUTO.currentStep(m)?.id;for(const e of TUTO.tutorialNext(m,tutoUi()))tutoEffect(e);if(was==='meteo'&&modal==='meteo')modal='';render();return;}
@@ -1200,7 +1203,7 @@ function marketWindow(){const p=S.player(m),r=m.rules,here=m.board[p.pos],region
  if(a==='market-resto')return priorAct('restaurant');
  if(a==='market-hotel'){modal='';return priorAct('rest-hotel');}};}
 {const priorRender=render;render=(...a)=>{priorRender(...a);try{
- if(screen!=='game'||!m||m.done||modal||marketOff()||!['move','place'].includes(m.phase)||!m.moved)return;// partie guidée : la ville s'ouvre aussi (demande de Fi, 18 octobre)
+ if(screen!=='game'||!m||m.done||modal||(marketOff()&&!TUTO.tutorialOn(m))||!['move','place'].includes(m.phase)||!m.moved)return;// partie guidée : la ville s'ouvre aussi (demande de Fi, 18 octobre)
  if(typeof onlineGame==='function'&&onlineGame()&&typeof myTurn==='function'&&!myTurn())return;
  const p=S.player(m),t=m.board[p.pos],seen=m.turn+'|'+p.id+'|'+p.pos;if(t?.type!=='ville'||marketSeen===seen)return;
  marketSeen=seen;marketView='';modal='market';setTimeout(()=>{if(modal==='market')render();},0);}catch(err){console.error(err);}};}
@@ -1572,3 +1575,11 @@ function wikiMarkup(){
 {const priorSheetQ=playerSheet;playerSheet=(inline=false)=>{let h=priorSheetQ(inline);try{const q=(id,label)=>`<button type="button" class="wiki-q" data-action="wiki-open-${id}" title="WikiBike : ${label}" aria-label="WikiBike : ${label}">?</button>`;
  h=h.replace('<span class="imm-lab">ÉNERGIE</span>','<span class="imm-lab">ÉNERGIE '+q('energie','énergie')+'</span>').replace('<p class="fiche-label">Dormir · termine la journée</p>','<p class="fiche-label">Dormir · termine la journée '+q('bivouac','les nuits')+'</p>').replace('<p class="fiche-label">Se ravitailler</p>','<p class="fiche-label">Se ravitailler '+q('repas','les repas')+'</p>');
  h=h.replace(/(<div class="imm-fatl"><span class="imm-niv[^"]*">)/,'$1'+q('fatigue','la fatigue')+' ');}catch(err){console.error(err);}return h;};}
+
+// ---------- Partie guidée (19 octobre) : « Apprendre à jouer » propose les deux guides ----------
+{const priorOverlay=overlay;overlay=()=>{if(modal!=='tuto-choice')return priorOverlay();
+ const two=TUTO.guideTwoReady;
+ return `<div class="modal-back"><section class="modal wide tuto-choice" role="dialog" aria-modal="true" aria-label="Choisir un guide"><span class="eyebrow">PARTIE GUIDÉE</span><h2>🎓 Apprendre à jouer</h2><div class="tuto-choice-grid">
+  <button type="button" class="tuto-choice-card" data-action="tuto-start-1"><span class="tuto-choice-tag">Guide 1 · conseillé pour commencer</span><b>Apprendre à jouer</b><span>Mode Immersion · 5 jours · Budapest → Athènes</span><small>Les bases : énergie, ville, nuits, météo, fatigue.</small></button>
+  <button type="button" class="tuto-choice-card" data-action="tuto-start-2" ${two?'':'disabled'}><span class="tuto-choice-tag">Guide 2${two?'':' · bientôt'}</span><b>Le mode Original et ses cartes</b><span>3 jours · Lyon → Venise · contre Max, l’ordinateur</span><small>Les cartes Événement et ce qui change.</small></button>
+ </div><div class="mk-foot">${btn('Fermer','close','light')}</div></section></div>`;};}

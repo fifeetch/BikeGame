@@ -2537,3 +2537,25 @@ body .player-mat.fiche .fiche-voyage .ultra-cps li b{margin:0}
 .wiki-see .wiki-see-link{padding:4px 10px;border-radius:99px;font:600 14px 'Barlow',system-ui,sans-serif;text-transform:none;letter-spacing:0;background:#f6e7c1;color:#1b3b38;border:1px solid #1b3b3840}
 .wiki-q{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;padding:0;margin-left:4px;border-radius:50%;border:1.5px solid currentColor;background:transparent;color:inherit;font:700 11px 'Barlow',system-ui,sans-serif;cursor:pointer;vertical-align:middle;opacity:.7}
 .wiki-q:hover,.wiki-q:focus-visible{opacity:1}
+/* Partie guidée réécrite (19 octobre) */
+.tuto-wide .tuto-bubble{width:min(480px,calc(100vw - 32px))}
+.tuto-hexes{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.tuto-hexes>span{display:flex;flex-direction:column;align-items:center;font:700 11px 'Barlow Condensed',system-ui,sans-serif;color:#1b3b38}
+.tuto-hexes i{width:34px;height:38px;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);display:flex;align-items:center;justify-content:center;font:900 15px 'Fraunces',Georgia,serif;font-style:normal;color:#1b1406}
+.tuto-table{border-collapse:collapse;width:100%;font-size:12.5px;margin:6px 0;line-height:1.25}
+.tuto-table th,.tuto-table td{border-bottom:1px solid #1b140622;padding:3px 4px;text-align:left;vertical-align:top}
+.tuto-table th{font:700 11px 'Barlow Condensed',system-ui,sans-serif;letter-spacing:.05em;text-transform:uppercase;color:#6b5a3c}
+.tuto-choice-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin:14px 0}
+.tuto-choice-card{display:flex;flex-direction:column;gap:6px;text-align:left;padding:16px 18px;border-radius:16px;background:#f6e7c1;color:#1b3b38;border:3px solid #f2a541;font:500 15px 'Barlow',system-ui,sans-serif}
+.tuto-choice-card b{font:900 22px 'Fraunces',Georgia,serif}
+.tuto-choice-card small{color:#5d4b26}
+.tuto-choice-card:disabled{opacity:.55;border-color:#c9bfa4;cursor:not-allowed}
+.tuto-choice-tag{width:fit-content;font:700 12px 'Barlow Condensed',system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase;padding:2px 8px;border-radius:99px;background:#2c6f6a;color:#f6e7c1}
+.tuto-bubble .tuto-text{margin:0;line-height:1.4}
+.tuto-bubble .tuto-text small{display:block;margin-top:6px;font-size:13px;color:#5d4b26}
+button.wiki-q.wiki-q{flex:none;width:18px;height:18px;min-height:0;min-width:0;padding:0;line-height:1;border-radius:50%;box-shadow:none}
+.modal .tuto-choice-card{display:flex;flex-direction:column;gap:6px;text-align:left;padding:16px 18px;border-radius:16px;background:#f6e7c1;color:#1b3b38;border:3px solid #f2a541;font:500 15px 'Barlow',system-ui,sans-serif;text-transform:none;letter-spacing:0;min-height:0;box-shadow:none}
+.modal .tuto-choice-card b{font:900 22px 'Fraunces',Georgia,serif;color:#1b3b38;text-transform:none}
+.modal .tuto-choice-card small{color:#5d4b26;font-size:13px}
+.modal .tuto-choice-card:disabled{opacity:.5;border-color:#c9bfa4;background:#e8dcbc;cursor:not-allowed}
+.modal .tuto-choice-card:not(:disabled):hover{background:#fff4d6}

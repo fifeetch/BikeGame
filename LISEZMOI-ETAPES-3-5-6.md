@@ -524,3 +524,8 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 
 ## 19 octobre — WikiBike plus complet (cache v133-wiki-plus)
 - dist/wiki-plus.js : compléments selon le mode (fatigue en 6 niveaux ou en 3, nuits et pari de la nuit avec les chances, demander, repos, météo, cartes, partie guidée…), vignettes des Règles et liens « Voir aussi ». Petits « ? » dans la fiche (énergie, fatigue, se ravitailler, dormir) qui ouvrent l'article (action wiki-open-<id>). « pièce(s) » corrigé.
+
+## 19 octobre — Partie guidée réécrite, guide 1 (cache v134-guide1)
+- Planche « Les deux guides » validée par Fi. « Apprendre à jouer » ouvre un choix : guide 1 (mode Immersion) et guide 2 (mode Original, « bientôt »).
+- Guide 1 : vrai mode Immersion, niveau Voyage. Nouvelles bulles : but du jeu, une journée = un tour, cases hexagonales, visite guidée de Belgrade (vélo, supérette, restaurant, hôtel, bulles par-dessus la ville : step.town), tableau des nuits, exemples de météo, cadre du bas, rouvrir la ville, une scène en route, fatigue en 6 niveaux, cols mythiques, fin avec bouton WikiBike. Bulle « carte Événement » retirée.
+- Hasard préparé pendant la partie guidée (simulator.js, m.tutorial) : une seule scène (« Hello ! », jour 2, 3ᵉ case), pas d'imprévu qui dure, nuits calmes, « Demander » donne toujours le jardin.

@@ -419,6 +419,8 @@ function beginScene(m,p,s,road,ctx,extra={}){const rnd=()=>irand(m);
 // En route : environ un jour sur deux, une scène s'ouvre sur la 1re, 2e ou 3e case de la journée.
 function immersionStep(m,p,k,t,onRoad){if(!immersionOn(m)||m.done||m.phase!=='move')return;const im=pim(p);
  for(const s of sitsAt(m,k))if(!im.zones.includes(s.uid)){im.zones.push(s.uid);const tpl=situationTemplate(s.id);record(m,'situation',`${tpl.title} : ${tpl.rules.join(' · ')}.`,{key:k});}
+ // Partie guidée (19 octobre) : une seule scène, préparée à l'avance (même jour, même case, même scène pour tout le monde).
+ if(m.tutorial?.active){const ts=m.tutorial.scene;if(!ts||ts.done||ts.day!==m.round||m.moved!==ts.step)return;const sc=SCENES.find(x=>x.id===ts.id);if(!sc)return;ts.done=true;beginScene(m,p,sc,true,immContext(m,p,k,onRoad));return;}
  if(im.planTurn!==m.turn){im.planTurn=m.turn;im.planStep=irand(m)<fatigueLevel(m,p).road?1+Math.floor(irand(m)*3):0;}
  if(!im.planStep||m.moved!==im.planStep)return;im.planStep=0;
  // La fatigue décide : galère ou belle surprise, et quelles galères sont possibles (inattention dès la fatigue 2).
@@ -455,6 +457,7 @@ function immersionEvening(m){if(ultraOn(m))return ultraEvening(m);const p=player
  const gained=p.energy-before,where=n.demand?n.demand.title:NIGHT[n.id].name,fDiff=(p.fatigue||0)-fBefore,nightLine=`${where}${n.rest?' après une journée sans rouler':''} : ${gained>=0?'+':''}${gained} énergie${fDiff?` · fatigue ${fDiff>0?'+':'−'}${Math.abs(fDiff)}`:''} · ${fatigueLevel(m,p).name.toLowerCase()} (${p.fatigue||0}/${fatigueMax(m)})`;
  const carnet=carnetDay(m,p,where);record(m,'carnet',carnet);const extra={carnet,nightLine};
  if(n.demand){beginScene(m,p,{id:'im-demande-'+n.demand.kind,title:n.demand.title,scene:ctx.city?'ville':'plaine',kind:n.demand.kind==='refus'?'galere':'belle',quote:n.demand.text,choices:[{label:'Bonne nuit',text:'À demain, la route.',effect:{}}]},false,ctx,extra);return;}
+ if(m.tutorial?.calmNights&&m.tutorial.active){beginScene(m,p,{id:'im-nuit-calme',title:NIGHT_TITLES[n.id]||'Nuit calme',scene:ctx.city?'ville':ctx.type==='cote'?'cote':MOUNTAIN.includes(ctx.type)?'montagne':'plaine',kind:'belle',quote:CALM[Math.floor(irand(m)*CALM.length)],choices:[{label:'Bonne nuit',text:'À demain, la route.',effect:{}}]},false,ctx,extra);return;}
  const due=Object.entries(im.companions).filter(([,c])=>c.stage==='met'&&m.round-c.met>=4);
  if(due.length&&irand(m)<.3){const [id]=due[Math.floor(irand(m)*due.length)],c=COMPANIONS.find(x=>x.id===id);
   beginScene(m,p,{id:'im-retrouvailles-'+id,title:'Les retrouvailles',scene:'plaine',kind:'belle',quote:c.again,choices:[
@@ -475,6 +478,7 @@ function immersionEvening(m){if(ultraOn(m))return ultraEvening(m);const p=player
 function immersionDayStart(m){if(!immersionOn(m)||m.done)return;m.imm.situations=(m.imm.situations||[]).filter(s=>s.until>=m.round);
  {const p=player(m);if(m.phase==='move'&&fatigueLevel(m,p).forced&&m.rules.fatigue?.enabled){p.turnModifiers={...p.turnModifiers,skipMove:true};record(m,'fatigue',`${p.name} est fourbu : repos forcé aujourd’hui.`);
   beginScene(m,p,{id:'im-fourbu',title:'Fourbu',scene:'plaine',kind:'galere',quote:'Ce matin, les jambes refusent. Impossible de remonter en selle : aujourd’hui, c’est repos forcé. Une journée sans rouler suivie d’une vraie nuit enlève 3 de fatigue (4 en ville).',choices:[{label:'Une journée pour souffler',text:'Le vélo reste appuyé contre un arbre.',effect:{}}]},true,immContext(m,p,p.pos));return;}}
+ if(m.tutorial?.active)return;// partie guidée : pas d'imprévu qui dure
  const lvS=immLevel(m);if(m.phase!=='move'||m.imm.situations.length>=(lvS.sitMax||2)||irand(m)>=(lvS.sit??.35))return;const p=player(m),s=spawnSituation(m,p);if(!s)return;
  const tpl=situationTemplate(s.id),days=s.until-m.round+1;
  beginScene(m,p,{id:'im-imprevu-'+s.id,title:(tpl.kind==='neg'?'Imprévu en vue : ':'Bonne nouvelle : ')+tpl.title,scene:tpl.seed.includes('cote')?'cote':tpl.seed.some(x=>MOUNTAIN.includes(x))?'montagne':tpl.seed.includes('ville')?'ville':'plaine',kind:tpl.kind==='neg'?'galere':'belle',
@@ -503,7 +507,7 @@ function sleepNight(m,id){const p=player(m);if(!immersionOn(m)||m.pendingAttack|
  const im=pim(p),restDay=!m.moved;
  if(id==='demander'){const odds=demandInfo(m,p),late=immLevel(m).late,draw=()=>{const roll=irand(m)*100;return roll<odds.grand?'grand':roll<odds.grand+odds.jardin?'jardin':'refus';};
   // Jamais trois fois de suite la même réponse : on retire une fois si les deux derniers soirs ont donné la même.
-  let kind=draw();const last=im.demandLast||[];if(last.length>=2&&last[0]===kind&&last[1]===kind)kind=['grand','jardin','refus'].filter(k=>k!==kind)[Math.floor(irand(m)*2)];
+  let kind=m.tutorial?.active?'jardin':draw();const last=im.demandLast||[];if(last.length>=2&&last[0]===kind&&last[1]===kind)kind=['grand','jardin','refus'].filter(k=>k!==kind)[Math.floor(irand(m)*2)];
   im.demandLast=[kind,...last].slice(0,2);im.demandStreak=(im.demandStreak||0)+1;
   let result=kind;if(kind==='refus')result=p.money>=late?'refusCamping':'refusDehors';if(result==='refusCamping'){p.money-=late;m.stats.moneySpent+=late;}
   const title={grand:'Grand accueil',jardin:'Oui, le jardin',refus:'Refus poli'}[kind],list=DEMAND_TEXTS[result],region=regionOf(m.board[p.pos]);
