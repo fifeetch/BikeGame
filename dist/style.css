@@ -2525,3 +2525,15 @@ body .player-mat.fiche .fiche-voyage .ultra-cps li b{margin:0}
 .mc-night{position:absolute;inset:0;z-index:0;pointer-events:none;background:#06131c;opacity:0;mix-blend-mode:multiply}
 /* Plus de fanion sur les vélos (demande de Fi, 18 octobre) */
 .rider-token.free .rider-flag,.rider-token.free .player-number{display:none}
+/* WikiBike plus complet (19 octobre) */
+.wiki-more{display:flex;flex-direction:column;gap:8px;font-size:15px;line-height:1.45}
+.wiki-more p{margin:0}.wiki-more ul{margin:0;padding-left:20px}
+.wiki-table{border-collapse:collapse;width:100%;font-size:14px;margin:4px 0}
+.wiki-table th,.wiki-table td{border-bottom:1px solid #1b3b3826;padding:4px 6px;text-align:left;vertical-align:top}
+.wiki-table th{font:700 13px 'Barlow Condensed',system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#6b5a3c}
+.wiki-visual .rv-card{max-width:420px}
+.wiki-see{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px}
+.wiki-see>span{font:700 13px 'Barlow Condensed',system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#6b5a3c;margin-right:4px}
+.wiki-see .wiki-see-link{padding:4px 10px;border-radius:99px;font:600 14px 'Barlow',system-ui,sans-serif;text-transform:none;letter-spacing:0;background:#f6e7c1;color:#1b3b38;border:1px solid #1b3b3840}
+.wiki-q{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;padding:0;margin-left:4px;border-radius:50%;border:1.5px solid currentColor;background:transparent;color:inherit;font:700 11px 'Barlow',system-ui,sans-serif;cursor:pointer;vertical-align:middle;opacity:.7}
+.wiki-q:hover,.wiki-q:focus-visible{opacity:1}

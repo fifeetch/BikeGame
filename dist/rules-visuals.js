@@ -21,6 +21,10 @@ const V={
  points:{title:'Points maxi, points mini',text:'Chaque carte Voyage montre deux nombres : tous les objectifs remplis, ou arrivé sans tous les objectifs (« 🏁 Terminer le voyage ici »).',
   draw:()=>svg(120,`<rect x="20" y="14" width="140" height="92" rx="10" fill="#f6e7c1"/><text x="90" y="40" text-anchor="middle" font-family="Fraunces, Georgia, serif" font-weight="900" font-size="15" fill="#1b1406">Cap vers le Nord</text><text x="90" y="74" text-anchor="middle" font-family="Fraunces, Georgia, serif" font-weight="900" font-size="28" fill="#2c7a5b">22</text><text x="90" y="96" text-anchor="middle" font-family="Barlow, sans-serif" font-size="12" fill="#1b1406">· 10 sans les objectifs</text><path d="M172 46h30" stroke="#7fc8a9" stroke-width="3"/>${note(208,51,'tous les objectifs','#7fc8a9')}<path d="M172 92h30" stroke="#e46a50" stroke-width="3"/>${note(208,97,'arrivé sans','#e46a50')}`)}
 };
+V.terrains={title:'Le coût des terrains',text:'Énergie de base pour entrer sur la case.',
+  draw:()=>svg(90,[hex(0,0,'p','1'),hex(1,0,'c','1'),hex(2,0,'mm','2'),hex(3,0,'m','3'),hex(4,0,'col'),hex(5,0,'v','0',{fill:'#f6e7c1'})].join('')+`<text x="${at(4,0).x+10}" y="${at(4,0).y+16}" font-family="Barlow Condensed, sans-serif" font-weight="700" font-size="13" fill="#f6e7c1">3</text>`)};
+// Une seule vignette (pour le WikiBike).
+export function ruleVisual(id){const v=V[id];return v?`<figure class="rv-card rv-one">${v.draw()}<figcaption><b>${v.title}</b>${v.text}</figcaption></figure>`:'';}
 const BY_TAB={route:['cote','col'],voyages:['unique','suite','villes','points']};
 export function ruleVisuals(tab){const ids=BY_TAB[tab];if(!ids)return '';
  return `<div class="rv-grid">${ids.map(id=>{const v=V[id];return `<figure class="rv-card">${v.draw()}<figcaption><b>${v.title}</b>${v.text}</figcaption></figure>`;}).join('')}</div>`;}

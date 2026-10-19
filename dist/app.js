@@ -33,7 +33,8 @@ import * as TUTO from './tutorial.js';
 import {endStatsHtml} from './end-stats.js';
 import {drawVariantPreview} from './terrain-dynamic.js';
 import {oddsLabel,DEMAND} from './immersion.js';
-import {WIKI_CATEGORIES,wikiEntries} from './wikibike.js?v=full1';
+import {WIKI_CATEGORIES,wikiEntries} from './wikibike.js?v=full2';
+import {wikiExtra} from './wiki-plus.js';
 const app=document.querySelector('#app');
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let artPref=readArtPreference(),displayPrefs=readDisplayPrefs(),sheetDrawer=false;
@@ -732,7 +733,7 @@ const NET_VIEW_ACTIONS=new Set(['net-resync','zoomin','zoomout','center','art','
 globalThis.document?.addEventListener?.('click',e=>{
  if(!onlineGame()||screen!=='game'||myTurn())return;
  const el=e.target.closest?.('[data-action],[data-sheet-tab],button,a,input,select,[data-board-key],svg,.map-wrap');if(!el)return;
- if(el.closest('[data-sheet-tab]')||NET_VIEW_ACTIONS.has(el.dataset?.action)||/^(help|intro-close|help-tab-|meteo-day-|chat-|wiki-entry-)/.test(el.dataset?.action||'')||el.closest('.chat-drawer')||el.closest('.chat-toast')||el.closest('.maptools')||el.closest('header')||el.closest('.split-size'))return;
+ if(el.closest('[data-sheet-tab]')||NET_VIEW_ACTIONS.has(el.dataset?.action)||/^(help|intro-close|help-tab-|meteo-day-|chat-|wiki-entry-|wiki-open-)/.test(el.dataset?.action||'')||el.closest('.chat-drawer')||el.closest('.chat-toast')||el.closest('.maptools')||el.closest('header')||el.closest('.split-size'))return;
  e.stopPropagation();e.preventDefault();message=`C’est au tour de ${seatName(NET.actorId(m))}.`;const toast=document.querySelector('.toast');if(toast)toast.textContent=message;
 },true);
 // Au démarrage : reprendre l'écoute de la partie en ligne, ou ouvrir l'écran « Rejoindre » si le lien contient un code.
@@ -1559,9 +1560,15 @@ const wikiNormalize=s=>String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'')
 function wikiMarkup(){
  const rules=helpRules(),boardMode=m?.mode||mode,entries=wikiEntries(rules,{boardMode}),entry=entries.find(e=>e.id===wikiEntry);
  const activeMode=boardMode==='tuiles'?'Tuiles':rules.immersion?.ultra?'Ultra':rules.immersion?.enabled?(rules.immersion.beta?'Bêta':'Immersion'):'Original';
- if(entry)return `<div class="wiki-entry"><span class="wiki-icon" aria-hidden="true">${entry.icon}</span><span class="eyebrow">${esc(WIKI_CATEGORIES.find(c=>c.id===entry.category)?.label||'WikiBike')}</span><h2>${esc(entry.name)}</h2><p class="wiki-short">${esc(entry.short)}</p><p>${esc(entry.body)}</p><div class="wiki-actions">${btn('← Toutes les définitions','wiki-back','light')}${btn('Fermer','close','light')}</div></div>`;
+ if(entry)return `<div class="wiki-entry"><span class="wiki-icon" aria-hidden="true">${entry.icon}</span><span class="eyebrow">${esc(WIKI_CATEGORIES.find(c=>c.id===entry.category)?.label||'WikiBike')}</span><h2>${esc(entry.name)}</h2><p class="wiki-short">${esc(entry.short)}</p><p>${esc(entry.body)}</p>${(()=>{const x=wikiExtra(entry,entries,rules);return (x.visual?`<div class="wiki-visual">${x.visual}</div>`:'')+(x.extra?`<div class="wiki-more">${x.extra}</div>`:'')+(x.see.length?`<div class="wiki-see"><span>Voir aussi</span>${x.see.map(e=>btn(`${e.icon} ${esc(e.name)}`,'wiki-entry-'+e.id,'wiki-see-link')).join('')}</div>`:'');})()}<div class="wiki-actions">${btn('← Toutes les définitions','wiki-back','light')}${btn('Fermer','close','light')}</div></div>`;
  return `<div class="wikibike"><span class="eyebrow">LE DICTIONNAIRE DU JEU</span><h2>📖 WikiBike</h2><p class="wiki-intro">${entries.length} articles · mode actif : <b>${activeMode}</b>. Les coûts et bonus indiqués suivent tes règles ; les rubriques des autres modes sont signalées.</p><label for="wiki-search">Rechercher un mot</label><input id="wiki-search" type="search" autocomplete="off" placeholder="Énergie, col, repas…" value="${esc(wikiQuery)}"/><div class="wiki-categories">${WIKI_CATEGORIES.map(category=>{const group=entries.filter(e=>e.category===category.id);return `<section class="wiki-category"><h3>${esc(category.label)} <small>${group.length}</small></h3><div class="wiki-grid">${group.map(e=>`<button type="button" class="wiki-term" data-action="wiki-entry-${e.id}" data-wiki-search="${esc(wikiNormalize(category.label+' '+e.name+' '+e.short+' '+e.body))}"><span aria-hidden="true">${e.icon}</span><span><b>${esc(e.name)}</b><small>${esc(e.short)}</small></span><span aria-hidden="true">→</span></button>`).join('')}</div></section>`;}).join('')}</div><p class="wiki-empty" hidden>Aucune définition trouvée.</p><div class="wiki-actions">${btn('Fermer','close','light')}</div></div>`;
 }
 {const beforeWikiAction=act;act=a=>{if(a==='wiki'){wikiEntry='';wikiQuery='';modal='wiki';render();return;}if(a==='wiki-back'){wikiEntry='';render();return;}if(a.startsWith('wiki-entry-')){wikiEntry=a.slice('wiki-entry-'.length);render();return;}return beforeWikiAction(a);};}
 {const beforeWikiOverlay=overlay;overlay=()=>modal==='wiki'?`<div class="modal-back"><section class="modal wide wiki-modal" role="dialog" aria-modal="true" aria-label="WikiBike">${wikiMarkup()}</section></div>`:beforeWikiOverlay();}
 {const beforeWikiBind=bind;bind=()=>{beforeWikiBind();const input=document.querySelector('#wiki-search');if(!input)return;const filter=()=>{wikiQuery=input.value;const query=wikiNormalize(wikiQuery.trim());let visible=0;document.querySelectorAll('.wiki-category').forEach(section=>{let count=0;section.querySelectorAll('.wiki-term').forEach(term=>{const match=term.dataset.wikiSearch.includes(query);term.hidden=!match;if(match)count++;});section.hidden=!count;visible+=count;});document.querySelector('.wiki-empty').hidden=visible>0;};input.addEventListener('input',filter);filter();};}
+
+// ---------- WikiBike depuis le jeu (19 octobre) : un petit « ? » ouvre directement le bon article ----------
+{const priorAct=act;act=a=>{if(a.startsWith('wiki-open-')){wikiEntry=a.slice(10);wikiQuery='';modal='wiki';render();return;}return priorAct(a);};}
+{const priorSheetQ=playerSheet;playerSheet=(inline=false)=>{let h=priorSheetQ(inline);try{const q=(id,label)=>`<button type="button" class="wiki-q" data-action="wiki-open-${id}" title="WikiBike : ${label}" aria-label="WikiBike : ${label}">?</button>`;
+ h=h.replace('<span class="imm-lab">ÉNERGIE</span>','<span class="imm-lab">ÉNERGIE '+q('energie','énergie')+'</span>').replace('<p class="fiche-label">Dormir · termine la journée</p>','<p class="fiche-label">Dormir · termine la journée '+q('bivouac','les nuits')+'</p>').replace('<p class="fiche-label">Se ravitailler</p>','<p class="fiche-label">Se ravitailler '+q('repas','les repas')+'</p>');
+ h=h.replace(/(<div class="imm-fatl"><span class="imm-niv[^"]*">)/,'$1'+q('fatigue','la fatigue')+' ');}catch(err){console.error(err);}return h;};}

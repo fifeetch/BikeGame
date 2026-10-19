@@ -521,3 +521,6 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 ## 18 octobre — Accueil vivant et vélos sans fanion (cache v129-accueil)
 - Écran d'accueil (choix B de la planche « Accueil plus vivant ») : la caméra suit un cycliste de Paris à Istanbul, la trace orange se dessine, les villes s'allument, le soir tombe puis le jour revient, confettis à l'arrivée et ça recommence (dist/home-anim.js). Rien ne bouge si l'appareil demande moins d'animations.
 - Demande de Fi : plus de fanion sur les vélos (pion de la carte et accueil) ; le numéro du joueur, qui était sur le fanion, disparaît aussi. La couleur du cycliste reste.
+
+## 19 octobre — WikiBike plus complet (cache v133-wiki-plus)
+- dist/wiki-plus.js : compléments selon le mode (fatigue en 6 niveaux ou en 3, nuits et pari de la nuit avec les chances, demander, repos, météo, cartes, partie guidée…), vignettes des Règles et liens « Voir aussi ». Petits « ? » dans la fiche (énergie, fatigue, se ravitailler, dormir) qui ouvrent l'article (action wiki-open-<id>). « pièce(s) » corrigé.
