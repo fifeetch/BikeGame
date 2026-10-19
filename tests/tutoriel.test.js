@@ -46,3 +46,17 @@ test('guide 2 (mode Original, 19 octobre) : deux cyclistes, mains et pioche pré
  assert.equal(m.eventDeck.at(-1),'evt-06');assert.equal(T.steps(m),T.STEPS2);assert.equal(T.currentStep(m).id,'g2-bienvenue');
  assert.ok(S.routeCheck(m,T.PLAN2[1]).ok);
 });
+
+test('guide express (19 octobre) : 13 bulles courtes, même partie préparée',()=>{
+ const m=T.createTutorialMatch3();assert.equal(m.tutorial.guide,3);assert.equal(T.steps(m),T.STEPS3);assert.equal(T.STEPS3.length,13);
+ for(const s of T.STEPS3){const words=s.text(m).replace(/<span class="tuto-hexes">.*<\/span>/s,'').replace(/<[^>]+>/g,' ').split(/\s+/).filter(Boolean).length;assert.ok(words<=40,s.id+' : '+words+' mots');}
+});
+
+test('on apprend en jouant (19 octobre) : pas de bulles, conseils au bon moment, chacun une seule fois',async()=>{
+ const {tipTick}=await import('../dist/tips.js');
+ const m=T.createTipsMatch();assert.equal(T.tutorialOn(m),false);assert.deepEqual(m.tips.seen,[]);
+ let st=tipTick(m,{route:[],modal:''},null);assert.equal(st.id,'tracer');
+ st=tipTick(m,{route:['hex-18-30'],modal:''},st);assert.equal(st.id,'rouler');assert.ok(m.tips.seen.includes('tracer'));
+ st=tipTick(m,{route:[],modal:''},st);assert.equal(st,null);assert.ok(m.tips.seen.includes('rouler'));
+ m.tips.off=true;assert.equal(tipTick(m,{route:[],modal:'night'},null),null);
+});

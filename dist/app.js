@@ -30,6 +30,7 @@ import {WEATHER,REGIONS} from './weather.js';
 import * as CARNET from './carnet-data.js';
 import {variantsFor,validVariant} from './terrain-variants.js';
 import * as TUTO from './tutorial.js';
+import {tipTick,tipById} from './tips.js';
 import {endStatsHtml} from './end-stats.js';
 import {drawVariantPreview} from './terrain-dynamic.js';
 import {oddsLabel,DEMAND} from './immersion.js';
@@ -963,9 +964,9 @@ function tutoBubble(cur){let {s,k}=tutoShown();const i=k,n=TUTO.steps(m).length-
  if(tutoBack){const actions=back+btn('Suivant →','tuto-fwd','tuto-primary')+btn('Reprendre ici','tuto-here','tuto-light');
   return `<div class="tuto-layer tuto-review${s.wide?' tuto-wide':''}"><aside class="tuto-bubble" role="dialog" aria-live="polite" aria-label="Guide : ${esc(s.title)}"><span class="tuto-arrow" aria-hidden="true"></span><small class="tuto-eyebrow"><span class="tuto-grip" aria-hidden="true">⠿</span>🎓 Relecture · étape ${i+1} sur ${n}</small><b class="tuto-title">${esc(s.title)}</b><div class="tuto-text">${s.text(m)}</div><div class="tuto-actions">${actions}</div></aside></div>`;}
  s=cur;
- const actions=(s.final?'':back)+(s.final?btn('📖 Ouvrir le WikiBike','tuto-wiki','tuto-primary')+(TUTO.guideTwoReady&&m.tutorial?.guide!==2?btn('Guide 2 : le mode Original →','tuto-start-2','tuto-light'):'')+btn('Continuer la partie','tuto-continue','tuto-light')+btn('Retour au menu','tuto-menu','tuto-light')
+ const actions=(s.final?'':back)+(s.final?btn('📖 Ouvrir le WikiBike','tuto-wiki','tuto-primary')+(m.tutorial?.guide===3?btn('Guide complet →','tuto-start-1','tuto-light'):TUTO.guideTwoReady&&m.tutorial?.guide!==2?btn('Guide 2 : le mode Original →','tuto-start-2','tuto-light'):'')+btn('Continuer la partie','tuto-continue','tuto-light')+btn('Retour au menu','tuto-menu','tuto-light')
   :(s.wait?`<span class="tuto-wait">${esc(s.waiting||'')}</span>`:btn(s.next||'Compris →','tuto-next','tuto-primary'))+(s.button&&!document.querySelector('.fiche-journee')?btn(esc(s.button.label),s.button.action,'tuto-light'):'')+btn('Passer le guide','tuto-skip','tuto-skip'));
- return `<div class="tuto-layer${s.center?' tuto-centered':''}${s.wide?' tuto-wide':''}"><aside class="tuto-bubble" role="dialog" aria-live="polite" aria-label="Guide : ${esc(s.title)}"><span class="tuto-arrow" aria-hidden="true"></span><small class="tuto-eyebrow"><span class="tuto-grip" aria-hidden="true" title="Déplacer la bulle">⠿</span>🎓 ${s.final?'Fin du guide':`Étape ${i+1} sur ${n}`} · Jour ${m.round}</small><b class="tuto-title">${esc(s.title)}</b><div class="tuto-text">${s.text(m)}</div><div class="tuto-actions">${actions}</div></aside></div>`;}
+ return `<div class="tuto-layer${s.center?' tuto-centered':''}${s.wide?' tuto-wide':''}"><aside class="tuto-bubble" role="dialog" aria-live="polite" aria-label="Guide : ${esc(s.title)}"><span class="tuto-arrow" aria-hidden="true"></span><small class="tuto-eyebrow"><span class="tuto-grip" aria-hidden="true" title="Déplacer la bulle">⠿</span>🎓 ${s.final?'Fin du guide':m.tutorial?.guide===3?`<span class="tuto-dots">${Array.from({length:n},(_,k)=>`<i class="${k<i?'done':k===i?'on':''}"></i>`).join('')}</span>`:`Étape ${i+1} sur ${n}`} · Jour ${m.round}</small><b class="tuto-title">${esc(s.title)}</b><div class="tuto-text">${s.text(m)}</div><div class="tuto-actions">${actions}</div></aside></div>`;}
 function tutoPlace(){const b=document.querySelector('.tuto-layer .tuto-bubble');if(!b||!m)return;const s=tutoShown().s;
  document.querySelectorAll('.tuto-target').forEach(e=>e.classList.remove('tuto-target'));
  if(!s){b.hidden=true;return;}
@@ -1606,8 +1607,10 @@ function wikiMarkup(){
 {const priorOverlay=overlay;overlay=()=>{if(modal!=='tuto-choice')return priorOverlay();
  const two=TUTO.guideTwoReady;
  return `<div class="modal-back"><section class="modal wide tuto-choice" role="dialog" aria-modal="true" aria-label="Choisir un guide"><span class="eyebrow">PARTIE GUIDÉE</span><h2>🎓 Apprendre à jouer</h2><div class="tuto-choice-grid">
-  <button type="button" class="tuto-choice-card" data-action="tuto-start-1"><span class="tuto-choice-tag">Guide 1 · conseillé pour commencer</span><b>Apprendre à jouer</b><span>Mode Immersion · 5 jours · Budapest → Athènes</span><small>Les bases : énergie, ville, nuits, météo, fatigue.</small></button>
-  <button type="button" class="tuto-choice-card" data-action="tuto-start-2" ${two?'':'disabled'}><span class="tuto-choice-tag">Guide 2${two?'':' · bientôt'}</span><b>Le mode Original et ses cartes</b><span>3 jours · Lyon → Venise · contre Max, l’ordinateur</span><small>Les cartes Événement et ce qui change.</small></button>
+  <button type="button" class="tuto-choice-card hot" data-action="tuto-start-tips"><span class="tuto-choice-tag">🚴 Conseillé · tout de suite</span><b>On apprend en jouant</b><span>Une vraie partie · Budapest → Athènes</span><small>Des conseils d’une ligne apparaissent au bon moment.</small></button>
+  <button type="button" class="tuto-choice-card" data-action="tuto-start-3"><span class="tuto-choice-tag">⚡ 10 minutes</span><b>Guide express</b><span>12 bulles courtes · Budapest → Sofia</span><small>Les règles de base, puis tu continues seul.</small></button>
+  <button type="button" class="tuto-choice-card" data-action="tuto-start-1"><span class="tuto-choice-tag">🧭 20 minutes · Immersion</span><b>Guide complet</b><span>Garage, puis 5 jours · Budapest → Athènes</span><small>Tout : énergie, ville, nuits, météo, fatigue, imprévus.</small></button>
+  <button type="button" class="tuto-choice-card" data-action="tuto-start-2" ${two?'':'disabled'}><span class="tuto-choice-tag">🃏 15 minutes · à deux</span><b>Le mode Original et ses cartes</b><span>3 jours · Lyon → Venise · contre Max, l’ordinateur</span><small>Les cartes Événement et ce qui change.</small></button>
  </div><div class="mk-foot">${btn('Fermer','close','light')}</div></section></div>`;};}
 
 // ---------- Guide 2 (19 octobre) : Max, le cycliste joué par l'ordinateur ----------
@@ -1681,4 +1684,28 @@ function garagePlace(){const b=document.querySelector('.tuto-layer .tuto-bubble'
   if(a==='tuto-g-back'){tutoGarage.k=Math.max(0,tutoGarage.k-1);render();return;}
   if(a==='tuto-g-skip'||a==='equipment-next'){garageEnd();clearInterval(tutoTimer);document.querySelectorAll('.tuto-layer').forEach(e=>e.remove());screen='game';return act('tuto-start');}
  }
+ return priorAct(a);};}
+
+// ---------- Guide express et « On apprend en jouant » (19 octobre) ----------
+let tipState=null;
+let tipTimer=null;
+function tipShow(){const bar=document.querySelector('#tip-bar');
+ const want=screen==='game'&&Boolean(m?.tips)&&!m.tips.off;if(want&&!tipTimer)tipTimer=setInterval(()=>{try{tipShow();}catch{}},500);else if(!want&&tipTimer){clearInterval(tipTimer);tipTimer=null;}
+ const clear=()=>document.querySelectorAll('.tip-target').forEach(e=>e.classList.remove('tip-target'));
+ if(screen!=='game'||!m?.tips){bar?.remove();clear();tipState=null;return;}
+ const was=tipState?.id;tipState=tipTick(m,{...tutoUi(),modal:modal||'',route:route||[]},tipState);clear();
+ if(!tipState){bar?.remove();if(was)persist();return;}
+ if(was&&was!==tipState.id)persist();
+ const t=tipById(tipState.id);let el=bar;if(!el){el=document.createElement('div');el.id='tip-bar';el.setAttribute('role','status');document.body.appendChild(el);}
+ if(el.dataset.id!==t.id){el.dataset.id=t.id;el.className='tip-bar';el.innerHTML=`<span class="tip-ico" aria-hidden="true">${t.icon}</span><span class="tip-txt">${t.text(m)}</span>${t.wiki?`<button type="button" class="tip-q" data-action="wiki-open-${t.wiki}" title="En savoir plus (WikiBike)">?</button>`:''}<button type="button" class="tip-x" data-action="tip-close" title="J’ai compris">✕</button>`;el.querySelectorAll('[data-action]').forEach(b=>b.onclick=()=>act(b.dataset.action));}
+ const top=Boolean(modal)||m.phase==='encounter'||m.phase==='voyage-choice';el.classList.toggle('tip-top',top);
+ // centré sur la carte, juste au-dessus de la barre du bas (grand écran)
+ const map=document.querySelector('.map-wrap'),dock=document.querySelector('.dock-main')?.closest('.dock, .action-dock, footer')||document.querySelector('.dock-main');
+ if(!top&&innerWidth>=720&&map){const r=map.getBoundingClientRect(),d=dock?.getBoundingClientRect();el.style.left=Math.round(r.left+r.width/2)+'px';el.style.bottom=Math.round(innerHeight-(d&&d.top>r.top?d.top:r.bottom)+12)+'px';el.style.maxWidth=Math.round(Math.max(320,r.width-24))+'px';}else{el.style.left='';el.style.bottom='';el.style.maxWidth='';}
+ if(t.target)document.querySelector(t.target)?.classList.add('tip-target');}
+{const priorRender=render;render=(...a)=>{const out=priorRender(...a);if(m?.tips||tipState)try{tipShow();}catch{}return out;};}
+{const priorAct=act;act=a=>{
+ if(a==='tip-close'){if(m?.tips&&tipState&&!m.tips.seen.includes(tipState.id))m.tips.seen.push(tipState.id);tipState=null;persist();tipShow();return;}
+ if(a==='tuto-start-3'||a==='tuto-start-tips'){modal='';if(onlineGame())leaveOnline();try{m=a==='tuto-start-3'?TUTO.createTutorialMatch3(customCards,eventEdits):TUTO.createTipsMatch(customCards,eventEdits);}catch(e){message=e.message;render();return;}
+  screen='game';zoom=1;route=[];mapSelection='';selected=0;message='';tutoFocusStep=-1;tipState=null;render();center();return;}
  return priorAct(a);};}

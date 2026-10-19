@@ -540,3 +540,8 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 ## v137 (19 octobre) — le guide 1 commence au garage
 - 5 bulles : le garage, les deux vélos (choisir le Gravel), la bourse, le matériel (prendre la tente), puis « Choisir les voyages » lance la partie guidée.
 - Bulle « Tes pièces » : +5 pièces tous les 5 jours.
+
+## v138 (19 octobre) — guide express et « On apprend en jouant »
+- « Apprendre à jouer » propose 4 choix : On apprend en jouant (conseillé), Guide express, Guide complet, Mode Original.
+- Guide express (tutorial.js, STEPS3, guide 3) : 13 bulles courtes, Budapest → Sofia, petits points de progression.
+- On apprend en jouant (tips.js) : vraie partie Budapest → Athènes, 17 conseils d’une ligne qui apparaissent au bon moment (bandeau avec ? WikiBike et ✕), chacun une seule fois (m.tips.seen).

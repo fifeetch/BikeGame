@@ -2576,3 +2576,22 @@ button.wiki-q.wiki-q{flex:none;width:18px;height:18px;min-height:0;min-width:0;p
 /* la flèche dépasse de la bulle : on ne fait défiler que le texte */
 .tuto-bubble{overflow:visible}
 .tuto-bubble .tuto-text{overflow:auto;min-height:0;flex:0 1 auto}
+/* Choix du guide : 4 cartes, la conseillée entourée (19 octobre) */
+.tuto-choice-card{border-color:#c9b88d}
+.tuto-choice-card.hot{border-color:#f2a541;box-shadow:0 0 0 3px #f2a54144}
+.tuto-dots{display:inline-flex;gap:4px;vertical-align:middle;margin-right:4px}
+.tuto-dots i{width:8px;height:8px;border-radius:50%;background:#d8c9a0}
+.tuto-dots i.on{background:#f2a541}.tuto-dots i.done{background:#2c7a5b}
+/* « On apprend en jouant » : bandeau d'une ligne + ce qui brille */
+.tip-bar{position:fixed;left:50%;bottom:118px;transform:translateX(-50%);z-index:4500;display:flex;align-items:center;gap:10px;max-width:min(640px,calc(100vw - 32px));box-sizing:border-box;padding:8px 8px 8px 14px;border-radius:999px;background:#f6e7c1;color:#1b1406;border:3px solid #f2a541;box-shadow:0 10px 28px rgba(0,0,0,.45);font:600 15px/1.3 'Barlow',system-ui,sans-serif;animation:tipIn .35s ease-out}
+.tip-bar.tip-top{bottom:auto;top:14px}
+.tip-ico{font-size:20px}
+.tip-txt{flex:1;min-width:0}
+.tip-q,.tip-x{flex:none;width:30px;height:30px;border-radius:50%;cursor:pointer;font:700 15px 'Barlow',system-ui,sans-serif;display:grid;place-items:center;padding:0}
+.tip-q{border:0;background:#1b3b38;color:#f6e7c1}
+.tip-x{border:2px solid #c9b88d;background:transparent;color:#6b5a33}
+@keyframes tipIn{from{opacity:0;transform:translate(-50%,10px)}}
+.tip-target{outline:3px solid #f2a541!important;outline-offset:3px;border-radius:12px;animation:tipPulse 1.6s ease-in-out infinite}
+@keyframes tipPulse{50%{outline-color:#f2a54144;box-shadow:0 0 18px #f2a541}}
+@media (prefers-reduced-motion:reduce){.tip-bar,.tip-target{animation:none}}
+@media (max-width:719px){.tip-bar{bottom:auto;top:10px;border-radius:16px}}

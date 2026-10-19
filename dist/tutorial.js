@@ -94,7 +94,7 @@ export const STEPS=[
  {id:'bravo',day:5,center:true,final:true,title:'Bravo ! Tu sais jouer.',text:m=>`Pour tout savoir sur une règle, ouvre le <b>📖 WikiBike</b> en bas de ta fiche : c'est le dictionnaire du jeu. Tu veux jouer à plusieurs avec des cartes ? Lance le guide <b>« Le mode Original et ses cartes »</b>.`}
 ];
 
-export const steps=m=>m?.tutorial?.guide===2?STEPS2:STEPS;
+export const steps=m=>m?.tutorial?.guide===2?STEPS2:m?.tutorial?.guide===3?STEPS3:STEPS;
 export const currentStep=m=>tutorialOn(m)?steps(m)[m.tutorial.step]||null:null;
 // Avance tant que l'étape en cours est déjà faite ; renvoie les effets à appliquer par l'écran (« meteo », « card »).
 export function tutorialTick(m,ui){const effects=[];if(!tutorialOn(m))return effects;
@@ -166,3 +166,24 @@ export const STEPS2=[
  {id:'g2-venise',day:3,plan:3,tab:'voyage',target:['hex:next','.dock-main'],title:'Venise !',text:m=>`Dernière étape : trace jusqu'à <b>Venise</b> et roule.`,wait:m=>you(m).completed||m.done,waiting:'J’attends ton arrivée…'},
  {id:'g2-bravo',day:3,center:true,final:true,title:'Bravo ! Tu connais les deux modes.',text:m=>`Tu as <b>${you(m).points} points</b> d'aventure. En mode Original, chaque soir compte : quelle carte garder, quand attaquer, quand se protéger.<br><br>Le <b>📖 WikiBike</b> détaille chaque carte (catégorie « Modes et événements »).`}
 ];
+
+// ---------- Guide express (19 octobre, planche « Guide express ») : 12 bulles courtes, Budapest → Sofia, puis on finit seul ----------
+const W1=id=>STEPS.find(s=>s.id===id).wait;
+export const STEPS3=[
+ {id:'x-bienvenue',day:1,center:true,title:'Bienvenue !',text:m=>`Tu traverses l'Europe à vélo. Ta <b>carte Voyage</b> donne le départ, l'arrivée et des <b>objectifs</b> à remplir en route : villes, montagnes, côtes.`,next:'C’est parti'},
+ {id:'x-energie',day:1,target:['.imm-band','.fiche-energy-box'],title:'L’énergie',text:m=>`Chaque case coûte de l'<b>énergie ⚡</b> selon son terrain. Quand elle est vide, ta journée s'arrête.${HEXES}`},
+ {id:'x-tracer',day:1,plan:1,tab:'journee',target:['hex:next'],title:'Trace ta route',text:m=>`Clique les <b>cases entourées</b> jusqu'à Belgrade. Les <b>pointillés orange</b> montrent le chemin conseillé.`,wait:W1('tracer'),waiting:'J’attends tes clics…'},
+ {id:'x-rouler',day:1,target:['.dock-main'],title:'Roule',text:m=>`Clique <b>Rouler</b>. Ton Gravel fait <b>5 cases par jour</b> au plus.`,wait:W1('rouler'),waiting:'J’attends que tu roules…'},
+ {id:'x-ville',day:1,town:true,target:['.tw-shop[data-shop="superette"]'],title:'La ville',text:m=>`En ville : <b>supérette</b> (repas à emporter), <b>restaurant</b> (+4 ⚡), <b>hôtel</b>, <b>magasin de vélo</b>. Entre dans la <b>supérette</b>.`,wait:(m,ui)=>ui.view==='superette'||townDone(ui)||m.round>1,waiting:'J’attends que tu entres…'},
+ {id:'x-superette',day:1,town:true,target:['[data-action="market-close"]'],title:'La supérette',text:m=>`<b>2 repas pour 1 pièce</b>, à manger n'importe où. Tes sacoches sont déjà pleines : ferme la ville (« Continuer ma route »).`,wait:(m,ui)=>townDone(ui)||m.round>1,waiting:'J’attends que tu fermes la ville…'},
+ {id:'x-manger',day:1,tab:'journee',target:['.dock-icons [data-action="eat-menu"]','[data-action="eat-menu"]','[data-action="eat"]'],title:'Mange',text:m=>`Clique <b>🍎 Manger</b> : repas froid <b>+2 ⚡</b>. Un repas par jour, n'importe où.`,wait:W1('manger'),waiting:'J’attends que tu manges…'},
+ {id:'x-dormir',day:1,target:['.modal [data-action="rest-hotel"]','[data-action="night-open"]','.dock-main'],title:'Dors',text:m=>`<b>Bivouac</b> gratuit (tente), <b>camping</b> 1 pièce, <b>hôtel</b> 3 pièces : plus c'est cher, mieux tu récupères. Ce soir : l'<b>hôtel</b>.`,wait:m=>m.round>1,waiting:'J’attends ta nuit…'},
+ {id:'x-pieces',day:2,target:['.imm-counts span:nth-child(2)','.imm-counts'],title:'Tes pièces',text:m=>`Elles paient repas, nuits et matériel. Tu reçois <b>+${m.rules.budget?.amount??5} pièces</b> tous les ${m.rules.budget?.every??5} jours.`},
+ {id:'x-seul',day:2,plan:2,target:['hex:next','.dock-main'],title:'À toi !',text:m=>`Trace et roule <b>tout seul</b> sur la route de Sofia : les 3 cases entourées.`,wait:m=>rolled(m,2)||m.round>2,waiting:'J’attends que tu roules…'},
+ {id:'x-scene',day:2,target:['.modal [data-action^="enc-"]','.modal'],title:'Une scène',text:m=>`En route, une <b>scène</b> peut s'ouvrir : rencontre, galère ou belle surprise. Choisis ; « 2 sur 3 » veut dire que c'est un <b>pari</b>.`,wait:m=>m.round>2||(m.phase!=='encounter'&&Boolean(m.tutorial?.scene?.done)),waiting:'J’attends ton choix…'},
+ {id:'x-fatigue',day:2,target:['.imm-fatl','.imm-band','.fiche-energy-box'],title:'La fatigue',text:m=>`Chaque jour de route, la <b>fatigue monte</b> : moins d'énergie, plus de galères. <b>Camping, hôtel</b> ou une <b>journée de repos</b> la font baisser.`},
+ {id:'x-bravo',day:2,center:true,final:true,title:'Tu sais jouer !',text:m=>`Arrive à <b>Athènes</b> avec <b>tous les objectifs</b> : tous les points de la carte. Puis pioche une <b>nouvelle carte</b>. Continue seul : les <b>?</b> et le 📖 <b>WikiBike</b> t'expliquent le reste.`}
+];
+export function createTutorialMatch3(customCards=[],eventEdits=[]){const m=createTutorialMatch(customCards,eventEdits);m.tutorial.guide=3;return m;}
+// « On apprend en jouant » : la même partie, sans bulles ; ce sont les conseils en jeu (tips.js) qui aident.
+export function createTipsMatch(customCards=[],eventEdits=[]){const m=createTutorialMatch(customCards,eventEdits);endTutorial(m);m.tutorial=null;m.tips={seen:[]};return m;}
