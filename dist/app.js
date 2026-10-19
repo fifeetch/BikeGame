@@ -956,7 +956,7 @@ function tutoTargetEl(s){for(const sel of s.target||[]){if(sel.startsWith('hex:'
 function tutoEffect(e){if(e==='meteo'){modal='meteo';meteoDay='today';}
  // Sur petit écran, la fiche ne s'ouvre que pour les bulles qui la montrent ; sinon on laisse voir le plateau.
  if(e.startsWith('tab:')){const [,tab,open]=e.split(':');sheetTab=tab;if(narrowScreen())sheetDrawer=open==='open';else if(!displayPrefs.sheet)displayPrefs=writeDisplayPref('sheet',true);}}
-function tutoBubble(s){const i=m.tutorial.step,n=TUTO.STEPS.length-1;
+function tutoBubble(s){const i=m.tutorial.step,n=TUTO.steps(m).length-1;
  const actions=s.final?btn('📖 Ouvrir le WikiBike','tuto-wiki','tuto-primary')+(TUTO.guideTwoReady&&m.tutorial?.guide!==2?btn('Guide 2 : le mode Original →','tuto-start-2','tuto-light'):'')+btn('Continuer la partie','tuto-continue','tuto-light')+btn('Retour au menu','tuto-menu','tuto-light')
   :(s.wait?`<span class="tuto-wait">${esc(s.waiting||'')}</span>`:btn(s.next||'Compris →','tuto-next','tuto-primary'))+(s.button&&!document.querySelector('.fiche-journee')?btn(esc(s.button.label),s.button.action,'tuto-light'):'')+btn('Passer le guide','tuto-skip','tuto-skip');
  return `<div class="tuto-layer${s.center?' tuto-centered':''}${s.wide?' tuto-wide':''}"><aside class="tuto-bubble" role="dialog" aria-live="polite" aria-label="Guide : ${esc(s.title)}"><span class="tuto-arrow" aria-hidden="true"></span><small class="tuto-eyebrow">🎓 ${s.final?'Fin du guide':`Étape ${i+1} sur ${n}`} · Jour ${m.round}</small><b class="tuto-title">${esc(s.title)}</b><div class="tuto-text">${s.text(m)}</div><div class="tuto-actions">${actions}</div></aside></div>`;}
@@ -999,6 +999,8 @@ function tutoPlace(){const b=document.querySelector('.tuto-layer .tuto-bubble');
  if(a==='tuto-start'&&screen!=='game'){modal='tuto-choice';render();return;}
  if(m&&a==='tuto-wiki'){TUTO.endTutorial(m);wikiEntry='';wikiQuery='';modal='wiki';render();return;}
  if(a==='tuto-start-1'){modal='';a='tuto-start';}
+ if(a==='tuto-start-2'){modal='';if(onlineGame())leaveOnline();try{m=TUTO.createTutorialMatch2(customCards,eventEdits);}catch(e){message=e.message;render();return;}
+  screen='game';zoom=1;route=[];mapSelection='';selected=0;message='';tutoFocusStep=-1;privacyCover=false;render();center();return;}
  if(a==='tuto-start'){if(onlineGame())leaveOnline();try{m=TUTO.createTutorialMatch(customCards,eventEdits);}catch(e){message=e.message;render();return;}
   screen='game';zoom=1;modal='';route=[];mapSelection='';selected=0;message='';tutoFocusStep=-1;render();center();return;}
  if(m&&a==='tuto-next'){const was=TUTO.currentStep(m)?.id;for(const e of TUTO.tutorialNext(m,tutoUi()))tutoEffect(e);if(was==='meteo'&&modal==='meteo')modal='';render();return;}
@@ -1583,3 +1585,27 @@ function wikiMarkup(){
   <button type="button" class="tuto-choice-card" data-action="tuto-start-1"><span class="tuto-choice-tag">Guide 1 · conseillé pour commencer</span><b>Apprendre à jouer</b><span>Mode Immersion · 5 jours · Budapest → Athènes</span><small>Les bases : énergie, ville, nuits, météo, fatigue.</small></button>
   <button type="button" class="tuto-choice-card" data-action="tuto-start-2" ${two?'':'disabled'}><span class="tuto-choice-tag">Guide 2${two?'':' · bientôt'}</span><b>Le mode Original et ses cartes</b><span>3 jours · Lyon → Venise · contre Max, l’ordinateur</span><small>Les cartes Événement et ce qui change.</small></button>
  </div><div class="mk-foot">${btn('Fermer','close','light')}</div></section></div>`;};}
+
+// ---------- Guide 2 (19 octobre) : Max, le cycliste joué par l'ordinateur ----------
+// Il joue sa journée tout seul, une action à la fois (pour qu'on voie ce qu'il fait) : garder une carte, annoncer son trajet,
+// répondre à une carte, rouler, jouer sa crevaison contre toi le jour 1, puis dormir au camping.
+let tutoBotTimer=0;
+function tutoBotStep(){tutoBotTimer=0;if(!m||screen!=='game'||!TUTO.tutorialOn(m)||m.tutorial.guide!==2||m.done)return;
+ const max=m.players[1],you=m.players[0];
+ // Pendant TON tour, Max ne fait que répondre : il passe sa fenêtre météo, ou subit une carte jouée contre lui.
+ if(m.activeIndex!==1){try{if(m.phase==='card-intervention'&&m.cardWindow?.responders[m.cardWindow.responderIndex]===max.id)S.passEventIntervention(m);else if(m.pendingAttack?.targetId===max.id){S.resolveEventAttack(m,{});if(m.cardWindow&&!m.pendingAttack)S.finishEventRoute(m);}else return;}catch(err){console.error(err);}privacyCover=false;persist();render();return;}
+ try{
+  if(m.pendingAttack){if(m.pendingAttack.targetId===max.id){S.resolveEventAttack(m,{});if(m.cardWindow&&!m.pendingAttack)S.finishEventRoute(m);}}
+  else if(m.phase==='card-choice')S.chooseCard(m,0);
+  else if(m.phase==='card-discard')S.discardEventHand(m,max.cardHand.length-1);
+  else if(m.phase==='card-intervention'){/* c'est à toi de répondre */return;}
+  else if(m.phase==='card-resolution')S.resolvePendingCard(m);
+  else if(m.phase==='puncture'){if(!S.repairPuncture?.(m))S.rest(m,'camping');}
+  else if(m.phase==='voyage-choice'){S.chooseNewVoyage?.(m,max.voyageChoices[0]);}
+  else if(['move','place'].includes(m.phase)&&!m.moved&&!max.tutoRode){const plan=TUTO.MAX_PLAN[m.round]||[];let r=[...plan];while(r.length&&!S.routeCheck(m,r).ok)r.pop();max.tutoRode=m.round;if(r.length)S.beginEventRoute(m,r);}
+  else if(['move','place'].includes(m.phase)&&m.round===1&&max.cardHand.includes('evt-11')&&!max.tutoAttacked){max.tutoAttacked=true;S.playCard(m,max.cardHand.indexOf('evt-11'),you.id);}
+  else if(['move','place'].includes(m.phase)){max.tutoRode=0;if(!S.rest(m,'camping')&&!S.rest(m,'bivouac'))S.endTurn(m);}
+ }catch(err){console.error(err);}
+ privacyCover=false;modal=modal==='cards'?'':modal;persist();render();}
+{const priorRender=render;render=(...a)=>{if(m&&TUTO.tutorialOn(m)&&m.tutorial.guide===2)privacyCover=false;priorRender(...a);
+ try{if(!tutoBotTimer&&m&&screen==='game'&&TUTO.tutorialOn(m)&&m.tutorial.guide===2&&!m.done){const max=m.players[1],responder=m.cardWindow?.responders?.[m.cardWindow.responderIndex];if((m.activeIndex===1&&m.phase!=='card-intervention')||(m.phase==='card-intervention'&&responder===max.id)||m.pendingAttack?.targetId===max.id)tutoBotTimer=setTimeout(tutoBotStep,1300);}}catch(err){console.error(err);}};}

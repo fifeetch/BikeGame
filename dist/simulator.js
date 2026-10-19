@@ -267,7 +267,7 @@ export function endTurn(m){if(m.pendingAttack||m.done||!['move','place'].include
  rider.dayCols=0;
  record(m,'end','Fin du tour sur '+(m.board[player(m).pos].name||E.terrains[m.board[player(m).pos].type].name)+'.',{distance:m.moved,action:m.turnKind});
  if(C.isEventGame(m)){const p=player(m);C.onTurnEnd(m,p);if(p.blockedFirst){for(const effect of (p.pendingEffects||[]).filter(e=>e.kind==='road_closed'))C.discard(m,effect.cardId);p.pendingEffects=(p.pendingEffects||[]).filter(e=>e.kind!=='road_closed');p.blockedFirst=null;}p.freeSteps=0;p.freeGeneralSteps=0;p.freeRoadSteps=0;p.freeTailwindSteps=0;p.bonusDistanceUsed=0;p.shortcutActive=false;if(m.encounters){beginEncounter(m);return true;}// À plusieurs (17 octobre, choix de Fi) : le tour passe tout de suite ; la pioche se fait au début du tour suivant du joueur.
- if(m.players.length>1&&!m.tutorial){advance(m);return true;}
+ if(m.players.length>1&&!(m.tutorial&&m.tutorial.guide!==2)){advance(m);return true;}
  C.drawChoices(m);if(!m.cardChoices.length&&!m.pendingAttack)advance(m);return true;}
  m.cardChoices=[drawCard(m),drawCard(m)];m.phase='card-choice';record(m,'draw','Deux cartes de jeu piochées : en garder une.');return true;
 }
@@ -353,7 +353,7 @@ function advance(m){player(m).turns++;m.stats.turns++;const r=m.rules.victory,bu
  }else m.phase=nextPlayer.voyageChoices?.length?'voyage-choice':nextPlayer.pendingCards?.length?'card-resolution':nextPlayer.flat?'puncture':m.mode==='tuiles'&&m.hand.length?'place':'move';
  arrivalCheck(m);
  if(m.immersion)immersionDayStart(m);
- if(C.isEventGame(m)&&m.players.length>1&&!m.tutorial&&!m.done&&['move','place','puncture','voyage-choice'].includes(m.phase)){m.resumePhase=m.phase;C.drawChoices(m);if(!m.cardChoices.length){m.phase=m.resumePhase;delete m.resumePhase;}}
+ if(C.isEventGame(m)&&m.players.length>1&&!(m.tutorial&&m.tutorial.guide!==2)&&!m.done&&['move','place','puncture','voyage-choice'].includes(m.phase)){m.resumePhase=m.phase;C.drawChoices(m);if(!m.cardChoices.length){m.phase=m.resumePhase;delete m.resumePhase;}}
  if(C.isEventGame(m))C.nextIncoming?.(m);
 }
 // Filet de sécurité (bug signalé par Fi) : déjà sur la ville d'arrivée avec tous les objectifs remplis, le voyage se termine sans devoir ressortir de la ville.

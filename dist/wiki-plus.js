@@ -32,7 +32,7 @@ const EXTRA={
  'hors-route':{see:['route','gps','tracer']},
  meteo:{see:['temps','bivouac'],more:({imm})=>`${li(['💨 <b>Vent de face</b> : +1 énergie sur la première case du jour.','🌧 <b>Pluie</b> : +1 énergie hors route.','⛈ <b>Orage</b> : 3 cases au plus.','❄ <b>Neige</b> : +1 énergie en montagne et sur les cols.'])}${imm?'<p>Sous la pluie ou l’orage, le bivouac devient plus risqué.</p>':''}`},
  cartes:{see:['positive','negative','climatique','permanent'],more:({orig})=>orig?`${table(['Carte','Pour qui','Quand'],[['🟢 Positive','toi','pendant ton tour, une par tour'],['🔴 Négative','un autre cycliste','pendant ton tour ; il la découvre au début du sien'],['🔵 Climatique','un autre cycliste','quand il annonce son trajet (sans bulletin météo)'],['🟡 Bonus permanent','toi','posé devant toi, 2 au plus']])}<p>Main de 3 cartes au plus. Fin de journée : <b>pioche 2, garde-en 1</b>. « Coup de pouce » annule une carte jouée contre toi.</p>`:''},
- tutoriel:{see:['but','journee','original','immersion'],more:()=>`<p>Deux guides : <b>Apprendre à jouer</b> (mode Immersion, 5 jours, Budapest → Athènes) pour les bases, puis <b>Le mode Original et ses cartes</b> (3 jours, Lyon → Venise, bientôt).</p>`},
+ tutoriel:{see:['but','journee','original','immersion'],more:()=>`<p>Deux guides : <b>Apprendre à jouer</b> (mode Immersion, 5 jours, Budapest → Athènes) pour les bases, puis <b>Le mode Original et ses cartes</b> (3 jours, Lyon → Venise, contre Max l’ordinateur).</p>`},
  but:{see:['voyage','points','fin-partie']},
  points:{see:['score-voyage','col','lieu-cache','fin-partie']},
  original:{see:['cartes','fatigue','bivouac']},

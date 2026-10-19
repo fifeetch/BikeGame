@@ -36,3 +36,11 @@ test('partie guidée (mode Immersion, 19 octobre) : le chemin conseillé mène a
  assert.equal(T.currentStep(m).id,'bravo');
  T.endTutorial(m);assert.equal(T.tutorialOn(m),false);
 });
+
+test('guide 2 (mode Original, 19 octobre) : deux cyclistes, mains et pioche préparées, Max joué par l’ordinateur',()=>{
+ const m=T.createTutorialMatch2(),[p,q]=m.players;
+ assert.equal(m.players.length,2);assert.equal(q.name,'Max');assert.ok(q.bot);assert.equal(m.rules.immersion.enabled,false);
+ assert.deepEqual(p.cardHand,['evt-03','evt-15','evt-21']);assert.deepEqual(q.cardHand,['evt-11','evt-02']);
+ assert.equal(m.eventDeck.at(-1),'evt-06');assert.equal(T.steps(m),T.STEPS2);assert.equal(T.currentStep(m).id,'g2-bienvenue');
+ assert.ok(S.routeCheck(m,T.PLAN2[1]).ok);
+});
