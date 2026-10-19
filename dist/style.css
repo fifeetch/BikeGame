@@ -2630,3 +2630,25 @@ button.wiki-q.wiki-q{flex:none;width:18px;height:18px;min-height:0;min-width:0;p
 .fiche-light .fiche-details .details-link{color:#1b3b38!important;background:none!important;border:0!important;min-height:0!important;padding:0!important;font:700 14px 'Barlow',system-ui,sans-serif!important}
 .fiche-light .fat-next{flex-basis:100%;font:500 13px/1.35 'Barlow',system-ui,sans-serif;color:#5a4a2c}
 .fiche-light .fat-next b{color:#1b3b38}
+/* fiche allégée, v2 (retour de Fi) : plus compacte */
+.fiche-light .imm-fatl{gap:4px 10px}
+.fiche-light .fat-effect{font-size:13px}
+.fiche-light .fat-next{flex-basis:100%;font:500 13px/1.3 'Barlow',system-ui,sans-serif;color:#5a4a2c}
+.fiche-light .imm-counts{gap:2px 14px;padding:2px 4px}
+.fiche-light .imm-counts>span{min-height:28px;padding:0;border:0;background:none;font-size:14px;gap:4px}
+.fiche-light .imm-counts>span b{font-size:15px}
+.fiche-light .details-btn{min-height:28px;font-size:13px}
+.fiche-light .fiche-details b{color:#1b3b38}
+.fiche-light .imm-counts{display:flex!important;flex-wrap:wrap;justify-content:flex-start;grid-template-columns:none}
+.fiche-light .imm-counts>span{flex:0 0 auto!important;width:auto!important;min-width:0!important;justify-content:flex-start!important}
+/* fatigue en cases */
+.fiche-light .fat-row{flex-basis:100%;display:flex;align-items:center;gap:10px}
+.fiche-light .fat-lab{font:700 14px 'Barlow Condensed',system-ui,sans-serif;letter-spacing:.14em;color:#5a4a2c}
+.fiche-light .fat-cells{flex:1;display:grid;grid-template-columns:repeat(var(--n),1fr);gap:3px;max-width:60%}
+.fiche-light .fat-cells i{height:14px;border-radius:3px;background:#e2cf9f}
+.fiche-light .fat-cells i.on{background:#c98a6a}
+.fiche-light .fat-cells i.lv3,.fiche-light .fat-cells i.lv4{background:#b8432e}
+.fiche-light .fat-cells i.lv5{background:#7a2c16}
+.fiche-light .fat-cells i.next{background:transparent;outline:2px dashed #c98a6a;outline-offset:-2px}
+.fiche-light .fat-name{font:700 15px 'Barlow',system-ui,sans-serif;color:#1b3b38;margin-left:auto}
+.fiche-light .fat-cells{max-width:none}

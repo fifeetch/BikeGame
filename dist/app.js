@@ -1730,13 +1730,20 @@ function ficheLight(root){if(!root||root.dataset.light)return;root.dataset.light
  const fat=root.querySelector('.imm-fatl'),cap=root.querySelector('.imm-nrg b small')?.textContent.replace('/','');
  const risk=root.querySelector('.imm-risk-txt');
  if(fat){const eff=document.createElement('span');eff.className='fat-effect';const r=risk?risk.textContent.replace(/\s*·.*$/,''):'';eff.textContent=[cap?`énergie max ${cap}`:'',/galère/.test(r)?r:''].filter(Boolean).join(' · ');fat.appendChild(eff);
+  // Fatigue en cases, comme l'énergie (demande de Fi) : une case par niveau, la case de demain en pointillés
+  {const dots=[...fat.querySelectorAll('.imm-dots i')],lv=dots.filter(i=>i.classList.contains('on')).length,niv=fat.querySelector('.imm-niv');
+   if(dots.length&&niv){const name=[...niv.childNodes].filter(n=>n.nodeType===3).map(n=>n.textContent).join('').trim();const q=niv.querySelector('.wiki-q');
+    const row=document.createElement('div');row.className='fat-row';row.innerHTML=`<span class="fat-lab">FATIGUE</span><span class="fat-cells" style="--n:${dots.length}" aria-label="fatigue ${lv} sur ${dots.length}">${dots.map((_,i)=>`<i class="${i<lv?'on lv'+(i+1):i===lv?'next':''}"></i>`).join('')}</span><b class="fat-name">${esc(name)}</b>`;
+    if(q)row.querySelector('.fat-lab').after(q);niv.hidden=true;fat.prepend(row);}}
   if(risk&&/galère/.test(risk.textContent))add('Risque de galère : '+risk.textContent.replace(/^galère\s*/,''));
-  // Immersion : le niveau suivant et comment la faire baisser (demande de Fi : « un peu plus de détail » sur la fatigue)
+  // Immersion : le niveau suivant, en une ligne ; comment la faire baisser va dans « + Détails »
   const lvl=fat.querySelectorAll('.imm-dots i.on').length,next=IMM_FATIGUE[lvl+1];
   if(S.immersionOn(m)&&fat.querySelector('.imm-dots')){const n=document.createElement('span');n.className='fat-next';
-   n.innerHTML=(next?`Niveau suivant : <b>${esc(next.name)}</b> (énergie max ${10-(lvl+1)}${next.risk?' · galères : '+esc(next.risk):''})`:'Niveau maximum')+` · <b>camping, hôtel</b> ou <b>journée de repos</b> la font baisser.`;fat.appendChild(n);}
+   n.innerHTML=next?`Si tu roules demain : <b>${esc(next.name)}</b> · max ${10-(lvl+1)}`:'Fatigue au maximum';fat.appendChild(n);
+   add('<b>Fatigue</b> : chaque jour de route +1 (+1 de plus avec un col ou 5 cases). Camping −1, hôtel −2, journée de repos −3. Le bivouac ne la baisse pas.');}
   else if(S.origNightsOn?.(m)&&fat.querySelector('.imm-dots')&&cap){const n=document.createElement('span');n.className='fat-next';const tot=fat.querySelectorAll('.imm-dots i').length,lv=fat.querySelectorAll('.imm-dots i.on').length;
-   n.innerHTML=(lv<tot?`Niveau suivant : énergie max <b>${Math.max(0,Number(cap)-2)}</b>${lv+1===tot?' (fourbu)':''}`:'Fourbu')+` · <b>camping</b> ou <b>hôtel</b> l'effacent, le bivouac non.`;fat.appendChild(n);}}
+   n.innerHTML=lv<tot?`Niveau suivant : énergie max <b>${Math.max(0,Number(cap)-2)}</b>`:'Fourbu';fat.appendChild(n);
+   add('<b>Fatigue</b> : camping ou hôtel l\'effacent, le bivouac non.');}}
  // ligne 3 : météo + réserves en pastilles
  const counts=root.querySelector('.imm-counts'),met=root.querySelector('.fiche-meteo');
  if(counts){const ic=['🍎','🪙','⭐'];[...counts.children].forEach((s,i)=>{if(ic[i]&&!s.dataset.ic){s.dataset.ic='1';s.insertAdjacentText('afterbegin',ic[i]+' ');}});
