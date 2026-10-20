@@ -582,3 +582,6 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - Accueil : bouton « ⚡ Partie rapide » (mêmes cyclistes, vélos, matériel et règles que la dernière partie préparée, puis choix du voyage).
 - Téléphone : glisser le bandeau vers le haut ouvre la fiche, glisser la fiche vers le bas la ferme ; onglets de la fiche lisibles en entier ; liens du bas sur deux colonnes.
 - Contrastes : classement sous la carte (texte crème sur fond blanc corrigé), petites mentions des cartes Voyage.
+
+## v147 (20 octobre) — téléphone : la barre du bas ne passe plus devant les fenêtres
+- Pendant qu’une fenêtre est ouverte (règles, manger, nuit, scène, photo du col), la barre du bas se cache.

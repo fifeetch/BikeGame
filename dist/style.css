@@ -2721,3 +2721,8 @@ button.wiki-q.wiki-q{flex:none;width:18px;height:18px;min-height:0;min-width:0;p
  body .player-mat.fiche .fiche-tabs button span{overflow:visible!important;white-space:nowrap}
  body .player-mat.fiche .fiche-footer{display:grid!important;grid-template-columns:1fr 1fr!important;gap:6px 12px!important}
 }
+/* la barre du bas ne passe plus devant les fenêtres (retour de Fi, 20 octobre) */
+@media (max-width:719px){
+ body.phone-game aside.player-sheet-dock{z-index:5}
+ body.phone-game.phone-modal aside.player-sheet-dock{visibility:hidden}
+}

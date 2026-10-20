@@ -1791,7 +1791,9 @@ function phoneLayout(){if(typeof innerWidth!=='number'||!document.body?.classLis
  nav?.querySelectorAll('button').forEach(x=>x.addEventListener('click',()=>{phoneMenuOpen=false;},{once:true}));
  const map=document.querySelector('.map-wrap'),dock=document.querySelector('aside.player-sheet-dock');
  if(map&&dock&&head){const h=Math.max(220,innerHeight-head.offsetHeight-dock.offsetHeight-14);if(map.style.height!==h+'px'){map.style.height=h+'px';map.style.minHeight='0';}}
- const tip=document.querySelector('#tip-bar');if(tip&&dock){tip.style.bottom=(dock.offsetHeight+10)+'px';}}
+ const tip=document.querySelector('#tip-bar');if(tip&&dock){tip.style.bottom=(dock.offsetHeight+10)+'px';}
+ // une fenêtre ouverte (règles, manger, nuit, scène…) passe devant : on cache la barre du bas pendant ce temps
+ document.body.classList.toggle('phone-modal',Boolean(document.querySelector('.modal-back, .night-scene, .colphoto, .scene-pop')));}
 {const priorRender=render;render=(...a)=>{const out=priorRender(...a);try{phoneLayout();}catch(e){console.error(e);}return out;};}
 globalThis.addEventListener?.('resize',()=>{try{phoneLayout();}catch{}});
 
@@ -1841,3 +1843,5 @@ function sheetSwipe(){if(typeof innerWidth!=='number'||innerWidth>=720||screen!=
  const sh=document.querySelector('.player-sheet-mount');if(sh&&!sh.dataset.swipe){sh.dataset.swipe='1';let y0=null;sh.addEventListener('touchstart',e=>{y0=sh.scrollTop<=0?e.touches[0].clientY:null;},{passive:true});
   sh.addEventListener('touchend',e=>{if(y0!==null&&e.changedTouches[0].clientY-y0>90&&sh.getBoundingClientRect().top<innerHeight/2&&document.querySelector('.sheet-drawer-close')?.getClientRects().length)act('sheet-toggle');y0=null;});}}
 {const priorRender=render;render=(...a)=>{const out=priorRender(...a);try{sheetSwipe();}catch{}return out;};}
+// les fenêtres ajoutées hors rendu (photo du col, nuit, scène) cachent aussi la barre du bas sur téléphone
+try{if(typeof MutationObserver==='function'&&document.body){const upd=()=>{document.body.classList.toggle('phone-modal',Boolean(document.querySelector('.modal-back, .night-scene, .colphoto, .scene-pop')));};new MutationObserver(upd).observe(document.body,{childList:true});}}catch{}
