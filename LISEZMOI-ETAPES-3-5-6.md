@@ -573,3 +573,7 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - Téléphone : en-tête d’une ligne avec menu ☰ (Règles, Réglages, Paramètres, Accueil), compteurs de cartes cachés (ils sont dans la fiche).
 - Barre d’actions et bandeau énergie collés en bas de l’écran ; la carte prend toute la hauteur restante ; légende de la carte cachée.
 - Barre d’actions plus basse (boutons en ligne, chemin « Plaine → Plaine » caché).
+
+## v145 (20 octobre) — préparation plus rapide et zoom au doigt
+- Sans carte perso, l’écran « Où roulera-t-on ? » est sauté ; toucher un type de jeu passe directement aux cyclistes (plus de « Continuer »).
+- Téléphone : au début de chaque journée, la carte se centre sur le cycliste avec des cases de 46 px.

@@ -1794,3 +1794,25 @@ function phoneLayout(){if(typeof innerWidth!=='number'||!document.body?.classLis
  const tip=document.querySelector('#tip-bar');if(tip&&dock){tip.style.bottom=(dock.offsetHeight+10)+'px';}}
 {const priorRender=render;render=(...a)=>{const out=priorRender(...a);try{phoneLayout();}catch(e){console.error(e);}return out;};}
 globalThis.addEventListener?.('resize',()=>{try{phoneLayout();}catch{}});
+
+// ---------- Préparation plus rapide (20 octobre, retour de Fi : « double clic inutile ») ----------
+// 1. Sans carte perso, l'écran « Où roulera-t-on ? » n'a qu'un choix : on le saute (Europe officielle).
+// 2. Toucher un type de jeu (Original, Immersion, Bêta, Ultra) passe directement à l'écran suivant, sans « Continuer ».
+{const priorRender=render;render=(...a)=>{
+ if(screen==='modes'&&Array.isArray(maps)&&!maps.length){selectedMapId='';mode='plateau';screen='setup';setupPage='kind';}
+ return priorRender(...a);};}
+{const priorAct=act;act=a=>{
+ if(a==='modes'&&screen==='setup'&&Array.isArray(maps)&&!maps.length){screen='home';modal='';render();return;}
+ const kindTap=typeof a==='string'&&/^mode-(original|immersion|beta|ultra)$/.test(a)&&screen==='setup'&&setupPage==='kind';
+ const out=priorAct(a);
+ if(kindTap&&screen==='setup'&&setupPage==='kind'){setupPage='players';render();try{scrollTo(0,0);}catch{}}
+ return out;};}
+
+// ---------- Audit mobile, lot M2 (20 octobre) : tracer au doigt ----------
+// Sur téléphone, au début de chaque journée, la carte se rapproche du cycliste pour que les cases fassent ~46 px.
+let phoneZoomKey='';
+function phoneZoom(){if(screen!=='game'||!m||typeof innerWidth!=='number'||innerWidth>=720||!boardRenderer||m.done)return;
+ const p=S.player(m),key=m.round+'|'+m.turn+'|'+p.id;if(key===phoneZoomKey)return;phoneZoomKey=key;
+ setTimeout(()=>{try{const el=document.querySelector(`.playable-europe [data-board-key="${p.pos}"]`),t=m.board[p.pos];if(!el||!t)return;const w=el.getBoundingClientRect().width;
+  boardRenderer.focusOn(t.x,t.y,{minScale:0,animate:false});if(w>0&&w<44)boardRenderer.zoomBy(46/w);}catch{}},1400);}
+{const priorRender=render;render=(...a)=>{const out=priorRender(...a);try{phoneZoom();}catch{}return out;};}
