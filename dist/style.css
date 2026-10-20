@@ -2698,3 +2698,26 @@ button.wiki-q.wiki-q{flex:none;width:18px;height:18px;min-height:0;min-width:0;p
  body.phone-game .dock-main .dm-ico{width:38px!important;height:38px!important}
  body.phone-game .dock-hint{padding:6px 10px!important}
 }
+/* Partie rapide (accueil) */
+.mc-title .quick-start{display:flex;flex-direction:column;align-items:flex-start;gap:0}
+.mc-title .quick-start small{font:600 13px 'Barlow',system-ui,sans-serif;letter-spacing:0;text-transform:none;opacity:.85}
+/* Finitions mobile (lot M4) */
+@media (max-width:719px){
+ .fiche-tabs button{padding:0 4px!important;min-width:0!important;font-size:14px!important}
+ .fiche-tabs button svg{display:none}
+ .fiche-footer{display:grid!important;grid-template-columns:1fr 1fr;gap:6px 12px!important;text-align:left}
+ .fiche-footer>*{min-width:0}
+}
+/* contrastes : classement sous la carte (texte crème sur fond blanc) et petites mentions des cartes Voyage */
+.game .panel.standings h3,.game .panel.standings li,.game .panel.standings li b{color:#1b3b38}
+.game .panel.standings .muted{color:#5a4a2c}
+.vcard-tier{color:#6b5a33!important}
+.vcard-pts small{color:#6b5a33!important}
+.vcard-route{filter:brightness(.78)}
+.vcard-pts small{opacity:1!important;font-size:.82em!important}
+@media (max-width:719px){
+ body .player-mat.fiche .fiche-tabs{gap:2px!important;padding:3px!important}
+ body .player-mat.fiche .fiche-tabs button{padding:0 2px!important;font-size:13px!important;letter-spacing:0!important}
+ body .player-mat.fiche .fiche-tabs button span{overflow:visible!important;white-space:nowrap}
+ body .player-mat.fiche .fiche-footer{display:grid!important;grid-template-columns:1fr 1fr!important;gap:6px 12px!important}
+}

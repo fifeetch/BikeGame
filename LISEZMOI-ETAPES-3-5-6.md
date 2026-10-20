@@ -577,3 +577,8 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 ## v145 (20 octobre) — préparation plus rapide et zoom au doigt
 - Sans carte perso, l’écran « Où roulera-t-on ? » est sauté ; toucher un type de jeu passe directement aux cyclistes (plus de « Continuer »).
 - Téléphone : au début de chaque journée, la carte se centre sur le cycliste avec des cases de 46 px.
+
+## v146 (20 octobre) — audit mobile, lots M3 et M4
+- Accueil : bouton « ⚡ Partie rapide » (mêmes cyclistes, vélos, matériel et règles que la dernière partie préparée, puis choix du voyage).
+- Téléphone : glisser le bandeau vers le haut ouvre la fiche, glisser la fiche vers le bas la ferme ; onglets de la fiche lisibles en entier ; liens du bas sur deux colonnes.
+- Contrastes : classement sous la carte (texte crème sur fond blanc corrigé), petites mentions des cartes Voyage.

@@ -1816,3 +1816,28 @@ function phoneZoom(){if(screen!=='game'||!m||typeof innerWidth!=='number'||inner
  setTimeout(()=>{try{const el=document.querySelector(`.playable-europe [data-board-key="${p.pos}"]`),t=m.board[p.pos];if(!el||!t)return;const w=el.getBoundingClientRect().width;
   boardRenderer.focusOn(t.x,t.y,{minScale:0,animate:false});if(w>0&&w<44)boardRenderer.zoomBy(46/w);}catch{}},1400);}
 {const priorRender=render;render=(...a)=>{const out=priorRender(...a);try{phoneZoom();}catch{}return out;};}
+
+// ---------- Audit mobile, lot M3 (20 octobre) : « Partie rapide » ----------
+// Le jeu retient les cyclistes de la dernière partie préparée (noms, vélos, matériel) ; un bouton sur l'accueil
+// relance tout de suite avec ces choix et les règles enregistrées : il ne reste qu'à choisir son voyage.
+function saveLastRoster(){try{localStorage.setItem('velo-last-roster',JSON.stringify(roster.map(p=>({name:p.name,bike:p.bike,items:[...(p.items||[])]}))));}catch{}}
+function lastRoster(){let r=null;try{r=JSON.parse(localStorage.getItem('velo-last-roster')||'null');}catch{}
+ if(!Array.isArray(r)||!r.length)r=[{name:'Joueur 1',bike:'gravel',items:['tente']}];
+ return r.slice(0,6).map((p,i)=>{const bike=setupRules.bikes?.[p.bike]?p.bike:Object.keys(setupRules.bikes||{gravel:1})[0];let purse=(setupRules.startMoney||10)-(setupRules.bikes?.[bike]?.price||0);
+  const items=(p.items||[]).filter(id=>{const e=setupRules.equipment?.[id];if(!e||e.betaOnly&&!setupRules.immersion?.beta||e.price>purse)return false;purse-=e.price;return true;});
+  return {name:String(p.name||`Joueur ${i+1}`).slice(0,40),bike,items};});}
+{const priorRender=render;render=(...a)=>{if(screen==='voyages'&&roster?.length)saveLastRoster();const out=priorRender(...a);
+ try{if(screen==='home'&&!document.querySelector('.quick-start')){const n=document.querySelector('.mc-title [data-action="new"]');if(n){const r=lastRoster(),kind=setupRules.immersion?.enabled?(setupRules.immersion.ultra?'Ultra':setupRules.immersion.beta?'Bêta':'Immersion'):'Original';
+  if(!setupRules.immersion?.ultra){const b=document.createElement('button');b.type='button';b.className=n.className.replace('main','')+' quick-start';b.dataset.action='quick-start';
+   b.innerHTML=`⚡ Partie rapide<small>${esc(kind)} · ${r.length>1?r.length+' cyclistes':esc(setupRules.bikes?.[r[0].bike]?.name||'Gravel')}</small>`;b.onclick=()=>act('quick-start');n.after(b);}}}}catch(e){console.error(e);}
+ return out;};}
+{const priorAct=act;act=a=>{if(a!=='quick-start')return priorAct(a);
+ if(onlineGame?.())leaveOnline();roster=lastRoster();mode='plateau';selectedMapId='';choosing=0;modal='';message='';try{drawn=drawVoyages();}catch{screen='setup';setupPage='kind';render();return;}screen='voyages';render();try{scrollTo(0,0);}catch{}};}
+
+// ---------- Audit mobile, lot M4 (20 octobre) : finitions ----------
+// La fiche se tire du doigt : glisser le bandeau vers le haut l'ouvre, glisser la fiche vers le bas (en haut de la fiche) la ferme.
+function sheetSwipe(){if(typeof innerWidth!=='number'||innerWidth>=720||screen!=='game')return;
+ const mini=document.querySelector('.mini-fiche');if(mini&&!mini.dataset.swipe){mini.dataset.swipe='1';let y0=null;mini.addEventListener('touchstart',e=>{y0=e.touches[0].clientY;},{passive:true});mini.addEventListener('touchend',e=>{if(y0!==null&&y0-e.changedTouches[0].clientY>40)act('sheet-toggle');y0=null;});}
+ const sh=document.querySelector('.player-sheet-mount');if(sh&&!sh.dataset.swipe){sh.dataset.swipe='1';let y0=null;sh.addEventListener('touchstart',e=>{y0=sh.scrollTop<=0?e.touches[0].clientY:null;},{passive:true});
+  sh.addEventListener('touchend',e=>{if(y0!==null&&e.changedTouches[0].clientY-y0>90&&sh.getBoundingClientRect().top<innerHeight/2&&document.querySelector('.sheet-drawer-close')?.getClientRects().length)act('sheet-toggle');y0=null;});}}
+{const priorRender=render;render=(...a)=>{const out=priorRender(...a);try{sheetSwipe();}catch{}return out;};}
