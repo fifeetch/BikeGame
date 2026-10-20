@@ -2665,3 +2665,36 @@ button.wiki-q.wiki-q{flex:none;width:18px;height:18px;min-height:0;min-width:0;p
 .mini-fiche .mf-res{gap:14px}
 .mini-fiche .mf-open{margin-left:auto;font-weight:700;color:#1b3b38;text-decoration:underline}
 .maptools .sheet-toggle .tool-label{display:inline}
+/* ---------- Audit mobile M1 : écran de jeu sur téléphone ---------- */
+@media (max-width:719px){
+ body.phone-game header.in-game{position:relative;display:flex;flex-direction:column;padding:6px 12px;gap:0;min-height:0}
+ body.phone-game header.in-game .brand{display:flex;align-items:center;gap:8px;width:100%}
+ body.phone-game header.in-game .brand b{font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ body.phone-game header.in-game .event-piles{display:none}
+ body.phone-game .phone-menu-btn{margin-left:auto;width:44px;height:44px;border-radius:12px;border:2px solid rgba(246,231,193,.45);background:transparent;color:#f6e7c1;font-size:22px;line-height:1;cursor:pointer}
+ body.phone-game header.in-game nav{display:none}
+ body.phone-game header.in-game.menu-open nav{display:grid;grid-template-columns:1fr 1fr;gap:8px;position:absolute;top:100%;left:8px;right:8px;z-index:4600;padding:10px;border-radius:14px;background:#16303a;box-shadow:0 14px 30px rgba(0,0,0,.5)}
+ body.phone-game header.in-game.menu-open nav button{width:100%}
+ body.phone-game main.game{padding-top:4px}
+ body.phone-game .board-legend{display:none}
+ body.phone-game aside.player-sheet-dock{position:sticky;bottom:0;z-index:30;background:#102226;padding-bottom:max(6px,env(safe-area-inset-bottom,0px));margin-top:6px}
+ body.phone-game .mini-fiche{margin-bottom:6px}
+ body.phone-game #tip-bar{top:auto!important;border-radius:16px}
+}
+/* barre d'actions plus basse sur téléphone */
+@media (max-width:719px){
+ body.phone-game .dock-day{padding:8px 10px!important;gap:6px!important}
+ body.phone-game .dock-icons{display:flex!important;flex-direction:row!important;justify-content:center;gap:8px!important;min-height:0!important}
+ body.phone-game .dock-icons .dock-ico{flex-direction:row!important;gap:6px!important;width:auto!important;min-height:44px!important;height:44px;padding:0 12px 0 4px!important}
+ body.phone-game .dock-icons .dock-ico>span{width:36px!important;height:36px!important;font-size:18px}
+ body.phone-game .dock-icons .dock-ico small{font-size:13px!important;margin:0!important}
+ body.phone-game .dock-center{gap:6px!important}
+ body.phone-game .dock-plan{gap:2px!important}
+ body.phone-game .dock-plan .dock-path{display:none!important}
+ body.phone-game .dock-plan b{font-size:16px!important}
+ body.phone-game .dock-chips{display:flex!important;flex-wrap:wrap;gap:4px!important}
+ body.phone-game .dock-chips em{font-size:12px!important}
+ body.phone-game .dock-main{min-height:52px!important;width:100%!important}
+ body.phone-game .dock-main .dm-ico{width:38px!important;height:38px!important}
+ body.phone-game .dock-hint{padding:6px 10px!important}
+}

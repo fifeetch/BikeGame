@@ -568,3 +568,8 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 ## v143 (20 octobre) — téléphone
 - Bandeau sous la carte : énergie, fatigue en cases, repas, pièces, aventure ; un toucher ouvre la fiche.
 - Le bouton 📋 affiche « Fiche » aussi sur téléphone.
+
+## v144 (20 octobre) — audit mobile, lot M1
+- Téléphone : en-tête d’une ligne avec menu ☰ (Règles, Réglages, Paramètres, Accueil), compteurs de cartes cachés (ils sont dans la fiche).
+- Barre d’actions et bandeau énergie collés en bas de l’écran ; la carte prend toute la hauteur restante ; légende de la carte cachée.
+- Barre d’actions plus basse (boutons en ligne, chemin « Plaine → Plaine » caché).

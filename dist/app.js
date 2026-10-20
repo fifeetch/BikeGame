@@ -1769,7 +1769,7 @@ function ficheLight(root){if(!root||root.dataset.light)return;root.dataset.light
 
 // ---------- Téléphone (20 octobre, retour de Fi) : un bandeau toujours visible avec l'énergie, la fatigue et les réserves ----------
 // Sur petit écran, la fiche est cachée derrière le bouton 📋 ; ce bandeau, au-dessus de la barre du bas, l'ouvre d'un toucher.
-function miniFiche(){document.querySelectorAll('.mini-fiche').forEach(e=>e.remove());
+function miniFiche(){if(typeof innerWidth!=='number')return;document.querySelectorAll('.mini-fiche').forEach(e=>e.remove());
  if(screen!=='game'||!m||m.done||innerWidth>=720||S.ultraOn?.(m))return;const dock=document.querySelector('.dock-day');if(!dock)return;
  const p=S.player(m),cap=energyCap(m,p),fm=fatigueMax(m),fat=Math.min(fm,p.fatigue||0);
  const cells=(n,on,cls)=>Array.from({length:n},(_,i)=>`<i class="${i<on?cls:''}"></i>`).join('');
@@ -1779,3 +1779,18 @@ function miniFiche(){document.querySelectorAll('.mini-fiche').forEach(e=>e.remov
   `<span class="mf-row mf-res"><span>🍎 ${p.food}</span><span>🪙 ${p.money}</span><span>⭐ ${p.points||0}</span><span class="mf-open">Fiche ›</span></span>`;
  b.onclick=()=>act('sheet-toggle');dock.parentElement.insertBefore(b,dock);}
 {const priorRender=render;render=(...a)=>{const out=priorRender(...a);try{miniFiche();}catch(e){console.error(e);}return out;};}
+
+// ---------- Audit mobile, lot M1 (20 octobre) : sur téléphone, l'écran de jeu tient dans l'écran ----------
+// En-tête d'une ligne avec un menu ☰ ; barre d'actions et bandeau d'énergie collés en bas ; la carte prend le reste.
+let phoneMenuOpen=false;
+function phoneLayout(){if(typeof innerWidth!=='number'||!document.body?.classList)return;const phone=screen==='game'&&m&&innerWidth<720;document.body.classList.toggle('phone-game',Boolean(phone));if(!phone)return;
+ const head=document.querySelector('header.in-game'),nav=head?.querySelector('nav');
+ if(head&&nav&&!head.querySelector('.phone-menu-btn')){const b=document.createElement('button');b.type='button';b.className='phone-menu-btn';b.setAttribute('aria-label','Menu : règles, réglages, paramètres, accueil');b.setAttribute('aria-expanded',String(phoneMenuOpen));b.textContent='☰';
+  b.onclick=()=>{phoneMenuOpen=!phoneMenuOpen;head.classList.toggle('menu-open',phoneMenuOpen);b.setAttribute('aria-expanded',String(phoneMenuOpen));};head.querySelector('.brand')?.appendChild(b);}
+ head?.classList.toggle('menu-open',phoneMenuOpen);
+ nav?.querySelectorAll('button').forEach(x=>x.addEventListener('click',()=>{phoneMenuOpen=false;},{once:true}));
+ const map=document.querySelector('.map-wrap'),dock=document.querySelector('aside.player-sheet-dock');
+ if(map&&dock&&head){const h=Math.max(220,innerHeight-head.offsetHeight-dock.offsetHeight-14);if(map.style.height!==h+'px'){map.style.height=h+'px';map.style.minHeight='0';}}
+ const tip=document.querySelector('#tip-bar');if(tip&&dock){tip.style.bottom=(dock.offsetHeight+10)+'px';}}
+{const priorRender=render;render=(...a)=>{const out=priorRender(...a);try{phoneLayout();}catch(e){console.error(e);}return out;};}
+globalThis.addEventListener?.('resize',()=>{try{phoneLayout();}catch{}});
