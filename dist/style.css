@@ -2652,3 +2652,16 @@ button.wiki-q.wiki-q{flex:none;width:18px;height:18px;min-height:0;min-width:0;p
 .fiche-light .fat-cells i.next{background:transparent;outline:2px dashed #c98a6a;outline-offset:-2px}
 .fiche-light .fat-name{font:700 15px 'Barlow',system-ui,sans-serif;color:#1b3b38;margin-left:auto}
 .fiche-light .fat-cells{max-width:none}
+/* Téléphone : bandeau énergie / fatigue / réserves qui ouvre la fiche */
+.mini-fiche{display:flex;flex-direction:column;gap:4px;width:100%;box-sizing:border-box;margin:0 0 10px;padding:8px 12px;border-radius:14px;border:2px solid #e2cf9f;background:#fff7df;color:#1b1406;text-align:left;cursor:pointer;font:600 14px 'Barlow',system-ui,sans-serif}
+.mini-fiche .mf-row{display:flex;align-items:center;gap:8px}
+.mini-fiche .mf-lab{width:20px;text-align:center}
+.mini-fiche .mf-bar{flex:1;display:grid;grid-template-columns:repeat(var(--n),1fr);gap:2px}
+.mini-fiche .mf-bar i{height:10px;border-radius:2px;background:#e2cf9f}
+.mini-fiche .mf-bar i.on{background:#f2a541}
+.mini-fiche .mf-fat i.on{background:#b8432e}
+.mini-fiche b{font:900 15px Fraunces,Georgia,serif;min-width:40px;text-align:right}
+.mini-fiche .mf-small{font-size:13px}
+.mini-fiche .mf-res{gap:14px}
+.mini-fiche .mf-open{margin-left:auto;font-weight:700;color:#1b3b38;text-decoration:underline}
+.maptools .sheet-toggle .tool-label{display:inline}

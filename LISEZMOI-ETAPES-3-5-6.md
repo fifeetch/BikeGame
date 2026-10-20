@@ -564,3 +564,7 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 ## v142 (19 octobre) — fiche plus compacte, fatigue en cases
 - La fatigue s’affiche en cases comme l’énergie (case de demain en pointillés), nom du niveau à droite ; « Si tu roules demain : … » en une ligne ; comment la faire baisser dans « + Détails ».
 - Repas, pièces, aventure et météo en petite ligne, sans bulles.
+
+## v143 (20 octobre) — téléphone
+- Bandeau sous la carte : énergie, fatigue en cases, repas, pièces, aventure ; un toucher ouvre la fiche.
+- Le bouton 📋 affiche « Fiche » aussi sur téléphone.

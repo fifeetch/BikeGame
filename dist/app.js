@@ -1766,3 +1766,16 @@ function ficheLight(root){if(!root||root.dataset.light)return;root.dataset.light
   b.onclick=()=>{ficheDetails=!ficheDetails;try{localStorage.setItem('velo-fiche-details',ficheDetails?'1':'0');}catch{}d.hidden=!ficheDetails;b.textContent=ficheDetails?'− Détails':'+ Détails';b.setAttribute('aria-expanded',String(ficheDetails));};
   (counts||gauges).appendChild(b);}}
 {const priorRender=render;render=(...a)=>{const out=priorRender(...a);try{if(screen==='game'&&m&&!S.ultraOn?.(m))document.querySelectorAll('.fiche.player-mat').forEach(ficheLight);}catch(e){console.error(e);}return out;};}
+
+// ---------- Téléphone (20 octobre, retour de Fi) : un bandeau toujours visible avec l'énergie, la fatigue et les réserves ----------
+// Sur petit écran, la fiche est cachée derrière le bouton 📋 ; ce bandeau, au-dessus de la barre du bas, l'ouvre d'un toucher.
+function miniFiche(){document.querySelectorAll('.mini-fiche').forEach(e=>e.remove());
+ if(screen!=='game'||!m||m.done||innerWidth>=720||S.ultraOn?.(m))return;const dock=document.querySelector('.dock-day');if(!dock)return;
+ const p=S.player(m),cap=energyCap(m,p),fm=fatigueMax(m),fat=Math.min(fm,p.fatigue||0);
+ const cells=(n,on,cls)=>Array.from({length:n},(_,i)=>`<i class="${i<on?cls:''}"></i>`).join('');
+ const b=document.createElement('button');b.type='button';b.className='mini-fiche';b.setAttribute('aria-label',`Ouvrir la fiche : énergie ${p.energy} sur ${cap}${fm?`, fatigue ${fat} sur ${fm}`:''}`);
+ b.innerHTML=`<span class="mf-row"><span class="mf-lab">⚡</span><span class="mf-bar" style="--n:${m.rules.maxEnergy||10}">${cells(m.rules.maxEnergy||10,p.energy,'on')}</span><b>${p.energy}/${cap}</b></span>`+
+  (fm?`<span class="mf-row"><span class="mf-lab">😮‍💨</span><span class="mf-bar mf-fat" style="--n:${fm}">${cells(fm,fat,'on')}</span><b class="mf-small">${fat}/${fm}</b></span>`:'')+
+  `<span class="mf-row mf-res"><span>🍎 ${p.food}</span><span>🪙 ${p.money}</span><span>⭐ ${p.points||0}</span><span class="mf-open">Fiche ›</span></span>`;
+ b.onclick=()=>act('sheet-toggle');dock.parentElement.insertBefore(b,dock);}
+{const priorRender=render;render=(...a)=>{const out=priorRender(...a);try{miniFiche();}catch(e){console.error(e);}return out;};}
