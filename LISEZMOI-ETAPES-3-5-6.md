@@ -585,3 +585,8 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 
 ## v147 (20 octobre) — téléphone : la barre du bas ne passe plus devant les fenêtres
 - Pendant qu’une fenêtre est ouverte (règles, manger, nuit, scène, photo du col), la barre du bas se cache.
+
+## v148 — Design system branché + jeu installable (21 octobre)
+- Les couleurs du jeu passent par les jetons du design system « Carte d'aventure » (`--teal`, `--cream`…) : 917 couleurs remplacées, rendu identique à l'écran.
+- Bouton « 📲 Installer le jeu » sur l'accueil (Android : installation directe ; iPhone : mode d'emploi « Partager → Sur l'écran d'accueil »).
+- Raccourcis de l'icône : « Partie rapide » et « Apprendre à jouer ».

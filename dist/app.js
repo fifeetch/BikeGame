@@ -1845,3 +1845,23 @@ function sheetSwipe(){if(typeof innerWidth!=='number'||innerWidth>=720||screen!=
 {const priorRender=render;render=(...a)=>{const out=priorRender(...a);try{sheetSwipe();}catch{}return out;};}
 // les fenêtres ajoutées hors rendu (photo du col, nuit, scène) cachent aussi la barre du bas sur téléphone
 try{if(typeof MutationObserver==='function'&&document.body){const upd=()=>{document.body.classList.toggle('phone-modal',Boolean(document.querySelector('.modal-back, .night-scene, .colphoto, .scene-pop')));};new MutationObserver(upd).observe(document.body,{childList:true});}}catch{}
+
+// ---------- Le jeu comme une application (21 octobre) ----------
+// Android / Chrome : le navigateur propose l'installation (beforeinstallprompt) ; on la garde pour un bouton sur l'accueil.
+// iPhone : pas d'installation automatique, on explique « Partager → Sur l'écran d'accueil ».
+let installPrompt=null,installHelp=false;
+const isStandalone=()=>{try{return matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;}catch{return false;}};
+const isIOS=()=>{try{return /iphone|ipad|ipod/i.test(navigator.userAgent)&&!/crios|fxios/i.test(navigator.userAgent);}catch{return false;}};
+globalThis.addEventListener?.('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;try{if(screen==='home')render();}catch{}});
+globalThis.addEventListener?.('appinstalled',()=>{installPrompt=null;try{render();}catch{}});
+{const priorRender=render;render=(...a)=>{const out=priorRender(...a);
+ try{if(screen==='home'&&!isStandalone()&&(installPrompt||isIOS())&&!document.querySelector('.install-app')){const anchor=document.querySelector('.mc-title [data-action="new"]')?.parentElement;if(anchor){
+  const box=document.createElement('div');box.className='install-app';
+  box.innerHTML=`<button type="button" data-action="install-app">📲 Installer le jeu<small>une icône sur ton téléphone, en plein écran, même sans réseau</small></button>${installHelp?`<p class="install-help">Sur iPhone : touche <b>Partager</b> <span aria-hidden="true">⬆️</span> en bas de Safari, puis <b>« Sur l'écran d'accueil »</b>.</p>`:''}`;
+  box.querySelector('button').onclick=()=>act('install-app');anchor.appendChild(box);}}}catch(e){console.error(e);}
+ return out;};}
+{const priorAct=act;act=a=>{if(a!=='install-app')return priorAct(a);
+ if(installPrompt){const p=installPrompt;installPrompt=null;try{p.prompt();p.userChoice?.finally?.(()=>render());}catch{}render();return;}
+ installHelp=!installHelp;render();};}
+// raccourcis de l'icône installée : ?start=quick (Partie rapide) et ?start=learn (Apprendre à jouer)
+try{const st=new URLSearchParams(location.search).get('start');if(st&&screen==='home'){history.replaceState?.(null,'',location.pathname);setTimeout(()=>{try{act(st==='quick'?'quick-start':'tuto-start');}catch{}},300);}}catch{}
