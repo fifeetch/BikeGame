@@ -590,3 +590,8 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - Les couleurs du jeu passent par les jetons du design system « Carte d'aventure » (`--teal`, `--cream`…) : 917 couleurs remplacées, rendu identique à l'écran.
 - Bouton « 📲 Installer le jeu » sur l'accueil (Android : installation directe ; iPhone : mode d'emploi « Partager → Sur l'écran d'accueil »).
 - Raccourcis de l'icône : « Partie rapide » et « Apprendre à jouer ».
+
+## v149 — Vitesse, lot 1 « Calculs malins » (22 octobre)
+- Cases jouables : seules les cases voisines sont testées (avant : les 2 783 cases à chaque toucher).
+- Sauvegarde automatique groupée : écrite après 0,6 s de pause (et forcée en quittant la page) au lieu d'à chaque toucher.
+- Mesure téléphone (processeur ralenti ×4) : calcul par toucher −40 % ; toucher une case 250-390 ms → 200-280 ms ; lancer une partie 1,4 s → 1,16 s. Sur ordinateur, le pire blocage passe de 1,6 s à 0,35 s.
