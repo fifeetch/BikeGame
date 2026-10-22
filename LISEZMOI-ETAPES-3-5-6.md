@@ -595,3 +595,9 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - Cases jouables : seules les cases voisines sont testées (avant : les 2 783 cases à chaque toucher).
 - Sauvegarde automatique groupée : écrite après 0,6 s de pause (et forcée en quittant la page) au lieu d'à chaque toucher.
 - Mesure téléphone (processeur ralenti ×4) : calcul par toucher −40 % ; toucher une case 250-390 ms → 200-280 ms ; lancer une partie 1,4 s → 1,16 s. Sur ordinateur, le pire blocage passe de 1,6 s à 0,35 s.
+
+## v150 — Vitesse, lot 2 « Réponse immédiate » (22 octobre)
+- La case touchée s'allume tout de suite (contour orange) ; le calcul se fait juste après l'affichage. Téléphone : réponse visible en ~47 ms (avant ~320 ms).
+- La caméra de la carte remesure son cadre après l'affichage au lieu de forcer un calcul de mise en page.
+- Essayé puis retiré : « retoucher » l'écran au lieu de le réécrire (gain 13 %, mais l'ordre de certaines fenêtres changeait).
+- Partie automatique de 10 jours identique avant/après (téléphone et ordinateur).

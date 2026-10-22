@@ -2733,3 +2733,6 @@ button.wiki-q.wiki-q{flex:none;width:18px;height:18px;min-height:0;min-width:0;p
 .install-app button{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-height:52px;padding:8px 16px;border-radius:14px;border:2px solid rgba(246,231,193,.45);background:rgba(16,34,38,.75);color:var(--paper);font:700 17px 'Barlow Condensed',system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;text-align:left;cursor:pointer}
 .install-app button small{font:500 13px 'Barlow',system-ui,sans-serif;letter-spacing:0;text-transform:none;color:var(--muted-on-ground)}
 .install-help{margin:0;padding:10px 12px;border-radius:12px;background:var(--paper);color:var(--ink);font:500 14px/1.4 'Barlow',system-ui,sans-serif}
+
+/* Vitesse (lot 2) : retour immédiat quand on touche une case */
+.map-tile.tap-now .terrain-face{stroke:var(--orange,#e0663f);stroke-width:3px;filter:brightness(1.18)}

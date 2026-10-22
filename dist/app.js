@@ -58,13 +58,23 @@ function boardSurfaceMarkup(state){
  boardRenderState=state;
  return `<div class="europe-world" data-board-host="svg" style="width:${MAP_WIDTH*1.05*zoom}px;height:${MAP_HEIGHT*1.05*zoom}px">${liveBoardSupported?'':boardSnapshotMarkup(state)}</div>`;
 }
+
+// Vitesse (lot 2) : réponse immédiate au toucher (navigateur seulement ; les tests restent synchrones).
+const tapSoon=typeof globalThis.addEventListener==='function'&&typeof requestAnimationFrame==='function';
 function mountBoard(){
  if(!liveBoardSupported)return;
  const placeholder=document.querySelector('[data-board-host]');
  if(!placeholder||!boardRenderState){boardRenderer?.destroy();boardRenderer=null;boardElement=null;return;}
- if(!boardElement){boardElement=placeholder;boardRenderer=createBoardRenderer(boardElement,{kind:'svg'});boardRenderer.onHexClick(handleBoardHex);}
+ if(!boardElement){boardElement=placeholder;boardRenderer=createBoardRenderer(boardElement,{kind:'svg'});boardRenderer.onHexClick(handleBoardHexSoon);}
  else placeholder.replaceWith(boardElement);
  boardRenderer.update(boardRenderState);
+}
+// Vitesse (lot 2) : la case touchée s'allume tout de suite ; le calcul suit juste après l'affichage.
+let hexQueue=Promise.resolve();
+function handleBoardHexSoon(key){
+ if(!tapSoon)return handleBoardHex(key);
+ try{const el=boardElement?.querySelector(`[data-board-key="${CSS.escape(key)}"]`);el?.classList.add('tap-now');}catch{}
+ hexQueue=hexQueue.then(()=>new Promise(res=>requestAnimationFrame(()=>setTimeout(()=>{try{handleBoardHex(key);}catch(err){console.error(err);}boardElement?.querySelectorAll('.tap-now').forEach(n=>n.classList.remove('tap-now'));res();},0))));
 }
 function handleBoardHex(key){
  if(screen==='map-editor'){editorName=(document.querySelector('#editor-map-name')?.value||editorName).trim()||'Ma carte';mapEditKey=key;modal='map-editor';render();return;}

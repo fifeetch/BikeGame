@@ -139,8 +139,9 @@ export function createCamera(world,{width,height,minScale=.35,maxScale=6,margin=
   else{vw=w;vh=h;if(pending){s=clampScale(pending.scale??s);tx=vw/2-pending.x*s;ty=vh/2-pending.y*s;pending=null;}else{s=lowest();tx=(vw-width*s)/2;ty=(vh-height*s)/2;}}
   ready=true;clampNow();apply(false);onChange(view(),true);}
  // Le cadre (.map) est recréé à chaque affichage de la page : on se rebranche sur le nouveau.
+ let remeasure=0;
  function attach(next){
-  if(next===viewport){measure();return;}
+  if(next===viewport){if(remeasure)return;remeasure=raf(()=>{remeasure=0;measure();});return;}// lot 2 : même cadre, on remesure après l'affichage (évite un calcul de mise en page forcé)
   detach();viewport=next;if(!viewport)return;
   viewport.classList?.add('board-camera');
   for(const [type,fn,opt]of listeners)viewport.addEventListener(type,fn,opt);
