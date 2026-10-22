@@ -601,3 +601,10 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - La caméra de la carte remesure son cadre après l'affichage au lieu de forcer un calcul de mise en page.
 - Essayé puis retiré : « retoucher » l'écran au lieu de le réécrire (gain 13 %, mais l'ordre de certaines fenêtres changeait).
 - Partie automatique de 10 jours identique avant/après (téléphone et ordinateur).
+
+## v151 — Vitesse, lot 3 « Ouverture rapide » (22 octobre)
+- Écran de chargement immédiat (titre + barre orange) : premier affichage 2,1 s → 0,47 s sur téléphone.
+- Les 51 fichiers du jeu sont annoncés d'avance (modulepreload) : téléchargés ensemble au lieu d'un par un. **Si on ajoute un nouveau fichier .js, relancer `python3 tools/maj-preload.py`.**
+- Les polices Google ne bloquent plus l'affichage (le texte apparaît d'abord, la police Fraunces juste après).
+- Placement des jetons d'aventure 7× plus rapide (69 → 10 ms), résultat identique vérifié sur 60 parties. Lancer une partie : 1,7 s → 1,45 s (téléphone).
+- Images de terrain non recompressées (pour ne pas abîmer le dessin).

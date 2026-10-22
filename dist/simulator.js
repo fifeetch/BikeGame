@@ -121,7 +121,10 @@ export function placeLandmarks(m){
  const near=new Map(),bfs=(start,goal)=>{const prev=new Map([[start,null]]),queue=[start];while(queue.length){const k=queue.shift();if(k===goal)break;for(const n of m.board[k]?.links||[])if(!prev.has(n)&&m.board[n].type!=='mer'){prev.set(n,k);queue.push(n);}}if(!prev.has(goal))return [];const out=[];for(let k=goal;k;k=prev.get(k))out.push(k);return out;};
  // zone : les 8 voyages d'origine + les voyages choisis dans cette partie (les 12 nouveaux vont plus loin en Europe)
  const zone=[...voyages.slice(0,8),...voyages.filter(v=>m.players.some(p=>p.voyage===v.id))];
- for(const v of new Set(zone))for(const k of bfs('city-'+v.from,'city-'+v.to)){const c=m.board[k];for(const t of Object.values(m.board))if(t.type!=='mer'&&axialDistance(c,t)<=3)near.set(t.key,t);}
+ // Vitesse (lot 3) : on ne regarde que les cases à 3 pas de chaque case du chemin (37 cases) au lieu des 2 783 ; même ordre, même résultat.
+ const tiles=Object.values(m.board),rank=new Map(),grid=new Map();tiles.forEach((t,i)=>{rank.set(t,i);const g=t.q+','+t.r;if(!grid.has(g))grid.set(g,[]);grid.get(g).push(t);});
+ const around=c=>{const out=[];for(let dq=-3;dq<=3;dq++)for(let dr=-3;dr<=3;dr++){const list=grid.get((c.q+dq)+','+(c.r+dr));if(list)for(const t of list)if(t.type!=='mer'&&axialDistance(c,t)<=3)out.push(t);}return out.sort((x,y)=>rank.get(x)-rank.get(y));};
+ for(const v of new Set(zone))for(const k of bfs('city-'+v.from,'city-'+v.to)){const c=m.board[k];for(const t of around(c))near.set(t.key,t);}
  const roadDist=new Map(),queue=Object.values(m.board).filter(t=>t.type!=='mer'&&t.roads?.length).map(t=>t.key);for(const k of queue)roadDist.set(k,0);
  for(let i=0;i<queue.length;i++){const k=queue[i];for(const n of m.board[k].links)if(!roadDist.has(n)&&m.board[n].type!=='mer'){roadDist.set(n,roadDist.get(k)+1);queue.push(n);}}
  const pool=shuffle([...near.values()].filter(t=>['plaine','moyenne_montagne','montagne','cote'].includes(t.type)&&!t.name&&!t.colName)),chosen=[];
