@@ -69,14 +69,16 @@ export function eventFace(card,actions='',compact=false){if(!card)return '';
 }
 
 // ---------- Animation : toutes les scènes de cartes visibles, une seule boucle ----------
-// Plus de 8 cartes à l'écran (catalogue) : seule la carte survolée s'anime, les autres restent sur leur image.
+// Seule la carte survolée s'anime (ou une carte montrée en grand dans une fenêtre) ; les autres restent sur leur image.
 const starts=new Map();let raf=0,last=0;
 function reduced(){try{return matchMedia('(prefers-reduced-motion: reduce)').matches;}catch{return false;}}
 function tick(now){raf=0;if(typeof document==='undefined'||!document.querySelectorAll)return;
  const els=[...document.querySelectorAll('svg.ecard-scene')];if(!els.length)return;
  if(now-last>=40){last=now;const many=els.length>8;
   for(const el of els){const id=el.dataset.card,cat=el.dataset.cat,face=el.closest('.event-face');
-   const live=!many||face?.matches(':hover,:focus-within');
+   // Fluidité (audit ordinateur, 23 oct.) : une carte ne s'anime que survolée, ou montrée en grand dans une fenêtre (3 cartes au plus).
+   const box=el.closest('.modal');const inModal=box&&box.getClientRects().length&&box.querySelectorAll('svg.ecard-scene').length<=3;
+   const live=!document.hidden&&(face?.matches(':hover,:focus-within')||(!many&&inModal));
    if(!live){if(el.dataset.still!=='1'){el.dataset.still='1';el.style.opacity='';starts.delete(id);}continue;}
    el.dataset.still='';if(!starts.has(id))starts.set(id,now);
    const sc=cardScene(id,cat),cyc=sceneHold(sc)+2.2,t=((now-starts.get(id))/1000)%cyc;

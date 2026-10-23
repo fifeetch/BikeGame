@@ -1407,7 +1407,7 @@ const TOWN_VIEW={velo:'velo',superette:'superette',resto:'resto',hotel:'hotel'};
 {const priorRender=render;render=(...a)=>{priorRender(...a);try{if(modal!=='market')return;
  document.querySelectorAll('.tw-shop').forEach(g=>g.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();act(g.dataset.action);}});
  if(townReduce()){townTick();return;}
- if(!townRaf){const loop=()=>{if(modal!=='market'||!townTick()){townRaf=0;return;}townRaf=requestAnimationFrame(loop);};townRaf=requestAnimationFrame(loop);}}catch(err){console.error(err);}};}
+ if(!townRaf){let townLast=0;const loop=now=>{if(modal!=='market'){townRaf=0;return;}if(now-townLast<33){townRaf=requestAnimationFrame(loop);return;}townLast=now;if(!townTick()){townRaf=0;return;}townRaf=requestAnimationFrame(loop);};townRaf=requestAnimationFrame(loop);}}catch(err){console.error(err);}};}
 // ---------- Cartes Événement au style « carte d'aventure » (17 octobre) : la scène de chaque carte s'anime sur la case du joueur ----------
 {const priorRender=render;render=(...a)=>{try{if(m){const p=S.player(m),t=p&&m.board?.[p.pos];if(t)setCardSceneContext({x:t.x,y:t.y,color:p.color});}}catch{}
  priorRender(...a);try{startCardScenes();}catch{}};}

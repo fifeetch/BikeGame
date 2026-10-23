@@ -2736,3 +2736,7 @@ button.wiki-q.wiki-q{flex:none;width:18px;height:18px;min-height:0;min-width:0;p
 
 /* Vitesse (lot 2) : retour immédiat quand on touche une case */
 .map-tile.tap-now .terrain-face{stroke:var(--orange,#e0663f);stroke-width:3px;filter:brightness(1.18)}
+
+/* Fluidité ordinateur (23 oct.) : l'anneau qui pulse sur la destination redessinait toute la carte 60 fois par seconde.
+   Il avance maintenant par petits pas (12 images par seconde, comme le pion vivant) : même effet, 6 fois moins de travail. */
+.pulse-ring{animation-timing-function:steps(36,end)}

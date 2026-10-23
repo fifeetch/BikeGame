@@ -213,5 +213,7 @@ export function townGo(id,done){const s=shopById(id);if(!s)return false;if(st.ph
 export function townOut(){const s=st.shop&&shopById(st.shop);if(!s){st={phase:'idle',t0:performance.now()-3000,x:0};return;}st={phase:'out',t0:performance.now(),bx:st.bx,shop:st.shop,x:st.bx};act=null;}
 export function townSkip(id){const s=shopById(id);st={phase:'inside',t0:performance.now(),x:s.dx-10,bx:s.dx-10,shop:id};insideT=performance.now()-9000;act=null;}
 export function townAct(o){act=o;actT=performance.now();}
-export function townTick(root=document){const dyn=root.querySelector('.tw-dyn');if(dyn)dyn.innerHTML=dynLayer();const sky=root.querySelector('.tw-skydyn');if(sky)sky.innerHTML=skyDyn();
- const ins=root.querySelector('.tw-inside');if(ins)ins.innerHTML=interior(ins.dataset.shop,(performance.now()-insideT)/1000);return Boolean(dyn||ins);}
+// Fluidité (23 oct.) : on ne réécrit une couche que si son dessin a changé.
+function put(el,html){if(el.__art!==html){el.__art=html;el.innerHTML=html;}}
+export function townTick(root=document){const dyn=root.querySelector('.tw-dyn');if(dyn)put(dyn,dynLayer());const sky=root.querySelector('.tw-skydyn');if(sky)put(sky,skyDyn());
+ const ins=root.querySelector('.tw-inside');if(ins)put(ins,interior(ins.dataset.shop,(performance.now()-insideT)/1000));return Boolean(dyn||ins);}

@@ -608,3 +608,10 @@ Les écrans d'avant partie sont refaits dans le style choisi sur la planche de m
 - Les polices Google ne bloquent plus l'affichage (le texte apparaît d'abord, la police Fraunces juste après).
 - Placement des jetons d'aventure 7× plus rapide (69 → 10 ms), résultat identique vérifié sur 60 parties. Lancer une partie : 1,7 s → 1,45 s (téléphone).
 - Images de terrain non recompressées (pour ne pas abîmer le dessin).
+
+## v152 — Fluidité sur ordinateur, lot A de l'audit PC et Mac (23 octobre)
+- Mesuré à la taille du Legion 5 et du Mac : en jeu, sans rien toucher, le processeur travaillait à ≈ 50 % ; maintenant ≈ 12 %. Rue de la ville ouverte : 95 % → 65 %.
+- Les cartes Événement de la fiche ne s'animent plus qu'au survol de la souris (ou montrées en grand dans une fenêtre, 3 au plus).
+- L'anneau qui pulse sur la destination avance à 12 images par seconde (il faisait redessiner toute la carte 60 fois par seconde).
+- Le pion et la rue de la ville ne sont redessinés que quand leur dessin change ; la rue tourne à 30 images par seconde. Le fanion caché n'est plus animé.
+- Aucune règle ni aucun écran changé.

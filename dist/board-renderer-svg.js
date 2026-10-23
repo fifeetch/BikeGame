@@ -252,7 +252,7 @@ export function createSVGBoardRenderer(container,options={}){
    const bob=Math.abs(Math.sin(clock()*.012))*1.1;attrsTo(record.el,{transform:`translate(${f1(a.x+(b.x-a.x)*t)} ${f1(a.y+(b.y-a.y)*t-bob)})`});
    if(record.flip&&Math.abs(b.x-a.x)>1){const face=b.x<a.x?-1:1;if(face!==record.facing){record.facing=face;attrsTo(record.flip,{transform:face<0?'scale(-1 1)':''});}}
    const sl=slope[i]||'flat',speed=(sl==='down'?0:sl==='up'?.007:.012)*(info.tired?.55:1);record.crank=(record.crank||0)+speed*16;
-   const veh=b.veh||a.veh||record.vehicle;if(record.flip)record.flip.innerHTML=veh==='ferry'?ferryShipArt(clock()/1000):veh==='train'?trainArt(clock()/1000):(veh==='boat'?boatArt(clock()/1000):'')+riderFree(veh==='boat'?.6:record.crank,{stand:sl==='up'&&!veh,tuck:sl==='down'&&!veh,low:info.tired,sweat:info.tired?1:0,cape:info.cape});
+   const veh=b.veh||a.veh||record.vehicle;if(record.flip&&(record.flipArt=null,1))record.flip.innerHTML=veh==='ferry'?ferryShipArt(clock()/1000):veh==='train'?trainArt(clock()/1000):(veh==='boat'?boatArt(clock()/1000):'')+riderFree(veh==='boat'?.6:record.crank,{stand:sl==='up'&&!veh,tuck:sl==='down'&&!veh,low:info.tired,sweat:info.tired?1:0,cape:info.cape});
    if(record.flag)attrsTo(record.flag,{d:flagPath(sl==='down'||info.windy?2.4:.7,clock()/1000)});
    if(follow){camS+=(zoomTo-camS)*.08;camera.focus(a.x+(b.x-a.x)*t,a.y+(b.y-a.y)*t,{scale:Math.max(backTo,camS),animate:false});}
    if(k<1)raf(step);else{record.anim=null;record.vehicle='';record.el.classList?.remove('moving');record.follow=false;if(follow){clearTimeout(glideTimer);glideTimer=setTimeout(()=>{if(!destroyed)camera.focus(b.x,b.y,{scale:backTo,duration:1100});},1400);}idleDraw(record,clock()/1000);}};
@@ -323,14 +323,15 @@ export function createSVGBoardRenderer(container,options={}){
  function idleDraw(record,t){const o=record.info||{};if(!record.flip||record.anim)return;
   const sweat=o.tired?((Math.sin(t*1.6)+1)/2).toFixed(2):0;
   const now=clock(),cheer=(record.cheerUntil||0)>now,eat=(record.eatUntil||0)>now;
-  record.flip.innerHTML=o.pose==='repair'?riderRepair(t):o.pose==='fall'?riderFall(t):o.sit&&!cheer&&!eat?riderSitting(t,{tent:o.tent,sweat}):riderFree(.6,{low:o.tired&&!cheer,cape:o.cape,sweat:cheer?0:sweat,cheer:cheer?t:0,eat:eat?t:0});
-  if(record.flag)attrsTo(record.flag,{d:flagPath(o.windy?2.4:o.tired?.25:.6,t)});
+  // Fluidité (23 oct.) : on ne réécrit le dessin que s'il a changé ; le fanion est caché, on ne l'anime plus.
+  const art=o.pose==='repair'?riderRepair(t):o.pose==='fall'?riderFall(t):o.sit&&!cheer&&!eat?riderSitting(t,{tent:o.tent,sweat}):riderFree(.6,{low:o.tired&&!cheer,cape:o.cape,sweat:cheer?0:sweat,cheer:cheer?t:0,eat:eat?t:0});
+  if(record.flipArt!==art){record.flipArt=art;record.flip.innerHTML=art;}
   if(record.fx){let fx='';
    if(o.cape)for(let i=0;i<5;i++){const x=-16+i*8,y=((t*40+i*13)%30)-22;fx+=`<path class="fx-rain" d="M${x} ${y.toFixed(1)} l-1.4 4"/>`;}
    if(o.weather==='neige')for(let i=0;i<5;i++){const x=-16+i*8+Math.sin(t+i)*2,y=((t*8+i*9)%30)-22;fx+=`<circle class="fx-snow" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="1"/>`;}
    if(o.tired>1&&!o.sit){const k=(t*1.2)%1;fx+=`<circle class="fx-puff" cx="${(12+k*5).toFixed(1)}" cy="${(-10-k*2).toFixed(1)}" r="${(1+k*1.6).toFixed(2)}" style="opacity:${(1-k).toFixed(2)}"/>`;}
    if(o.bubble)fx+=bubbleArt(o.bubble,t);
-   record.fx.innerHTML=fx;}}
+   if(record.fxArt!==fx){record.fxArt=fx;record.fx.innerHTML=fx;}}}
  let idleRaf=0,idleLast=0,spotSaved=null,animEnd=0;
  function startIdle(){if(idleRaf||destroyed||!browser())return;const loop=()=>{idleRaf=0;if(destroyed)return;const t=clock();if(!reduced()&&t-idleLast>80){idleLast=t;for(const r of playerNodes.values())idleDraw(r,t/1000);}idleRaf=raf(loop);};idleRaf=raf(loop);}
  const followingNow=()=>[...playerNodes.values()].some(r=>r.anim&&r.follow);
@@ -358,7 +359,7 @@ export function createSVGBoardRenderer(container,options={}){
     // Pion : un médaillon crème avec un cycliste sur son vélo (couleur du joueur), et le numéro du joueur dans une pastille.
     // Pion « cycliste libre » (planche « Le pion du cycliste », choix B) : le cycliste chargé posé sur la carte, avec un fanion à sa couleur.
     record={el:make('g',{class:'rider-token free'}),inner:make('g',{class:'rider-inner'}),shadow:make('ellipse',{class:'rider-shadow',cx:0,cy:10,rx:13,ry:3.4}),dust:make('g',{class:'rider-dust'}),flip:make('g',{class:'rider-flip'}),flag:make('path',{class:'rider-flag',d:'M-12 -2 L-12 -25 M-12 -25 Q-5 -24 0 -21.5 Q-5 -19 -12 -17.5 Z'}),text:make('text',{class:'player-number',x:-6.6,y:-19}),pos:p.pos,facing:1};
-    record.dust.innerHTML='<circle cx="-14" cy="8" r="2.2"/><circle cx="-19" cy="6" r="1.4"/>';record.flip.innerHTML=riderFree(.6);record.fx=make('g',{class:'rider-fx'});record.inner.append(record.shadow,record.dust,record.flip,record.flag,record.text,record.fx);record.el.append(record.inner);tokens.append(record.el);playerNodes.set(p.id,record);}
+    record.dust.innerHTML='<circle cx="-14" cy="8" r="2.2"/><circle cx="-19" cy="6" r="1.4"/>';record.flipArt=null;record.flip.innerHTML=riderFree(.6);record.fx=make('g',{class:'rider-fx'});record.inner.append(record.shadow,record.dust,record.flip,record.flag,record.text,record.fx);record.el.append(record.inner);tokens.append(record.el);playerNodes.set(p.id,record);}
    attrsTo(record.el,{class:`rider-token free${p.id===g.id?' active':''}${record.anim?' moving':''}`,'aria-label':p.name});
    attrsTo(record.flip,{style:`--rider:${p.color}`});attrsTo(record.flag,{style:`fill:${p.color}`});record.info=(state?.riders||{})[p.id]||{};if(record.text.textContent!==p.id.slice(1))record.text.textContent=p.id.slice(1);
    const moved=record.pos!==p.pos,from=g.board[record.pos];record.pos=p.pos;
